@@ -13,6 +13,8 @@ interface Props {
   whatsappRaw: string;
   bookingPhone: string;
   bookingEmail: string;
+  showCta?: boolean;
+  hrefPrefix?: string;
 }
 
 const {
@@ -24,6 +26,8 @@ const {
   whatsappRaw,
   bookingPhone,
   bookingEmail,
+  showCta = true,
+  hrefPrefix = ''
 } = Astro.props;
 
 const nav = restaurant.textosNav ?? {};
@@ -40,87 +44,143 @@ const rutaLegal = (slug: string) =>
 const hoursByDay = buildHoursByDay(restaurant.horariosSemana);
 const scheduleMessages = {
   abierto: t(restaurant.horariosAbierto, locale, defaultLocale) || 'Abierto hasta las {hora}.',
-  proxima: t(restaurant.horariosProximaApertura, locale, defaultLocale) || 'Hoy abrimos a las {hora}.',
-  cerrado: t(restaurant.horariosCerrado, locale, defaultLocale) || 'Cerrado.',
+  proxima:
+    t(restaurant.horariosProximaApertura, locale, defaultLocale) || 'Hoy abrimos a las {hora}.',
+  cerrado: t(restaurant.horariosCerrado, locale, defaultLocale) || 'Cerrado.'
 };
 
 // Chrome text por locale (no editorial)
 const T: Record<string, { cta: string; visit: string; contact: string; hours: string }> = {
   es: { cta: '¿Con ganas de mesa?', visit: 'Visítanos', contact: 'Contacto', hours: 'Horario' },
   en: { cta: 'Ready for a table?', visit: 'Visit us', contact: 'Contact', hours: 'Hours' },
-  ca: { cta: 'Amb ganes de taula?', visit: 'Visita’ns', contact: 'Contacte', hours: 'Horari' },
+  ca: { cta: 'Amb ganes de taula?', visit: 'Visita’ns', contact: 'Contacte', hours: 'Horari' }
 };
 const tt = T[locale] ?? T.es;
 const byline = t(footerTexts.bylineIzq, locale, defaultLocale);
 
 // Estilos comunes para h4 y para links (para no repetir 4 veces)
 const h4Cls = 'uppercase text-accent font-medium text-[11px] tracking-[0.32em] mb-5';
-const linkCls = 'text-ink-soft text-[15px] leading-[1.9] transition-colors duration-300 hover:text-accent cursor-pointer';
+const linkCls =
+  'text-ink-soft text-[15px] leading-[1.9] transition-colors duration-300 hover:text-accent cursor-pointer';
 ---
 
-<footer class="pt-[12vh] pb-[30px] px-(--gap) border-t border-line bg-surface max-[960px]:py-[8vh] max-[960px]:pb-[30px] [&_a]:cursor-pointer">
-  <!-- ▸ CTA row -->
-  <div class="mx-auto max-w-[var(--max)] mb-16 pb-12 border-b border-line flex flex-wrap items-center justify-between gap-8 max-[700px]:flex-col max-[700px]:items-start max-[700px]:gap-6 max-[960px]:mb-12">
-    <div class="flex flex-col gap-2">
-      <p class="font-serif font-light leading-none text-[clamp(28px,3.5vw,44px)]">{tt.cta}</p>
-      {byline && <p class="text-muted text-sm tracking-[0.02em]">{byline}</p>}
-    </div>
-    <CtaButton href="#book">
-      {t(nav.linkReservar, locale, defaultLocale) || 'Reservar'}
-    </CtaButton>
-  </div>
+<footer
+  class='pt-[12vh] pb-[30px] px-(--gap) border-t border-line bg-surface max-[960px]:py-[8vh] max-[960px]:pb-[30px] [&_a]:cursor-pointer'
+>
+  {/* ▸ CTA row — sólo en páginas SIN sección Booking (legales, 404) */}
+  {
+    showCta && (
+      <div class='mx-auto max-w-[var(--max)] mb-16 pb-12 border-b border-line flex flex-wrap items-center justify-between gap-8 max-[700px]:flex-col max-[700px]:items-start max-[700px]:gap-6 max-[960px]:mb-12'>
+        <div class='flex flex-col gap-2'>
+          <p class='font-serif font-light leading-none text-[clamp(28px,3.5vw,44px)]'>{tt.cta}</p>
+          {byline && <p class='text-muted text-sm tracking-[0.02em]'>{byline}</p>}
+        </div>
+        <CtaButton href={`${hrefPrefix}#book`}>
+          {t(nav.linkReservar, locale, defaultLocale) || 'Reservar'}
+        </CtaButton>
+      </div>
+    )
+  }
 
   <!-- ▸ Info columns -->
-  <div class="grid mx-auto max-w-[var(--max)] mb-14 grid-cols-3 gap-[clamp(40px,6vw,80px)] max-[900px]:grid-cols-1 max-[900px]:gap-10 max-[900px]:mb-10">
+  <div
+    class='grid mx-auto max-w-[var(--max)] mb-14 grid-cols-3 gap-[clamp(40px,6vw,80px)] max-[900px]:grid-cols-1 max-[900px]:gap-10 max-[900px]:mb-10'
+  >
     <div>
       <h4 class={h4Cls}>{tt.visit}</h4>
-      <p class="text-ink-soft text-[15px] leading-[1.9]">
+      <p class='text-ink-soft text-[15px] leading-[1.9]'>
         {dir.calle}<br />
-        {dir.codigoPostal} {dir.ciudad}<br />
-        {dir.barrio && <>{dir.barrio}<br /></>}
+        {dir.codigoPostal}
+        {dir.ciudad}<br />
+        {
+          dir.barrio && (
+            <>
+              {dir.barrio}
+              <br />
+            </>
+          )
+        }
       </p>
     </div>
     <div>
       <h4 class={h4Cls}>{tt.contact}</h4>
-      {bookingPhone && <p><a href={`tel:${bookingPhone}`} class={linkCls}>{bookingPhone}</a></p>}
-      {waHref && (
-        <p><a href={waHref} target="_blank" rel="noopener" class={linkCls}>WhatsApp · {whatsappRaw}</a></p>
-      )}
-      {bookingEmail && <p><a href={`mailto:${bookingEmail}`} class={linkCls}>{bookingEmail}</a></p>}
+      {
+        bookingPhone && (
+          <p>
+            <a href={`tel:${bookingPhone}`} class={linkCls}>
+              {bookingPhone}
+            </a>
+          </p>
+        )
+      }
+      {
+        waHref && (
+          <p>
+            <a href={waHref} target='_blank' rel='noopener' class={linkCls}>
+              WhatsApp · {whatsappRaw}
+            </a>
+          </p>
+        )
+      }
+      {
+        bookingEmail && (
+          <p>
+            <a href={`mailto:${bookingEmail}`} class={linkCls}>
+              {bookingEmail}
+            </a>
+          </p>
+        )
+      }
     </div>
     <div>
       <h4 class={h4Cls}>{tt.hours}</h4>
-      <p class="text-ink-soft text-[15px] leading-[1.9]">{t(restaurant.horariosTexto, locale, defaultLocale)}</p>
+      <p class='text-ink-soft text-[15px] leading-[1.9]'>
+        {t(restaurant.horariosTexto, locale, defaultLocale)}
+      </p>
       <p
-        id="openLine"
-        class="text-accent font-medium text-[13px] tracking-[0.02em] mt-3 flex items-center gap-2"
+        id='openLine'
+        class='text-accent font-medium text-[13px] tracking-[0.02em] mt-3 flex items-center gap-2'
       >
-        <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+        <span class='w-1.5 h-1.5 rounded-full bg-accent'></span>
         <span>…</span>
       </p>
     </div>
   </div>
 
   <!-- ▸ Legal + social + copyright -->
-  <div class="mx-auto max-w-[var(--max)] border-t border-line pt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 text-dim text-xs tracking-[0.04em] max-[700px]:flex-col max-[700px]:items-start">
-    {legalPages.length > 0 && (
-      <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
-        {legalPages.map((p, i) => (
-          <>
-            {i > 0 && <span class="opacity-40">·</span>}
-            <a href={rutaLegal(p.tipo)} class="hover:text-accent transition-colors duration-300 cursor-pointer">
-              {t(p.titulo, locale, defaultLocale)}
-            </a>
-          </>
-        ))}
-      </div>
-    )}
-    <div class="flex items-center gap-6 max-[700px]:gap-4">
-      {instagramHandle && (
-        <a href={instagram} target="_blank" rel="noopener" class="hover:text-accent transition-colors duration-300 cursor-pointer">
-          {instagramHandle}
-        </a>
-      )}
+  <div
+    class='mx-auto max-w-[var(--max)] border-t border-line pt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 text-dim text-xs tracking-[0.04em] max-[700px]:flex-col max-[700px]:items-start'
+  >
+    {
+      legalPages.length > 0 && (
+        <div class='flex flex-wrap items-center gap-x-3 gap-y-2'>
+          {legalPages.map((p, i) => (
+            <>
+              {i > 0 && <span class='opacity-40'>·</span>}
+              <a
+                href={rutaLegal(p.tipo)}
+                class='hover:text-accent transition-colors duration-300 cursor-pointer'
+              >
+                {t(p.titulo, locale, defaultLocale)}
+              </a>
+            </>
+          ))}
+        </div>
+      )
+    }
+    <div class='flex items-center gap-6 max-[700px]:gap-4'>
+      {
+        instagramHandle && (
+          <a
+            href={instagram}
+            target='_blank'
+            rel='noopener'
+            class='hover:text-accent transition-colors duration-300 cursor-pointer'
+          >
+            {instagramHandle}
+          </a>
+        )
+      }
       <span>© {new Date().getFullYear()} {restaurant.nombre}</span>
     </div>
   </div>
@@ -130,7 +190,7 @@ const linkCls = 'text-ink-soft text-[15px] leading-[1.9] transition-colors durat
   (function () {
     const HOURS = hoursByDay;
     const msg = scheduleMessages;
-    const fmt = (n) => {
+    const fmt = n => {
       const h = Math.floor(n);
       const m = Math.round((n - h) * 60);
       return `${h}:${m.toString().padStart(2, '0')}`;
@@ -139,9 +199,15 @@ const linkCls = 'text-ink-soft text-[15px] leading-[1.9] transition-colors durat
     const d = now.getDay();
     const h = now.getHours() + now.getMinutes() / 60;
     const today = HOURS[d] || [];
-    let open = false, nextOpen = null, closesAt = null;
+    let open = false,
+      nextOpen = null,
+      closesAt = null;
     for (const [a, b] of today) {
-      if (h >= a && h < b) { open = true; closesAt = b; break; }
+      if (h >= a && h < b) {
+        open = true;
+        closesAt = b;
+        break;
+      }
       if (h < a && nextOpen === null) nextOpen = a;
     }
     const line = open
