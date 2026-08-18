@@ -1,0 +1,554 @@
+---
+import { t, localizedPath } from '@hosteleria/i18n-utils';
+import { img } from '../lib/sanity';
+import type { DataRestaurante, IdiomaRef, I18nPortable } from '../lib/queries';
+
+interface Props extends DataRestaurante {
+  locale: string;
+  defaultLocale: string;
+  activeLocales: IdiomaRef[];
+}
+
+const {
+  locale,
+  defaultLocale,
+  activeLocales,
+  restaurante,
+  categoriasVino,
+  vinos,
+  categoriasPlato,
+  platos,
+} = Astro.props;
+
+const ui = restaurante.textosUi ?? {};
+const nav = ui.nav ?? {};
+const sec = ui.secciones ?? {};
+const form = ui.form ?? {};
+const footerTexts = ui.footer ?? {};
+
+// Fallbacks locales
+const heroImgUrl = img.url(restaurante.heroImagen) ?? '/img/hero.jpg';
+const gruposImgUrl = img.url(restaurante.gruposImagen) ?? '/img/hire.jpg';
+const galeriaFallback = [
+  '/img/gal-table.jpg', '/img/gal-room.jpg', '/img/gal-soup.jpg',
+  '/img/gal-martini.jpg', '/img/cellar.jpg', '/img/pass.jpg',
+  '/img/glass.jpg', '/img/hire.jpg', '/img/kitchen.jpg',
+];
+const galeriaImgs = (restaurante.galeria?.length
+  ? restaurante.galeria.map((g) => img.url(g) ?? '/img/gal-room.jpg')
+  : galeriaFallback
+).slice(0, 9);
+const sobreImg1 = img.url(restaurante.sobreImagenes?.[0]) ?? '/img/gal-room.jpg';
+
+// Agrupar
+const vinosPorCat = categoriasVino.map((cat) => ({
+  cat,
+  items: vinos.filter((v) => v.categoria?._id === cat._id),
+}));
+const platosPorCat = categoriasPlato.map((cat) => ({
+  cat,
+  items: platos.filter((p) => p.categoria?._id === cat._id),
+}));
+
+// Horarios → JS
+const DIA_NUM: Record<string, number> = { Su: 0, Mo: 1, Tu: 2, We: 3, Th: 4, Fr: 5, Sa: 6 };
+const hoursByDay: Record<number, Array<[number, number]>> = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+for (const d of restaurante.horariosSemana ?? []) {
+  const num = DIA_NUM[d.dia];
+  if (num == null) continue;
+  hoursByDay[num] = (d.turnos ?? []).map((tu) => {
+    const hm = (s: string) => {
+      const [h, m] = s.split(':').map(Number);
+      return h + (m || 0) / 60;
+    };
+    return [hm(tu.apertura), hm(tu.cierre)] as [number, number];
+  });
+}
+
+// Portable text → párrafos
+function ptToParagraphs(pt: unknown): string[] {
+  if (!Array.isArray(pt)) return [];
+  return (pt as { _type?: string; children?: { text?: string }[] }[])
+    .filter((b) => b._type === 'block')
+    .map((b) => (b.children ?? []).map((c) => c.text ?? '').join(''))
+    .filter((s) => s.trim().length > 0);
+}
+function sobreCuerpoParrafos(field: I18nPortable, loc: string, def: string): string[] {
+  if (!field?.length) return [];
+  const primary = field.find((x) => x?._key === loc)?.value;
+  if (primary?.length) return ptToParagraphs(primary);
+  const fallback = field.find((x) => x?._key === def)?.value;
+  return ptToParagraphs(fallback);
+}
+const sobreParrafos = sobreCuerpoParrafos(restaurante.sobreCuerpo, locale, defaultLocale);
+
+const dir = restaurante.direccion ?? {};
+const localesUi = activeLocales.length ? activeLocales : [{ codigo: defaultLocale, nombre: defaultLocale }];
+
+const horarioMensajes = {
+  abierto: t(restaurante.horariosAbierto, locale, defaultLocale) || 'Abierto hasta las {hora}.',
+  proxima: t(restaurante.horariosProximaApertura, locale, defaultLocale) || 'Hoy abrimos a las {hora}.',
+  cerrado: t(restaurante.horariosCerrado, locale, defaultLocale) || 'Cerrado.',
+};
+
+const emailReserva = restaurante.contacto?.email ?? '';
+const telefonoReserva = restaurante.contacto?.telefono ?? '';
+const nombreRestaurante = restaurante.nombre;
+const instagram = restaurante.redes?.instagram ?? '';
+const instagramHandle = instagram ? '@' + instagram.replace(/\/$/, '').split('/').pop() : '';
+
+// Auto-italic última palabra
+function ultimaPalabraItalic(txt: string): string {
+  const palabras = txt.split(' ');
+  if (palabras.length < 2) return txt;
+  return palabras.slice(0, -1).join(' ') + ' <em>' + palabras.at(-1) + '</em>';
+}
+---
+
+<nav class="nav" id="nav">
+  <a class="nav-logo" href="#top">{nombreRestaurante}</a>
+
+  <div class="nav-desktop">
+    <ul class="nav-links">
+      <li><a href="#about">{t(nav.linkLocal, locale, defaultLocale) || 'Sobre'}</a></li>
+      <li><a href="#plates">{t(nav.linkCocina, locale, defaultLocale) || 'Cocina'}</a></li>
+      <li><a href="#wines">{t(nav.linkVinos, locale, defaultLocale) || 'Vinos'}</a></li>
+      <li><a href="#gallery">{t(sec.galeriaEyebrow, locale, defaultLocale) || 'Galería'}</a></li>
+    </ul>
+    {localesUi.length > 1 && (
+      <div class="lang-switcher" aria-label="Idioma">
+        {localesUi.map((l) => (
+          <a
+            href={l.codigo === locale ? '#' : localizedPath('/', l.codigo, defaultLocale)}
+            class:list={['lang', { 'is-active': l.codigo === locale }]}
+            aria-current={l.codigo === locale ? 'true' : undefined}
+          >
+            {l.codigo.toUpperCase()}
+          </a>
+        ))}
+      </div>
+    )}
+    <a href="#book" class="nav-cta">
+      {t(nav.linkReservar, locale, defaultLocale) || 'Reservar'}
+    </a>
+  </div>
+
+  <button
+    class="nav-hamburger"
+    id="hamburgerBtn"
+    aria-label={t(nav.menu, locale, defaultLocale) || 'Abrir menú'}
+    aria-expanded="false"
+    aria-controls="mobileOverlay"
+  >
+    <svg width="24" height="16" viewBox="0 0 24 16" fill="none" aria-hidden="true">
+      <path d="M2 4h20M2 12h20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+    </svg>
+  </button>
+</nav>
+
+<div class="mobile-overlay" id="mobileOverlay" aria-hidden="true">
+  <div class="mobile-overlay-header">
+    <span class="mobile-overlay-brand">{nombreRestaurante}</span>
+    <button
+      class="mobile-overlay-close"
+      id="mobileCloseBtn"
+      aria-label={t(nav.close, locale, defaultLocale) || 'Cerrar menú'}
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <path d="M4 4l12 12M16 4L4 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+      </svg>
+    </button>
+  </div>
+
+  <nav class="mobile-overlay-links" aria-label={t(nav.menu, locale, defaultLocale) || 'Menú'}>
+    <a href="#about">{t(nav.linkLocal, locale, defaultLocale) || 'Sobre'}</a>
+    <a href="#plates">{t(nav.linkCocina, locale, defaultLocale) || 'Cocina'}</a>
+    <a href="#wines">{t(nav.linkVinos, locale, defaultLocale) || 'Vinos'}</a>
+    <a href="#gallery">{t(sec.galeriaEyebrow, locale, defaultLocale) || 'Galería'}</a>
+    <a href="#book"><em>{t(nav.linkReservar, locale, defaultLocale) || 'Reservar'}</em></a>
+  </nav>
+
+  <div class="mobile-overlay-footer">
+    {localesUi.length > 1 && (
+      <div class="mobile-overlay-lang" aria-label="Idioma">
+        {localesUi.map((l) => (
+          <a
+            href={l.codigo === locale ? '#' : localizedPath('/', l.codigo, defaultLocale)}
+            class:list={['lang', { 'is-active': l.codigo === locale }]}
+          >
+            {l.codigo.toUpperCase()}
+          </a>
+        ))}
+      </div>
+    )}
+    <div class="mobile-overlay-contact">
+      {telefonoReserva && <a href={`tel:${telefonoReserva}`}>{telefonoReserva}</a>}
+      {emailReserva && <a href={`mailto:${emailReserva}`}>{emailReserva}</a>}
+    </div>
+  </div>
+</div>
+
+<header class="hero" id="top">
+  <div class="hero-inner">
+    <div class="hero-copy">
+      <div>
+        <span class="hero-meta tag">
+          {t(restaurante.heroMetaIzq, locale, defaultLocale)} · {t(restaurante.heroMetaDer, locale, defaultLocale)}
+        </span>
+        <h1 class="hero-title">
+          <span class="block">{t(restaurante.heroTitulo, locale, defaultLocale)}</span>
+          <span class="block"><em>{t(restaurante.heroSubtitulo, locale, defaultLocale)}</em></span>
+        </h1>
+        <p class="hero-desc" set:html={t(restaurante.heroNota, locale, defaultLocale).replace(/\n/g, '<br />')} />
+      </div>
+      <div class="hero-actions">
+        <a href="#book" class="btn btn-accent">
+          {t(restaurante.heroCta, locale, defaultLocale)}
+          <span class="arrow">→</span>
+        </a>
+        <a href="#plates" class="text-link">
+          {t(nav.linkCocina, locale, defaultLocale) || 'Ver carta'}
+        </a>
+      </div>
+    </div>
+    <figure class="hero-photo">
+      <img src={heroImgUrl} alt={t(restaurante.heroTitulo, locale, defaultLocale)} />
+    </figure>
+  </div>
+</header>
+
+<section class="statement reveal">
+  <span class="tag">{t(restaurante.manifiestoEyebrow, locale, defaultLocale)}</span>
+  <p set:html={ultimaPalabraItalic(t(restaurante.manifiestoTexto, locale, defaultLocale))} />
+</section>
+
+<section class="about" id="about">
+  <div class="about-head reveal">
+    <span class="tag">{t(restaurante.sobreEyebrow, locale, defaultLocale)}</span>
+    <h2 set:html={ultimaPalabraItalic(t(restaurante.sobreTitulo, locale, defaultLocale))} />
+  </div>
+  <div class="about-body">
+    <div class="about-text reveal">
+      {sobreParrafos.map((p) => <p>{p}</p>)}
+    </div>
+    <figure class="about-photo reveal">
+      <img src={sobreImg1} alt="" />
+    </figure>
+  </div>
+</section>
+
+<section class="menu" id="plates">
+  <div class="menu-header reveal">
+    <span class="tag">{t(sec.platosEyebrow, locale, defaultLocale)}</span>
+    <h2 set:html={ultimaPalabraItalic(t(sec.platosTitulo, locale, defaultLocale))} />
+  </div>
+  <div class="menu-body">
+    {platosPorCat.map(({ cat, items }) => (
+      items.length > 0 && (
+        <div class="menu-section reveal">
+          <div class="menu-section-head">
+            <span class="menu-section-title">{t(cat.nombre, locale, defaultLocale)}</span>
+            <span class="menu-section-rule"></span>
+          </div>
+          <div class="menu-list">
+            {items.map((p) => (
+              <div class="menu-row">
+                <div>
+                  <div class="menu-row-name">{t(p.nombre, locale, defaultLocale)}</div>
+                  <div class="menu-row-note">{t(p.nota, locale, defaultLocale)}</div>
+                </div>
+                <span class="menu-row-price">{p.precio != null ? `${p.precio} €` : '—'}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    ))}
+  </div>
+</section>
+
+<section class="menu alt" id="wines">
+  <div class="menu-header reveal">
+    <span class="tag">{t(sec.vinosEyebrow, locale, defaultLocale)}</span>
+    <h2 set:html={ultimaPalabraItalic(t(sec.vinosTitulo, locale, defaultLocale))} />
+  </div>
+  <div class="menu-body">
+    {vinosPorCat.map(({ cat, items }) => (
+      items.length > 0 && (
+        <div class="menu-section reveal">
+          <div class="menu-section-head">
+            <span class="menu-section-title">{t(cat.nombre, locale, defaultLocale)}</span>
+            <span class="menu-section-rule"></span>
+          </div>
+          <div class="menu-list">
+            {items.map((v) => (
+              <div class="menu-row">
+                <div>
+                  <div class="menu-row-name">{v.nombre}</div>
+                  <div class="menu-row-note">{t(v.nota, locale, defaultLocale)}{v.region && <> · {v.region}</>}</div>
+                </div>
+                <span class="menu-row-price">{v.precioCopa ?? '—'} / {v.precioBotella ?? '—'}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    ))}
+    <div class="menu-footnote">{t(sec.vinosNotaFinal, locale, defaultLocale)}</div>
+  </div>
+</section>
+
+<section class="gallery" id="gallery">
+  <div class="gallery-head reveal">
+    <span class="tag">{t(sec.galeriaEyebrow, locale, defaultLocale)}</span>
+    <h2 set:html={ultimaPalabraItalic(t(nav.linkLocal, locale, defaultLocale) || 'El local')} />
+  </div>
+  <div class="gallery-grid reveal">
+    {galeriaImgs.map((src, i) => (
+      <div class={`gallery-item g-${i + 1}`}>
+        <img src={src} alt="" loading="lazy" />
+      </div>
+    ))}
+  </div>
+</section>
+
+<section class="hire" id="groups">
+  <div class="hire-bg">
+    <img src={gruposImgUrl} alt="" />
+  </div>
+  <div class="hire-content">
+    <div class="reveal">
+      <span class="tag">{t(restaurante.gruposEyebrow, locale, defaultLocale)}</span>
+      <h2 set:html={ultimaPalabraItalic(t(restaurante.gruposTitulo, locale, defaultLocale))} />
+    </div>
+    <div class="hire-actions reveal">
+      <a href="#book" class="btn btn-invert">
+        {t(restaurante.gruposCta, locale, defaultLocale)}
+        <span class="arrow">→</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="book" id="book">
+  <div class="book-inner">
+    <div class="book-head reveal">
+      <span class="tag">{t(nav.linkReservar, locale, defaultLocale) || 'Reserva'}</span>
+      <h2 set:html={ultimaPalabraItalic(t(form.titulo, locale, defaultLocale))} />
+      <p>{t(form.intro, locale, defaultLocale)}</p>
+      <div class="book-head-contact">
+        {telefonoReserva && <a href={`tel:${telefonoReserva}`}>{telefonoReserva}</a>}
+        {emailReserva && <a href={`mailto:${emailReserva}`}>{emailReserva}</a>}
+      </div>
+    </div>
+    <form class="book-form reveal" id="reservaForm" novalidate>
+      <label>
+        <span>{t(form.labelNombre, locale, defaultLocale) || 'Nombre'}</span>
+        <input type="text" name="nombre" required autocomplete="name" />
+      </label>
+      <label>
+        <span>{t(form.labelTelefono, locale, defaultLocale) || 'Teléfono'}</span>
+        <input type="tel" name="telefono" required autocomplete="tel" />
+      </label>
+      <label>
+        <span>{t(form.labelEmail, locale, defaultLocale) || 'Email'}</span>
+        <input type="email" name="email" autocomplete="email" />
+      </label>
+      <label>
+        <span>{t(form.labelComensales, locale, defaultLocale) || 'Comensales'}</span>
+        <input type="number" name="personas" min="1" max="20" value="2" required />
+      </label>
+      <label>
+        <span>{t(form.labelFecha, locale, defaultLocale) || 'Fecha'}</span>
+        <input type="date" name="fecha" required />
+      </label>
+      <label>
+        <span>{t(form.labelHora, locale, defaultLocale) || 'Hora'}</span>
+        <input type="time" name="hora" required />
+      </label>
+      <label class="full">
+        <span>{t(form.labelNotas, locale, defaultLocale) || 'Notas'}</span>
+        <textarea name="notas" rows="3"></textarea>
+      </label>
+      <div class="book-submit-wrap">
+        <button type="submit" class="btn btn-accent">
+          {t(form.submit, locale, defaultLocale) || 'Enviar reserva'}
+          <span class="arrow">→</span>
+        </button>
+        <p class="book-msg" id="reservaMsg" role="status" aria-live="polite"></p>
+      </div>
+    </form>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-top">
+    <a href="#top" class="footer-mark">{nombreRestaurante}</a>
+    <span class="footer-tag">
+      {t(restaurante.heroMetaIzq, locale, defaultLocale)} · {t(restaurante.heroMetaDer, locale, defaultLocale)}
+    </span>
+  </div>
+  <div class="footer-grid">
+    <div class="footer-col">
+      <h4>{t(nav.linkLocal, locale, defaultLocale) || 'Dirección'}</h4>
+      <p>
+        {dir.calle}<br />
+        {dir.codigoPostal} {dir.ciudad}<br />
+        {dir.barrio && <>{dir.barrio}</>}
+      </p>
+    </div>
+    <div class="footer-col">
+      <h4>Contacto</h4>
+      {telefonoReserva && <p><a href={`tel:${telefonoReserva}`}>{telefonoReserva}</a></p>}
+      {emailReserva && <p><a href={`mailto:${emailReserva}`}>{emailReserva}</a></p>}
+      {instagramHandle && <p><a href={instagram} target="_blank" rel="noopener">{instagramHandle}</a></p>}
+    </div>
+    <div class="footer-col">
+      <h4>{t(restaurante.horariosTitulo, locale, defaultLocale) || 'Horario'}</h4>
+      <p>{t(restaurante.horariosTexto, locale, defaultLocale)}</p>
+      <p class="open-now" id="openLine">…</p>
+    </div>
+    <div class="footer-col">
+      <h4>{t(nav.linkReservar, locale, defaultLocale) || 'Reservar'}</h4>
+      <p><a href="#book">{t(restaurante.heroCta, locale, defaultLocale)} →</a></p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>{t(footerTexts.bylineIzq, locale, defaultLocale)}</span>
+    <span>© {new Date().getFullYear()} {nombreRestaurante}</span>
+  </div>
+</footer>
+
+<div id="lightbox"><img src="" alt="" /></div>
+
+<script is:inline define:vars={{ hoursByDay, horarioMensajes, emailReserva, nombreRestaurante }}>
+  window.OPEN_HOURS = hoursByDay;
+  window.HORARIO_MENSAJES = horarioMensajes;
+  window.EMAIL_RESERVA = emailReserva;
+  window.NOMBRE_RESTAURANTE = nombreRestaurante;
+</script>
+<script is:inline>
+  addEventListener('load', () => document.body.classList.add('loaded'));
+
+  const nav = document.getElementById('nav');
+  const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 40);
+  onScroll();
+  addEventListener('scroll', onScroll, { passive: true });
+
+  const hamburger = document.getElementById('hamburgerBtn');
+  const closeBtn = document.getElementById('mobileCloseBtn');
+  const overlay = document.getElementById('mobileOverlay');
+  const openOverlay = () => {
+    overlay.classList.add('open');
+    document.body.classList.add('overlay-open');
+    hamburger.setAttribute('aria-expanded', 'true');
+    overlay.setAttribute('aria-hidden', 'false');
+    closeBtn?.focus();
+  };
+  const closeOverlay = () => {
+    overlay.classList.remove('open');
+    document.body.classList.remove('overlay-open');
+    hamburger.setAttribute('aria-expanded', 'false');
+    overlay.setAttribute('aria-hidden', 'true');
+    hamburger?.focus();
+  };
+  hamburger?.addEventListener('click', openOverlay);
+  closeBtn?.addEventListener('click', closeOverlay);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlay.classList.contains('open')) closeOverlay();
+  });
+
+  document.querySelectorAll('a[href^="#"]').forEach((a) => {
+    a.onclick = (e) => {
+      const t = a.getAttribute('href');
+      if (t === '#') return;
+      const target = document.querySelector(t);
+      if (!target) return;
+      e.preventDefault();
+      const wasOpen = overlay.classList.contains('open');
+      if (wasOpen) closeOverlay();
+      setTimeout(
+        () => target.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+        wasOpen ? 350 : 0,
+      );
+    };
+  });
+
+  const io = new IntersectionObserver(
+    (entries) => entries.forEach((e) => {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    }),
+    { threshold: 0.12 },
+  );
+  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+
+  (function () {
+    const HOURS = window.OPEN_HOURS;
+    const msg = window.HORARIO_MENSAJES;
+    const fmt = (n) => {
+      const h = Math.floor(n);
+      const m = Math.round((n - h) * 60);
+      return `${h}:${m.toString().padStart(2, '0')}`;
+    };
+    const now = new Date();
+    const d = now.getDay();
+    const h = now.getHours() + now.getMinutes() / 60;
+    const today = HOURS[d] || [];
+    let open = false, nextOpen = null, closesAt = null;
+    for (const [a, b] of today) {
+      if (h >= a && h < b) { open = true; closesAt = b; break; }
+      if (h < a && nextOpen === null) nextOpen = a;
+    }
+    const line = open
+      ? msg.abierto.replace('{hora}', fmt(closesAt))
+      : nextOpen !== null
+        ? msg.proxima.replace('{hora}', fmt(nextOpen))
+        : msg.cerrado;
+    const el = document.getElementById('openLine');
+    if (el) el.textContent = line;
+  })();
+
+  const lb = document.getElementById('lightbox');
+  const lbi = lb.querySelector('img');
+  document.querySelectorAll('.gallery-item').forEach((c) =>
+    c.addEventListener('click', () => {
+      const src = c.querySelector('img').src;
+      lbi.src = src;
+      lb.classList.add('open');
+    }),
+  );
+  lb.addEventListener('click', () => lb.classList.remove('open'));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') lb.classList.remove('open');
+  });
+
+  const form = document.getElementById('reservaForm');
+  const msgEl = document.getElementById('reservaMsg');
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    const d = new FormData(form);
+    const nombre = d.get('nombre'),
+      telefono = d.get('telefono'),
+      email = d.get('email') || '(no indicado)',
+      personas = d.get('personas'),
+      fecha = d.get('fecha'),
+      hora = d.get('hora'),
+      notas = d.get('notas') || '(sin notas)';
+    const subject = `Reserva: ${nombre} — ${personas} pax — ${fecha} ${hora}`;
+    const body =
+`Solicitud de reserva en ${window.NOMBRE_RESTAURANTE}
+
+Nombre: ${nombre}
+Teléfono: ${telefono}
+Email: ${email}
+Comensales: ${personas}
+Fecha: ${fecha}
+Hora: ${hora}
+Notas: ${notas}`;
+    window.location.href =
+      'mailto:' + window.EMAIL_RESERVA + '?subject=' +
+      encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    if (msgEl) msgEl.textContent = '…';
+  });
+</script>

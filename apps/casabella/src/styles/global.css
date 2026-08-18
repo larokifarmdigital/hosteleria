@@ -1,0 +1,97 @@
+/* Self-hosted fonts (privacy/perf: no request a Google Fonts) */
+@import "@fontsource-variable/fraunces";
+@import "@fontsource-variable/manrope";
+
+@import "tailwindcss";
+
+/* ═════════════════════════════════════════════════════════════════ DESIGN TOKENS
+   Colores + tipografía expuestos como utilities (bg-bg, text-accent, font-serif...).
+*/
+@theme {
+  --color-bg: #131110;
+  --color-surface: #1c1917;
+  --color-surface-2: #24211e;
+  --color-ink: #f4ecdd;
+  --color-ink-soft: #e0d5c2;
+  --color-muted: #a89a83;
+  --color-dim: #7a6f5e;
+  --color-line: #2a2622;
+  --color-accent: #d4a655;
+  --color-accent-hover: #e6b968;
+
+  --font-serif: 'Fraunces Variable', 'Fraunces', 'Cormorant Garamond', serif;
+  --font-sans: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
+
+  /* Keyframes registrados en @theme para animate-[name_...] utility */
+  --animate-heroScrollFade: heroScrollFade 1s ease 1.4s forwards;
+  --animate-heroScrollLine: heroScrollLine 2.2s ease-in-out infinite;
+}
+
+/* Tokens no-Tailwind (medidas globales) */
+:root {
+  --gap: clamp(24px, 5vw, 80px);
+  --max: 1440px;
+}
+
+/* ═════════════════════════════════════════════════════════════════ BASE
+   Resets sobre elementos HTML crudos (no clases). Estos NO pueden ser Tailwind
+   utility porque no hay elemento con class donde ponerlos.
+*/
+@layer base {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    min-width: 375px;
+  }
+  body.overlay-open { overflow: hidden; }
+
+  ::selection { background: var(--color-accent); color: var(--color-bg); }
+
+  img { max-width: 100%; height: auto; display: block; }
+  a { color: inherit; text-decoration: none; }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════ KEYFRAMES
+   Definiciones de animaciones custom. Los `animate-*` utilities se referencian
+   via CSS variables @theme (--animate-*) o inline con `animate-[keyframe_...]`.
+*/
+@keyframes heroScrollFade { to { opacity: 1; } }
+@keyframes heroScrollLine {
+  0%   { transform: scaleY(0.4); transform-origin: top; }
+  50%  { transform: scaleY(1); transform-origin: top; }
+  50.01% { transform-origin: bottom; }
+  100% { transform: scaleY(0); transform-origin: bottom; }
+}
+
+/* ═════════════════════════════════════════════════════════════════ REVEAL
+   Reveal-on-scroll: el JS toggle-a `.in` cuando entra en viewport. La clase
+   custom queda porque el estado se aplica desde JS y su selector `.reveal.in`
+   se combina con `.reveal` en el mismo elemento.
+*/
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity .9s cubic-bezier(.16,.6,.2,1), transform .9s cubic-bezier(.16,.6,.2,1);
+}
+.reveal.in { opacity: 1; transform: none; }
+
+/* ═════════════════════════════════════════════════════════════════ REDUCED MOTION */
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  * { animation: none !important; transition-duration: 0.01ms !important; }
+}

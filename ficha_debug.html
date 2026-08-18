@@ -1,0 +1,586 @@
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+<head>
+<meta content="IE=edge; chrome=1" http-equiv="X-UA-Compatible"/>
+<meta content="no-cache" http-equiv="Pragma"/>
+<meta content="no-cache, no-store, must-revalidate" http-equiv="Cache-Control"/>
+<meta content="-1" http-equiv="Expires"/>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<meta content="text/javascript" http-equiv="Content-Script-Type"/>
+<meta content="text/css" http-equiv="Content-Style-Type"/>
+<base href="https://labofar.aemps.es/labofar/layoutRegistroEntidadesDistribucion.jsp"/>
+<link href="https://labofar.aemps.es:443/labofar/favicon.ico" rel="shortcut icon"/>
+<link href="https://labofar.aemps.es:443/labofar/css/jquery-ui/themes/smoothness/jquery-ui.min.css" rel="stylesheet" type="text/css"/>
+<link href="https://labofar.aemps.es:443/labofar/css/estilos.css" rel="stylesheet" type="text/css"/>
+<link href="https://labofar.aemps.es:443/labofar/css/jquery/plugins/dropdown/jquery.dropdown.min.css" rel="stylesheet" type="text/css"/>
+<link href="https://labofar.aemps.es:443/labofar/css/plugins/fixedheadertable.css" rel="stylesheet" type="text/css"/>
+<script src="https://labofar.aemps.es:443/labofar/scripts/jquery/jquery.min.js" type="text/javascript"></script>
+<script src="https://labofar.aemps.es:443/labofar/scripts/jquery/jquery-migrate.min.js" type="text/javascript"></script>
+<script src="https://labofar.aemps.es:443/labofar/scripts/jquery/jquery-ui.min.js" type="text/javascript"></script>
+<script src="https://labofar.aemps.es:443/labofar/scripts/funciones.js" type="text/javascript"></script>
+<script src="https://labofar.aemps.es:443/labofar/scripts/commons.js" type="text/javascript"></script>
+<script src="https://labofar.aemps.es:443/labofar/scripts/fontawesome/fa-regular.min.js" type="text/javascript"></script>
+<script src="https://labofar.aemps.es:443/labofar/scripts/fontawesome/fa-solid.min.js" type="text/javascript"></script>
+<script src="https://labofar.aemps.es:443/labofar/scripts/fontawesome/fontawesome.min.js" type="text/javascript"></script>
+<script src="https://labofar.aemps.es:443/labofar/scripts/jquery/plugins/dropdown/jquery.dropdown.js" type="text/javascript"></script>
+<script src="https://labofar.aemps.es:443/labofar/scripts/polyfill.js" type="text/javascript"></script>
+<script src="https://labofar.aemps.es:443/labofar/scripts/custom-dialog.js" type="text/javascript"></script>
+<script src="https://labofar.aemps.es:443/labofar/scripts/jquery/plugins/jquery.fixedheadertable.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+			//<!--
+		
+			$(document).ready(function() {
+				// Deshabilitar botón atrás del navegador
+				deshabilitarBotonAtrasNavegador();
+				
+				
+					// Eliminar caracteres raros en input:text y textarea
+					$("input[type=text], textarea").on('keyup change', function() {
+						$(this).each(function(index) {
+							$(this).val($(this).val().replace(/[^\wáéíóúàèìòùñüÁÉÍÓÚÀÈÌÒÙÑÜ\s!#%&()*+,\-.\/:;<=>?@[\]_{|}]/gi, ''));
+						});
+					});
+				
+				
+				let csrfToken = null;
+				
+				if (!!csrfToken) {
+					// Selecciona todos los formularios en la página
+				    $('form').each(function() {
+				        // Crea un nuevo elemento input oculto
+				        var input = $('<input>').attr('type', 'hidden').attr('name', 'csrfToken').attr('id', 'csrfToken').attr('value', csrfToken);
+				        
+				        // Añade el input al formulario
+				        $(this).prepend(input);
+				    });
+				}
+			});
+			
+			// -->
+		</script>
+<script type="text/javascript">
+			//<!--
+			
+			$(document).ready(function() {
+				// Fijar la paginación de DisplayTag
+				initPaginationDisplayTag();
+				// Inicializar Tooltip
+				$(document).tooltip();			
+				// Ocultar capa de carga
+				ocultarCargando();
+			});			
+			
+			// -->
+		</script>
+<title>LABOFAR </title>
+</head>
+<body style="cursor: wait;">
+<div class="cargando" id="divCargando">
+			Cargando...
+		</div>
+<table cellpadding="0" cellspacing="0" id="tablaPrincipal">
+<tr>
+<td nowrap="nowrap" style="text-align: center; vertical-align: top; white-space: nowrap;">
+<table border="0" cellpadding="0" cellspacing="0" class="cabecera" width="100%">
+<tr>
+<td class="logo_msc" width="196px">
+<a class="sinborde" href="https://www.sanidad.gob.es/" onclick="javascript: accederEnlace(this);">
+<img alt="Ministerio de Sanidad, Consumo y Bienestar Social" class="sinborde" src="https://www.aemps.gob.es/diseno/img/logo_Ministerio.jpg" title="Ministerio de Sanidad, Consumo y Bienestar Social"/>
+</a>
+</td>
+<td class="logo_aemps" width="181px">
+<a class="sinborde" href="http://www.aemps.gob.es/" onclick="javascript: accederEnlace(this);">
+<img alt="Agencia Española de Medicamentos y Productos Sanitarios" class="sinborde" src="images/logo_aemps.jpg" title="Agencia Española de Medicamentos y Productos Sanitarios"/>
+</a>
+</td>
+<td class="nombre_app" style="text-align: center;">
+<a class="nombre_app" href="https://labofar.aemps.es:443/labofar/registro/entidadesDistribucion/consulta.do" onclick="javascript: accederEnlace(this);" style="text-decoration: none; font-size: 22px; color: #AB0031; font-weight: bold;">
+				Entidades de distribución
+			</a>
+</td>
+</tr>
+</table>
+<div id="dialog-confirm" style="display: none;">
+<p id="message" style="text-align: justify;"></p>
+</div>
+<div id="downloadingCabecera" style="left: 0px; bottom: 0px; position: absolute; float: left; padding: 10px; display: none;">
+<span><i class="fas fa-arrow-circle-down fa-4x"></i></span>
+<font style="font-size: 22px; color: #AB0031; font-weight: bold; vertical-align: super;">Descargando...</font>
+</div>
+</td>
+</tr>
+<tr>
+<td>
+<table width="100%">
+<tr>
+<td class="center" colspan="2">
+<div style="min-height: 500px; height: auto !important; height: 500px;">
+<center>
+<script type="text/javascript">
+	//<!--
+
+	var url = 'registro/entidadesDistribucion/consulta.do?metodo=';
+
+	function mostrarActividades() {
+		// Enviar los datos habilitandos los campos del formulario (aquellos que se encuentren deshabilitados)
+		guardarHabilitando(url + "detalleActividades", true,	'entidadDistribucionForm');
+	}
+
+	/**
+	 * Función encargada del tránsito a la vista de instalaciones contratadas.
+	 */
+	function mostrarInstalacionesContratadas() {
+		// Enviar los datos habilitando los campos del formulario (aquellos que se encuentren deshabilitados)
+		guardarHabilitando(url + "detalleInstalacionesContratadas", true, 'entidadDistribucionForm');
+	}
+	
+	/**
+	 * Función encargada del tránsito a la vista de clientes (los que han contratado la instalación).
+	 */
+	function mostrarClientes() {
+		// Enviar los datos sin habilitando los campos del formulario 
+		guardarHabilitando(url + "detalleClientes", false, 'entidadDistribucionForm');
+	}
+	
+	$(document).ready(function() {
+		$('#returnHome').click(function() {
+			guardarHabilitando(url + "detalleBusqueda&volverBusqueda=S", true, 'entidadDistribucionForm');
+		});
+	});
+	
+	/**
+	* Función que redirige a la vista de certificado.
+	*/
+	function verCertificado(idExpedienteCertificado) {
+		guardarHabilitando(url + "detalleCertificado&idExpeCertificado=" + idExpedienteCertificado, true, 'entidadDistribucionForm');
+	}
+	
+	/**
+	* Función encargada de abrir el dialog con la lista de certificados.
+	*/
+	function abrirDialogCertificados() {
+		// Abrir dialogo
+		$('#dialog_certificados').dialog($.extend({}, dialogDefaults, {
+			buttons : [
+				{
+					text : 'Cerrar',
+					"class" : 'btn',
+					"id" : 'btnCerrar',
+					click : function() {
+						$(this).dialog('close');
+					}
+				} ],
+			title : 'Certificados',
+			width : 450,
+			closeText : 'Cerrar',
+			autoOpen : true
+		}));
+	}
+
+	//-->
+</script>
+<style>
+	td.breadcrumb {
+		font-size: 14px;
+		padding: 0.7em 0em 0.5em 2.3em;
+	}
+	
+	td.breadcrumb span {
+		cursor: pointer;
+	}
+	
+	td.breadcrumb span.active {
+		cursor: default;
+	}
+	
+	td.breadcrumb span font {
+		color: #007bff;
+	}
+	
+	td.breadcrumb span.active font {
+		color: #6c757d;
+	}
+</style>
+<form action="/labofar/registro/entidadesDistribucion/consulta.do?metodo=detalleEntidad" method="post" name="entidadDistribucionForm">
+<input name="entidadDistribucion.idExpediente" type="hidden" value="1076735"/>
+<input name="entidadDistribucion.idComunidad" type="hidden" value="13"/>
+<input name="entidadDistribucion.tipoEntidad" type="hidden" value="3"/>
+<input id="idEmpresa" name="entidadDistribucion.empresa.CEmprId" type="hidden" value="11389"/>
+<input name="entidadDistribucion.empresa.domicilio.idEmprDomicilio" type="hidden" value="11389"/>
+<input id="idInsta" name="instalacion.id" type="hidden" value="11389-004"/>
+<input id="idInstaEmpr" name="instalacion.idEmpresa" type="hidden" value="11389"/>
+<input name="nombreBusqueda" type="hidden" value=""/>
+<input name="ccaaBusqueda" type="hidden" value=""/>
+<input name="tipoEntidadBusqueda" type="hidden" value=""/>
+<table width="100%">
+<tr>
+<td class="breadcrumb">
+<span id="returnHome"><i class="fas fa-home"></i> <font>Inicio</font></span> / <span class="active"><font>Empresa</font></span>
+</td>
+</tr>
+</table>
+<table class="tabla1" width="95%">
+<thead>
+<tr>
+<td class="cabeceraTitulo" style="text-align: center; text-transform: uppercase; font-size: 16px;">					
+					ACTIBIOS DISTRIBUCIONS S.L.					
+				</td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<table class="tabla2" width="100%">
+<!-- SUSPENSIÓN -->
+<!-- GENERAL -->
+<tr>
+<td>
+<table id="datosGenerales" width="100%">
+<thead>
+<tr>
+<td class="campo_titulo_izquierda">
+												General
+											</td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<fieldset>
+<table style="width: 100%;">
+<tr>
+<td class="campo_nombre_izquierda" style="width: 15em;">
+																Número de autorización
+															</td>
+<td style="width: 20em;">
+<input class="campo_texto" readonly="true" type="text" value="00042-MAD"/>
+</td>
+<td class="campo_nombre_izquierda_middle" style="width: 15em;">
+																Fecha última modificación
+															</td>
+<td style="width: 20em;">
+<input class="campo_texto" name="entidadDistribucion.fechaModificacionSolicitudFormateada" readonly="readonly" type="text" value="26/03/2026"/>
+</td>
+</tr>
+<tr>
+<td class="campo_nombre_izquierda" style="width: 15em;">
+																Tipo de entidad
+															</td>
+<td style="width: 20em;">
+<input class="campo_texto" readonly="true" type="text" value="Almacén mayorista + almacén por contrato"/>
+</td>
+</tr>
+</table>
+</fieldset>
+</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+<tr>
+<td> </td>
+</tr>
+<!-- EMPRESA -->
+<tr>
+<td>
+<table id="datosEmpresa" width="100%">
+<thead>
+<tr>
+<td class="campo_titulo_izquierda">
+												Empresa
+											</td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<fieldset>
+<table style="width: 100%;">
+<tr>
+<td class="campo_nombre_izquierda" style="width: 15em;">
+																CIF
+															</td>
+<td style="width: 20em;">
+<input class="campo_texto" name="entidadDistribucion.empresa.TEmprCif" readonly="readonly" type="text" value="B66165044"/>
+</td>
+<td class="campo_nombre_izquierda" style="width: 15em;">
+																Razón social
+															</td>
+<td style="width: 20em;">
+<input class="campo_texto" name="entidadDistribucion.empresa.domicilio.nombreDomicilio" readonly="readonly" type="text" value="ACTIBIOS DISTRIBUCIONS S.L."/>
+</td>
+</tr>
+<tr>
+<td class="campo_nombre_izquierda">
+																Forma jurídica
+															</td>
+<td style="width: 20em;">
+<input class="campo_texto" readonly="true" type="text" value="Sociedad Limitada"/>
+</td>
+<td class="campo_nombre_izquierda">
+																Dirección
+															</td>
+<td style="width: 20em;">
+<input class="campo_texto" name="entidadDistribucion.empresa.domicilio.direccionDomicilio" readonly="readonly" type="text" value="Centre de Negocis Gavà Park. c. Coneixement, 7-13"/>
+</td>
+</tr>
+<tr>
+<td class="campo_nombre_izquierda">
+																Provincia
+															</td>
+<td style="width: 20em;">
+<input class="campo_texto" readonly="true" type="text" value="Barcelona"/>
+</td>
+<td class="campo_nombre_izquierda">
+																Localidad
+															</td>
+<td style="width: 20em;">
+<input class="campo_texto" name="entidadDistribucion.empresa.domicilio.localidadDomicilio" readonly="readonly" type="text" value="Gavà"/>
+</td>
+</tr>
+<tr>
+<td class="campo_nombre_izquierda">
+																Código postal
+															</td>
+<td style="width: 20em;">
+<input class="campo_texto" name="entidadDistribucion.empresa.domicilio.cpDomicilio" readonly="readonly" type="text" value="08850"/>
+</td>
+<td class="campo_nombre_izquierda">
+																Teléfono
+															</td>
+<td>
+<input class="campo_texto" name="entidadDistribucion.empresa.domicilio.telefonoDomicilio" readonly="readonly" type="text" value="902760739"/>
+</td>
+</tr>
+<tr>
+<td class="campo_nombre_izquierda_middle">
+																Email
+															</td>
+<td>
+<input class="campo_texto" id="emailDomicilio" name="entidadDistribucion.empresa.domicilio.emailDomicilio" readonly="readonly" type="text" value=""/>
+</td>
+</tr>
+</table>
+</fieldset>
+</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+<tr>
+<td> </td>
+</tr>
+<!-- INSTALACIONES -->
+<tr>
+<td>
+<table class="tabla2" id="datosInstalaciones" width="100%">
+<thead>
+<tr>
+<td class="campo_titulo_izquierda">
+												Instalación de almacenamiento
+											</td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<fieldset>
+<table style="width: 100%">
+<tr>
+<td class="campo_nombre_izquierda" style="width: 15em;">
+																Nombre
+															</td>
+<td style="width: 20em;">
+<input class="campo_texto" id="nombreInsta" name="instalacion.domicilio.nombreDomicilio" readonly="readonly" type="text" value="ACTIBIOS DISTRIBUCIONS, S.L."/>
+</td>
+<td class="campo_nombre_izquierda" style="width: 15em;">
+																Dirección
+															</td>
+<td style="width: 20em;">
+<input class="campo_texto" id="direccionInsta" name="instalacion.domicilio.direccionDomicilio" readonly="readonly" type="text" value="Calle Las Fábricas, 4-6"/>
+</td>
+</tr>
+<tr>
+<td class="campo_nombre_izquierda">
+																Provincia
+															</td>
+<td style="width: 20em;">
+<input class="campo_texto" readonly="true" type="text" value="Madrid"/>
+</td>
+<td class="campo_nombre_izquierda">
+																Localidad
+															</td>
+<td style="width: 20em;">
+<input class="campo_texto" name="instalacion.domicilio.localidadDomicilio" readonly="readonly" type="text" value="Alcorcón"/>
+</td>
+</tr>
+<tr>
+<td class="campo_nombre_izquierda">
+																Código postal
+															</td>
+<td style="width: 20em;">
+<input class="campo_texto" id="cpInsta" name="instalacion.domicilio.cpDomicilio" readonly="readonly" type="text" value="28923"/>
+</td>
+<td class="campo_nombre_izquierda">
+																Teléfono
+															</td>
+<td style="width: 20em;">
+<input class="campo_texto" id="telefonoInsta" name="instalacion.domicilio.telefonoDomicilio" readonly="readonly" type="text" value="902760726"/>
+</td>
+</tr>
+<tr>
+<td class="campo_nombre_izquierda">
+																Email
+															</td>
+<td style="width: 20em;">
+<input class="campo_texto" id="emailInsta" name="instalacion.domicilio.emailDomicilio" readonly="readonly" type="text" value="direcciontecnicamadrid@actibios.com"/>
+</td>
+</tr>
+<tr>
+<td colspan="4"> </td>
+</tr>
+<tr>
+<td colspan="4">
+<input onclick="javascript: mostrarActividades();" type="button" value="Actividades autorizadas"/>
+																     
+																<input onclick="javascript: mostrarInstalacionesContratadas();" type="button" value="Almacenes por contrato"/>
+																    
+																<input onclick="javascript: mostrarClientes();" type="button" value="Clientes"/>
+</td>
+</tr>
+</table>
+</fieldset>
+</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+<tr>
+<td> </td>
+</tr>
+<!-- ÁMBITOS -->
+<tr>
+<td>
+<table class="tabla2" id="datosInstalaciones" width="100%">
+<thead>
+<tr>
+<td class="campo_titulo_izquierda">
+												Ámbitos
+											</td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<fieldset>
+<table style="width: 100%">
+<tr>
+<td class="campo_nombre_izquierda_middle" colspan="4" width="100%">
+<input checked="checked" class="radio_button" disabled="disabled" id="instaHumana" name="entidadDistribucion.ambitos.instaHumana" type="checkbox" value="S"/>
+																Uso humano
+															</td>
+</tr>
+<tr>
+<td class="campo_nombre_izquierda_middle" colspan="4">
+<input checked="checked" class="radio_button" disabled="disabled" id="instaVeterinaria" name="entidadDistribucion.ambitos.instaVeterinaria" type="checkbox" value="S"/>
+																Uso veterinario
+															</td>
+</tr>
+</table>
+</fieldset>
+</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+<tr>
+<td> </td>
+</tr>
+<!-- RESTRICCIONES -->
+<tr>
+<td>
+<table class="tabla2" id="datosRestricciones" width="100%">
+<thead>
+<tr>
+<td class="campo_titulo_izquierda">
+												Restricciones o aclaraciones
+											</td>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<fieldset>
+<table width="100%">
+<tr>
+<td class="campo_nombre_izquierda_middle">
+																Restricciones o aclaraciones relacionadas con el ámbito de estas operaciones de almacenamiento
+															</td>
+<tr>
+<tr>
+<td>
+<div class="detalleRestricciones">
+<p></p>
+</div>
+</td>
+</tr>
+</tr></tr></table>
+</fieldset>
+</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</tbody>
+</table>
+<div id="dialog_certificados" style="display: none;">
+<div style="width: 100%; margin-top: 10px; text-align: center;">
+<table class="simple" width="100%">
+<thead>
+<tr>
+<th>Número de certificado</th>
+<th> </th>
+</tr>
+</thead>
+<tbody>
+</tbody>
+</table>
+</div>
+</div>
+</form>
+</center>
+</div>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td class="center">
+<div style="text-align: center; margin-top: 15px;">
+<p><a href="http://www.aemps.gob.es">Agencia Española de Medicamentos y Productos Sanitarios</a></p>
+<p>C/ Campezo, 1 (Edificio 8) - 28022 MADRID | e-Mail: 
+<a href="mailto:consultas.labofar@aemps.es" title="Buzón de Consultas Labofar">consultas.labofar@aemps.es</a></p>
+</div>
+<script>
+console.log("Redireccionando...");
+if (window.location.hostname.includes("labofar-internal")) {
+    window.location.replace("https://labofar.aemps.es" + window.location.pathname + window.location.search);
+}
+</script>
+</td>
+</tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,64 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import { img } from '../lib/sanity';
+import type { Restaurant } from '../lib/queries';
+import { extractI18nParagraphs } from '../lib/portableText';
+import Eyebrow from '../components/Eyebrow.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+
+const aboutImg1 = img.url(restaurant.sobreImagenes?.[0]) ?? '/img/gal-room.jpg';
+const aboutImg2 = img.url(restaurant.sobreImagenes?.[1]) ?? '/img/kitchen.jpg';
+
+const paragraphs = extractI18nParagraphs(restaurant.sobreCuerpo, locale, defaultLocale);
+
+const aboutBlocks = paragraphs.length
+  ? [
+      { img: aboutImg1, text: paragraphs[0], showHeader: true },
+      ...(paragraphs.length > 1
+        ? [{ img: aboutImg2, text: paragraphs.slice(1).join('\n\n'), showHeader: false }]
+        : []),
+    ]
+  : [{ img: aboutImg1, text: '', showHeader: true }];
+---
+
+<section
+  id="about"
+  class="grid mx-auto pt-[8vh] pb-[14vh] px-(--gap) max-w-[var(--max)] gap-[clamp(60px,10vh,120px)] max-[960px]:pt-[4vh] max-[960px]:pb-[10vh]"
+>
+  {aboutBlocks.map((block) => (
+    <!-- `group/about` + `even:` para bloque alternado; group-hover para escalar la imagen -->
+    <div
+      class="reveal grid items-center grid-cols-2 gap-[clamp(40px,6vw,80px)]
+             even:[&>.media]:order-2 group/about
+             max-[960px]:grid-cols-1 max-[960px]:gap-8 max-[960px]:even:[&>.media]:order-0"
+    >
+      <div class="media aspect-[4/5] overflow-hidden bg-surface max-[960px]:aspect-[3/2]">
+        <img
+          src={block.img}
+          alt=""
+          class="w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover/about:scale-[1.03]"
+        />
+      </div>
+      <div>
+        {block.showHeader && (
+          <>
+            <Eyebrow class="block mb-5">{t(restaurant.sobreEyebrow, locale, defaultLocale)}</Eyebrow>
+            <h2 class="font-serif font-light leading-[1.05] tracking-[-0.01em] mb-7 text-[clamp(32px,4vw,60px)]">
+              {t(restaurant.sobreTitulo, locale, defaultLocale)}
+            </h2>
+          </>
+        )}
+        {block.text.split('\n\n').map((p) => (
+          <p class="text-ink-soft text-[17px] leading-[1.75] mb-[18px] max-w-[46ch]">{p}</p>
+        ))}
+      </div>
+    </div>
+  ))}
+</section>

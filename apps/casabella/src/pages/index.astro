@@ -1,0 +1,64 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import RestaurantPage from '../components/RestaurantPage.astro';
+import { fetchRestaurantData, fetchLegalPages } from '../lib/queries';
+import { img } from '../lib/sanity';
+import { buildRestaurantJsonLd, buildFaqJsonLd } from '../lib/jsonld';
+import { t, resolveActiveLocales, localizedPath } from '@hosteleria/i18n-utils';
+
+const data = await fetchRestaurantData();
+const { restaurant } = data;
+const legalPages = await fetchLegalPages(restaurant._id);
+const defaultLocale = restaurant.idiomaPorDefecto?.codigo ?? 'es';
+const locale = defaultLocale;
+
+const activeLocales = restaurant.idiomasActivos?.length
+  ? restaurant.idiomasActivos
+  : [{ codigo: defaultLocale, nombre: defaultLocale }];
+
+const siteUrl = restaurant.dominio ?? 'https://lapubilla.example.com';
+const canonical = `${siteUrl}${localizedPath('/', locale, defaultLocale)}`;
+
+const hreflangs = resolveActiveLocales(
+  defaultLocale,
+  activeLocales.map((l) => l.codigo),
+).map((l) => ({
+  locale: l,
+  url: `${siteUrl}${localizedPath('/', l, defaultLocale)}`,
+}));
+
+const seoTitle = t(restaurant.seoTitulo, locale, defaultLocale) || restaurant.nombre;
+const seoDescription = t(restaurant.seoDescripcion, locale, defaultLocale) || '';
+const ogImage = img.url(restaurant.seoImagen) ?? img.url(restaurant.heroImagen);
+const logoUrl = img.url(restaurant.logo);
+const faviconUrl = img.url(restaurant.favicon);
+const appleTouchIconUrl = img.pngSquare(restaurant.iconoApp, 180);
+const themeColor = restaurant.colorMarca;
+
+const jsonLd = [
+  buildRestaurantJsonLd(restaurant, locale, defaultLocale, canonical),
+  buildFaqJsonLd(restaurant.faq, locale, defaultLocale),
+];
+---
+
+<BaseLayout
+  locale={locale}
+  title={seoTitle}
+  description={seoDescription}
+  canonical={canonical}
+  ogImage={ogImage}
+  hreflangs={hreflangs}
+  jsonLd={jsonLd}
+  faviconUrl={faviconUrl}
+  appleTouchIconUrl={appleTouchIconUrl}
+  themeColor={themeColor}
+  cloudflareAnalyticsToken={restaurant.cloudflareAnalyticsToken}
+>
+  <RestaurantPage
+    locale={locale}
+    defaultLocale={defaultLocale}
+    activeLocales={activeLocales}
+    legalPages={legalPages}
+    {...data}
+  />
+</BaseLayout>

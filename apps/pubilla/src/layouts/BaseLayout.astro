@@ -1,0 +1,97 @@
+---
+import '../styles/global.css';
+
+interface Hreflang {
+  locale: string;
+  url: string;
+}
+
+interface Props {
+  locale: string;
+  title: string;
+  description: string;
+  canonical: string;
+  ogImage?: string;
+  hreflangs: Hreflang[];
+  jsonLd?: Record<string, unknown>;
+  faviconUrl?: string;
+  appleTouchIconUrl?: string;
+  themeColor?: string;
+}
+
+const {
+  locale,
+  title,
+  description,
+  canonical,
+  ogImage,
+  hreflangs,
+  jsonLd,
+  faviconUrl,
+  appleTouchIconUrl,
+  themeColor,
+} = Astro.props;
+
+const xDefault = hreflangs[0]?.url ?? canonical;
+const finalFavicon = faviconUrl ?? '/favicon.svg';
+const finalAppleTouch = appleTouchIconUrl ?? '/apple-touch-icon.png';
+const finalTheme = themeColor ?? '#d2622a';
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script is:inline>
+      (function () {
+        var MIN = 375;
+        var w = document.documentElement.clientWidth || window.innerWidth;
+        if (w && w < MIN) {
+          document
+            .querySelector('meta[name="viewport"]')
+            .setAttribute('content', 'width=' + MIN + ', initial-scale=' + w / MIN);
+        }
+      })();
+    </script>
+
+    <link rel="icon" href={finalFavicon} />
+    <link rel="apple-touch-icon" sizes="180x180" href={finalAppleTouch} />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content={finalTheme} />
+
+    <meta name="generator" content={Astro.generator} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400&display=swap"
+      rel="stylesheet"
+    />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    {hreflangs.map((h) => <link rel="alternate" hreflang={h.locale} href={h.url} />)}
+    <link rel="alternate" hreflang="x-default" href={xDefault} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:locale" content={locale} />
+    <meta property="og:url" content={canonical} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
+
+    {jsonLd && (
+      <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    )}
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

@@ -1,0 +1,19 @@
+---
+// Script global de reveal-on-scroll. Aplica clase `in` a elementos `.reveal`
+// cuando entran en viewport (una sola vez). Va al final del body.
+---
+
+<script is:inline>
+  (function () {
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      }),
+      { threshold: 0.12 },
+    );
+    document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+  })();
+</script>

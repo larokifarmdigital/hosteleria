@@ -1,0 +1,14 @@
+{
+  "name": "@hosteleria/ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./components/*": "./src/components/*",
+    "./styles/*": "./src/styles/*"
+  },
+  "files": ["src"],
+  "peerDependencies": {
+    "astro": "^5.0.0"
+  }
+}

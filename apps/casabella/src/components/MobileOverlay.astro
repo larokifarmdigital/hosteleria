@@ -1,0 +1,223 @@
+---
+import { t, localizedPath } from '@hosteleria/i18n-utils';
+import type { LocaleRef, Restaurant } from '../lib/queries';
+import IconClose from '../icons/IconClose.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+  activeLocales: LocaleRef[];
+  waHref: string;
+  whatsappRaw: string;
+  bookingPhone: string;
+  bookingEmail: string;
+  hrefPrefix?: string;
+  langSwitcherPath?: string;
+}
+
+const {
+  restaurant,
+  locale,
+  defaultLocale,
+  activeLocales,
+  waHref,
+  whatsappRaw,
+  bookingPhone,
+  bookingEmail,
+  hrefPrefix = '',
+  langSwitcherPath = '/'
+} = Astro.props;
+
+const nav = restaurant.textosNav ?? {};
+
+const A11Y: Record<string, { close: string; menu: string }> = {
+  es: { close: 'Cerrar menú', menu: 'Menú' },
+  en: { close: 'Close menu', menu: 'Menu' },
+  ca: { close: 'Tancar menú', menu: 'Menú' }
+};
+const a11y = A11Y[locale] ?? A11Y.es;
+
+const localesUi = activeLocales.length
+  ? activeLocales
+  : [{ codigo: defaultLocale, nombre: defaultLocale }];
+
+const partes = restaurant.nombre.match(/^(Casa|La|El)?\s?(.*)$/);
+const brandStart = partes?.[1] ?? '';
+const brandRest = partes?.[2] ?? restaurant.nombre;
+
+const links = [
+  { href: `${hrefPrefix}#about`, label: t(nav.linkLocal, locale, defaultLocale) || 'Historia' },
+  { href: `${hrefPrefix}#plates`, label: t(nav.linkCocina, locale, defaultLocale) || 'Carta' },
+  { href: `${hrefPrefix}#wines`, label: t(nav.linkVinos, locale, defaultLocale) || 'Vinos' },
+  { href: `${hrefPrefix}#gallery`, label: t(nav.linkGaleria, locale, defaultLocale) || 'Galería' },
+  { href: `${hrefPrefix}#book`, label: t(nav.linkReservar, locale, defaultLocale) || 'Reservar' }
+];
+---
+
+<div
+  id='mobileOverlay'
+  aria-hidden='true'
+  data-open='false'
+  class="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-bg
+         py-5 px-(--gap) pb-10
+         invisible opacity-0 -translate-y-2
+         transition-[opacity,transform,visibility] duration-[400ms] ease-out delay-[400ms]
+         data-[open='true']:visible data-[open='true']:opacity-100 data-[open='true']:translate-y-0 data-[open='true']:delay-0"
+>
+  <!-- header -->
+  <div class='flex justify-between items-center pb-[8vh] border-b border-line'>
+    <span class='font-serif text-ink font-medium text-[22px]'>
+      {
+        brandStart ? (
+          <>
+            {brandStart}
+            <em class='italic text-accent'>{brandRest}</em>
+          </>
+        ) : (
+          restaurant.nombre
+        )
+      }
+    </span>
+    <button
+      id='mobileCloseBtn'
+      aria-label={a11y.close}
+      class='flex items-center justify-center w-11 h-11 -mr-2.5 bg-transparent border-none rounded-full text-ink cursor-pointer transition-[background-color,transform] duration-300 hover:bg-surface-2 hover:rotate-90'
+    >
+      <IconClose />
+    </button>
+  </div>
+
+  <!-- links con staggering: cada link fade-in con delay incremental cuando data-open=true -->
+  <nav aria-label={a11y.menu} class='flex-1 flex flex-col justify-center list-none py-6 gap-1'>
+    {
+      links.map((link, i) => (
+        <a
+          href={link.href}
+          style={`--d: ${0.1 + i * 0.06}s`}
+          class="block font-serif text-ink font-light text-[clamp(32px,8vw,44px)] py-3.5 border-b border-line
+               opacity-0 translate-y-3
+               transition-[color,padding-left,opacity,transform] duration-[500ms] ease-out
+               [transition-delay:0s,0s,var(--d),var(--d)]
+               hover:text-accent hover:pl-3 cursor-pointer
+               group-data-[open='true']/overlay:opacity-100 group-data-[open='true']/overlay:translate-y-0"
+        >
+          {link.label}
+        </a>
+      ))
+    }
+  </nav>
+
+  <!-- footer con lang switcher + contact -->
+  <div class='flex flex-col pt-6 border-t border-line gap-5'>
+    {
+      localesUi.length > 1 && (
+        <div
+          aria-label='Idioma'
+          class='flex gap-2.5 font-sans font-medium uppercase text-[11px] tracking-[0.26em] text-dim'
+        >
+          {localesUi.map((l, i) => (
+            <>
+              {i > 0 && <span class='text-dim opacity-50 -mx-1 select-none'>·</span>}
+              <a
+                href={
+                  l.codigo === locale
+                    ? '#'
+                    : localizedPath(langSwitcherPath, l.codigo, defaultLocale)
+                }
+                class:list={[
+                  'py-1 px-0.5 transition-colors duration-300',
+                  l.codigo === locale
+                    ? 'text-accent pointer-events-none'
+                    : 'hover:text-ink cursor-pointer'
+                ]}
+                aria-current={l.codigo === locale ? 'true' : undefined}
+              >
+                {l.codigo.toUpperCase()}
+              </a>
+            </>
+          ))}
+        </div>
+      )
+    }
+    <div class='flex flex-col gap-1.5 text-ink-soft text-sm'>
+      {
+        bookingPhone && (
+          <a
+            href={`tel:${bookingPhone}`}
+            class='transition-colors duration-300 hover:text-accent cursor-pointer'
+          >
+            {bookingPhone}
+          </a>
+        )
+      }
+      {
+        waHref && (
+          <a
+            href={waHref}
+            target='_blank'
+            rel='noopener'
+            class='transition-colors duration-300 hover:text-accent cursor-pointer'
+          >
+            WhatsApp: {whatsappRaw}
+          </a>
+        )
+      }
+      {
+        bookingEmail && (
+          <a
+            href={`mailto:${bookingEmail}`}
+            class='transition-colors duration-300 hover:text-accent cursor-pointer'
+          >
+            {bookingEmail}
+          </a>
+        )
+      }
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    const hamburger = document.getElementById('hamburgerBtn');
+    const closeBtn = document.getElementById('mobileCloseBtn');
+    const overlay = document.getElementById('mobileOverlay');
+    if (!hamburger || !overlay) return;
+
+    // El overlay usa data-open (Tailwind data-[open=true]:). Además:
+    // - `group/overlay` en el div padre + `group-data-[open='true']/overlay:` en los links → staggering al abrir.
+    overlay.classList.add('group/overlay');
+
+    const setOpen = open => {
+      overlay.dataset.open = open ? 'true' : 'false';
+      document.body.classList.toggle('overlay-open', open);
+      hamburger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      overlay.setAttribute('aria-hidden', open ? 'false' : 'true');
+      if (open) closeBtn?.focus();
+      else hamburger?.focus();
+    };
+
+    hamburger.addEventListener('click', () => setOpen(true));
+    closeBtn?.addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && overlay.dataset.open === 'true') setOpen(false);
+    });
+
+    // Smooth scroll para anchors + cierra overlay
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.onclick = e => {
+        const t = a.getAttribute('href');
+        if (t === '#') return;
+        const target = document.querySelector(t);
+        if (!target) return;
+        e.preventDefault();
+        const wasOpen = overlay.dataset.open === 'true';
+        if (wasOpen) setOpen(false);
+        setTimeout(
+          () => target.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+          wasOpen ? 350 : 0
+        );
+      };
+    });
+  })();
+</script>

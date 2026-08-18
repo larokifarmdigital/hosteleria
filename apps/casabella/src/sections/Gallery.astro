@@ -1,0 +1,92 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import { img } from '../lib/sanity';
+import type { Restaurant } from '../lib/queries';
+import Eyebrow from '../components/Eyebrow.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+
+const sec = restaurant.textosSecciones ?? {};
+
+const galeriaFallback = [
+  '/img/gal-table.jpg', '/img/gal-room.jpg', '/img/gal-soup.jpg',
+  '/img/gal-martini.jpg', '/img/cellar.jpg', '/img/pass.jpg',
+  '/img/glass.jpg', '/img/hire.jpg', '/img/kitchen.jpg',
+];
+const galeriaImgs = restaurant.galeria?.length
+  ? restaurant.galeria.map((g) => img.url(g) ?? '/img/gal-room.jpg')
+  : galeriaFallback;
+---
+
+<section id="gallery" class="mx-auto py-[12vh] px-(--gap) max-w-[var(--max)] max-[960px]:py-[8vh]">
+  <div class="reveal text-center mb-[60px]">
+    <Eyebrow class="block mb-4">{t(sec.galeriaEyebrow, locale, defaultLocale)}</Eyebrow>
+    <h2 class="font-serif font-light text-[clamp(32px,4vw,56px)]">
+      {t(sec.galeriaTitulo, locale, defaultLocale) || 'Nuestro espacio'}
+    </h2>
+  </div>
+  <div class="grid grid-cols-3 gap-3 auto-rows-[240px] max-[960px]:grid-cols-2 max-[960px]:gap-2.5 max-[960px]:auto-rows-[180px] max-[600px]:grid-cols-1 max-[600px]:auto-rows-[260px]">
+    {galeriaImgs.map((src) => (
+      <!-- group para hover-descendant. nth-child(6n+1) y (6n+4) span 2 rows en desktop -->
+      <div
+        data-gallery-item
+        class="group relative overflow-hidden bg-surface cursor-zoom-in rounded-md
+               shadow-[0_10px_30px_rgb(0_0_0/0.25)]
+               transition-[box-shadow,transform] duration-[400ms] ease-out
+               hover:shadow-[0_20px_50px_rgb(0_0_0/0.4)] hover:-translate-y-1
+               [&:nth-child(6n+1)]:row-span-2 [&:nth-child(6n+4)]:row-span-2
+               max-[960px]:[&:nth-child(6n+1)]:row-span-1 max-[960px]:[&:nth-child(6n+4)]:row-span-1
+               max-[960px]:hover:translate-y-0"
+      >
+        <img
+          src={src}
+          alt=""
+          loading="lazy"
+          class="w-full h-full object-cover brightness-[0.85] saturate-[0.92]
+                 transition-[transform,filter] duration-[1100ms] ease-[cubic-bezier(.2,.6,.2,1)]
+                 group-hover:scale-[1.06] group-hover:brightness-100 group-hover:saturate-100"
+        />
+      </div>
+    ))}
+  </div>
+</section>
+
+<!-- Lightbox: data-open attr en vez de class .open -->
+<div
+  id="lightbox"
+  data-open="false"
+  class="fixed inset-0 z-[200] grid place-items-center cursor-zoom-out
+         invisible opacity-0
+         bg-[rgb(9_8_7/0.94)]
+         transition-[opacity,visibility] duration-[400ms] delay-[400ms]
+         data-[open='true']:visible data-[open='true']:opacity-100 data-[open='true']:delay-0"
+>
+  <img src="" alt="" class="w-auto max-w-[88vw] h-auto max-h-[86vh] object-contain" />
+</div>
+
+<script is:inline>
+  (function () {
+    const lb = document.getElementById('lightbox');
+    if (!lb) return;
+    const lbi = lb.querySelector('img');
+    const setOpen = (open) => { lb.dataset.open = open ? 'true' : 'false'; };
+    document.querySelectorAll('[data-gallery-item]').forEach((c) => {
+      const inner = c.querySelector('img');
+      if (!inner) return;
+      c.addEventListener('click', () => {
+        lbi.src = inner.src;
+        setOpen(true);
+      });
+    });
+    lb.addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    });
+  })();
+</script>

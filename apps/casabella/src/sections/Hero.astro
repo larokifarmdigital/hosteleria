@@ -1,0 +1,71 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import { img } from '../lib/sanity';
+import type { Restaurant } from '../lib/queries';
+import CtaButton from '../components/CtaButton.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+const heroImgUrl = img.url(restaurant.heroImagen) ?? '/img/hero.jpg';
+---
+
+<section
+  id='top'
+  class='grid relative pt-20 min-h-svh grid-cols-[55%_45%] max-[960px]:grid-cols-1 max-[960px]:min-h-0'
+>
+  <!-- Media con gradient overlay via after: -->
+  <div
+    class="relative overflow-hidden bg-surface max-[960px]:aspect-[4/3] max-[960px]:order-2
+           after:content-[''] after:absolute after:inset-0 after:pointer-events-none after:opacity-40
+           after:bg-[linear-gradient(90deg,transparent_0%,var(--color-bg)_100%)]
+           max-[960px]:after:opacity-60 max-[960px]:after:bg-[linear-gradient(180deg,var(--color-bg)_0%,transparent_20%,transparent_80%,var(--color-bg)_100%)]"
+  >
+    <img
+      src={heroImgUrl}
+      alt={t(restaurant.heroTitulo, locale, defaultLocale)}
+      class='w-full h-full object-cover'
+    />
+  </div>
+
+  <div
+    class='flex flex-col justify-center gap-8 py-[6vh] px-(--gap) max-[960px]:pt-24 max-[960px]:pb-12 max-[960px]:gap-6 max-[960px]:order-1'
+  >
+    <div class='flex items-center gap-3.5 text-[11px] tracking-[0.28em] uppercase text-muted'>
+      <span>{t(restaurant.heroMetaIzq, locale, defaultLocale)}</span>
+      <span class='w-[3px] h-[3px] rounded-full bg-accent'></span>
+      <span>{t(restaurant.heroMetaDer, locale, defaultLocale)}</span>
+    </div>
+    <h1 class='font-serif font-light leading-none tracking-[-0.02em] text-[clamp(48px,6.5vw,96px)]'>
+      {t(restaurant.heroTitulo, locale, defaultLocale)}<br />
+      <em class='text-accent italic font-light'>
+        {t(restaurant.heroSubtitulo, locale, defaultLocale)}
+      </em>
+    </h1>
+    <p
+      class='text-ink-soft text-[17px] leading-[1.7] max-w-[42ch]'
+      set:html={t(restaurant.heroNota, locale, defaultLocale).replace(/\n/g, '<br />')}
+    />
+    <CtaButton href='#book' class='w-fit'>
+      {t(restaurant.heroCta, locale, defaultLocale)}
+    </CtaButton>
+  </div>
+
+  <!-- Scroll indicator: fade in + animated line vertical -->
+  <a
+    href='#about'
+    aria-hidden='true'
+    class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[2] flex flex-col items-center gap-2.5
+           text-[10px] tracking-[0.28em] uppercase text-muted pointer-events-none
+           opacity-0 animate-[heroScrollFade_1s_ease_1.4s_forwards]
+           after:content-[''] after:w-px after:h-10 after:bg-[linear-gradient(to_bottom,var(--color-accent),transparent)]
+           after:animate-[heroScrollLine_2.2s_ease-in-out_infinite]
+           max-[960px]:hidden"
+  >
+    <span>Scroll</span>
+  </a>
+</section>

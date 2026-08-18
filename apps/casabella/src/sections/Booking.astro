@@ -1,0 +1,127 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant } from '../lib/queries';
+import Eyebrow from '../components/Eyebrow.astro';
+import CtaButton from '../components/CtaButton.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+  bookingEmail: string;
+}
+
+const { restaurant, locale, defaultLocale, bookingEmail } = Astro.props;
+
+const nav = restaurant.textosNav ?? {};
+const form = restaurant.textosForm ?? {};
+
+// Aplicamos las mismas utilities a todos los inputs/labels usando arbitrary child variants
+const formCls = [
+  '[&_label]:flex [&_label]:flex-col [&_label]:gap-2.5',
+  '[&_label]:uppercase [&_label]:text-muted [&_label]:font-medium',
+  '[&_label]:text-[11px] [&_label]:tracking-[0.22em]',
+  '[&_input]:bg-transparent [&_input]:border-0 [&_input]:border-b [&_input]:border-line',
+  '[&_input]:py-3 [&_input]:pb-3.5 [&_input]:px-0 [&_input]:font-sans [&_input]:text-ink',
+  '[&_input]:text-base [&_input]:font-normal [&_input]:transition-colors [&_input]:duration-300',
+  '[&_input:focus]:outline-none [&_input:focus]:border-accent',
+  '[&_textarea]:bg-transparent [&_textarea]:border-0 [&_textarea]:border-b [&_textarea]:border-line',
+  '[&_textarea]:py-3 [&_textarea]:pb-3.5 [&_textarea]:px-0 [&_textarea]:font-sans [&_textarea]:text-ink',
+  '[&_textarea]:text-base [&_textarea]:font-normal [&_textarea]:transition-colors [&_textarea]:duration-300',
+  '[&_textarea]:resize-y [&_textarea]:min-h-[90px] [&_textarea]:leading-normal',
+  '[&_textarea:focus]:outline-none [&_textarea:focus]:border-accent',
+];
+---
+
+<section id="book" class="mx-auto py-[12vh] px-(--gap) max-w-[900px] max-[960px]:py-[8vh]">
+  <div class="reveal text-center mb-[60px]">
+    <Eyebrow class="block mb-[18px]">{t(nav.linkReservar, locale, defaultLocale) || 'Reserva'}</Eyebrow>
+    <h2 class="font-serif font-light mb-5 text-[clamp(36px,4.4vw,64px)]">
+      {t(form.titulo, locale, defaultLocale)}
+    </h2>
+    <p class="text-muted text-base leading-[1.7] mx-auto max-w-[52ch]">
+      {t(form.intro, locale, defaultLocale)}
+    </p>
+  </div>
+  <form
+    id="reservaForm"
+    novalidate
+    class:list={[
+      'reveal grid grid-cols-2 gap-y-7 gap-x-8 max-[960px]:grid-cols-1 max-[960px]:gap-6',
+      ...formCls,
+    ]}
+  >
+    <label>
+      <span>{t(form.labelNombre, locale, defaultLocale) || 'Nombre'}</span>
+      <input type="text" name="nombre" required autocomplete="name" />
+    </label>
+    <label>
+      <span>{t(form.labelTelefono, locale, defaultLocale) || 'Teléfono'}</span>
+      <input type="tel" name="telefono" required autocomplete="tel" />
+    </label>
+    <label>
+      <span>{t(form.labelEmail, locale, defaultLocale) || 'Email'}</span>
+      <input type="email" name="email" autocomplete="email" />
+    </label>
+    <label>
+      <span>{t(form.labelComensales, locale, defaultLocale) || 'Comensales'}</span>
+      <input type="number" name="personas" min="1" max="20" value="2" required />
+    </label>
+    <label>
+      <span>{t(form.labelFecha, locale, defaultLocale) || 'Fecha'}</span>
+      <input type="date" name="fecha" required />
+    </label>
+    <label>
+      <span>{t(form.labelHora, locale, defaultLocale) || 'Hora'}</span>
+      <input type="time" name="hora" required />
+    </label>
+    <label class="col-span-full">
+      <span>{t(form.labelNotas, locale, defaultLocale) || 'Notas'}</span>
+      <textarea name="notas" rows="3"></textarea>
+    </label>
+    <CtaButton type="submit" class="col-span-full justify-self-start mt-3">
+      {t(form.submit, locale, defaultLocale) || 'Enviar'}
+    </CtaButton>
+    <p
+      id="reservaMsg"
+      role="status"
+      aria-live="polite"
+      class="col-span-full min-h-[1.4em] text-[13px] tracking-[0.04em] text-muted"
+    ></p>
+  </form>
+</section>
+
+<script is:inline define:vars={{ bookingEmail, restaurantName: restaurant.nombre }}>
+  (function () {
+    const form = document.getElementById('reservaForm');
+    const msgEl = document.getElementById('reservaMsg');
+    if (!form) return;
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!form.reportValidity()) return;
+      const d = new FormData(form);
+      const nombre = d.get('nombre'),
+        telefono = d.get('telefono'),
+        email = d.get('email') || '(no indicado)',
+        personas = d.get('personas'),
+        fecha = d.get('fecha'),
+        hora = d.get('hora'),
+        notas = d.get('notas') || '(sin notas)';
+      const subject = `Reserva: ${nombre} — ${personas} pax — ${fecha} ${hora}`;
+      const body =
+`Solicitud de reserva en ${restaurantName}
+
+Nombre: ${nombre}
+Teléfono: ${telefono}
+Email: ${email}
+Comensales: ${personas}
+Fecha: ${fecha}
+Hora: ${hora}
+Notas: ${notas}`;
+      window.location.href =
+        'mailto:' + bookingEmail + '?subject=' +
+        encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+      if (msgEl) msgEl.textContent = '…';
+    });
+  })();
+</script>

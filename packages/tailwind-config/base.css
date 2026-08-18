@@ -1,0 +1,22 @@
+/*
+  Tokens base compartidos por todas las landings.
+  Cada app importa este archivo y sobrescribe lo que necesite en su propio @theme.
+*/
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Fraunces", ui-serif, Georgia, serif;
+
+  --color-brand-50: oklch(0.97 0.02 60);
+  --color-brand-100: oklch(0.93 0.05 60);
+  --color-brand-500: oklch(0.65 0.18 40);
+  --color-brand-600: oklch(0.55 0.19 38);
+  --color-brand-700: oklch(0.45 0.17 36);
+  --color-brand-900: oklch(0.25 0.10 34);
+
+  --color-ink: oklch(0.2 0.02 60);
+  --color-paper: oklch(0.98 0.01 90);
+
+  --radius-card: 1rem;
+  --shadow-soft: 0 10px 30px -12px rgb(0 0 0 / 0.15);
+}

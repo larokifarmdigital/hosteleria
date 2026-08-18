@@ -1,0 +1,568 @@
+---
+import { t, localizedPath } from '@hosteleria/i18n-utils';
+import { img } from '../lib/sanity';
+import type {
+  DataRestaurante,
+  IdiomaRef,
+  I18nPortable,
+} from '../lib/queries';
+
+interface Props extends DataRestaurante {
+  locale: string;
+  defaultLocale: string;
+  activeLocales: IdiomaRef[];
+}
+
+const {
+  locale,
+  defaultLocale,
+  activeLocales,
+  restaurante,
+  categoriasVino,
+  vinos,
+  categoriasPlato,
+  platos,
+} = Astro.props;
+
+const ui = restaurante.textosUi ?? {};
+const nav = ui.nav ?? {};
+const sec = ui.secciones ?? {};
+const form = ui.form ?? {};
+const footerTexts = ui.footer ?? {};
+
+// Fallbacks a imágenes locales (mientras el cliente no sube fotos reales)
+const heroImgUrl = img.url(restaurante.heroImagen) ?? '/img/hero.jpg';
+const gruposImgUrl = img.url(restaurante.gruposImagen) ?? '/img/hire.jpg';
+
+const galeriaFallback = [
+  { src: '/img/gal-table.jpg' },
+  { src: '/img/gal-room.jpg' },
+  { src: '/img/gal-soup.jpg' },
+  { src: '/img/gal-martini.jpg' },
+  { src: '/img/cellar.jpg' },
+  { src: '/img/pass.jpg' },
+  { src: '/img/glass.jpg' },
+  { src: '/img/hire.jpg' },
+];
+const galeriaImgs = restaurante.galeria?.length
+  ? restaurante.galeria.map((g) => ({ src: img.url(g) ?? '' }))
+  : galeriaFallback;
+
+const lf1 = img.url(restaurante.sobreImagenes?.[0]) ?? '/img/cellar.jpg';
+const lf2 = img.url(restaurante.sobreImagenes?.[1]) ?? '/img/glass.jpg';
+const pfa = '/img/kitchen.jpg';
+const pfb = '/img/plate2.jpg';
+const af1 = img.url(restaurante.sobreImagenes?.[0]) ?? '/img/gal-room.jpg';
+const af2 = img.url(restaurante.sobreImagenes?.[1]) ?? '/img/gal-martini.jpg';
+const af3 = img.url(restaurante.sobreImagenes?.[2]) ?? '/img/gal-table.jpg';
+const ovlImg = img.url(restaurante.sobreImagenes?.[0]) ?? '/img/gal-room.jpg';
+
+// Agrupar vinos y platos por categoría
+const vinosPorCat = categoriasVino.map((cat) => ({
+  cat,
+  items: vinos.filter((v) => v.categoria?._id === cat._id),
+}));
+const platosPorCat = categoriasPlato.map((cat) => ({
+  cat,
+  items: platos.filter((p) => p.categoria?._id === cat._id),
+}));
+
+// Horarios: pasar a JS como { 0: [[h1,h2], ...], 1: ..., ... 6: [] }
+const DIA_NUM: Record<string, number> = { Su: 0, Mo: 1, Tu: 2, We: 3, Th: 4, Fr: 5, Sa: 6 };
+const hoursByDay: Record<number, Array<[number, number]>> = {
+  0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [],
+};
+for (const d of restaurante.horariosSemana ?? []) {
+  const num = DIA_NUM[d.dia];
+  if (num == null) continue;
+  hoursByDay[num] = (d.turnos ?? []).map((tu) => {
+    const hm = (s: string) => {
+      const [h, m] = s.split(':').map(Number);
+      return h + (m || 0) / 60;
+    };
+    return [hm(tu.apertura), hm(tu.cierre)] as [number, number];
+  });
+}
+
+// Portable text → párrafos de texto plano (soporta lo básico)
+function ptToParagraphs(pt: unknown): string[] {
+  if (!Array.isArray(pt)) return [];
+  return (pt as { _type?: string; children?: { text?: string }[] }[])
+    .filter((b) => b._type === 'block')
+    .map((b) => (b.children ?? []).map((c) => c.text ?? '').join(''))
+    .filter((s) => s.trim().length > 0);
+}
+function sobreCuerpoParrafos(field: I18nPortable, loc: string, def: string): string[] {
+  if (!field?.length) return [];
+  const primary = field.find((x) => x?._key === loc)?.value;
+  if (primary?.length) return ptToParagraphs(primary);
+  const fallback = field.find((x) => x?._key === def)?.value;
+  return ptToParagraphs(fallback);
+}
+const sobreParrafos = sobreCuerpoParrafos(restaurante.sobreCuerpo, locale, defaultLocale);
+
+// Dirección para la sección hours y el overlay
+const dir = restaurante.direccion ?? {};
+const direccionLinea = [
+  dir.calle,
+  [dir.codigoPostal, dir.ciudad].filter(Boolean).join(' '),
+].filter(Boolean).join(' · ');
+
+// Language switcher — todos los locales activos (defaultLocale incluido)
+const localesUi = activeLocales.length ? activeLocales : [{ codigo: defaultLocale, nombre: defaultLocale }];
+
+// Mensajes de horario dinámico (para el JS)
+const horarioMensajes = {
+  abierto: t(restaurante.horariosAbierto, locale, defaultLocale) || 'Abierto hasta las {hora}.',
+  proxima: t(restaurante.horariosProximaApertura, locale, defaultLocale) || 'Hoy abrimos a las {hora}.',
+  cerrado: t(restaurante.horariosCerrado, locale, defaultLocale) || 'Cerrado.',
+};
+
+const emailReserva = restaurante.contacto?.email ?? '';
+const telefonoReserva = restaurante.contacto?.telefono ?? '';
+const nombreRestaurante = restaurante.nombre;
+const instagram = restaurante.redes?.instagram ?? '';
+const instagramHandle = instagram
+  ? '@' + instagram.replace(/\/$/, '').split('/').pop()
+  : '';
+
+// Texto para la marca en navegación
+const brand = nombreRestaurante.toUpperCase();
+const footerWord = nombreRestaurante.split(' ').pop()?.toUpperCase() ?? brand;
+---
+
+<nav class="navbar">
+  <a class="wm" href="#top">{brand}</a>
+  <div class="nav-right">
+    {localesUi.length > 1 && (
+      <div class="lang-switcher" aria-label="Idioma">
+        {localesUi.map((l) => (
+          <a
+            href={l.codigo === locale ? '#' : localizedPath('/', l.codigo, defaultLocale)}
+            class:list={['lang', { 'is-active': l.codigo === locale }]}
+            aria-current={l.codigo === locale ? 'true' : undefined}
+          >
+            {l.codigo.toUpperCase()}
+          </a>
+        ))}
+      </div>
+    )}
+    <button id="menuOpen">{t(nav.menu, locale, defaultLocale) || 'Menú'}</button>
+  </div>
+</nav>
+
+<div class="overlay" id="overlay" role="dialog" aria-label={t(nav.menu, locale, defaultLocale) || 'Menú'}>
+  <span class="ovl-wm">{brand}</span>
+  <button class="close" id="menuClose">{t(nav.close, locale, defaultLocale) || 'Cerrar'}</button>
+  <div class="ovl-grid">
+    <nav class="ovl-links">
+      <a href="#list">{t(nav.linkVinos, locale, defaultLocale) || 'Vinos'}</a>
+      <a href="#plates">{t(nav.linkCocina, locale, defaultLocale) || 'Cocina'}</a>
+      <a href="#rooms">{t(nav.linkLocal, locale, defaultLocale) || 'El local'}</a>
+      <a href="#reservar">{t(nav.linkReservar, locale, defaultLocale) || 'Reservar'}</a>
+    </nav>
+    <div class="ovl-side">
+      <div class="ovl-img"><img src={ovlImg} alt="" /></div>
+      <p>
+        {dir.calle}<br />{dir.codigoPostal} {dir.ciudad}{dir.barrio && <> · {dir.barrio}</>}<br />
+        {telefonoReserva}<br />{emailReserva}
+      </p>
+    </div>
+  </div>
+  <div class="ovl-foot">
+    <span>{t(restaurante.manifiestoEyebrow, locale, defaultLocale)}</span>
+    {instagramHandle && <span>{instagramHandle}</span>}
+  </div>
+</div>
+
+<header class="hero" id="top">
+  <h1 class="hero-h">
+    <span class="hl" id="hl1"><span>{t(restaurante.heroTitulo, locale, defaultLocale)}</span></span>
+  </h1>
+  <div class="hero-meta">
+    <span>{t(restaurante.heroMetaIzq, locale, defaultLocale)}</span>
+    <span>{t(restaurante.heroMetaDer, locale, defaultLocale)}</span>
+  </div>
+  <figure class="hero-band">
+    <img src={heroImgUrl} alt={t(restaurante.heroTitulo, locale, defaultLocale)} id="heroImg" />
+    <span class="hero-h2 hl" id="hl2"><span>{t(restaurante.heroSubtitulo, locale, defaultLocale)}</span></span>
+    <a class="btnx ghost hero-cta" href="#reservar">
+      <span class="lab"><i data-t={t(restaurante.heroCta, locale, defaultLocale)}>{t(restaurante.heroCta, locale, defaultLocale)}</i></span>
+      <span class="circ"><span class="ar">&#8594;</span></span>
+    </a>
+    <span class="hero-note" set:html={t(restaurante.heroNota, locale, defaultLocale).replace(/\n/g, '<br />')} />
+  </figure>
+</header>
+
+<section class="statement">
+  <span class="lbl reveal">{t(restaurante.manifiestoEyebrow, locale, defaultLocale)}</span>
+  <p class="reveal">{t(restaurante.manifiestoTexto, locale, defaultLocale)}</p>
+</section>
+
+<section class="list-block" id="list">
+  <div class="list-grid">
+    <div class="list-figs">
+      <div class="lf1 wipe"><img src={lf1} alt="" class="plx" /></div>
+      <div class="lf2 wipe"><img src={lf2} alt="" class="plx" /></div>
+    </div>
+    <div>
+      <div class="sec-head">
+        <span class="lbl">{t(sec.vinosEyebrow, locale, defaultLocale)}</span>
+        <h2>{t(sec.vinosTitulo, locale, defaultLocale)}</h2>
+      </div>
+      <div class="stagger two-col">
+        {vinosPorCat.map(({ cat, items }) => (
+          items.length > 0 && (
+            <>
+              <div class="cat-head">{t(cat.nombre, locale, defaultLocale)}</div>
+              {items.map((v) => (
+                <div class="row">
+                  <div>
+                    <div class="name">{v.nombre}</div>
+                    <div class="note">{t(v.nota, locale, defaultLocale)}{v.region && <> · {v.region}</>}</div>
+                  </div>
+                  <span class="price">{v.precioCopa ?? '—'} / {v.precioBotella ?? '—'}</span>
+                </div>
+              ))}
+            </>
+          )
+        ))}
+        <div class="stir">{t(sec.vinosNotaFinal, locale, defaultLocale)}</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="rooms">
+  <div class="band-head">
+    <span class="lbl">{t(sec.galeriaEyebrow, locale, defaultLocale) || t(nav.linkLocal, locale, defaultLocale)}</span>
+    <div class="band-arrows">
+      <button class="arrow" id="prevC" aria-label="Anterior"><span>&#8592;</span></button>
+      <button class="arrow" id="nextC" aria-label="Siguiente"><span>&#8594;</span></button>
+    </div>
+  </div>
+  <div class="band-track reveal">
+    {galeriaImgs.map((g) => (
+      <div class="card"><img src={g.src} alt="" /></div>
+    ))}
+  </div>
+</section>
+
+<section class="list-block" id="plates">
+  <div class="plates-grid">
+    <div>
+      <div class="sec-head">
+        <span class="lbl">{t(sec.platosEyebrow, locale, defaultLocale)}</span>
+        <h2>{t(sec.platosTitulo, locale, defaultLocale)}</h2>
+      </div>
+      <div class="stagger two-col">
+        {platosPorCat.map(({ cat, items }) => (
+          items.length > 0 && (
+            <>
+              <div class="cat-head">{t(cat.nombre, locale, defaultLocale)}</div>
+              {items.map((p) => (
+                <div class="row">
+                  <div>
+                    <div class="name">{t(p.nombre, locale, defaultLocale)}</div>
+                    <div class="note">{t(p.nota, locale, defaultLocale)}</div>
+                  </div>
+                  <span class="price">{p.precio ?? '—'}</span>
+                </div>
+              ))}
+            </>
+          )
+        ))}
+      </div>
+    </div>
+    <div class="plates-figs">
+      <div class="pfa wipe"><img src={pfa} alt="" class="plx" /></div>
+      <div class="pfb wipe"><img src={pfb} alt="" class="plx" /></div>
+    </div>
+  </div>
+</section>
+
+<section class="list-block" id="about">
+  <div class="about-grid">
+    <div class="about-figs">
+      <div class="af1 wipe"><img src={af1} alt="" class="plx" /></div>
+      <div class="af2 wipe"><img src={af2} alt="" class="plx" data-speed="26" /></div>
+      <div class="af3 wipe"><img src={af3} alt="" class="plx" /></div>
+    </div>
+    <div class="about-copy">
+      <div class="sec-head">
+        <span class="lbl">{t(restaurante.sobreEyebrow, locale, defaultLocale)}</span>
+        <h2>{t(restaurante.sobreTitulo, locale, defaultLocale)}</h2>
+      </div>
+      {sobreParrafos.map((p) => <p class="reveal">{p}</p>)}
+    </div>
+  </div>
+</section>
+
+<section class="hire">
+  <div class="hire-inner">
+    <img src={gruposImgUrl} alt="" class="plx" data-speed="-55" />
+    <div class="hire-copy">
+      <span class="lbl">{t(restaurante.gruposEyebrow, locale, defaultLocale)}</span>
+      <h2>{t(restaurante.gruposTitulo, locale, defaultLocale)}</h2>
+      <a class="btnx inv" href="#reservar">
+        <span class="lab"><i data-t={t(restaurante.gruposCta, locale, defaultLocale)}>{t(restaurante.gruposCta, locale, defaultLocale)}</i></span>
+        <span class="circ"><span class="ar">&#8594;</span></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="list-block reserva" id="reservar">
+  <div class="reserva-grid">
+    <div>
+      <div class="sec-head">
+        <span class="lbl">{t(nav.linkReservar, locale, defaultLocale) || 'Reserva'}</span>
+        <h2>{t(form.titulo, locale, defaultLocale)}</h2>
+      </div>
+      <p class="reveal reserva-intro">{t(form.intro, locale, defaultLocale)}</p>
+    </div>
+    <form class="reserva-form reveal" id="reservaForm" novalidate>
+      <label>
+        <span>{t(form.labelNombre, locale, defaultLocale) || 'Nombre'}</span>
+        <input type="text" name="nombre" required autocomplete="name" />
+      </label>
+      <label>
+        <span>{t(form.labelTelefono, locale, defaultLocale) || 'Teléfono'}</span>
+        <input type="tel" name="telefono" required autocomplete="tel" />
+      </label>
+      <label>
+        <span>{t(form.labelEmail, locale, defaultLocale) || 'Email'}</span>
+        <input type="email" name="email" autocomplete="email" />
+      </label>
+      <label>
+        <span>{t(form.labelComensales, locale, defaultLocale) || 'Comensales'}</span>
+        <input type="number" name="personas" min="1" max="20" value="2" required />
+      </label>
+      <label>
+        <span>{t(form.labelFecha, locale, defaultLocale) || 'Fecha'}</span>
+        <input type="date" name="fecha" required />
+      </label>
+      <label>
+        <span>{t(form.labelHora, locale, defaultLocale) || 'Hora'}</span>
+        <input type="time" name="hora" required />
+      </label>
+      <label class="full">
+        <span>{t(form.labelNotas, locale, defaultLocale) || 'Notas'}</span>
+        <textarea name="notas" rows="3"></textarea>
+      </label>
+      <button type="submit" class="btnx reserva-submit">
+        <span class="lab"><i data-t={t(form.submit, locale, defaultLocale)}>{t(form.submit, locale, defaultLocale)}</i></span>
+        <span class="circ"><span class="ar">&#8594;</span></span>
+      </button>
+      <p class="reserva-msg" id="reservaMsg" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
+
+<section class="hours" id="hours">
+  <h2 class="reveal">{t(restaurante.horariosTitulo, locale, defaultLocale)}</h2>
+  <p class="times reveal">{t(restaurante.horariosTexto, locale, defaultLocale)}</p>
+  <p class="now reveal" id="openLine">…</p>
+  <a class="btnx reveal" href="#reservar">
+    <span class="lab"><i data-t={t(restaurante.heroCta, locale, defaultLocale)}>{t(restaurante.heroCta, locale, defaultLocale)}</i></span>
+    <span class="circ"><span class="ar">&#8594;</span></span>
+  </a>
+  <div class="addr reveal">
+    <span>{direccionLinea}</span>
+    {emailReserva && <span>{emailReserva}</span>}
+    {instagram && (
+      <a href={instagram} target="_blank" rel="noopener">{instagramHandle}</a>
+    )}
+  </div>
+  <div class="footer-word reveal">{footerWord}</div>
+  <div class="byline">
+    <span>{t(footerTexts.bylineIzq, locale, defaultLocale)}</span>
+    <span>{t(footerTexts.bylineDer, locale, defaultLocale) || dir.calle}</span>
+  </div>
+</section>
+
+<div id="lightbox"><img src="" alt="" /></div>
+
+<script is:inline define:vars={{ hoursByDay, horarioMensajes, emailReserva, nombreRestaurante }}>
+  window.OPEN_HOURS = hoursByDay;
+  window.HORARIO_MENSAJES = horarioMensajes;
+  window.EMAIL_RESERVA = emailReserva;
+  window.NOMBRE_RESTAURANTE = nombreRestaurante;
+</script>
+<script is:inline src="/lenis.min.js"></script>
+<script is:inline>
+  const STATIC = location.search.includes('static');
+  if (STATIC) document.documentElement.classList.add('static');
+  let lenis;
+  if (!STATIC && !matchMedia('(prefers-reduced-motion: reduce)').matches && window.Lenis) {
+    lenis = new Lenis({ lerp: 0.05 });
+    (function raf(t) { lenis.raf(t); requestAnimationFrame(raf); })();
+  }
+  addEventListener('load', () =>
+    setTimeout(() => document.body.classList.add('loaded'), STATIC ? 0 : 100),
+  );
+  if (STATIC) {
+    addEventListener('load', () => {
+      document
+        .querySelectorAll('.reveal,.stagger,.mask,.list-figs,.plates-figs,.about-figs,.room-figs,.hire-inner,.figwipe,.wipe')
+        .forEach((el) => el.classList.add('in'));
+    });
+  }
+
+  const overlay = document.getElementById('overlay');
+  const openB = document.getElementById('menuOpen'),
+    closeB = document.getElementById('menuClose');
+  openB.onclick = () => { overlay.classList.add('open'); closeB.focus(); };
+  const close = () => { overlay.classList.remove('open'); openB.focus(); };
+  closeB.onclick = close;
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+  document.querySelectorAll('a[href^="#"]').forEach((a) => {
+    a.onclick = (e) => {
+      const t = a.getAttribute('href');
+      if (t === '#') return;
+      e.preventDefault();
+      if (overlay.classList.contains('open')) close();
+      setTimeout(
+        () => (lenis ? lenis.scrollTo(t) : document.querySelector(t).scrollIntoView({ behavior: 'smooth' })),
+        60,
+      );
+    };
+  });
+
+  document.querySelector('.band-track')?.classList.replace('reveal', 'stagger');
+  ['.sec-head', '.band-head', '.stir', '.hours h2', '.hours .times', '.hours .now', '.hours .btnx',
+   '.addr', '.statement .lbl', '.about-copy p', '.plates .sub', '.footer-word', '.byline']
+    .forEach((sel) => document.querySelectorAll(sel).forEach((el) => {
+      if (!el.classList.contains('reveal') && !el.closest('.stagger')) el.classList.add('reveal');
+    }));
+  const io = new IntersectionObserver(
+    (es) => es.forEach((e) => {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    }),
+    { threshold: 0.18 },
+  );
+  document
+    .querySelectorAll('.reveal,.stagger,.list-figs,.plates-figs,.about-figs,.hire-inner')
+    .forEach((el) => io.observe(el));
+
+  const hImg = document.getElementById('heroImg'),
+    h1e = document.getElementById('hl1'),
+    h2e = document.getElementById('hl2');
+  const plx = [...document.querySelectorAll('.plx')];
+  let tick = false;
+  addEventListener('scroll', () => {
+    if (tick) return;
+    tick = true;
+    requestAnimationFrame(() => {
+      tick = false;
+      for (const img of plx) {
+        const r = img.parentElement.getBoundingClientRect();
+        const p = (r.top + r.height / 2 - innerHeight / 2) / innerHeight;
+        const f = parseFloat(img.dataset.speed) || -18;
+        img.style.transform = `translateY(${p * f}px) scale(1.08)`;
+      }
+      const nb = document.querySelector('.navbar'),
+        heroH = document.querySelector('.hero-h');
+      if (nb && heroH) nb.classList.toggle('scrolled', heroH.getBoundingClientRect().top <= 72);
+      const sp = Math.min(1, Math.max(0, scrollY / innerHeight));
+      if (hImg) hImg.style.transform = `translateY(${sp * 24}px) scale(${1.18 - sp * 0.04})`;
+      if (h1e) h1e.style.transform = `translateX(${sp * -18}px)`;
+      if (h2e) h2e.style.transform = `translateX(${sp * 18}px)`;
+    });
+  }, { passive: true });
+
+  const fw = document.querySelector('.footer-word');
+  const fitWord = () => {
+    fw.style.fontSize = '100px';
+    const textWidth = fw.scrollWidth;
+    const boxWidth = fw.clientWidth;
+    fw.style.fontSize = (100 * boxWidth * 0.94) / textWidth + 'px';
+  };
+  fitWord();
+  addEventListener('resize', fitWord);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitWord);
+
+  // Estado abierto/cerrado dinámico
+  (function () {
+    const HOURS = window.OPEN_HOURS;
+    const msg = window.HORARIO_MENSAJES;
+    const fmt = (n) => {
+      const h = Math.floor(n);
+      const m = Math.round((n - h) * 60);
+      return `${h}:${m.toString().padStart(2, '0')}`;
+    };
+    const now = new Date();
+    const d = now.getDay();
+    const h = now.getHours() + now.getMinutes() / 60;
+    const today = HOURS[d] || [];
+    let open = false, nextOpen = null, closesAt = null;
+    for (const [a, b] of today) {
+      if (h >= a && h < b) { open = true; closesAt = b; break; }
+      if (h < a && nextOpen === null) nextOpen = a;
+    }
+    const line = open
+      ? msg.abierto.replace('{hora}', fmt(closesAt))
+      : nextOpen !== null
+        ? msg.proxima.replace('{hora}', fmt(nextOpen))
+        : msg.cerrado;
+    document.getElementById('openLine').textContent = line;
+  })();
+
+  // Carrusel
+  const track = document.querySelector('.band-track');
+  let down = false, sx = 0, sl = 0, moved = 0;
+  track.addEventListener('pointerdown', (e) => {
+    down = true; moved = 0; sx = e.clientX; sl = track.scrollLeft;
+    track.classList.add('dragging');
+  });
+  addEventListener('pointermove', (e) => {
+    if (!down) return;
+    const dx = e.clientX - sx;
+    moved = Math.max(moved, Math.abs(dx));
+    track.scrollLeft = sl - dx;
+  });
+  addEventListener('pointerup', () => { down = false; track.classList.remove('dragging'); });
+  const step = () => track.querySelector('.card').getBoundingClientRect().width + 24;
+  document.getElementById('prevC').onclick = () => track.scrollBy({ left: -step(), behavior: 'smooth' });
+  document.getElementById('nextC').onclick = () => track.scrollBy({ left: step(), behavior: 'smooth' });
+  const lb = document.getElementById('lightbox'),
+    lbi = lb.querySelector('img');
+  document.querySelectorAll('.card').forEach((c) => c.addEventListener('click', () => {
+    if (moved > 8) return;
+    lbi.src = c.querySelector('img').src;
+    lb.classList.add('open');
+  }));
+  lb.addEventListener('click', () => lb.classList.remove('open'));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') lb.classList.remove('open'); });
+
+  // Formulario de reserva → mailto:
+  const form = document.getElementById('reservaForm');
+  const msg = document.getElementById('reservaMsg');
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    const d = new FormData(form);
+    const nombre = d.get('nombre'),
+      telefono = d.get('telefono'),
+      email = d.get('email') || '(no indicado)',
+      personas = d.get('personas'),
+      fecha = d.get('fecha'),
+      hora = d.get('hora'),
+      notas = d.get('notas') || '(sin notas)';
+    const subject = `Reserva: ${nombre} — ${personas} pax — ${fecha} ${hora}`;
+    const body =
+`Solicitud de reserva en ${window.NOMBRE_RESTAURANTE}
+
+Nombre: ${nombre}
+Teléfono: ${telefono}
+Email: ${email}
+Comensales: ${personas}
+Fecha: ${fecha}
+Hora: ${hora}
+Notas: ${notas}`;
+    window.location.href =
+      'mailto:' + window.EMAIL_RESERVA + '?subject=' +
+      encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    if (msg) msg.textContent = '…';
+  });
+</script>

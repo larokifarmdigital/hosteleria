@@ -1,0 +1,27 @@
+{
+  "name": "studio",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "sanity dev",
+    "build": "sanity build",
+    "start": "sanity start",
+    "deploy": "sanity deploy",
+    "seed": "sanity exec scripts/seed.ts --with-user-token",
+    "clean": "rm -rf dist .sanity"
+  },
+  "dependencies": {
+    "@hosteleria/sanity-schema": "workspace:*",
+    "@sanity/vision": "^3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sanity": "^3",
+    "sanity-plugin-internationalized-array": "^3",
+    "styled-components": "^6.1.13"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "@types/react": "^18.3.12",
+    "typescript": "^5.7.3"
+  }
+}
