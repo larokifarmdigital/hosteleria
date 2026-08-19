@@ -1,4 +1,4 @@
-import type { BookingStrings } from './index';
+import type { BookingStrings } from './index.ts';
 
 const STRINGS: Record<string, BookingStrings> = {
   es: {

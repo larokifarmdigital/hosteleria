@@ -4,6 +4,11 @@
 
 @import "tailwindcss";
 
+/* Escanea también los packages del workspace (Tailwind v4 excluye node_modules
+   por defecto; los @hosteleria/* están linkeados ahí como symlinks). */
+@source "../../../../packages/ui/src/**/*.{astro,ts}";
+@source "../../../../packages/booking-form/src/**/*.ts";
+
 /* ═════════════════════════════════════════════════════════════════ DESIGN TOKENS
    Guixot — paleta ivory + navy + brass: elegante contemporáneo brasserie.
    Look brasserie parisina moderna. Se aleja del rustic tradicional hacia

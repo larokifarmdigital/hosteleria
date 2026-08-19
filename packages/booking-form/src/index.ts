@@ -1,4 +1,4 @@
-export { bookingStrings } from './i18n';
+export { bookingStrings } from './i18n.ts';
 
 export type BookingStrings = {
   pickDate: string;
