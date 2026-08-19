@@ -1,5 +1,5 @@
 ---
-import IconWhatsApp from '@hosteleria/ui/icons/IconWhatsApp.astro';
+import IconWhatsApp from '../icons/IconWhatsApp.astro';
 
 interface Props {
   href: string;
@@ -12,22 +12,22 @@ if (!href) return null;
 
 <a
   href={href}
-  target="_blank"
-  rel="noopener"
+  target='_blank'
+  rel='noopener'
   aria-label={locale === 'en' ? 'Contact via WhatsApp' : 'Contactar por WhatsApp'}
-  title="WhatsApp"
-  class="fixed z-40 bottom-[22px] right-[22px] w-14 h-14 rounded-full
+  title='WhatsApp'
+  class='fixed z-40 bottom-[22px] right-[22px] w-14 h-14 rounded-full
          flex items-center justify-center cursor-pointer
          bg-[#25D366] text-white
-         border-[3px] border-bg outline outline-1 outline-[rgb(212_166_85/0.4)]
+         border-[3px] border-bg outline outline-1 outline-[var(--wa-outline,rgb(0_0_0/0.35))]
          shadow-[0_8px_20px_rgb(0_0_0/0.42),0_2px_6px_rgb(0_0_0/0.2)]
          transition-[background-color,transform,box-shadow,outline-color] duration-300 ease-out
-         hover:bg-[#20b858] hover:scale-[1.06] hover:outline-[rgb(230_185_104/0.7)]
+         hover:bg-[#20b858] hover:scale-[1.06] hover:outline-[var(--wa-outline-hover,rgb(0_0_0/0.55))]
          hover:shadow-[0_14px_30px_rgb(0_0_0/0.5),0_2px_8px_rgb(0_0_0/0.22)]
          active:scale-[0.98]
          motion-reduce:hover:scale-100
          max-[900px]:bottom-4 max-[900px]:right-4 max-[900px]:w-13 max-[900px]:h-13
-         [&>svg]:block max-[900px]:[&>svg]:w-6 max-[900px]:[&>svg]:h-6"
+         [&>svg]:block max-[900px]:[&>svg]:w-6 max-[900px]:[&>svg]:h-6'
 >
   <IconWhatsApp />
 </a>

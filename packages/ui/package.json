@@ -11,7 +11,8 @@
   "files": ["src"],
   "dependencies": {
     "@hosteleria/i18n-utils": "workspace:*",
-    "@hosteleria/sanity-client": "workspace:*"
+    "@hosteleria/sanity-client": "workspace:*",
+    "@hosteleria/utils": "workspace:*"
   },
   "peerDependencies": {
     "astro": "^5.0.0"

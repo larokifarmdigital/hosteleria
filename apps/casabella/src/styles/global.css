@@ -19,6 +19,10 @@
   --color-accent: #d4a655;
   --color-accent-hover: #e6b968;
 
+  /* WhatsApp FAB outline (marca-específico) */
+  --wa-outline: rgb(212 166 85 / 0.4);
+  --wa-outline-hover: rgb(230 185 104 / 0.7);
+
   --font-serif: 'Fraunces Variable', 'Fraunces', 'Cormorant Garamond', serif;
   --font-sans: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
 

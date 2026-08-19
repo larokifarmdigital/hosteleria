@@ -1,11 +1,12 @@
 ---
-import { localizedPath } from '@hosteleria/i18n-utils';
+import { localizedPath, t } from '@hosteleria/i18n-utils';
 import type { RestaurantData, LocaleRef, LegalPageDoc } from '../lib/queries';
 import { buildWhatsAppHref } from '@hosteleria/utils';
 import Nav from './Nav.astro';
 import MobileOverlay from '@hosteleria/ui/components/MobileOverlay.astro';
-import Footer from './Footer.astro';
-import WhatsAppFab from './WhatsAppFab.astro';
+import Footer from '@hosteleria/ui/components/Footer.astro';
+import WhatsAppFab from '@hosteleria/ui/components/WhatsAppFab.astro';
+import CtaButton from './CtaButton.astro';
 
 interface Props {
   restaurant: RestaurantData['restaurant'];
@@ -119,7 +120,10 @@ const formattedDate = lastUpdated
   whatsappRaw={whatsappRaw}
   bookingPhone={bookingPhone}
   bookingEmail={bookingEmail}
-  hrefPrefix={homePath}
-/>
+>
+  <CtaButton slot='cta' href={`${homePath}#book`}>
+    {t(restaurant.textosNav?.linkReservar, locale, defaultLocale) || 'Reservar'}
+  </CtaButton>
+</Footer>
 
 <WhatsAppFab href={waHref} locale={locale} />
