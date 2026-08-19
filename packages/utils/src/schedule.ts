@@ -1,4 +1,4 @@
-import type { Restaurant } from './queries';
+import type { Restaurant } from '@hosteleria/sanity-client';
 
 const DAY_NUM: Record<string, number> = { Su: 0, Mo: 1, Tu: 2, We: 3, Th: 4, Fr: 5, Sa: 6 };
 

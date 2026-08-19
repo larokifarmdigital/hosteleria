@@ -1,13 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Nav from '../components/Nav.astro';
-import MobileOverlay from '../components/MobileOverlay.astro';
+import MobileOverlay from '@hosteleria/ui/components/MobileOverlay.astro';
 import Footer from '../components/Footer.astro';
 import WhatsAppFab from '../components/WhatsAppFab.astro';
 import CtaButton from '../components/CtaButton.astro';
 import { fetchRestaurantData, fetchLegalPages } from '../lib/queries';
 import { img } from '../lib/sanity';
-import { buildWhatsAppHref } from '../lib/whatsapp';
+import { buildWhatsAppHref } from '@hosteleria/utils';
 
 const data = await fetchRestaurantData();
 const { restaurant } = data;

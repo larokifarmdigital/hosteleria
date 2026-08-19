@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import RestaurantPage from '../../components/RestaurantPage.astro';
 import { fetchRestaurantData, fetchLegalPages } from '../../lib/queries';
 import { img } from '../../lib/sanity';
-import { buildRestaurantJsonLd, buildFaqJsonLd } from '../../lib/jsonld';
+import { buildRestaurantJsonLd, buildFaqJsonLd } from '@hosteleria/seo';
 import { t, resolveActiveLocales, localizedPath } from '@hosteleria/i18n-utils';
 
 /**
@@ -49,7 +49,7 @@ const appleTouchIconUrl = img.pngSquare(restaurant.iconoApp, 180);
 const themeColor = restaurant.colorMarca;
 
 const jsonLd = [
-  buildRestaurantJsonLd(restaurant, locale, defaultLocale, canonical),
+  buildRestaurantJsonLd({ restaurant, locale, defaultLocale, canonical, img, servesCuisine: ['Mediterránea', 'Contemporánea', 'Catalana', 'Italiana'] }),
   buildFaqJsonLd(restaurant.faq, locale, defaultLocale),
 ];
 ---

@@ -29,12 +29,18 @@ importers:
       '@hosteleria/sanity-client':
         specifier: workspace:*
         version: link:../../packages/sanity-client
+      '@hosteleria/seo':
+        specifier: workspace:*
+        version: link:../../packages/seo
       '@hosteleria/tailwind-config':
         specifier: workspace:*
         version: link:../../packages/tailwind-config
       '@hosteleria/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@hosteleria/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@portabletext/to-html':
         specifier: ^2
         version: 2.0.17
@@ -69,12 +75,18 @@ importers:
       '@hosteleria/sanity-client':
         specifier: workspace:*
         version: link:../../packages/sanity-client
+      '@hosteleria/seo':
+        specifier: workspace:*
+        version: link:../../packages/seo
       '@hosteleria/tailwind-config':
         specifier: workspace:*
         version: link:../../packages/tailwind-config
       '@hosteleria/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@hosteleria/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@portabletext/to-html':
         specifier: ^2.0.17
         version: 2.0.17
@@ -230,6 +242,9 @@ importers:
 
   packages/sanity-client:
     dependencies:
+      '@hosteleria/i18n-utils':
+        specifier: workspace:*
+        version: link:../i18n-utils
       '@sanity/client':
         specifier: ^6
         version: 6.29.1
@@ -243,13 +258,37 @@ importers:
         specifier: ^3
         version: 3.99.0(@emotion/is-prop-valid@1.4.0)(@types/node@26.2.0)(@types/react@18.3.31)(immer@10.2.0)(jiti@2.7.0)(lightningcss@1.32.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(styled-components@6.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(yaml@2.9.0)
 
+  packages/seo:
+    dependencies:
+      '@hosteleria/i18n-utils':
+        specifier: workspace:*
+        version: link:../i18n-utils
+      '@hosteleria/sanity-client':
+        specifier: workspace:*
+        version: link:../sanity-client
+      astro:
+        specifier: ^5
+        version: 5.18.2(@types/node@26.2.0)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.62.4)(typescript@5.9.3)(yaml@2.9.0)
+
   packages/tailwind-config: {}
 
   packages/ui:
     dependencies:
+      '@hosteleria/i18n-utils':
+        specifier: workspace:*
+        version: link:../i18n-utils
+      '@hosteleria/sanity-client':
+        specifier: workspace:*
+        version: link:../sanity-client
       astro:
         specifier: ^5.0.0
         version: 5.18.2(@types/node@26.2.0)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.62.4)(typescript@5.9.3)(yaml@2.9.0)
+
+  packages/utils:
+    dependencies:
+      '@hosteleria/sanity-client':
+        specifier: workspace:*
+        version: link:../sanity-client
 
 packages:
 

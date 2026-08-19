@@ -2,8 +2,8 @@
 import { t } from '@hosteleria/i18n-utils';
 import { img } from '../lib/sanity';
 import type { Restaurant } from '../lib/queries';
-import { extractI18nParagraphs } from '../lib/portableText';
-import Eyebrow from '../components/Eyebrow.astro';
+import { extractI18nParagraphs } from '@hosteleria/utils';
+import Eyebrow from '@hosteleria/ui/components/Eyebrow.astro';
 
 interface Props {
   restaurant: Restaurant;

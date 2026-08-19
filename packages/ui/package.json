@@ -5,9 +5,14 @@
   "type": "module",
   "exports": {
     "./components/*": "./src/components/*",
-    "./styles/*": "./src/styles/*"
+    "./icons/*": "./src/icons/*",
+    "./layouts/*": "./src/layouts/*"
   },
   "files": ["src"],
+  "dependencies": {
+    "@hosteleria/i18n-utils": "workspace:*",
+    "@hosteleria/sanity-client": "workspace:*"
+  },
   "peerDependencies": {
     "astro": "^5.0.0"
   }

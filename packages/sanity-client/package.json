@@ -9,6 +9,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@hosteleria/i18n-utils": "workspace:*",
     "@sanity/client": "^6",
     "@sanity/image-url": "^1"
   }

@@ -1,0 +1,21 @@
+{
+  "name": "@hosteleria/seo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./jsonld": "./src/jsonld.ts",
+    "./sitemap": "./src/sitemap.ts",
+    "./robots": "./src/robots.ts",
+    "./manifest": "./src/manifest.ts",
+    "./llms": "./src/llms.ts"
+  },
+  "dependencies": {
+    "@hosteleria/i18n-utils": "workspace:*",
+    "@hosteleria/sanity-client": "workspace:*"
+  },
+  "peerDependencies": {
+    "astro": "^5"
+  }
+}

@@ -1,14 +1,8 @@
 import { t, type CodigoIdioma } from '@hosteleria/i18n-utils';
-import type { Restaurant } from './queries';
-import { img } from './sanity';
+import type { ImageBuilder, Restaurant } from '@hosteleria/sanity-client';
 
-/**
- * Extrae las coordenadas del `pb=` de un embed URL de Google Maps.
- * Formato: `!2d<longitud>!3d<latitud>`. Devuelve null si no se pueden extraer.
- */
 function extraerCoordsDeMapaUrl(mapaUrl: string | undefined): { lat: number; lng: number } | null {
   if (!mapaUrl) return null;
-  // Si es un iframe completo, extraer el src
   const srcMatch = mapaUrl.match(/src=["']([^"']+)["']/i);
   const src = srcMatch ? srcMatch[1] : mapaUrl;
   const lngMatch = src.match(/!2d(-?\d+\.?\d*)/);
@@ -27,7 +21,7 @@ const DIA_SCHEMA: Record<string, string> = {
   We: 'Wednesday',
   Th: 'Thursday',
   Fr: 'Friday',
-  Sa: 'Saturday',
+  Sa: 'Saturday'
 };
 
 const PAGO_SCHEMA: Record<string, string> = {
@@ -37,20 +31,23 @@ const PAGO_SCHEMA: Record<string, string> = {
   contactless: 'Contactless',
   apple_pay: 'Apple Pay',
   google_pay: 'Google Pay',
-  bizum: 'Bizum',
+  bizum: 'Bizum'
+};
+
+export type BuildRestaurantJsonLdOpts = {
+  restaurant: Restaurant;
+  locale: CodigoIdioma;
+  defaultLocale: CodigoIdioma;
+  canonical: string;
+  img: ImageBuilder;
+  servesCuisine?: string[];
 };
 
 /**
- * Construye el JSON-LD `Restaurant` enriquecido (schema.org) que leen tanto los
- * buscadores clásicos (Google Rich Results) como los LLMs (Perplexity, ChatGPT).
- * Solo incluye campos con valor — nada de nulls / undefined dentro del JSON.
+ * JSON-LD `Restaurant` (schema.org). Solo incluye campos con valor.
  */
-export function buildRestaurantJsonLd(
-  restaurant: Restaurant,
-  locale: CodigoIdioma,
-  defaultLocale: CodigoIdioma,
-  canonical: string,
-) {
+export function buildRestaurantJsonLd(opts: BuildRestaurantJsonLdOpts) {
+  const { restaurant, locale, defaultLocale, canonical, img, servesCuisine } = opts;
   const dir = restaurant.direccion ?? {};
   const contacto = restaurant.contacto ?? {};
   const logoUrl = img.url(restaurant.logo);
@@ -65,7 +62,7 @@ export function buildRestaurantJsonLd(
       '@type': 'OpeningHoursSpecification',
       dayOfWeek: dayName,
       opens: tu.apertura,
-      closes: tu.cierre === '24:00' ? '23:59' : tu.cierre,
+      closes: tu.cierre === '24:00' ? '23:59' : tu.cierre
     }));
   });
 
@@ -74,14 +71,10 @@ export function buildRestaurantJsonLd(
     .filter(Boolean)
     .join(', ');
 
-  // Solo publicamos las RRSS en JSON-LD (schema.org sameAs) si el cliente lo activó
-  // en Sanity. Los datos siguen guardados aunque el flag esté a false.
   const sameAs = restaurant.mostrarRedes
-    ? [
-        restaurant.redes?.instagram,
-        restaurant.redes?.facebook,
-        restaurant.redes?.tiktok,
-      ].filter(Boolean)
+    ? [restaurant.redes?.instagram, restaurant.redes?.facebook, restaurant.redes?.tiktok].filter(
+        Boolean
+      )
     : [];
 
   const description =
@@ -103,9 +96,9 @@ export function buildRestaurantJsonLd(
     ...(logoUrl && { logo: logoUrl }),
     ...(images.length && { image: images }),
     ...(priceFromMedio && { priceRange: priceFromMedio }),
-    servesCuisine: ['Mediterránea', 'Contemporánea', 'Catalana', 'Italiana'],
+    ...(servesCuisine?.length && { servesCuisine }),
     ...(restaurant.aceptaReservas != null && {
-      acceptsReservations: restaurant.aceptaReservas,
+      acceptsReservations: restaurant.aceptaReservas
     }),
     ...(paymentAccepted && { paymentAccepted }),
     smokingAllowed: false,
@@ -115,18 +108,17 @@ export function buildRestaurantJsonLd(
       ...(dir.ciudad && { addressLocality: dir.ciudad }),
       ...(dir.provincia && { addressRegion: dir.provincia }),
       ...(dir.codigoPostal && { postalCode: dir.codigoPostal }),
-      ...(dir.pais && { addressCountry: dir.pais }),
+      ...(dir.pais && { addressCountry: dir.pais })
     },
     ...((() => {
-      // Coordenadas para JSON-LD: extraídas automáticamente del `mapaUrl` embed.
       const geo = extraerCoordsDeMapaUrl(restaurant.mapaUrl);
       return geo
         ? {
             geo: {
               '@type': 'GeoCoordinates',
               latitude: geo.lat,
-              longitude: geo.lng,
-            },
+              longitude: geo.lng
+            }
           }
         : {};
     })()),
@@ -139,20 +131,19 @@ export function buildRestaurantJsonLd(
       amenityFeature: (restaurant.serviciosExtras ?? []).map((s) => ({
         '@type': 'LocationFeatureSpecification',
         name: s.replace(/_/g, ' '),
-        value: true,
-      })),
-    }),
+        value: true
+      }))
+    })
   };
 }
 
 /**
- * FAQPage JSON-LD — permite que Google AI Overviews, Perplexity y ChatGPT
- * extraigan las preguntas/respuestas y las citen directamente.
+ * FAQPage JSON-LD.
  */
 export function buildFaqJsonLd(
   faq: Restaurant['faq'],
   locale: CodigoIdioma,
-  defaultLocale: CodigoIdioma,
+  defaultLocale: CodigoIdioma
 ) {
   if (!faq?.length) return null;
   const entries = faq
@@ -165,8 +156,8 @@ export function buildFaqJsonLd(
         name: pregunta,
         acceptedAnswer: {
           '@type': 'Answer',
-          text: respuesta,
-        },
+          text: respuesta
+        }
       };
     })
     .filter(Boolean);
@@ -174,6 +165,6 @@ export function buildFaqJsonLd(
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: entries,
+    mainEntity: entries
   };
 }

@@ -53,3 +53,5 @@ export function crearImageBuilder(client: SanityClient): ImageBuilder {
 }
 
 export type { SanityClient, SanityImageSource };
+
+export * from './queries';
