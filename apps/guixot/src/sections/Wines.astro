@@ -1,0 +1,78 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant, WineCategory, Wine } from '../lib/queries';
+import { splitLastWord } from '../lib/typography';
+import Tag from '../components/Tag.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  wineCategories: WineCategory[];
+  wines: Wine[];
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, wineCategories, wines, locale, defaultLocale } = Astro.props;
+
+const sec = restaurant.textosSecciones ?? {};
+const title = t(sec.vinosTitulo, locale, defaultLocale);
+const { head, tail } = splitLastWord(title);
+
+const winesByCategory = wineCategories.map((cat) => ({
+  category: cat,
+  items: wines.filter((w) => w.categoria?._id === cat._id),
+}));
+---
+
+<section id="wines" class="py-[12vh] px-(--gap) max-[900px]:py-[8vh]">
+  <div class="mx-auto max-w-[1080px]">
+    <div class="reveal text-center mb-16 max-[900px]:mb-10">
+      <Tag class="mb-6 mx-auto">{t(sec.vinosEyebrow, locale, defaultLocale)}</Tag>
+      <h2 class="font-serif font-medium leading-none tracking-[-0.01em] text-[clamp(40px,5.5vw,80px)]">
+        {tail ? (
+          <>
+            {head} <em class="italic text-accent font-normal">{tail}</em>
+          </>
+        ) : (
+          title
+        )}
+      </h2>
+    </div>
+
+    <div class="flex flex-col gap-14">
+      {winesByCategory.map(({ category, items }) => (
+        items.length > 0 && (
+          <div class="reveal">
+            <div class="flex items-baseline gap-5 mb-6">
+              <h3 class="font-serif font-medium text-accent text-[clamp(20px,2.2vw,26px)] leading-none whitespace-nowrap">
+                {t(category.nombre, locale, defaultLocale)}
+              </h3>
+              <span class="flex-1 h-px bg-line"></span>
+            </div>
+            <div class="flex flex-col divide-y divide-line/60">
+              {items.map((wine) => (
+                <div class="grid grid-cols-[1fr_auto] items-baseline gap-6 py-4">
+                  <div>
+                    <div class="font-serif font-medium text-ink text-[18px] leading-tight mb-1">
+                      {wine.nombre}
+                    </div>
+                    <div class="text-muted text-[14px] leading-[1.55] italic">
+                      {t(wine.nota, locale, defaultLocale)}{wine.region && <> · {wine.region}</>}
+                    </div>
+                  </div>
+                  <span class="font-serif text-accent text-[17px] font-medium whitespace-nowrap tabular-nums">
+                    {wine.precioCopa ?? '—'} / {wine.precioBotella ?? '—'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      ))}
+    </div>
+
+    <div class="text-center pt-14 text-[11px] tracking-[0.32em] uppercase text-muted">
+      {t(sec.vinosNotaFinal, locale, defaultLocale)}
+    </div>
+  </div>
+</section>

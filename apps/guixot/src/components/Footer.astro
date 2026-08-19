@@ -43,6 +43,7 @@ const rutaLegal = (slug: string) =>
 
 const hoursByDay = buildHoursByDay(restaurant.horariosSemana);
 const scheduleRows = formatSchedule(restaurant.horariosSemana, locale);
+// Separar filas abiertas / cerradas para display compacto en el footer
 const openRows = scheduleRows.filter((r) => !r.closed);
 const closedRows = scheduleRows.filter((r) => r.closed);
 const closedLabel = closedRows.map((r) => r.label).join(', ');
@@ -139,7 +140,7 @@ const linkCls =
     <div>
       <h4 class={h4Cls}>{tt.hours}</h4>
 
-      {/* Estado abierto/cerrado — línea limpia con dot */}
+      {/* Estado abierto/cerrado en 1 línea */}
       <p
         id='openLine'
         class='font-sans text-[13.5px] font-medium tracking-[0.02em] text-accent flex items-center gap-2 mb-4'
@@ -148,7 +149,7 @@ const linkCls =
         <span>…</span>
       </p>
 
-      {/* Schedule compacto — 1 fila por grupo abierto + 1 fila con días cerrados */}
+      {/* Schedule compacto — 1 línea por grupo abierto + 1 línea final con días cerrados */}
       <div class='flex flex-col gap-2 font-sans text-[13px] leading-[1.5] tabular-nums'>
         {openRows.map((row) => (
           <div>
@@ -161,7 +162,9 @@ const linkCls =
               {row.label}
               {row.isToday && <span class='ml-1.5 text-[9px] opacity-70'>· HOY</span>}
             </div>
-            <div class:list={[row.isToday ? 'text-ink font-medium' : 'text-ink-soft']}>
+            <div
+              class:list={[row.isToday ? 'text-ink font-medium' : 'text-ink-soft']}
+            >
               {row.shifts.join(' · ')}
             </div>
           </div>

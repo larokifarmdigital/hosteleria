@@ -5,19 +5,24 @@ const RESTAURANT_SLUG = import.meta.env.RESTAURANT_SLUG || 'pubilla';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types (subset — solo lo que consume la landing)
+// Nota: los NOMBRES de types son inglés; los NOMBRES DE CAMPOS dentro reflejan
+// literalmente las keys del doc Sanity (español) porque GROQ las devuelve así.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type IdiomaRef = { codigo: string; nombre: string };
+export type LocaleRef = { codigo: string; nombre: string };
 
 export type Turno = { apertura: string; cierre: string };
-export type DiaHorario = { dia: 'Mo' | 'Tu' | 'We' | 'Th' | 'Fr' | 'Sa' | 'Su'; turnos?: Turno[] };
+export type DayHours = { dia: 'Mo' | 'Tu' | 'We' | 'Th' | 'Fr' | 'Sa' | 'Su'; turnos?: Turno[] };
 
-export type SanityImg = { asset?: { _ref?: string; _id?: string; url?: string } } & Record<string, unknown>;
+export type SanityImg = { asset?: { _ref?: string; _id?: string; url?: string } } & Record<
+  string,
+  unknown
+>;
 
 export type PortableBlock = { _type: string; children?: { text?: string }[] };
 export type I18nPortable = { _key: string; value?: PortableBlock[] }[] | null | undefined;
 
-export type Restaurante = {
+export type Restaurant = {
   _id: string;
   nombre: string;
   slug?: { current: string };
@@ -26,8 +31,8 @@ export type Restaurante = {
   logo?: SanityImg;
   favicon?: SanityImg;
   iconoApp?: SanityImg;
-  idiomaPorDefecto?: IdiomaRef;
-  idiomasActivos?: IdiomaRef[];
+  idiomaPorDefecto?: LocaleRef;
+  idiomasActivos?: LocaleRef[];
   // Hero
   heroTitulo?: CampoI18nSanity;
   heroSubtitulo?: CampoI18nSanity;
@@ -57,7 +62,7 @@ export type Restaurante = {
   horariosAbierto?: CampoI18nSanity;
   horariosProximaApertura?: CampoI18nSanity;
   horariosCerrado?: CampoI18nSanity;
-  horariosSemana?: DiaHorario[];
+  horariosSemana?: DayHours[];
   // Contacto
   direccion?: {
     calle?: string;
@@ -68,22 +73,35 @@ export type Restaurante = {
     pais?: string;
   };
   contacto?: { telefono?: string; whatsapp?: string; email?: string; web?: string };
+  mapaUrl?: string;
+  mostrarRedes?: boolean;
   redes?: { instagram?: string; facebook?: string; tiktok?: string };
+  mostrarResenas?: boolean;
   // Textos UI
-  textosUi?: {
-    nav?: Record<string, CampoI18nSanity>;
-    secciones?: Record<string, CampoI18nSanity>;
-    form?: Record<string, CampoI18nSanity>;
-    footer?: Record<string, CampoI18nSanity>;
-  };
+  textosNav?: Record<string, CampoI18nSanity>;
+  textosSecciones?: Record<string, CampoI18nSanity>;
+  textosForm?: Record<string, CampoI18nSanity>;
+  textosFooter?: Record<string, CampoI18nSanity>;
   // SEO
   seoTitulo?: CampoI18nSanity;
   seoDescripcion?: CampoI18nSanity;
   seoImagen?: SanityImg;
+  // IA · SEO avanzado
+  resumenIA?: CampoI18nSanity;
+  aceptaReservas?: boolean;
+  precioMedio?: number;
+  cloudflareAnalyticsToken?: string;
+  formasPago?: string[];
+  serviciosExtras?: string[];
+  faq?: Array<{
+    _key?: string;
+    pregunta?: CampoI18nSanity;
+    respuesta?: CampoI18nSanity;
+  }>;
 };
 
-export type CategoriaVino = { _id: string; nombre?: CampoI18nSanity; orden?: number };
-export type Vino = {
+export type WineCategory = { _id: string; nombre?: CampoI18nSanity; orden?: number };
+export type Wine = {
   _id: string;
   nombre: string;
   region?: string;
@@ -95,8 +113,8 @@ export type Vino = {
   categoria?: { _id: string; orden?: number; nombre?: CampoI18nSanity };
 };
 
-export type CategoriaPlato = { _id: string; nombre?: CampoI18nSanity; orden?: number };
-export type Plato = {
+export type DishCategory = { _id: string; nombre?: CampoI18nSanity; orden?: number };
+export type Dish = {
   _id: string;
   nombre?: CampoI18nSanity;
   nota?: CampoI18nSanity;
@@ -110,7 +128,7 @@ export type Plato = {
 // Queries
 // ─────────────────────────────────────────────────────────────────────────────
 
-const RESTAURANTE_QUERY = /* groq */ `
+const RESTAURANT_QUERY = /* groq */ `
   *[_type == "restaurante" && slug.current == $slug][0]{
     ...,
     "idiomaPorDefecto": idiomaPorDefecto->{codigo, nombre},
@@ -118,22 +136,22 @@ const RESTAURANTE_QUERY = /* groq */ `
   }
 `;
 
-const CATEGORIAS_VINO_QUERY = /* groq */ `
+const WINE_CATEGORIES_QUERY = /* groq */ `
   *[_type == "categoriaVino" && restaurante._ref == $rid] | order(orden asc)
 `;
 
-const VINOS_QUERY = /* groq */ `
+const WINES_QUERY = /* groq */ `
   *[_type == "vino" && restaurante._ref == $rid && activo == true]{
     ...,
     "categoria": categoria->{_id, orden, nombre}
   } | order(categoria->orden asc, orden asc)
 `;
 
-const CATEGORIAS_PLATO_QUERY = /* groq */ `
+const DISH_CATEGORIES_QUERY = /* groq */ `
   *[_type == "categoriaPlato" && restaurante._ref == $rid] | order(orden asc)
 `;
 
-const PLATOS_QUERY = /* groq */ `
+const DISHES_QUERY = /* groq */ `
   *[_type == "plato" && restaurante._ref == $rid && activo == true]{
     ...,
     "categoria": categoria->{_id, orden, nombre}
@@ -144,28 +162,49 @@ const PLATOS_QUERY = /* groq */ `
 // Fetchers
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type DataRestaurante = {
-  restaurante: Restaurante;
-  categoriasVino: CategoriaVino[];
-  vinos: Vino[];
-  categoriasPlato: CategoriaPlato[];
-  platos: Plato[];
+export type RestaurantData = {
+  restaurant: Restaurant;
+  wineCategories: WineCategory[];
+  wines: Wine[];
+  dishCategories: DishCategory[];
+  dishes: Dish[];
 };
 
-export async function fetchDataRestaurante(): Promise<DataRestaurante> {
-  const restaurante = await sanity.fetch<Restaurante | null>(RESTAURANTE_QUERY, {
-    slug: RESTAURANT_SLUG,
+// ─────────────────────────────────────────────────────────────────────────────
+// Legal pages
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type LegalPageDoc = {
+  _id: string;
+  tipo: 'aviso-legal' | 'privacidad' | 'cookies';
+  titulo?: CampoI18nSanity;
+  contenido?: Array<{ _key: string; value?: unknown[] }>;
+  ultimaActualizacion?: string;
+  orden?: number;
+};
+
+const LEGAL_PAGES_QUERY = /* groq */ `
+  *[_type == "paginaLegal" && restaurante._ref == $rid] | order(orden asc)
+`;
+
+export async function fetchLegalPages(restaurantId: string): Promise<LegalPageDoc[]> {
+  return sanity.fetch<LegalPageDoc[]>(LEGAL_PAGES_QUERY, { rid: restaurantId });
+}
+
+export async function fetchRestaurantData(): Promise<RestaurantData> {
+  const restaurant = await sanity.fetch<Restaurant | null>(RESTAURANT_QUERY, {
+    slug: RESTAURANT_SLUG
   });
-  if (!restaurante) {
+  if (!restaurant) {
     throw new Error(
-      `Restaurante '${RESTAURANT_SLUG}' no encontrado en Sanity. Crea el doc en el Studio o corre 'pnpm --filter studio run seed'.`,
+      `Restaurante '${RESTAURANT_SLUG}' no encontrado en Sanity. Crea el doc en el Studio o corre 'pnpm --filter studio run seed'.`
     );
   }
-  const [categoriasVino, vinos, categoriasPlato, platos] = await Promise.all([
-    sanity.fetch<CategoriaVino[]>(CATEGORIAS_VINO_QUERY, { rid: restaurante._id }),
-    sanity.fetch<Vino[]>(VINOS_QUERY, { rid: restaurante._id }),
-    sanity.fetch<CategoriaPlato[]>(CATEGORIAS_PLATO_QUERY, { rid: restaurante._id }),
-    sanity.fetch<Plato[]>(PLATOS_QUERY, { rid: restaurante._id }),
+  const [wineCategories, wines, dishCategories, dishes] = await Promise.all([
+    sanity.fetch<WineCategory[]>(WINE_CATEGORIES_QUERY, { rid: restaurant._id }),
+    sanity.fetch<Wine[]>(WINES_QUERY, { rid: restaurant._id }),
+    sanity.fetch<DishCategory[]>(DISH_CATEGORIES_QUERY, { rid: restaurant._id }),
+    sanity.fetch<Dish[]>(DISHES_QUERY, { rid: restaurant._id })
   ]);
-  return { restaurante, categoriasVino, vinos, categoriasPlato, platos };
+  return { restaurant, wineCategories, wines, dishCategories, dishes };
 }

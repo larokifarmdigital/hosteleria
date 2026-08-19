@@ -1,0 +1,79 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant, DishCategory, Dish } from '../lib/queries';
+import { splitLastWord } from '../lib/typography';
+import Tag from '../components/Tag.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  dishCategories: DishCategory[];
+  dishes: Dish[];
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, dishCategories, dishes, locale, defaultLocale } = Astro.props;
+
+const sec = restaurant.textosSecciones ?? {};
+const title = t(sec.platosTitulo, locale, defaultLocale);
+const { head, tail } = splitLastWord(title);
+
+const dishesByCategory = dishCategories.map((cat) => ({
+  category: cat,
+  items: dishes.filter((d) => d.categoria?._id === cat._id),
+}));
+---
+
+<!--
+  Guixot Dishes: cada categoría con h3 + rule horizontal que llena el espacio,
+  después lista de platos con nombre + nota + precio. Look tavern/bodega.
+-->
+<section id="plates" class="py-[12vh] px-(--gap) bg-bg-2 border-y border-line max-[900px]:py-[8vh]">
+  <div class="mx-auto max-w-[1080px]">
+    <div class="reveal text-center mb-16 max-[900px]:mb-10">
+      <Tag class="mb-6 mx-auto">{t(sec.platosEyebrow, locale, defaultLocale)}</Tag>
+      <h2 class="font-serif font-medium leading-none tracking-[-0.01em] text-[clamp(40px,5.5vw,80px)]">
+        {tail ? (
+          <>
+            {head} <em class="italic text-accent font-normal">{tail}</em>
+          </>
+        ) : (
+          title
+        )}
+      </h2>
+    </div>
+
+    <div class="flex flex-col gap-14">
+      {dishesByCategory.map(({ category, items }) => (
+        items.length > 0 && (
+          <div class="reveal">
+            {/* Category header with horizontal rule filling remaining space */}
+            <div class="flex items-baseline gap-5 mb-6">
+              <h3 class="font-serif font-medium text-accent text-[clamp(20px,2.2vw,26px)] leading-none whitespace-nowrap">
+                {t(category.nombre, locale, defaultLocale)}
+              </h3>
+              <span class="flex-1 h-px bg-line"></span>
+            </div>
+            <div class="flex flex-col divide-y divide-line/60">
+              {items.map((dish) => (
+                <div class="grid grid-cols-[1fr_auto] items-baseline gap-6 py-4">
+                  <div>
+                    <div class="font-serif font-medium text-ink text-[18px] leading-tight mb-1">
+                      {t(dish.nombre, locale, defaultLocale)}
+                    </div>
+                    <div class="text-muted text-[14px] leading-[1.55] italic">
+                      {t(dish.nota, locale, defaultLocale)}
+                    </div>
+                  </div>
+                  <span class="font-serif text-accent text-[17px] font-medium whitespace-nowrap tabular-nums">
+                    {dish.precio != null ? `${dish.precio} €` : '—'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      ))}
+    </div>
+  </div>
+</section>

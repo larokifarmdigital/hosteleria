@@ -1,0 +1,45 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import { img } from '../lib/sanity';
+import type { Restaurant } from '../lib/queries';
+import { splitLastWord } from '../lib/typography';
+import Tag from '../components/Tag.astro';
+import CtaButton from '../components/CtaButton.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+const gruposImgUrl = img.url(restaurant.gruposImagen) ?? '/img/hire.jpg';
+const title = t(restaurant.gruposTitulo, locale, defaultLocale);
+const { head, tail } = splitLastWord(title);
+---
+
+<!--
+  Guixot Groups: split horizontal (foto izq + contenido der en desktop)
+  para look editorial. Distinto al overlay-bg de Casabella.
+-->
+<section id="groups" class="grid grid-cols-[45%_55%] items-stretch min-h-[60vh] bg-bg-2 border-y border-line max-[900px]:grid-cols-1">
+  <figure class="relative overflow-hidden max-[900px]:aspect-[16/9]">
+    <img src={gruposImgUrl} alt="" class="w-full h-full object-cover" />
+    <div class="absolute inset-0 bg-[linear-gradient(90deg,transparent_60%,rgb(239_232_217/0.9))] max-[900px]:bg-[linear-gradient(180deg,transparent_60%,rgb(239_232_217/0.95))]"></div>
+  </figure>
+  <div class="reveal flex flex-col justify-center gap-8 px-(--gap) py-16 max-w-[560px] max-[900px]:mx-auto max-[900px]:text-center max-[900px]:items-center max-[900px]:py-12">
+    <Tag class="max-[900px]:mx-auto">{t(restaurant.gruposEyebrow, locale, defaultLocale)}</Tag>
+    <h2 class="font-serif font-medium leading-[1.05] tracking-[-0.01em] text-[clamp(38px,5vw,72px)]">
+      {tail ? (
+        <>
+          {head} <em class="italic text-accent font-normal">{tail}</em>
+        </>
+      ) : (
+        title
+      )}
+    </h2>
+    <CtaButton href="#book" class="self-start max-[900px]:self-center">
+      {t(restaurant.gruposCta, locale, defaultLocale)}
+    </CtaButton>
+  </div>
+</section>

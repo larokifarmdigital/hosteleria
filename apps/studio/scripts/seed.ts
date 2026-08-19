@@ -1430,6 +1430,41 @@ const paginasLegalesCasabella = [
   }
 ];
 
+// Guixot reutiliza las mismas plantillas base — el cliente rellena `[COMPLETAR]`
+// (CIF/NIF/titular/dirección fiscal) desde Sanity Studio para cada restaurante.
+const paginasLegalesGuixot = [
+  {
+    _id: 'paginaLegal-guixot-aviso-legal',
+    _type: 'paginaLegal',
+    restaurante: ref(ID.restauranteGuixot),
+    tipo: 'aviso-legal',
+    titulo: i18nStr('Aviso legal', 'Legal notice'),
+    contenido: i18nPortable(avisoLegalCasabellaES, avisoLegalCasabellaEN),
+    ultimaActualizacion: '2026-08-19',
+    orden: 10
+  },
+  {
+    _id: 'paginaLegal-guixot-privacidad',
+    _type: 'paginaLegal',
+    restaurante: ref(ID.restauranteGuixot),
+    tipo: 'privacidad',
+    titulo: i18nStr('Política de privacidad', 'Privacy policy'),
+    contenido: i18nPortable(privacidadCasabellaES, privacidadCasabellaEN),
+    ultimaActualizacion: '2026-08-19',
+    orden: 20
+  },
+  {
+    _id: 'paginaLegal-guixot-cookies',
+    _type: 'paginaLegal',
+    restaurante: ref(ID.restauranteGuixot),
+    tipo: 'cookies',
+    titulo: i18nStr('Política de cookies', 'Cookie policy'),
+    contenido: i18nPortable(cookiesCasabellaES, cookiesCasabellaEN),
+    ultimaActualizacion: '2026-08-19',
+    orden: 30
+  }
+];
+
 // ─────────────────────────────────────────────────────────────────────────────
 // GUIXOT — Sant Andreu · cocina catalana tradicional de guisos (mocks)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2003,6 +2038,8 @@ async function main() {
   for (const v of vinosGuixot) await client.createOrReplace(v as never);
   for (const c of categoriasPlatoGuixot) await client.createOrReplace(c as never);
   for (const p of platosGuixot) await client.createOrReplace(p as never);
+  console.log('⚖️  Creando páginas legales Guixot…');
+  for (const pl of paginasLegalesGuixot) await client.createOrReplace(pl as never);
 
   console.log('🍽 Creando restaurante Roure…');
   await client.createOrReplace(restauranteRoure as never);

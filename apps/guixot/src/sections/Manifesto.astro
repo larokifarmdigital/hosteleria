@@ -1,0 +1,41 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant } from '../lib/queries';
+import Tag from '../components/Tag.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+---
+
+<!--
+  Guixot Manifesto: bloque editorial destacado con "framing" — flanqueado por
+  dos rules horizontales que enmarcan el bloque, con firma abajo. Se siente
+  más "cita destacada de revista" que un párrafo suelto.
+-->
+<section class="reveal py-[10vh] px-(--gap) max-[900px]:py-[7vh]">
+  <div class="max-w-[880px] mx-auto text-center">
+    <!-- Rule ornamental corta arriba -->
+    <div class="flex items-center justify-center gap-4 mb-8">
+      <span class="w-16 h-px bg-accent"></span>
+      <Tag class="!before:hidden">{t(restaurant.manifiestoEyebrow, locale, defaultLocale)}</Tag>
+      <span class="w-16 h-px bg-accent"></span>
+    </div>
+
+    <!-- Cita grande con comillas literales burgundy -->
+    <blockquote class="font-serif font-light italic leading-[1.2] text-ink text-[clamp(28px,4vw,52px)] mb-8">
+      <span class="text-accent not-italic font-medium">“</span>{t(restaurant.manifiestoTexto, locale, defaultLocale)}<span class="text-accent not-italic font-medium">”</span>
+    </blockquote>
+
+    <!-- Firma / atribución en small caps con línea decorativa -->
+    <div class="flex items-center justify-center gap-3 text-[10px] tracking-[0.32em] uppercase text-dim font-medium">
+      <span class="w-6 h-px bg-line-strong"></span>
+      <span>{restaurant.nombre}</span>
+      <span class="w-6 h-px bg-line-strong"></span>
+    </div>
+  </div>
+</section>

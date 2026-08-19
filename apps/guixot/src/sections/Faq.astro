@@ -1,0 +1,101 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant } from '../lib/queries';
+import { splitLastWord } from '../lib/typography';
+import IconChevronDown from '../icons/IconChevronDown.astro';
+import Tag from '../components/Tag.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+
+if (!restaurant.faq?.length) return null;
+
+// FAQ label hardcoded por locale — no viene de Sanity
+const T: Record<string, { eyebrow: string; head: string; tail: string }> = {
+  es: { eyebrow: 'Preguntas frecuentes', head: 'Todo lo que necesitas', tail: 'saber' },
+  en: { eyebrow: 'Frequently asked', head: 'Everything you need to', tail: 'know' },
+  ca: { eyebrow: 'Preguntes freqüents', head: 'Tot el que necessites', tail: 'saber' },
+};
+const tt = T[locale] ?? T.es;
+---
+
+<section id="faq" class="mx-auto py-[12vh] px-(--gap) max-w-[1000px] max-[700px]:py-[10vh]">
+  <div class="reveal text-center mb-14 max-[700px]:mb-10">
+    <Tag class="mb-6 mx-auto">{tt.eyebrow}</Tag>
+    <h2 class="font-serif font-medium leading-none tracking-[-0.01em] text-[clamp(36px,4.6vw,60px)]">
+      {tt.head} <em class="italic text-accent font-normal">{tt.tail}</em>
+    </h2>
+  </div>
+
+  <div class="flex flex-col">
+    {restaurant.faq.map((item, i) => (
+      <details
+        class="reveal group border-b border-line first:border-t border-line px-[clamp(16px,3vw,32px)] transition-colors duration-[350ms] hover:bg-[rgb(30_58_95/0.15)] open:bg-[rgb(30_58_95/0.22)]"
+      >
+        <summary
+          class="grid items-center grid-cols-[44px_1fr_20px] gap-5 py-6 cursor-pointer list-none [&::-webkit-details-marker]:hidden transition-colors duration-300 hover:text-accent max-[700px]:grid-cols-[34px_1fr_16px] max-[700px]:gap-3.5 max-[700px]:py-5"
+        >
+          <span class="font-serif italic font-medium text-accent leading-none text-[22px] max-[700px]:text-[18px]">
+            {String(i + 1).padStart(2, '0')}
+          </span>
+          <span class="font-serif text-ink font-medium leading-[1.35] tracking-[-0.005em] text-[clamp(17px,1.8vw,21px)] transition-colors duration-300 group-open:text-accent">
+            {t(item.pregunta, locale, defaultLocale)}
+          </span>
+          <span
+            aria-hidden="true"
+            class="flex items-center justify-center text-muted transition-[transform,color] duration-[450ms] ease-[cubic-bezier(.65,0,.35,1)] group-open:rotate-180 group-open:text-accent group-hover:text-accent motion-reduce:transition-none"
+          >
+            <IconChevronDown />
+          </span>
+        </summary>
+        <div class="faq-body overflow-hidden opacity-0 -translate-y-1.5 h-0 will-change-[height] transition-[height,opacity,transform] duration-[420ms] ease-[cubic-bezier(.65,0,.35,1)] group-open:opacity-100 group-open:translate-y-0 motion-reduce:transition-none">
+          <p class="text-ink-soft text-[15.5px] leading-[1.75] max-w-[62ch] py-0 pb-6 pl-16 pr-5 m-0 max-[700px]:pl-12 max-[700px]:pr-0 max-[700px]:pb-5">
+            {t(item.respuesta, locale, defaultLocale)}
+          </p>
+        </div>
+      </details>
+    ))}
+  </div>
+</section>
+
+<script is:inline>
+  (function () {
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.querySelectorAll('details.reveal').forEach((details) => {
+      const summary = details.querySelector('summary');
+      const body = details.querySelector('.faq-body');
+      if (!summary || !body) return;
+      summary.addEventListener('click', (e) => {
+        if (reduce) return;
+        e.preventDefault();
+        const isOpen = details.hasAttribute('open');
+        body.style.height = body.scrollHeight + 'px';
+        if (isOpen) {
+          requestAnimationFrame(() => { body.style.height = '0px'; });
+          body.addEventListener('transitionend', function once(ev) {
+            if (ev.propertyName !== 'height') return;
+            body.removeEventListener('transitionend', once);
+            details.removeAttribute('open');
+            body.style.height = '';
+          });
+        } else {
+          details.setAttribute('open', '');
+          body.style.height = '0px';
+          requestAnimationFrame(() => {
+            body.style.height = body.scrollHeight + 'px';
+          });
+          body.addEventListener('transitionend', function once(ev) {
+            if (ev.propertyName !== 'height') return;
+            body.removeEventListener('transitionend', once);
+            body.style.height = 'auto';
+          });
+        }
+      });
+    });
+  })();
+</script>

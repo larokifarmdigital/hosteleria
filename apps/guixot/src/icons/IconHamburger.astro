@@ -1,0 +1,19 @@
+---
+interface Props {
+  size?: number;
+  class?: string;
+  ariaHidden?: boolean;
+}
+const { size = 24, class: cls = '', ariaHidden = true } = Astro.props;
+---
+
+<svg
+  width={size}
+  height={size * (16 / 24)}
+  viewBox="0 0 24 16"
+  fill="none"
+  aria-hidden={ariaHidden}
+  class={cls}
+>
+  <path d="M2 4h20M2 12h20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+</svg>

@@ -1,0 +1,52 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import { img } from '../lib/sanity';
+import type { Restaurant } from '../lib/queries';
+import { extractI18nParagraphs } from '../lib/portableText';
+import { splitAtHalf } from '../lib/typography';
+import Tag from '../components/Tag.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+const aboutImg = img.url(restaurant.sobreImagenes?.[0]) ?? '/img/gal-room.jpg';
+const paragraphs = extractI18nParagraphs(restaurant.sobreCuerpo, locale, defaultLocale);
+const title = t(restaurant.sobreTitulo, locale, defaultLocale);
+const { head, tail } = splitAtHalf(title);
+---
+
+<!--
+  Guixot About: cabecera con tag + título split-at-half, cuerpo con foto a la
+  izq y texto a la der (invertido vs Casabella, más rustic-column style).
+-->
+<section id="about" class="py-[14vh] px-(--gap) max-w-[var(--max)] mx-auto max-[900px]:py-[10vh]">
+  <div class="reveal text-center mb-16 max-[900px]:mb-10">
+    <Tag class="mb-6 mx-auto">{t(restaurant.sobreEyebrow, locale, defaultLocale)}</Tag>
+    <h2 class="font-serif font-medium leading-[1.05] tracking-[-0.01em] text-[clamp(38px,5.5vw,72px)] max-w-[18ch] mx-auto">
+      {tail ? (
+        <>
+          {head} <em class="italic text-accent font-normal">{tail}</em>
+        </>
+      ) : (
+        title
+      )}
+    </h2>
+  </div>
+
+  <div class="grid grid-cols-[1fr_1.2fr] gap-[clamp(40px,6vw,96px)] items-start max-[900px]:grid-cols-1 max-[900px]:gap-8">
+    <figure class="reveal aspect-[4/5] overflow-hidden bg-surface shadow-[0_20px_60px_-20px_rgb(30_58_95/0.25)] max-[900px]:aspect-[4/3]">
+      <img src={aboutImg} alt="" class="w-full h-full object-cover" />
+    </figure>
+    <div class="reveal pt-4 max-[900px]:pt-0">
+      {paragraphs.map((p) => (
+        <p class="text-ink-soft text-[17px] leading-[1.8] mb-5 max-w-[52ch] first:first-letter:font-serif first:first-letter:text-[64px] first:first-letter:leading-[0.85] first:first-letter:font-medium first:first-letter:text-accent first:first-letter:float-left first:first-letter:mr-2 first:first-letter:mt-1">
+          {p}
+        </p>
+      ))}
+    </div>
+  </div>
+</section>

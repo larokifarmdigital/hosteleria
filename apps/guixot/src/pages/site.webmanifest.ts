@@ -1,18 +1,18 @@
 import type { APIRoute } from 'astro';
-import { fetchDataRestaurante } from '../lib/queries';
+import { fetchRestaurantData } from '../lib/queries';
 import { img } from '../lib/sanity';
 
 export const prerender = true;
 
 /**
- * Genera dinámicamente el manifest PWA con los datos del restaurante en Sanity.
+ * Genera dinámicamente el manifest PWA con los datos del restaurant en Sanity.
  * Si el icono aún no está subido, usa placeholders en /public.
  */
 export const GET: APIRoute = async () => {
-  const { restaurante } = await fetchDataRestaurante();
-  const iconoApp = restaurante.iconoApp;
-  const theme = restaurante.colorMarca ?? '#d2622a';
-  const shortName = restaurante.nombre.split(' ').pop() ?? restaurante.nombre;
+  const { restaurant } = await fetchRestaurantData();
+  const iconoApp = restaurant.iconoApp;
+  const theme = restaurant.colorMarca ?? '#d2622a';
+  const shortName = restaurant.nombre.split(' ').pop() ?? restaurant.nombre;
 
   const icons = iconoApp
     ? [
@@ -27,14 +27,14 @@ export const GET: APIRoute = async () => {
       ];
 
   const manifest = {
-    name: restaurante.nombre,
+    name: restaurant.nombre,
     short_name: shortName,
-    description: restaurante.nombre,
+    description: restaurant.nombre,
     start_url: '/',
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
-    lang: restaurante.idiomaPorDefecto?.codigo ?? 'es',
+    lang: restaurant.idiomaPorDefecto?.codigo ?? 'es',
     background_color: '#f5f1e8',
     theme_color: theme,
     icons,

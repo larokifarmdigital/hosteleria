@@ -1,0 +1,63 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import { img } from '../lib/sanity';
+import type { Restaurant } from '../lib/queries';
+import Tag from '../components/Tag.astro';
+import CtaButton from '../components/CtaButton.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+const heroImgUrl = img.url(restaurant.heroImagen) ?? '/img/hero.jpg';
+const heroTitle = t(restaurant.heroTitulo, locale, defaultLocale);
+const heroSubtitle = t(restaurant.heroSubtitulo, locale, defaultLocale);
+---
+
+<!--
+  Guixot Hero: layout HORIZONTAL editorial.
+  - hero-top: tags decorativas alineadas
+  - hero-body: 2 columnas (texto + foto), CTA integrado al final del texto
+-->
+<header id="top" class="relative pt-24 pb-16 px-(--gap) max-[900px]:pt-20">
+  <div class="mx-auto max-w-[var(--max)]">
+
+    <!-- ▸ hero-top: rule + tag + tag alineados horizontal -->
+    <div class="flex items-center gap-4 mb-12 max-[700px]:flex-wrap max-[700px]:gap-2">
+      <span class="w-[60px] h-px bg-line-strong flex-shrink-0"></span>
+      <Tag class="!before:hidden">
+        {t(restaurant.heroMetaIzq, locale, defaultLocale)}
+      </Tag>
+      <span class="text-dim opacity-60">·</span>
+      <Tag class="!before:hidden">
+        {t(restaurant.heroMetaDer, locale, defaultLocale)}
+      </Tag>
+    </div>
+
+    <!-- ▸ hero-body: título + descripción + CTA a la izquierda, foto a la derecha -->
+    <div class="grid grid-cols-[1.1fr_1fr] gap-[clamp(40px,6vw,96px)] items-center max-[900px]:grid-cols-1 max-[900px]:gap-10">
+      <div class="flex flex-col gap-8">
+        <h1 class="font-serif font-medium leading-[0.95] tracking-[-0.02em] text-[clamp(56px,8vw,124px)]">
+          <span class="block">{heroTitle}</span>
+          <span class="block italic text-accent font-normal">{heroSubtitle}</span>
+        </h1>
+        <p
+          class="text-ink-soft text-[17px] leading-[1.7] max-w-[42ch]"
+          set:html={t(restaurant.heroNota, locale, defaultLocale).replace(/\n/g, '<br />')}
+        />
+        <div class="max-[900px]:self-start">
+          <CtaButton href="#book">
+            {t(restaurant.heroCta, locale, defaultLocale)}
+          </CtaButton>
+        </div>
+      </div>
+      <figure class="aspect-[4/5] overflow-hidden bg-surface shadow-[0_20px_60px_-20px_rgb(30_58_95/0.25)] max-[900px]:aspect-[4/3]">
+        <img src={heroImgUrl} alt={heroTitle} class="w-full h-full object-cover" />
+      </figure>
+    </div>
+
+  </div>
+</header>
