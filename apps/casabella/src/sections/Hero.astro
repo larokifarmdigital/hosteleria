@@ -3,6 +3,7 @@ import { t } from '@hosteleria/i18n-utils';
 import { img } from '../lib/sanity';
 import type { Restaurant } from '../lib/queries';
 import CtaButton from '../components/CtaButton.astro';
+import { resolveBookingAction } from '@hosteleria/utils';
 
 interface Props {
   restaurant: Restaurant;
@@ -12,6 +13,7 @@ interface Props {
 
 const { restaurant, locale, defaultLocale } = Astro.props;
 const heroImgUrl = img.url(restaurant.heroImagen) ?? '/img/hero.jpg';
+const bookingAction = resolveBookingAction(restaurant, locale);
 ---
 
 <section
@@ -50,9 +52,16 @@ const heroImgUrl = img.url(restaurant.heroImagen) ?? '/img/hero.jpg';
       class='text-ink-soft text-[17px] leading-[1.7] max-w-[42ch]'
       set:html={t(restaurant.heroNota, locale, defaultLocale).replace(/\n/g, '<br />')}
     />
-    <CtaButton href='#book' class='w-fit'>
-      {t(restaurant.heroCta, locale, defaultLocale)}
-    </CtaButton>
+    {bookingAction && (
+      <CtaButton
+        href={bookingAction.href}
+        target={bookingAction.external ? '_blank' : undefined}
+        rel={bookingAction.external ? 'noopener' : undefined}
+        class='w-fit'
+      >
+        {t(restaurant.heroCta, locale, defaultLocale)}
+      </CtaButton>
+    )}
   </div>
 
   <!-- Scroll indicator: fade in + animated line vertical -->

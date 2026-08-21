@@ -1,7 +1,7 @@
 ---
 import { localizedPath, t } from '@hosteleria/i18n-utils';
 import type { RestaurantData, LocaleRef, LegalPageDoc } from '../lib/queries';
-import { buildWhatsAppHref } from '@hosteleria/utils';
+import { buildWhatsAppHref, resolveBookingAction } from '@hosteleria/utils';
 import Nav from './Nav.astro';
 import MobileOverlay from './MobileOverlay.astro';
 import Footer from '@hosteleria/ui/components/Footer.astro';
@@ -36,6 +36,7 @@ const whatsappRaw = restaurant.contacto?.whatsapp ?? '';
 const waHref = buildWhatsAppHref(whatsappRaw, restaurant.nombre, locale);
 
 const homePath = localizedPath('/', locale, defaultLocale);
+const bookingAction = resolveBookingAction(restaurant, locale, homePath);
 const slug = Astro.params.slug as string;
 // El language switcher debe apuntar a la misma página legal en el otro locale
 const langSwitcherPath = `/legal/${slug}`;
@@ -121,9 +122,16 @@ const formattedDate = lastUpdated
   bookingPhone={bookingPhone}
   bookingEmail={bookingEmail}
 >
-  <CtaButton slot='cta' href={`${homePath}#book`}>
-    {t(restaurant.textosNav?.linkReservar, locale, defaultLocale) || 'Reservar'}
-  </CtaButton>
+  {bookingAction && (
+    <CtaButton
+      slot='cta'
+      href={bookingAction.href}
+      target={bookingAction.external ? '_blank' : undefined}
+      rel={bookingAction.external ? 'noopener' : undefined}
+    >
+      {bookingAction.label ?? t(restaurant.textosNav?.linkReservar, locale, defaultLocale) ?? 'Reservar'}
+    </CtaButton>
+  )}
 </Footer>
 
 <WhatsAppFab href={waHref} locale={locale} />

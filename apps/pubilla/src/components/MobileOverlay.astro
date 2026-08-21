@@ -2,6 +2,7 @@
 import { t, localizedPath } from '@hosteleria/i18n-utils';
 import type { LocaleRef, Restaurant } from '@hosteleria/sanity-client';
 import IconClose from '@hosteleria/ui/icons/IconClose.astro';
+import { resolveBookingAction } from '@hosteleria/utils';
 import CtaButton from './CtaButton.astro';
 
 interface Props {
@@ -60,6 +61,7 @@ const links = [
   { href: `${hrefPrefix}#wines`, label: t(nav.linkVinos, locale, defaultLocale) || 'Vinos' },
   { href: `${hrefPrefix}#gallery`, label: t(nav.linkGaleria, locale, defaultLocale) || 'Galería' }
 ];
+const bookingAction = resolveBookingAction(restaurant, locale, hrefPrefix);
 const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
 
 const CONTACT_LABELS: Record<string, { tel: string; wa: string; mail: string }> = {
@@ -163,9 +165,16 @@ const cLabels = CONTACT_LABELS[locale] ?? CONTACT_LABELS.es;
            group-data-[open='true']/overlay:[transition-delay:0.25s] group-data-[open='true']/overlay:duration-[380ms]
            motion-reduce:transition-none motion-reduce:opacity-100 motion-reduce:translate-y-0"
   >
-    <CtaButton href={`${hrefPrefix}#book`} class='w-full justify-center'>
-      {reservarLabel}
-    </CtaButton>
+    {bookingAction && (
+      <CtaButton
+        href={bookingAction.href}
+        target={bookingAction.external ? '_blank' : undefined}
+        rel={bookingAction.external ? 'noopener' : undefined}
+        class='w-full justify-center'
+      >
+        {bookingAction.label ?? reservarLabel}
+      </CtaButton>
+    )}
   </div>
 
   <!-- Separador ornamental -->

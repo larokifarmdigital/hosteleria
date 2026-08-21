@@ -4,6 +4,7 @@ import { img } from '../lib/sanity';
 import type { Restaurant } from '../lib/queries';
 import Eyebrow from '@hosteleria/ui/components/Eyebrow.astro';
 import CtaButton from '../components/CtaButton.astro';
+import { resolveBookingAction } from '@hosteleria/utils';
 
 interface Props {
   restaurant: Restaurant;
@@ -13,6 +14,7 @@ interface Props {
 
 const { restaurant, locale, defaultLocale } = Astro.props;
 const gruposImgUrl = img.url(restaurant.gruposImagen) ?? '/img/hire.jpg';
+const bookingAction = resolveBookingAction(restaurant, locale);
 ---
 
 <section id="groups" class="relative overflow-hidden flex items-center justify-center min-h-[70vh] max-[960px]:min-h-[60vh]">
@@ -29,8 +31,14 @@ const gruposImgUrl = img.url(restaurant.gruposImagen) ?? '/img/hire.jpg';
     <h2 class="font-serif font-light leading-[1.05] tracking-[-0.01em] text-[clamp(40px,5.5vw,80px)]">
       {t(restaurant.gruposTitulo, locale, defaultLocale)}
     </h2>
-    <CtaButton href="#book">
-      {t(restaurant.gruposCta, locale, defaultLocale)}
-    </CtaButton>
+    {bookingAction && (
+      <CtaButton
+        href={bookingAction.href}
+        target={bookingAction.external ? '_blank' : undefined}
+        rel={bookingAction.external ? 'noopener' : undefined}
+      >
+        {t(restaurant.gruposCta, locale, defaultLocale)}
+      </CtaButton>
+    )}
   </div>
 </section>

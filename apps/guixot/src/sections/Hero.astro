@@ -4,6 +4,7 @@ import { img } from '../lib/sanity';
 import type { Restaurant } from '../lib/queries';
 import Tag from '../components/Tag.astro';
 import CtaButton from '../components/CtaButton.astro';
+import { resolveBookingAction } from '@hosteleria/utils';
 
 interface Props {
   restaurant: Restaurant;
@@ -15,6 +16,7 @@ const { restaurant, locale, defaultLocale } = Astro.props;
 const heroImgUrl = img.url(restaurant.heroImagen) ?? '/img/hero.jpg';
 const heroTitle = t(restaurant.heroTitulo, locale, defaultLocale);
 const heroSubtitle = t(restaurant.heroSubtitulo, locale, defaultLocale);
+const bookingAction = resolveBookingAction(restaurant, locale);
 ---
 
 <!--
@@ -48,11 +50,17 @@ const heroSubtitle = t(restaurant.heroSubtitulo, locale, defaultLocale);
           class="text-ink-soft text-[17px] leading-[1.7] max-w-[42ch]"
           set:html={t(restaurant.heroNota, locale, defaultLocale).replace(/\n/g, '<br />')}
         />
-        <div class="max-[900px]:self-start">
-          <CtaButton href="#book">
-            {t(restaurant.heroCta, locale, defaultLocale)}
-          </CtaButton>
-        </div>
+        {bookingAction && (
+          <div class="max-[900px]:self-start">
+            <CtaButton
+              href={bookingAction.href}
+              target={bookingAction.external ? '_blank' : undefined}
+              rel={bookingAction.external ? 'noopener' : undefined}
+            >
+              {t(restaurant.heroCta, locale, defaultLocale)}
+            </CtaButton>
+          </div>
+        )}
       </div>
       <figure class="aspect-[4/5] overflow-hidden bg-surface shadow-[0_20px_60px_-20px_rgb(30_58_95/0.25)] max-[900px]:aspect-[4/3]">
         <img src={heroImgUrl} alt={heroTitle} class="w-full h-full object-cover" />

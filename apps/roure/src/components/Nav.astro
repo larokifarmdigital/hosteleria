@@ -2,6 +2,7 @@
 import { t, localizedPath } from '@hosteleria/i18n-utils';
 import type { LocaleRef, Restaurant } from '../lib/queries';
 import IconHamburger from '@hosteleria/ui/icons/IconHamburger.astro';
+import { resolveBookingAction } from '@hosteleria/utils';
 
 interface Props {
   restaurant: Restaurant;
@@ -27,6 +28,9 @@ const {
 } = Astro.props;
 
 const nav = restaurant.textosNav ?? {};
+
+// Acción del botón "Reservar": form (#book) → whatsapp → tel → null (no mostrar)
+const bookingAction = resolveBookingAction(restaurant, locale, hrefPrefix);
 
 const localesUi = activeLocales.length
   ? activeLocales
@@ -148,12 +152,16 @@ const openMenuLabel = A11Y_OPEN_MENU[locale] ?? A11Y_OPEN_MENU.es;
       )
     }
 
-    <a
-      href={`${hrefPrefix}#book`}
-      class='inline-flex items-center gap-2.5 py-3 px-6 bg-accent text-bg border border-accent rounded-sm font-sans font-semibold uppercase text-[11px] tracking-[0.2em] whitespace-nowrap cursor-pointer shadow-[0_4px_14px_rgb(212_166_85/0.25)] transition-[background-color,border-color,transform,box-shadow] duration-300 hover:bg-accent-hover hover:border-accent-hover hover:-translate-y-px hover:shadow-[0_8px_22px_rgb(212_166_85/0.38)] focus-visible:outline-offset-[4px]'
-    >
-      {t(nav.linkReservar, locale, defaultLocale) || 'Reservar'}
-    </a>
+    {bookingAction && (
+      <a
+        href={bookingAction.href}
+        target={bookingAction.external ? '_blank' : undefined}
+        rel={bookingAction.external ? 'noopener' : undefined}
+        class='inline-flex items-center gap-2.5 py-3 px-6 bg-accent text-bg border border-accent rounded-sm font-sans font-semibold uppercase text-[11px] tracking-[0.2em] whitespace-nowrap cursor-pointer shadow-[0_4px_14px_rgb(212_166_85/0.25)] transition-[background-color,border-color,transform,box-shadow] duration-300 hover:bg-accent-hover hover:border-accent-hover hover:-translate-y-px hover:shadow-[0_8px_22px_rgb(212_166_85/0.38)] focus-visible:outline-offset-[4px]'
+      >
+        {bookingAction.label ?? t(nav.linkReservar, locale, defaultLocale) ?? 'Reservar'}
+      </a>
+    )}
   </div>
 
   <button

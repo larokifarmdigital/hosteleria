@@ -2,6 +2,7 @@
 import { t, localizedPath } from '@hosteleria/i18n-utils';
 import type { LocaleRef, Restaurant } from '@hosteleria/sanity-client';
 import IconClose from '@hosteleria/ui/icons/IconClose.astro';
+import { resolveBookingAction } from '@hosteleria/utils';
 
 interface Props {
   restaurant: Restaurant;
@@ -52,6 +53,7 @@ const links = [
   { href: `${hrefPrefix}#wines`, label: t(nav.linkVinos, locale, defaultLocale) || 'Vinos' },
   { href: `${hrefPrefix}#gallery`, label: t(nav.linkGaleria, locale, defaultLocale) || 'Galería' }
 ];
+const bookingAction = resolveBookingAction(restaurant, locale, hrefPrefix);
 const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
 
 // Numeración romana (i, ii, iii, iv) — coherente con el patrón editorial
@@ -166,15 +168,19 @@ const sello = selloParts.join(' · ');
   </nav>
 
   <!-- CTA botón filled bordó al ancho completo -->
-  <div class='pt-8'>
-    <a
-      href={`${hrefPrefix}#book`}
-      class='group flex items-center justify-center gap-3 py-4 px-8 bg-accent text-bg border border-accent rounded-sm font-sans font-semibold uppercase text-[13px] tracking-[0.24em] cursor-pointer transition-[background-color,border-color,transform] duration-300 hover:bg-accent-hover hover:border-accent-hover hover:-translate-y-px shadow-[0_6px_18px_-6px_rgb(138_58_74/0.4)]'
-    >
-      <span>{reservarLabel}</span>
-      <span class='transition-transform duration-300 group-hover:translate-x-1'>→</span>
-    </a>
-  </div>
+  {bookingAction && (
+    <div class='pt-8'>
+      <a
+        href={bookingAction.href}
+        target={bookingAction.external ? '_blank' : undefined}
+        rel={bookingAction.external ? 'noopener' : undefined}
+        class='group flex items-center justify-center gap-3 py-4 px-8 bg-accent text-bg border border-accent rounded-sm font-sans font-semibold uppercase text-[13px] tracking-[0.24em] cursor-pointer transition-[background-color,border-color,transform] duration-300 hover:bg-accent-hover hover:border-accent-hover hover:-translate-y-px shadow-[0_6px_18px_-6px_rgb(138_58_74/0.4)]'
+      >
+        <span>{bookingAction.label ?? reservarLabel}</span>
+        <span class='transition-transform duration-300 group-hover:translate-x-1'>→</span>
+      </a>
+    </div>
+  )}
 
   <!-- Separador — ❦ — antes del footer -->
   <div class='flex items-center justify-center gap-3 py-6 mt-6'>

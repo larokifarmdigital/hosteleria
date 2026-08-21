@@ -15,6 +15,11 @@ interface Props {
 
 const { restaurant, locale, defaultLocale, bookingEmail } = Astro.props;
 
+// Switch en Sanity: si aceptaReservas === false ocultamos la sección Booking
+// completa. El botón "Reservar" del Nav/Hero/etc cae en cascada a WhatsApp/tel
+// (ver resolveBookingAction en @hosteleria/utils).
+if (restaurant.aceptaReservas === false) return null;
+
 const nav = restaurant.textosNav ?? {};
 const form = restaurant.textosForm ?? {};
 

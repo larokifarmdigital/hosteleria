@@ -3,6 +3,7 @@ import { t } from '@hosteleria/i18n-utils';
 import { img } from '../lib/sanity';
 import type { Restaurant } from '../lib/queries';
 import CtaButton from '../components/CtaButton.astro';
+import { resolveBookingAction } from '@hosteleria/utils';
 
 interface Props {
   restaurant: Restaurant;
@@ -19,6 +20,7 @@ const cta = t(restaurant.gruposCta, locale, defaultLocale);
 const puntosDestacados = (restaurant.gruposDestacados ?? [])
   .map(p => t(p.texto, locale, defaultLocale))
   .filter(Boolean);
+const bookingAction = resolveBookingAction(restaurant, locale);
 ---
 
 <!--
@@ -86,7 +88,15 @@ const puntosDestacados = (restaurant.gruposDestacados ?? [])
 
     <!-- CTA -->
     <div class='pt-2'>
-      <CtaButton href='#book'>{cta}</CtaButton>
+      {bookingAction && (
+        <CtaButton
+          href={bookingAction.href}
+          target={bookingAction.external ? '_blank' : undefined}
+          rel={bookingAction.external ? 'noopener' : undefined}
+        >
+          {cta}
+        </CtaButton>
+      )}
     </div>
   </div>
 </section>

@@ -4,11 +4,13 @@
  * Distinto al pill dorado de Casabella. Substancial, brochazo tradicional.
  */
 interface Props {
+  target?: '_blank' | '_self';
+  rel?: string;
   href?: string;
   type?: 'submit' | 'button';
   class?: string;
 }
-const { href, type = 'button', class: cls = '' } = Astro.props;
+const { href, type = 'button', target, rel, class: cls = '' } = Astro.props;
 
 const base = [
   'inline-flex items-center gap-3 py-3.5 px-8',
@@ -24,7 +26,7 @@ const base = [
 ---
 
 {href ? (
-  <a href={href} class:list={[...base, cls]}>
+  <a href={href} target={target} rel={rel} class:list={[...base, cls]}>
     <slot />
     <span class="arrow">→</span>
   </a>

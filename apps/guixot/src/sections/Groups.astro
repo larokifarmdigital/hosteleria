@@ -5,6 +5,7 @@ import type { Restaurant } from '../lib/queries';
 import { splitLastWord } from '@hosteleria/utils';
 import Tag from '../components/Tag.astro';
 import CtaButton from '../components/CtaButton.astro';
+import { resolveBookingAction } from '@hosteleria/utils';
 
 interface Props {
   restaurant: Restaurant;
@@ -16,6 +17,7 @@ const { restaurant, locale, defaultLocale } = Astro.props;
 const gruposImgUrl = img.url(restaurant.gruposImagen) ?? '/img/hire.jpg';
 const title = t(restaurant.gruposTitulo, locale, defaultLocale);
 const { head, tail } = splitLastWord(title);
+const bookingAction = resolveBookingAction(restaurant, locale);
 ---
 
 <!--
@@ -38,8 +40,15 @@ const { head, tail } = splitLastWord(title);
         title
       )}
     </h2>
-    <CtaButton href="#book" class="self-start max-[900px]:self-center">
-      {t(restaurant.gruposCta, locale, defaultLocale)}
-    </CtaButton>
+    {bookingAction && (
+      <CtaButton
+        href={bookingAction.href}
+        target={bookingAction.external ? '_blank' : undefined}
+        rel={bookingAction.external ? 'noopener' : undefined}
+        class="self-start max-[900px]:self-center"
+      >
+        {t(restaurant.gruposCta, locale, defaultLocale)}
+      </CtaButton>
+    )}
   </div>
 </section>
