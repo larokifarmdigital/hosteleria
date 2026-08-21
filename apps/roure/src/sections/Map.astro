@@ -1,0 +1,71 @@
+---
+import type { Restaurant } from '../lib/queries';
+import {
+  extractMapSrc,
+  withMapLocale,
+  extractCoords,
+  extractFTID,
+  ftidToCID,
+  buildMapsExternalUrl,
+} from '@hosteleria/utils';
+import Eyebrow from '@hosteleria/ui/components/Eyebrow.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+}
+
+const { restaurant, locale } = Astro.props;
+
+const rawMapSrc = extractMapSrc(restaurant.mapaUrl);
+if (!rawMapSrc) return null;
+
+const mapSrc = withMapLocale(rawMapSrc, locale);
+const dir = restaurant.direccion ?? {};
+
+const coords = extractCoords(rawMapSrc);
+const ftid = extractFTID(rawMapSrc);
+const cid = ftidToCID(ftid);
+const fullAddress = [dir.calle, dir.codigoPostal, dir.ciudad, dir.pais]
+  .filter(Boolean)
+  .join(', ');
+const mapsExternalUrl = buildMapsExternalUrl(cid, coords, fullAddress, locale);
+---
+
+<section id="map" class="py-[12vh] px-(--gap) border-t border-b border-line max-[900px]:py-[10vh]">
+  <div class="reveal max-w-[var(--max)] mx-auto mb-[clamp(40px,5vw,60px)] text-center max-[900px]:mb-10">
+    <Eyebrow class="block mb-[18px]">
+      {locale === 'en' ? 'How to find us' : 'Cómo llegar'}
+    </Eyebrow>
+    <h2 class="font-serif font-light leading-none tracking-[-0.01em] text-[clamp(36px,4.6vw,60px)]">
+      {restaurant.nombre},
+      <em class="text-accent italic font-light">{dir.barrio || dir.ciudad || ''}</em>
+    </h2>
+  </div>
+
+  <div class="reveal overflow-hidden bg-surface mx-auto max-w-[var(--max)] border border-line">
+    <iframe
+      src={mapSrc}
+      title={`${restaurant.nombre} — ${locale === 'en' ? 'How to find us' : 'Cómo llegar'}`}
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+      allowfullscreen
+      class="block w-full border-0 h-[clamp(340px,52vh,500px)] max-[900px]:h-[clamp(280px,44vh,380px)] filter [filter:grayscale(0.18)_contrast(0.94)]"
+    ></iframe>
+  </div>
+
+  {mapsExternalUrl && (
+    <div class="reveal max-w-[var(--max)] mx-auto mt-[clamp(24px,3vw,36px)] text-center">
+      <a
+        href={mapsExternalUrl}
+        target="_blank"
+        rel="noopener"
+        class="group inline-flex items-center gap-2.5 font-sans font-medium uppercase text-accent text-[13px] tracking-[0.14em] py-1 border-b border-accent cursor-pointer
+               transition-[color,border-color] duration-300 hover:text-accent-hover hover:border-accent-hover"
+      >
+        {locale === 'en' ? 'Open in Google Maps' : 'Ver en Google Maps'}
+        <span class="transition-transform duration-300 group-hover:translate-x-1">→</span>
+      </a>
+    </div>
+  )}
+</section>

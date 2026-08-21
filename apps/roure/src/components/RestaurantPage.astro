@@ -1,0 +1,109 @@
+---
+import type { RestaurantData, LocaleRef, LegalPageDoc } from '../lib/queries';
+import { buildWhatsAppHref } from '@hosteleria/utils';
+
+import Nav from './Nav.astro';
+import MobileOverlay from './MobileOverlay.astro';
+import Footer from '@hosteleria/ui/components/Footer.astro';
+import WhatsAppFab from '@hosteleria/ui/components/WhatsAppFab.astro';
+import RevealScript from '@hosteleria/ui/components/RevealScript.astro';
+
+import Hero from '../sections/Hero.astro';
+import Manifesto from '../sections/Manifesto.astro';
+import About from '../sections/About.astro';
+import Dishes from '../sections/Dishes.astro';
+import Wines from '../sections/Wines.astro';
+import Gallery from '../sections/Gallery.astro';
+import Groups from '../sections/Groups.astro';
+import Faq from '../sections/Faq.astro';
+import Booking from '../sections/Booking.astro';
+import Map from '../sections/Map.astro';
+
+interface Props extends RestaurantData {
+  locale: string;
+  defaultLocale: string;
+  activeLocales: LocaleRef[];
+  legalPages?: LegalPageDoc[];
+}
+
+const {
+  locale,
+  defaultLocale,
+  activeLocales,
+  restaurant,
+  wineCategories,
+  wines,
+  dishCategories,
+  dishes,
+  legalPages = [],
+} = Astro.props;
+
+const bookingEmail = restaurant.contacto?.email ?? '';
+const bookingPhone = restaurant.contacto?.telefono ?? '';
+const whatsappRaw = restaurant.contacto?.whatsapp ?? '';
+const waHref = buildWhatsAppHref(whatsappRaw, restaurant.nombre, locale);
+---
+
+<Nav
+  restaurant={restaurant}
+  locale={locale}
+  defaultLocale={defaultLocale}
+  activeLocales={activeLocales}
+/>
+
+<MobileOverlay
+  restaurant={restaurant}
+  locale={locale}
+  defaultLocale={defaultLocale}
+  activeLocales={activeLocales}
+  waHref={waHref}
+  whatsappRaw={whatsappRaw}
+  bookingPhone={bookingPhone}
+  bookingEmail={bookingEmail}
+/>
+
+<main id="main">
+  <Hero restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
+  <Manifesto restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
+  <About restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
+  <Dishes
+    restaurant={restaurant}
+    dishCategories={dishCategories}
+    dishes={dishes}
+    locale={locale}
+    defaultLocale={defaultLocale}
+  />
+  <Wines
+    restaurant={restaurant}
+    wineCategories={wineCategories}
+    wines={wines}
+    locale={locale}
+    defaultLocale={defaultLocale}
+  />
+  <Gallery restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
+  <Groups restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
+  <Faq restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
+  <Booking
+    restaurant={restaurant}
+    locale={locale}
+    defaultLocale={defaultLocale}
+    bookingEmail={bookingEmail}
+  />
+  <Map restaurant={restaurant} locale={locale} />
+</main>
+
+<Footer
+  restaurant={restaurant}
+  locale={locale}
+  defaultLocale={defaultLocale}
+  legalPages={legalPages}
+  waHref={waHref}
+  whatsappRaw={whatsappRaw}
+  bookingPhone={bookingPhone}
+  bookingEmail={bookingEmail}
+  showCta={false}
+/>
+
+<WhatsAppFab href={waHref} locale={locale} />
+
+<RevealScript />

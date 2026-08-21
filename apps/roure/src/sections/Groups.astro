@@ -1,0 +1,36 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import { img } from '../lib/sanity';
+import type { Restaurant } from '../lib/queries';
+import Eyebrow from '@hosteleria/ui/components/Eyebrow.astro';
+import CtaButton from '../components/CtaButton.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+const gruposImgUrl = img.url(restaurant.gruposImagen) ?? '/img/hire.jpg';
+---
+
+<section id="groups" class="relative overflow-hidden flex items-center justify-center min-h-[70vh] max-[960px]:min-h-[60vh]">
+  <!-- Background con gradient overlay via after:, imagen difuminada -->
+  <div
+    class="absolute inset-0 z-0
+           after:content-[''] after:absolute after:inset-0
+           after:bg-[linear-gradient(180deg,var(--color-bg)_0%,transparent_30%,transparent_70%,var(--color-bg)_100%)]"
+  >
+    <img src={gruposImgUrl} alt="" class="w-full h-full object-cover opacity-35" />
+  </div>
+  <div class="reveal relative z-[1] flex flex-col items-center text-center gap-[26px] px-(--gap) max-w-[700px]">
+    <Eyebrow class="block">{t(restaurant.gruposEyebrow, locale, defaultLocale)}</Eyebrow>
+    <h2 class="font-serif font-light leading-[1.05] tracking-[-0.01em] text-[clamp(40px,5.5vw,80px)]">
+      {t(restaurant.gruposTitulo, locale, defaultLocale)}
+    </h2>
+    <CtaButton href="#book">
+      {t(restaurant.gruposCta, locale, defaultLocale)}
+    </CtaButton>
+  </div>
+</section>

@@ -1,0 +1,60 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant, WineCategory, Wine } from '../lib/queries';
+import Eyebrow from '@hosteleria/ui/components/Eyebrow.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  wineCategories: WineCategory[];
+  wines: Wine[];
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, wineCategories, wines, locale, defaultLocale } = Astro.props;
+
+const sec = restaurant.textosSecciones ?? {};
+
+const winesByCategory = wineCategories.map((cat) => ({
+  category: cat,
+  items: wines.filter((w) => w.categoria?._id === cat._id),
+}));
+---
+
+<section id="wines" class="py-[12vh] px-(--gap) bg-surface border-t border-line max-[960px]:py-[8vh]">
+  <div class="reveal text-center mb-[70px] mx-auto max-w-[var(--max)] max-[960px]:mb-12">
+    <Eyebrow class="block mb-5">{t(sec.vinosEyebrow, locale, defaultLocale)}</Eyebrow>
+    <h2 class="font-serif font-light leading-none tracking-[-0.01em] text-[clamp(38px,5vw,72px)]">
+      {t(sec.vinosTitulo, locale, defaultLocale)}
+    </h2>
+  </div>
+  <div class="grid mx-auto max-w-[var(--max)] grid-cols-2 gap-y-0 gap-x-[clamp(40px,6vw,90px)] max-[960px]:grid-cols-1 max-[960px]:gap-0">
+    {winesByCategory.map(({ category, items }) => (
+      items.length > 0 && (
+        <>
+          <div class="col-span-full pt-11 pb-3 mt-3 border-t border-line text-[11px] tracking-[0.32em] uppercase text-accent font-medium first:pt-0 first:mt-0 first:border-t-0">
+            {t(category.nombre, locale, defaultLocale)}
+          </div>
+          {items.map((wine) => (
+            <div class="grid items-baseline grid-cols-[1fr_auto] gap-6 py-[22px] px-[18px] -mx-[18px] border-b border-line rounded transition-[background-color,transform] duration-[350ms] ease-out hover:bg-[rgb(212_166_85/0.05)] hover:translate-x-1 max-[960px]:py-5 max-[960px]:px-[14px] max-[960px]:-mx-[14px] max-[960px]:hover:translate-x-0">
+              <div>
+                <div class="font-serif text-ink font-normal mb-1.5 tracking-[0.005em] text-[clamp(19px,1.6vw,23px)]">
+                  {wine.nombre}
+                </div>
+                <div class="text-muted text-sm leading-[1.55]">
+                  {t(wine.nota, locale, defaultLocale)}{wine.region && <> · {wine.region}</>}
+                </div>
+              </div>
+              <span class="font-sans text-base font-medium text-accent whitespace-nowrap pt-0.5">
+                {wine.precioCopa ?? '—'} / {wine.precioBotella ?? '—'}
+              </span>
+            </div>
+          ))}
+        </>
+      )
+    ))}
+    <div class="col-span-full text-center pt-10 text-[11px] tracking-[0.32em] uppercase text-muted">
+      {t(sec.vinosNotaFinal, locale, defaultLocale)}
+    </div>
+  </div>
+</section>

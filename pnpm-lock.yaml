@@ -213,18 +213,36 @@ importers:
 
   apps/roure:
     dependencies:
+      '@fontsource-variable/space-grotesk':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/marcellus':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@hosteleria/booking-form':
+        specifier: workspace:*
+        version: link:../../packages/booking-form
       '@hosteleria/i18n-utils':
         specifier: workspace:*
         version: link:../../packages/i18n-utils
       '@hosteleria/sanity-client':
         specifier: workspace:*
         version: link:../../packages/sanity-client
+      '@hosteleria/seo':
+        specifier: workspace:*
+        version: link:../../packages/seo
       '@hosteleria/tailwind-config':
         specifier: workspace:*
         version: link:../../packages/tailwind-config
       '@hosteleria/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@hosteleria/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
+      '@portabletext/to-html':
+        specifier: ^2
+        version: 2.0.17
       '@tailwindcss/vite':
         specifier: ^4.0.0
         version: 4.3.3(vite@6.4.3(@types/node@26.2.0)(jiti@2.7.0)(lightningcss@1.32.0)(yaml@2.9.0))
@@ -1699,6 +1717,12 @@ packages:
 
   '@fontsource-variable/newsreader@5.3.0':
     resolution: {integrity: sha512-rrzYi43qMpbzwuFtf9OkWH8sxAPVPcQQQEwXpPtwaKYeJ8yVg5aLs5kawmo1f2Q1t1M38TLmEKCkGVDsYwgdFw==}
+
+  '@fontsource-variable/space-grotesk@5.3.0':
+    resolution: {integrity: sha512-2IxmvfB08i9vnGB3Ym/AXvhRE+8XOjWMXIyDum03c+tPwH0FUoMNQfGpU8NXPxjbws0Vvss3AH0Zqt4oJBBAdw==}
+
+  '@fontsource/marcellus@5.3.0':
+    resolution: {integrity: sha512-cMnanjpiPIC7Rq4GXIA/Zal5WLSoDV5Mc681tMkWsWfKHXnRnLGlhuGeBnLF6HrqtFkiSdiuy4NCSPfOrz266w==}
 
   '@img/colour@1.1.0':
     resolution: {integrity: sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==}
@@ -8262,6 +8286,10 @@ snapshots:
   '@fontsource-variable/manrope@5.3.0': {}
 
   '@fontsource-variable/newsreader@5.3.0': {}
+
+  '@fontsource-variable/space-grotesk@5.3.0': {}
+
+  '@fontsource/marcellus@5.3.0': {}
 
   '@img/colour@1.1.0':
     optional: true

@@ -1,0 +1,259 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Nav from '../components/Nav.astro';
+import MobileOverlay from '../components/MobileOverlay.astro';
+import Footer from '@hosteleria/ui/components/Footer.astro';
+import WhatsAppFab from '@hosteleria/ui/components/WhatsAppFab.astro';
+import CtaButton from '../components/CtaButton.astro';
+import { fetchRestaurantData, fetchLegalPages } from '../lib/queries';
+import { img } from '../lib/sanity';
+import { buildWhatsAppHref } from '@hosteleria/utils';
+import { t as tt } from '@hosteleria/i18n-utils';
+
+const data = await fetchRestaurantData();
+const { restaurant } = data;
+const legalPages = await fetchLegalPages(restaurant._id);
+
+const defaultLocale = restaurant.idiomaPorDefecto?.codigo ?? 'es';
+const activeLocales = restaurant.idiomasActivos?.length
+  ? restaurant.idiomasActivos
+  : [{ codigo: defaultLocale, nombre: defaultLocale }];
+const activeLocaleCodes = activeLocales.map(l => l.codigo);
+
+const locale = defaultLocale;
+
+const siteUrl = restaurant.dominio ?? '';
+const canonical = `${siteUrl}/404`;
+
+const faviconUrl = img.url(restaurant.favicon);
+const appleTouchIconUrl = img.pngSquare(restaurant.iconoApp, 180);
+
+const bookingEmail = restaurant.contacto?.email ?? '';
+const bookingPhone = restaurant.contacto?.telefono ?? '';
+const whatsappRaw = restaurant.contacto?.whatsapp ?? '';
+const waHref = buildWhatsAppHref(whatsappRaw, restaurant.nombre, locale);
+
+const COPY: Record<
+  string,
+  {
+    title: string;
+    message: string;
+    back: string;
+    book: string;
+    sections: string;
+    linkAbout: string;
+    linkPlates: string;
+    linkWines: string;
+    linkGallery: string;
+  }
+> = {
+  es: {
+    title: 'Página no encontrada',
+    message:
+      'La página que buscas no existe o ha cambiado de dirección. Vuelve al inicio o pasa por las secciones más visitadas.',
+    back: 'Volver al inicio',
+    book: 'Reservar mesa',
+    sections: 'O explora',
+    linkAbout: 'Historia',
+    linkPlates: 'Carta',
+    linkWines: 'Vinos',
+    linkGallery: 'Galería'
+  },
+  en: {
+    title: 'Page not found',
+    message:
+      'The page you are looking for does not exist or has moved. Head back home or jump straight to the sections people love.',
+    back: 'Back to home',
+    book: 'Book a table',
+    sections: 'Or explore',
+    linkAbout: 'About',
+    linkPlates: 'Menu',
+    linkWines: 'Wines',
+    linkGallery: 'Gallery'
+  },
+  ca: {
+    title: 'Pàgina no trobada',
+    message:
+      'La pàgina que busques no existeix o ha canviat d’adreça. Torna a l’inici o entra directament a les seccions més visitades.',
+    back: 'Tornar a l’inici',
+    book: 'Reservar taula',
+    sections: 'O explora',
+    linkAbout: 'Història',
+    linkPlates: 'Carta',
+    linkWines: 'Vins',
+    linkGallery: 'Galeria'
+  }
+};
+const t = COPY[locale] ?? COPY.es;
+---
+
+<BaseLayout
+  locale={locale}
+  title={`404 — ${restaurant.nombre}`}
+  description={t.message}
+  canonical={canonical}
+  hreflangs={[]}
+  faviconUrl={faviconUrl}
+  appleTouchIconUrl={appleTouchIconUrl}
+  cloudflareAnalyticsToken={restaurant.cloudflareAnalyticsToken}
+>
+  <Nav
+    restaurant={restaurant}
+    locale={locale}
+    defaultLocale={defaultLocale}
+    activeLocales={activeLocales}
+    hrefPrefix='/'
+    forceScrolled={true}
+  />
+  <MobileOverlay
+    restaurant={restaurant}
+    locale={locale}
+    defaultLocale={defaultLocale}
+    activeLocales={activeLocales}
+    waHref={waHref}
+    whatsappRaw={whatsappRaw}
+    bookingPhone={bookingPhone}
+    bookingEmail={bookingEmail}
+    hrefPrefix='/'
+  />
+
+  <main id='main' class='min-h-svh flex items-center justify-center px-(--gap) pt-32 pb-24'>
+    <div class='max-w-[640px] w-full text-center'>
+      <p
+        class='font-serif font-light leading-none tracking-[-0.03em] text-accent text-[clamp(120px,22vw,240px)]'
+      >
+        4<em class='italic'>0</em>4
+      </p>
+      <h1
+        data-i18n='title'
+        class='font-serif font-light leading-tight tracking-[-0.01em] mt-4 mb-6 text-[clamp(28px,4vw,44px)]'
+      >
+        {t.title}
+      </h1>
+      <p
+        data-i18n='message'
+        class='text-ink-soft text-[17px] leading-[1.7] mb-10 max-w-[46ch] mx-auto'
+      >
+        {t.message}
+      </p>
+
+      <div class='flex flex-wrap items-center justify-center gap-4 mb-14'>
+        <CtaButton href='/' class='[&_[data-i18n]]:contents'>
+          <span data-i18n='back'>{t.back}</span>
+        </CtaButton>
+        <a
+          data-i18n-href='book'
+          href='/#book'
+          class='group inline-flex items-center gap-2 font-sans font-medium uppercase text-[13px] tracking-[0.14em] text-accent border-b border-accent py-1 cursor-pointer transition-colors duration-300 hover:text-accent-hover hover:border-accent-hover'
+        >
+          <span data-i18n='book'>{t.book}</span>
+          <span class='transition-transform duration-300 group-hover:translate-x-1'>→</span>
+        </a>
+      </div>
+
+      <div class='pt-8 border-t border-line'>
+        <p
+          data-i18n='sections'
+          class='text-muted text-[11px] tracking-[0.32em] uppercase mb-5 font-medium'
+        >
+          {t.sections}
+        </p>
+        <nav
+          class='flex flex-wrap justify-center gap-x-5 gap-y-2 font-sans font-medium uppercase text-[11px] tracking-[0.22em]'
+          aria-label='Quick links'
+        >
+          <a
+            data-i18n-href='about'
+            href='/#about'
+            class='text-muted hover:text-accent transition-colors duration-300 cursor-pointer'
+          >
+            <span data-i18n='linkAbout'>{t.linkAbout}</span>
+          </a>
+          <span class='text-dim opacity-40 select-none'>·</span>
+          <a
+            data-i18n-href='plates'
+            href='/#plates'
+            class='text-muted hover:text-accent transition-colors duration-300 cursor-pointer'
+          >
+            <span data-i18n='linkPlates'>{t.linkPlates}</span>
+          </a>
+          <span class='text-dim opacity-40 select-none'>·</span>
+          <a
+            data-i18n-href='wines'
+            href='/#wines'
+            class='text-muted hover:text-accent transition-colors duration-300 cursor-pointer'
+          >
+            <span data-i18n='linkWines'>{t.linkWines}</span>
+          </a>
+          <span class='text-dim opacity-40 select-none'>·</span>
+          <a
+            data-i18n-href='gallery'
+            href='/#gallery'
+            class='text-muted hover:text-accent transition-colors duration-300 cursor-pointer'
+          >
+            <span data-i18n='linkGallery'>{t.linkGallery}</span>
+          </a>
+        </nav>
+      </div>
+    </div>
+  </main>
+
+  <Footer
+    restaurant={restaurant}
+    locale={locale}
+    defaultLocale={defaultLocale}
+    legalPages={legalPages}
+    waHref={waHref}
+    whatsappRaw={whatsappRaw}
+    bookingPhone={bookingPhone}
+    bookingEmail={bookingEmail}
+  >
+    <CtaButton slot='cta' href='/#book'>
+      {tt(restaurant.textosNav?.linkReservar, locale, defaultLocale) || 'Reservar'}
+    </CtaButton>
+  </Footer>
+
+  <WhatsAppFab href={waHref} locale={locale} />
+</BaseLayout>
+
+<script is:inline define:vars={{ COPY, defaultLocale, activeLocaleCodes }}>
+  (function () {
+    const path = location.pathname;
+    const firstSegment = path.split('/').filter(Boolean)[0];
+    const detectedLocale =
+      firstSegment && activeLocaleCodes.includes(firstSegment) && firstSegment !== defaultLocale
+        ? firstSegment
+        : defaultLocale;
+
+    if (detectedLocale === defaultLocale) return;
+
+    const t = COPY[detectedLocale] || COPY[defaultLocale];
+    const prefix = '/' + detectedLocale;
+
+    document.documentElement.lang =
+      detectedLocale === 'es' ? 'es-ES' : detectedLocale === 'ca' ? 'ca-ES' : detectedLocale;
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (key && t[key]) el.textContent = t[key];
+    });
+
+    const HREF_MAP = {
+      book: prefix + '/#book',
+      about: prefix + '/#about',
+      plates: prefix + '/#plates',
+      wines: prefix + '/#wines',
+      gallery: prefix + '/#gallery'
+    };
+    document.querySelectorAll('[data-i18n-href]').forEach(el => {
+      const key = el.getAttribute('data-i18n-href');
+      if (key && HREF_MAP[key]) el.setAttribute('href', HREF_MAP[key]);
+    });
+
+    document.querySelectorAll('a[href="/"]').forEach(el => {
+      el.setAttribute('href', prefix + '/');
+    });
+
+    document.title = '404 — ' + document.title.split('—').slice(1).join('—').trim();
+  })();
+</script>

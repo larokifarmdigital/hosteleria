@@ -1640,6 +1640,41 @@ const paginasLegalesCasabella = [
   }
 ];
 
+// Roure reutiliza las mismas plantillas base — el cliente rellena `[COMPLETAR]`
+// (CIF/NIF/titular/dirección fiscal) desde Sanity Studio para cada restaurante.
+const paginasLegalesRoure = [
+  {
+    _id: 'paginaLegal-roure-aviso-legal',
+    _type: 'paginaLegal',
+    restaurante: ref(ID.restauranteRoure),
+    tipo: 'aviso-legal',
+    titulo: i18nStr('Aviso legal', 'Legal notice'),
+    contenido: i18nPortable(avisoLegalCasabellaES, avisoLegalCasabellaEN),
+    ultimaActualizacion: '2026-08-21',
+    orden: 10
+  },
+  {
+    _id: 'paginaLegal-roure-privacidad',
+    _type: 'paginaLegal',
+    restaurante: ref(ID.restauranteRoure),
+    tipo: 'privacidad',
+    titulo: i18nStr('Política de privacidad', 'Privacy policy'),
+    contenido: i18nPortable(privacidadCasabellaES, privacidadCasabellaEN),
+    ultimaActualizacion: '2026-08-21',
+    orden: 20
+  },
+  {
+    _id: 'paginaLegal-roure-cookies',
+    _type: 'paginaLegal',
+    restaurante: ref(ID.restauranteRoure),
+    tipo: 'cookies',
+    titulo: i18nStr('Política de cookies', 'Cookie policy'),
+    contenido: i18nPortable(cookiesCasabellaES, cookiesCasabellaEN),
+    ultimaActualizacion: '2026-08-21',
+    orden: 30
+  }
+];
+
 // La Pubilla reutiliza las mismas plantillas base — el cliente rellena `[COMPLETAR]`
 // (CIF/NIF/titular/dirección fiscal) desde Sanity Studio para cada restaurante.
 const paginasLegalesPubilla = [
@@ -2012,6 +2047,7 @@ const restauranteRoure = {
   nombre: 'Roure',
   slug: { _type: 'slug', current: 'roure' },
   dominio: 'https://roure.cat',
+  anyoFundacion: 2016,
   idiomaPorDefecto: ref(ID.idiomaEs),
   idiomasActivos: [
     { _key: 'la-es', ...ref(ID.idiomaEs) },
@@ -2046,6 +2082,23 @@ const restauranteRoure = {
   gruposEyebrow: i18nStr('Grupos y celebraciones', 'Groups & celebrations'),
   gruposTitulo: i18nStr('La sala entera para ti', 'The whole room for you'),
   gruposCta: i18nStr('Consultar', 'Enquire'),
+  gruposDestacados: [
+    {
+      _key: 'ro-gd1',
+      _type: 'puntoDestacado',
+      texto: i18nStr('Hasta 35 comensales', 'Up to 35 guests')
+    },
+    {
+      _key: 'ro-gd2',
+      _type: 'puntoDestacado',
+      texto: i18nStr('Menú maridado con nuestra bodega', 'Set menu paired with our cellar')
+    },
+    {
+      _key: 'ro-gd3',
+      _type: 'puntoDestacado',
+      texto: i18nStr('Sala privada disponible', 'Private room available')
+    }
+  ],
   horariosTitulo: i18nStr('Cuando quieras', 'Whenever you like'),
   horariosTexto: i18nTxt(
     'Martes a sábado, 13:00–16:00 y 20:00–23:30. Domingos y lunes, cerrado.',
@@ -2081,7 +2134,100 @@ const restauranteRoure = {
   seoDescripcion: i18nTxt(
     'Restaurante y bodega en el corazón de El Born. Cocina catalana contemporánea con producto de mercado y vinos curados con calma.',
     'Restaurant and wine cellar in the heart of El Born. Contemporary Catalan cuisine with market produce and a patiently curated wine list.'
-  )
+  ),
+  faqEyebrow: i18nStr('Preguntas frecuentes', 'Frequently asked'),
+  faqTitulo: i18nStr('Todo lo que', 'Everything you'),
+  faqTituloAcento: i18nStr('necesitas saber', 'need to know'),
+  mostrarRedes: true,
+  // IA · SEO avanzado
+  resumenIA: i18nTxt(
+    'Roure es un restaurante y bodega de cocina catalana contemporánea en El Born, Barcelona. Abierto desde 2016 con foco en producto de mercado del Mercat de Santa Caterina y una bodega curada con paciencia (especialidad en vinos naturales y de pequeños productores). Cocina abierta de martes a sábado, comidas (13:00–16:00) y cenas (20:00–23:30). Domingos y lunes cerrado. Precio medio 42 € por persona con dos platos y bebida. Reservas recomendadas, sobre todo para grupos.',
+    'Roure is a restaurant and wine cellar for contemporary Catalan cuisine in El Born, Barcelona. Open since 2016, focused on market produce from the Mercat de Santa Caterina and a patiently curated cellar (specialising in natural wines and small producers). Kitchen open Tuesday to Saturday, lunch (13:00–16:00) and dinner (20:00–23:30). Closed Sundays and Mondays. Average €42 per person for two courses and a drink. Reservations recommended, especially for groups.'
+  ),
+  aceptaReservas: true,
+  precioMedio: 42,
+  cloudflareAnalyticsToken: '[COMPLETAR - pegar token desde dash.cloudflare.com]',
+  formasPago: [
+    'cash',
+    'credit_card',
+    'debit_card',
+    'contactless',
+    'apple_pay',
+    'google_pay',
+    'bizum'
+  ],
+  serviciosExtras: ['carta_vinos', 'grupos', 'sala_privada', 'menu_degustacion', 'bar'],
+  faq: [
+    {
+      _key: 'ro-faq1',
+      _type: 'faqItem',
+      pregunta: i18nStr('¿Qué tipo de cocina servís?', 'What type of cuisine do you serve?'),
+      respuesta: i18nTxt(
+        'Cocina catalana contemporánea con base en producto de mercado. Trabajamos con proveedores del Mercat de Santa Caterina y productores de proximidad. La carta cambia cada semana y tenemos también menú degustación maridado con nuestra bodega.',
+        'Contemporary Catalan cuisine grounded in market produce. We work with suppliers from Mercat de Santa Caterina and local producers. The menu changes each week and we also offer a tasting menu paired with our cellar.'
+      )
+    },
+    {
+      _key: 'ro-faq2',
+      _type: 'faqItem',
+      pregunta: i18nStr('¿Dónde estáis?', 'Where are you located?'),
+      respuesta: i18nTxt(
+        'En pleno El Born, Barcelona: Passeig del Born, 30, 08003 Barcelona. A 2 minutos andando del Mercat del Born y a 5 minutos de la parada de metro Jaume I (L4 amarilla).',
+        'In the heart of El Born, Barcelona: Passeig del Born, 30, 08003 Barcelona. A 2-minute walk from Mercat del Born and 5 minutes from Jaume I metro station (L4 yellow line).'
+      )
+    },
+    {
+      _key: 'ro-faq3',
+      _type: 'faqItem',
+      pregunta: i18nStr('¿Cuál es vuestro horario?', 'What are your opening hours?'),
+      respuesta: i18nTxt(
+        'De martes a sábado servimos comidas de 13:00 a 16:00 y cenas de 20:00 a 23:30. Domingos y lunes cerramos.',
+        'Tuesday to Saturday we serve lunch from 13:00 to 16:00 and dinner from 20:00 to 23:30. Closed Sundays and Mondays.'
+      )
+    },
+    {
+      _key: 'ro-faq4',
+      _type: 'faqItem',
+      pregunta: i18nStr('¿Tenéis carta de vinos amplia?', 'Do you have an extensive wine list?'),
+      respuesta: i18nTxt(
+        'Sí. Roure es también bodega: tenemos más de 200 referencias, con foco en vinos naturales, catalanes y de pequeños productores. También servimos copas rotatorias que cambian según la temporada.',
+        'Yes. Roure is also a cellar: we carry over 200 references with a focus on natural wines, Catalan producers and small growers. We also offer rotating wines by the glass that change with the season.'
+      )
+    },
+    {
+      _key: 'ro-faq5',
+      _type: 'faqItem',
+      pregunta: i18nStr('¿Necesito reservar mesa?', 'Do I need to book a table?'),
+      respuesta: i18nTxt(
+        'Sí, lo recomendamos siempre. Puedes reservar desde el formulario de la web, escribiéndonos a hola@roure.cat o llamando al +34 933 21 45 67.',
+        'Yes, we always recommend it. You can book from the form on the website, by writing to hola@roure.cat or by calling +34 933 21 45 67.'
+      )
+    },
+    {
+      _key: 'ro-faq6',
+      _type: 'faqItem',
+      pregunta: i18nStr(
+        '¿Cuál es el precio medio por persona?',
+        'What is the average price per person?'
+      ),
+      respuesta: i18nTxt(
+        'Alrededor de 42 € por persona con dos platos y una bebida. El menú degustación (5 platos + maridaje) está en 65 €.',
+        'Around €42 per person for two courses and a drink. The tasting menu (5 courses + wine pairing) is €65.'
+      )
+    },
+    {
+      _key: 'ro-faq7',
+      _type: 'faqItem',
+      pregunta: i18nStr(
+        '¿Se puede reservar la sala entera para eventos?',
+        'Can I book the whole room for private events?'
+      ),
+      respuesta: i18nTxt(
+        'Sí, la sala entera está disponible para grupos de hasta 35 comensales con menú cerrado maridado con nuestra bodega. Escríbenos a hola@roure.cat con la fecha y el número aproximado de personas.',
+        'Yes, the whole room is available for groups up to 35 guests with a set menu paired with our cellar. Write to hola@roure.cat with the date and approximate number of guests.'
+      )
+    }
+  ]
 };
 
 const categoriasVinoRoure = [
@@ -2329,6 +2475,8 @@ async function main() {
   for (const v of vinosRoure) await client.createOrReplace(v as never);
   for (const c of categoriasPlatoRoure) await client.createOrReplace(c as never);
   for (const p of platosRoure) await client.createOrReplace(p as never);
+  console.log('⚖️  Creando páginas legales Roure…');
+  for (const pl of paginasLegalesRoure) await client.createOrReplace(pl as never);
 
   console.log('\n✅ Seed completado.');
   console.log(`   Idiomas:       2 (es, en)`);

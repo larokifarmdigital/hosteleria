@@ -1,0 +1,266 @@
+---
+import { t, localizedPath } from '@hosteleria/i18n-utils';
+import type { LocaleRef, Restaurant } from '@hosteleria/sanity-client';
+import IconClose from '@hosteleria/ui/icons/IconClose.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+  activeLocales: LocaleRef[];
+  waHref: string;
+  whatsappRaw: string;
+  bookingPhone: string;
+  bookingEmail: string;
+  hrefPrefix?: string;
+  langSwitcherPath?: string;
+}
+
+const {
+  restaurant,
+  locale,
+  defaultLocale,
+  activeLocales,
+  waHref,
+  whatsappRaw,
+  bookingPhone,
+  bookingEmail,
+  hrefPrefix = '',
+  langSwitcherPath = '/'
+} = Astro.props;
+
+const nav = restaurant.textosNav ?? {};
+
+const A11Y: Record<string, { close: string; menu: string }> = {
+  es: { close: 'Cerrar menú', menu: 'Menú' },
+  en: { close: 'Close menu', menu: 'Menu' },
+  ca: { close: 'Tancar menú', menu: 'Menú' }
+};
+const a11y = A11Y[locale] ?? A11Y.es;
+
+const localesUi = activeLocales.length
+  ? activeLocales
+  : [{ codigo: defaultLocale, nombre: defaultLocale }];
+
+const partes = restaurant.nombre.match(/^(Casa|La|El)?\s?(.*)$/);
+const brandStart = partes?.[1] ?? '';
+const brandRest = partes?.[2] ?? restaurant.nombre;
+
+const links = [
+  { href: `${hrefPrefix}#about`, label: t(nav.linkLocal, locale, defaultLocale) || 'Historia' },
+  { href: `${hrefPrefix}#plates`, label: t(nav.linkCocina, locale, defaultLocale) || 'Carta' },
+  { href: `${hrefPrefix}#wines`, label: t(nav.linkVinos, locale, defaultLocale) || 'Vinos' },
+  { href: `${hrefPrefix}#gallery`, label: t(nav.linkGaleria, locale, defaultLocale) || 'Galería' }
+];
+const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
+
+// Sello "Cellier · {año}" — firma bodega Roure
+const anyo = restaurant.anyoFundacion;
+const cellierLabel = locale === 'en' ? 'Cellar' : 'Cellier';
+---
+
+<!--
+  Roure MobileOverlay: bodega contemporánea "cellier". Look distinto de los
+  otros 4 overlays. Firma única:
+    · Links centrados (todos los demás usan left-aligned)
+    · Marcellus serif elegante boutique
+    · Arrow → aparece al hover a la derecha de cada link (nice affordance)
+    · Separadores hairline muy sutiles
+    · Header brand + close simple
+    · CTA botón filled verde bosque al ancho completo
+    · Sello "Cellier · 2016" rotado abajo derecha como wine tag
+    · Footer con contacto en Space Grotesk sans peculiar
+  Animación FADE puro (limpia).
+-->
+<div
+  id='mobileOverlay'
+  aria-hidden='true'
+  data-open='false'
+  class="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-bg
+         py-6 px-(--gap) pb-10
+         opacity-0 pointer-events-none
+         transition-opacity duration-[200ms] ease-out
+         data-[open='true']:opacity-100 data-[open='true']:pointer-events-auto
+         motion-reduce:transition-none motion-reduce:duration-0"
+>
+  <!-- Header simple: brand + X -->
+  <div class='flex justify-between items-center pb-6'>
+    <span class='font-serif text-ink font-normal text-[24px] leading-none tracking-tight'>
+      {
+        brandStart ? (
+          <>
+            {brandStart}{' '}
+            <em class='italic text-accent font-normal'>{brandRest}</em>
+          </>
+        ) : (
+          restaurant.nombre
+        )
+      }
+    </span>
+    <button
+      id='mobileCloseBtn'
+      aria-label={a11y.close}
+      class='flex items-center justify-center w-11 h-11 -mr-2.5 bg-transparent border-none text-ink cursor-pointer transition-[color,transform] duration-300 hover:text-accent hover:rotate-90'
+    >
+      <IconClose />
+    </button>
+  </div>
+
+  <!-- Nav CENTRADO: links serif con arrow al hover (firma única de Roure) -->
+  <nav aria-label={a11y.menu} class='flex-1 flex flex-col justify-center'>
+    <ul class='flex flex-col divide-y divide-line/60 border-y border-line/60'>
+      {
+        links.map(link => (
+          <li>
+            <a
+              href={link.href}
+              class='group flex items-center justify-center gap-4 py-6 cursor-pointer relative'
+            >
+              <span class='font-serif text-ink font-normal text-[clamp(34px,8vw,50px)] leading-[1.05] tracking-tight transition-colors duration-300 group-hover:text-accent'>
+                {link.label}
+              </span>
+              <span
+                aria-hidden='true'
+                class='font-serif text-accent-alt text-[26px] leading-none opacity-0 translate-x-[-6px] transition-[opacity,transform] duration-300 group-hover:opacity-100 group-hover:translate-x-0 motion-reduce:transition-none motion-reduce:opacity-100 motion-reduce:translate-x-0'
+              >
+                →
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+
+  <!-- CTA botón filled verde bosque al ancho completo -->
+  <div class='pt-8'>
+    <a
+      href={`${hrefPrefix}#book`}
+      class='group flex items-center justify-center gap-3 py-4 px-8 bg-accent text-bg border border-accent rounded-sm font-sans font-semibold uppercase text-[13px] tracking-[0.24em] cursor-pointer transition-[background-color,border-color,transform] duration-300 hover:bg-accent-hover hover:border-accent-hover hover:-translate-y-px shadow-[0_6px_18px_-6px_rgb(47_74_44/0.42)]'
+    >
+      <span>{reservarLabel}</span>
+      <span class='transition-transform duration-300 group-hover:translate-x-1'>→</span>
+    </a>
+  </div>
+
+  <!-- Footer: contacto en Space Grotesk sans + idiomas + sello cellier -->
+  <div class='relative flex flex-col gap-4 pt-10 mt-8 border-t border-line/60'>
+    <div class='flex flex-col gap-2'>
+      {
+        bookingPhone && (
+          <a
+            href={`tel:${bookingPhone}`}
+            class='font-sans text-ink text-[15px] transition-colors duration-300 hover:text-accent cursor-pointer'
+          >
+            {bookingPhone}
+          </a>
+        )
+      }
+      {
+        waHref && (
+          <a
+            href={waHref}
+            target='_blank'
+            rel='noopener'
+            class='font-sans text-ink text-[15px] transition-colors duration-300 hover:text-accent cursor-pointer'
+          >
+            WhatsApp <span class='text-accent-alt mx-1'>·</span> {whatsappRaw}
+          </a>
+        )
+      }
+      {
+        bookingEmail && (
+          <a
+            href={`mailto:${bookingEmail}`}
+            class='font-sans text-ink text-[15px] transition-colors duration-300 hover:text-accent cursor-pointer'
+          >
+            {bookingEmail}
+          </a>
+        )
+      }
+    </div>
+
+    {
+      localesUi.length > 1 && (
+        <div
+          aria-label='Idioma'
+          class='flex gap-3 pt-4 mt-2 border-t border-line/60 font-sans font-medium uppercase text-[10.5px] tracking-[0.26em] text-dim'
+        >
+          {localesUi.map((l, i) => (
+            <>
+              {i > 0 && <span class='text-dim opacity-50 -mx-0.5 select-none'>·</span>}
+              <a
+                href={
+                  l.codigo === locale
+                    ? '#'
+                    : localizedPath(langSwitcherPath, l.codigo, defaultLocale)
+                }
+                class:list={[
+                  'py-1 transition-colors duration-300',
+                  l.codigo === locale
+                    ? 'text-accent pointer-events-none'
+                    : 'hover:text-ink cursor-pointer'
+                ]}
+                aria-current={l.codigo === locale ? 'true' : undefined}
+              >
+                {l.codigo.toUpperCase()}
+              </a>
+            </>
+          ))}
+        </div>
+      )
+    }
+
+    <!-- Sello "Cellier · 2016" rotado tipo wine tag (esquina inferior derecha) -->
+    {
+      anyo && (
+        <div
+          aria-hidden='true'
+          class='absolute -top-4 right-0 bg-accent-alt text-bg px-3 py-1.5 rotate-[3deg] font-serif italic text-[12px] tracking-wide shadow-[0_4px_10px_rgb(28_34_28/0.25)]'
+        >
+          {cellierLabel} · {anyo}
+        </div>
+      )
+    }
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    const hamburger = document.getElementById('hamburgerBtn');
+    const closeBtn = document.getElementById('mobileCloseBtn');
+    const overlay = document.getElementById('mobileOverlay');
+    if (!hamburger || !overlay) return;
+
+    const setOpen = open => {
+      overlay.dataset.open = open ? 'true' : 'false';
+      document.body.classList.toggle('overlay-open', open);
+      hamburger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      overlay.setAttribute('aria-hidden', open ? 'false' : 'true');
+      if (open) closeBtn?.focus();
+      else hamburger?.focus();
+    };
+
+    hamburger.addEventListener('click', () => setOpen(true));
+    closeBtn?.addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && overlay.dataset.open === 'true') setOpen(false);
+    });
+
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.onclick = e => {
+        const target = a.getAttribute('href');
+        if (target === '#') return;
+        const el = document.querySelector(target);
+        if (!el) return;
+        e.preventDefault();
+        const wasOpen = overlay.dataset.open === 'true';
+        if (wasOpen) setOpen(false);
+        setTimeout(
+          () => el.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+          wasOpen ? 240 : 0
+        );
+      };
+    });
+  })();
+</script>

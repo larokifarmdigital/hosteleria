@@ -1,0 +1,22 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant } from '../lib/queries';
+import Eyebrow from '@hosteleria/ui/components/Eyebrow.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+---
+
+<section class="reveal py-[14vh] px-(--gap) max-w-[900px] mx-auto text-center">
+  <Eyebrow class="block mb-7">{t(restaurant.manifiestoEyebrow, locale, defaultLocale)}</Eyebrow>
+  <blockquote
+    class="font-serif text-ink font-light italic leading-[1.25] text-[clamp(26px,3.2vw,48px)] before:text-accent before:content-['“'] after:text-accent after:content-['”']"
+  >
+    {t(restaurant.manifiestoTexto, locale, defaultLocale)}
+  </blockquote>
+</section>

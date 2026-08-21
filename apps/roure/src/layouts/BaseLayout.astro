@@ -1,7 +1,11 @@
 ---
 import '../styles/global.css';
+import { accentColor } from '../lib/theme';
 
-interface Hreflang { locale: string; url: string; }
+interface Hreflang {
+  locale: string;
+  url: string;
+}
 
 interface Props {
   locale: string;
@@ -10,10 +14,10 @@ interface Props {
   canonical: string;
   ogImage?: string;
   hreflangs: Hreflang[];
-  jsonLd?: Record<string, unknown>;
+  jsonLd?: Record<string, unknown> | Array<Record<string, unknown> | null | undefined>;
   faviconUrl?: string;
   appleTouchIconUrl?: string;
-  themeColor?: string;
+  cloudflareAnalyticsToken?: string;
 }
 
 const {
@@ -26,20 +30,39 @@ const {
   jsonLd,
   faviconUrl,
   appleTouchIconUrl,
-  themeColor,
+  cloudflareAnalyticsToken
 } = Astro.props;
+
+const cfBeaconConfig = cloudflareAnalyticsToken
+  ? JSON.stringify({ token: cloudflareAnalyticsToken })
+  : '';
 
 const xDefault = hreflangs[0]?.url ?? canonical;
 const finalFavicon = faviconUrl ?? '/favicon.svg';
 const finalAppleTouch = appleTouchIconUrl ?? '/apple-touch-icon.png';
-const finalTheme = themeColor ?? '#804a2a';
+
+// `<html lang>` regional: mejora hreflang matching y a11y screen readers
+const HTML_LANG: Record<string, string> = {
+  es: 'es-ES',
+  en: 'en',
+  ca: 'ca-ES',
+};
+const htmlLang = HTML_LANG[locale] ?? locale;
+
+// Copy del skip navigation link (a11y WCAG 2.4.1)
+const SKIP_TO_CONTENT: Record<string, string> = {
+  es: 'Saltar al contenido',
+  en: 'Skip to content',
+  ca: 'Saltar al contingut',
+};
+const skipToContent = SKIP_TO_CONTENT[locale] ?? SKIP_TO_CONTENT.es;
 ---
 
 <!doctype html>
-<html lang={locale}>
+<html lang={htmlLang}>
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
     <script is:inline>
       (function () {
         var MIN = 375;
@@ -52,43 +75,63 @@ const finalTheme = themeColor ?? '#804a2a';
       })();
     </script>
 
-    <link rel="icon" href={finalFavicon} />
-    <link rel="apple-touch-icon" sizes="180x180" href={finalAppleTouch} />
-    <link rel="manifest" href="/site.webmanifest" />
-    <meta name="theme-color" content={finalTheme} />
+    <link rel='icon' href={finalFavicon} />
+    <link rel='apple-touch-icon' sizes='180x180' href={finalAppleTouch} />
+    <link rel='manifest' href='/site.webmanifest' />
+    <meta name='theme-color' content={accentColor} />
 
-    <meta name="generator" content={Astro.generator} />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap"
-      rel="stylesheet"
-    />
+    {/* Robots: explícito aunque sea el default (evita ambigüedad para bots agresivos) */}
+    <meta name='robots' content='index,follow' />
+
+    {/* Preconnect a Sanity CDN — mejora LCP de las imágenes del hero/galería */}
+    <link rel='preconnect' href='https://cdn.sanity.io' crossorigin />
+
+    <meta name='generator' content={Astro.generator} />
 
     <title>{title}</title>
-    <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
+    <meta name='description' content={description} />
+    <link rel='canonical' href={canonical} />
 
-    {hreflangs.map((h) => <link rel="alternate" hreflang={h.locale} href={h.url} />)}
-    <link rel="alternate" hreflang="x-default" href={xDefault} />
+    {hreflangs.map(h => <link rel='alternate' hreflang={h.locale} href={h.url} />)}
+    <link rel='alternate' hreflang='x-default' href={xDefault} />
 
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
-    <meta property="og:locale" content={locale} />
-    <meta property="og:url" content={canonical} />
-    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta property='og:type' content='website' />
+    <meta property='og:title' content={title} />
+    <meta property='og:description' content={description} />
+    <meta property='og:locale' content={locale} />
+    <meta property='og:url' content={canonical} />
+    {ogImage && <meta property='og:image' content={ogImage} />}
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={description} />
-    {ogImage && <meta name="twitter:image" content={ogImage} />}
+    <meta name='twitter:card' content='summary_large_image' />
+    <meta name='twitter:title' content={title} />
+    <meta name='twitter:description' content={description} />
+    {ogImage && <meta name='twitter:image' content={ogImage} />}
 
-    {jsonLd && (
-      <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
-    )}
+    {
+      jsonLd &&
+        (Array.isArray(jsonLd) ? jsonLd : [jsonLd])
+          .filter(Boolean)
+          .map(ld => <script type='application/ld+json' set:html={JSON.stringify(ld)} />)
+    }
+
+    {
+      cloudflareAnalyticsToken && (
+        <script
+          defer
+          src='https://static.cloudflareinsights.com/beacon.min.js'
+          data-cf-beacon={cfBeaconConfig}
+        />
+      )
+    }
   </head>
   <body>
+    {/* Skip navigation link (WCAG 2.4.1) — invisible hasta focus con teclado */}
+    <a
+      href='#main'
+      class='sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200] focus:bg-accent focus:text-bg focus:px-4 focus:py-2 focus:rounded focus:font-medium focus:no-underline'
+    >
+      {skipToContent}
+    </a>
     <slot />
   </body>
 </html>

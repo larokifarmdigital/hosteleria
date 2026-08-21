@@ -1,0 +1,30 @@
+---
+interface Props {
+  href?: string;
+  type?: 'submit' | 'button';
+  class?: string;
+}
+const { href, type = 'button', class: cls = '' } = Astro.props;
+
+const base = [
+  'inline-flex items-center gap-3 py-4 px-7',
+  'bg-accent text-bg rounded-sm border border-accent',
+  'font-sans font-medium uppercase text-[13px] tracking-[0.14em]',
+  'cursor-pointer border-none',
+  'transition-[background-color,transform] duration-[350ms] ease-out',
+  'hover:bg-accent-hover hover:-translate-y-0.5',
+  '[&>.arrow]:transition-transform [&>.arrow]:duration-[350ms] hover:[&>.arrow]:translate-x-1',
+];
+---
+
+{href ? (
+  <a href={href} class:list={[...base, cls]}>
+    <slot />
+    <span class="arrow">→</span>
+  </a>
+) : (
+  <button type={type} class:list={[...base, cls]}>
+    <slot />
+    <span class="arrow">→</span>
+  </button>
+)}
