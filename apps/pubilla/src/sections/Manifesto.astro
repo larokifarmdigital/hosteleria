@@ -1,0 +1,57 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant } from '../lib/queries';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+
+const eyebrow = t(restaurant.manifiestoEyebrow, locale, defaultLocale);
+const texto = t(restaurant.manifiestoTexto, locale, defaultLocale);
+---
+
+<!--
+  Pubilla Manifesto: tarjeta cream con marco doble (borde exterior fino +
+  interior grueso mostaza), triple asterisco tipo "asterismo" tipográfico
+  arriba, cita en Newsreader italic grande, firma manuscrita al pie con
+  reglas laterales.
+-->
+<section class='py-[14vh] px-(--gap) max-w-[860px] mx-auto max-[960px]:py-[10vh]'>
+  <div class='reveal relative py-14 px-10 max-[700px]:py-10 max-[700px]:px-6 text-center bg-bg-2/40 border border-line-strong/40'>
+    <!-- Bordes decorativos interiores (efecto marco doble) -->
+    <span
+      aria-hidden='true'
+      class='absolute inset-2 border border-accent/25 pointer-events-none'
+    ></span>
+
+    <!-- Asterismo tipográfico (tres asteriscos triangulares) -->
+    <div
+      aria-hidden='true'
+      class='relative flex items-center justify-center gap-3 mb-8 text-accent leading-none'
+    >
+      <span class='font-serif text-[24px] max-[700px]:text-[20px]'>∗</span>
+      <span class='font-serif text-[32px] max-[700px]:text-[24px]'>∗</span>
+      <span class='font-serif text-[24px] max-[700px]:text-[20px]'>∗</span>
+    </div>
+
+    <!-- Cita -->
+    <p
+      class='relative font-serif font-normal italic text-ink leading-[1.28] text-[clamp(24px,3vw,44px)] max-w-[24ch] mx-auto'
+    >
+      {texto}
+    </p>
+
+    <!-- Firma abajo -->
+    <div class='relative mt-10 flex items-center justify-center gap-4'>
+      <span class='w-16 h-px bg-line-strong'></span>
+      <span class='font-sans uppercase text-[11px] tracking-[0.32em] text-accent-alt font-semibold whitespace-nowrap'>
+        {eyebrow}
+      </span>
+      <span class='w-16 h-px bg-line-strong'></span>
+    </div>
+  </div>
+</section>

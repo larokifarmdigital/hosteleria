@@ -1,0 +1,97 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import { img } from '../lib/sanity';
+import type { Restaurant } from '../lib/queries';
+import CtaButton from '../components/CtaButton.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+const heroImgUrl = img.url(restaurant.heroImagen) ?? '/img/hero.jpg';
+
+const titulo = t(restaurant.heroTitulo, locale, defaultLocale);
+const subtitulo = t(restaurant.heroSubtitulo, locale, defaultLocale);
+const metaIzq = t(restaurant.heroMetaIzq, locale, defaultLocale);
+const metaDer = t(restaurant.heroMetaDer, locale, defaultLocale);
+const cta = t(restaurant.heroCta, locale, defaultLocale);
+
+const anyo = restaurant.anyoFundacion;
+const casaDesde = anyo
+  ? locale === 'en' ? `House since ${anyo}` : `Casa desde ${anyo}`
+  : null;
+---
+
+<!--
+  Pubilla Hero: layout tipo "portada de revista culinaria".
+  Grid 60/40 con contenido tipográfico grande a la izquierda y foto grande
+  con marco cream + rotación sutil a la derecha (polaroid grande). Etiqueta
+  "Casa desde 1926" sobre la foto como pegatina rotada. Muy distinto de los
+  splits limpios/verticales de casabella, guixot y la-principal.
+-->
+<section
+  id='top'
+  class='relative min-h-svh grid grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] items-center gap-[clamp(30px,5vw,80px)] px-(--gap) pt-24 pb-16 overflow-hidden max-[960px]:grid-cols-1 max-[960px]:min-h-0 max-[960px]:pt-20 max-[960px]:pb-14 max-[960px]:gap-10'
+>
+  <!-- Bloque de contenido tipográfico -->
+  <div class='flex flex-col gap-8 max-[960px]:gap-6 max-[960px]:order-2'>
+    <!-- Meta arriba (solo texto, sin regla lateral) -->
+    <div class='reveal flex items-center gap-3 text-[11px] tracking-[0.32em] uppercase text-muted'>
+      <span>{metaIzq}</span>
+      <span aria-hidden='true' class='w-1 h-1 rounded-full bg-accent-alt'></span>
+      <span>{metaDer}</span>
+    </div>
+
+    <!-- Título GIGANTE -->
+    <h1
+      class='reveal font-serif font-normal leading-[0.95] tracking-[-0.02em] text-[clamp(56px,8.5vw,128px)] max-w-[13ch]'
+    >
+      {titulo}
+      <br />
+      <em class='italic font-normal text-accent'>{subtitulo}</em>
+    </h1>
+
+    <!-- Asterisco decorativo tipo "encabezado editorial" -->
+    <div
+      aria-hidden='true'
+      class='reveal flex items-center gap-3 text-accent-alt'
+    >
+      <span class='w-12 h-px bg-accent-alt/60'></span>
+      <span class='font-serif text-[24px] leading-none'>∗</span>
+      <span class='w-12 h-px bg-accent-alt/60'></span>
+    </div>
+
+    <!-- CTA -->
+    <div class='reveal'>
+      <CtaButton href='#book'>{cta}</CtaButton>
+    </div>
+  </div>
+
+  <!-- Foto tipo polaroid grande con rotación sutil -->
+  <div class='reveal relative max-[960px]:order-1'>
+    <!-- Marco crema con padding y sombra -->
+    <div
+      class='relative bg-bg p-4 pb-16 max-[700px]:pb-14 rotate-[1.5deg] hover:rotate-0 transition-transform duration-[700ms] ease-out shadow-[0_24px_60px_-16px_rgb(26_26_36/0.32),0_4px_12px_rgb(26_26_36/0.14)]'
+    >
+      <div class='aspect-[4/5] overflow-hidden bg-surface'>
+        <img
+          src={heroImgUrl}
+          alt={titulo}
+          class='w-full h-full object-cover brightness-[0.98]'
+        />
+      </div>
+
+      <!-- Caption manuscrita al pie del polaroid -->
+      {
+        casaDesde && (
+          <div class='absolute bottom-4 left-0 right-0 text-center font-serif italic text-accent text-[18px] max-[700px]:text-[15px]'>
+            {casaDesde}
+          </div>
+        )
+      }
+    </div>
+  </div>
+</section>

@@ -1,0 +1,92 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import { img } from '../lib/sanity';
+import type { Restaurant } from '../lib/queries';
+import CtaButton from '../components/CtaButton.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+const gruposImgUrl = img.url(restaurant.gruposImagen) ?? '/img/hire.jpg';
+const eyebrow = t(restaurant.gruposEyebrow, locale, defaultLocale);
+const titulo = t(restaurant.gruposTitulo, locale, defaultLocale);
+const cta = t(restaurant.gruposCta, locale, defaultLocale);
+
+const puntosDestacados = (restaurant.gruposDestacados ?? [])
+  .map(p => t(p.texto, locale, defaultLocale))
+  .filter(Boolean);
+---
+
+<!--
+  Pubilla Groups: banner horizontal ancho a pantalla completa con imagen
+  de fondo, overlay mostaza semitransparente, contenido centrado con
+  eyebrow arriba, título grande y puntos destacados en línea separados
+  con asteriscos (∗). Look "invitación estampada" muy distinto del split
+  lateral de casabella/la-principal/guixot.
+-->
+<section
+  id='groups'
+  class='relative overflow-hidden min-h-[60vh] flex items-center justify-center py-[14vh] px-(--gap) max-[960px]:min-h-[50vh] max-[960px]:py-[10vh]'
+>
+  <!-- Background con imagen visible + overlay ligero solo para legibilidad
+       (fade top/bottom fuerte, centro casi transparente para que la foto
+       se vea + scrim sutil detrás del texto). -->
+  <div class='absolute inset-0 z-0'>
+    <img src={gruposImgUrl} alt='' class='w-full h-full object-cover' />
+    <!-- Fade top/bottom para fundir con secciones vecinas -->
+    <div
+      aria-hidden='true'
+      class='absolute inset-0 bg-[linear-gradient(180deg,var(--color-bg)_0%,transparent_25%,transparent_75%,var(--color-bg)_100%)]'
+    ></div>
+  </div>
+
+  <!-- Scrim central detrás del texto para legibilidad sin ocultar la foto -->
+  <div
+    class='reveal relative z-[1] flex flex-col items-center text-center gap-8 max-w-[720px] max-[960px]:gap-6
+           bg-bg/85 backdrop-blur-[6px] px-10 py-14 max-[700px]:px-6 max-[700px]:py-10
+           border border-line-strong/30 shadow-[0_20px_50px_-16px_rgb(26_26_36/0.35)]'
+  >
+    <!-- Eyebrow con doble regla -->
+    <div class='flex items-center gap-3 text-[11px] tracking-[0.32em] uppercase text-accent-alt font-semibold'>
+      <span aria-hidden='true' class='w-10 h-px bg-accent-alt'></span>
+      <span>{eyebrow}</span>
+      <span aria-hidden='true' class='w-10 h-px bg-accent-alt'></span>
+    </div>
+
+    <!-- Título -->
+    <h2
+      class='font-serif font-normal leading-[1.02] tracking-[-0.01em] text-[clamp(40px,5.5vw,76px)] max-w-[16ch]'
+    >
+      {titulo}
+    </h2>
+
+    <!-- Puntos destacados en línea separados con ∗ -->
+    {
+      puntosDestacados.length > 0 && (
+        <div class='flex items-center justify-center gap-3 flex-wrap max-w-[900px]'>
+          {puntosDestacados.map((punto, i) => (
+            <>
+              {i > 0 && (
+                <span aria-hidden='true' class='font-serif text-accent text-[18px] leading-none'>
+                  ∗
+                </span>
+              )}
+              <span class='font-serif italic text-ink-soft text-[clamp(15px,1.5vw,18px)]'>
+                {punto}
+              </span>
+            </>
+          ))}
+        </div>
+      )
+    }
+
+    <!-- CTA -->
+    <div class='pt-2'>
+      <CtaButton href='#book'>{cta}</CtaButton>
+    </div>
+  </div>
+</section>

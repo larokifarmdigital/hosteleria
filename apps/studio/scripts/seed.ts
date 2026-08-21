@@ -234,6 +234,7 @@ const restaurantePubilla = {
   nombre: 'La Pubilla',
   slug: { _type: 'slug', current: 'pubilla' },
   dominio: 'https://lapubilla.com',
+  anyoFundacion: 1926,
   idiomaPorDefecto: ref(ID.idiomaEs),
   idiomasActivos: [
     { _key: 'la-es', ...ref(ID.idiomaEs) },
@@ -274,6 +275,23 @@ const restaurantePubilla = {
   gruposEyebrow: i18nStr('Grupos y eventos', 'Groups & events'),
   gruposTitulo: i18nStr('Reservados y celebraciones', 'Private hire & celebrations'),
   gruposCta: i18nStr('Consultar', 'Enquire'),
+  gruposDestacados: [
+    {
+      _key: 'pu-gd1',
+      _type: 'puntoDestacado',
+      texto: i18nStr('Hasta 30 comensales', 'Up to 30 guests')
+    },
+    {
+      _key: 'pu-gd2',
+      _type: 'puntoDestacado',
+      texto: i18nStr('Menú del día o carta', 'Set menu or à la carte')
+    },
+    {
+      _key: 'pu-gd3',
+      _type: 'puntoDestacado',
+      texto: i18nStr('Reservado interior disponible', 'Private room available')
+    }
+  ],
   horariosTitulo: i18nStr('Ven a conocernos', 'Come visit us'),
   horariosTexto: i18nTxt(
     'Desayunos y comidas de lunes a sábado, 8:30–12:00 y 13:15–16:00. Cenas de martes a sábado, 20:00–23:30. Domingos, cerrado.',
@@ -309,7 +327,88 @@ const restaurantePubilla = {
   seoDescripcion: i18nTxt(
     'Casa centenaria en Plaça de la Llibertat. Cocina catalana de mercado, desayunos, menú del día y cenas. Reserva mesa en el corazón de Gràcia.',
     'Century-old house on Plaça de la Llibertat. Catalan market cuisine, breakfasts, daily menu and dinners. Book a table in the heart of Gràcia.'
-  )
+  ),
+  faqEyebrow: i18nStr('Preguntas frecuentes', 'Frequently asked'),
+  faqTitulo: i18nStr('Todo lo que', 'Everything you'),
+  faqTituloAcento: i18nStr('necesitas saber', 'need to know'),
+  mostrarRedes: true,
+  // IA · SEO avanzado
+  resumenIA: i18nTxt(
+    'La Pubilla es una casa centenaria de cocina catalana de mercado en Plaça de la Llibertat, barrio de Gràcia, Barcelona. Abierta desde 1926 y con casi 100 años de historia en el mismo local. Cocina de proximidad y temporada con producto del mercado. Servimos desayunos, comidas (con menú del día) y cenas. Horario: desayunos y comidas de lunes a sábado (8:30–12:00 y 13:15–16:00), cenas de martes a sábado (20:00–23:30). Domingos cerrado. Precio medio 25 € por persona en carta; menú del día a 15 €. Reservas recomendadas.',
+    'La Pubilla is a century-old Catalan market restaurant on Plaça de la Llibertat, in the Gràcia neighborhood of Barcelona. Open since 1926, with nearly 100 years of history in the same location. Seasonal cuisine with local market produce. We serve breakfasts, lunches (with daily set menu) and dinners. Hours: breakfasts and lunches Monday to Saturday (8:30–12:00 and 13:15–16:00), dinners Tuesday to Saturday (20:00–23:30). Closed Sundays. Average €25 per person à la carte; daily set menu at €15. Reservations recommended.'
+  ),
+  aceptaReservas: true,
+  precioMedio: 25,
+  cloudflareAnalyticsToken: '[COMPLETAR - pegar token desde dash.cloudflare.com]',
+  formasPago: [
+    'cash',
+    'credit_card',
+    'debit_card',
+    'contactless',
+    'apple_pay',
+    'google_pay',
+    'bizum'
+  ],
+  serviciosExtras: ['grupos', 'menu_dia', 'sala_privada', 'familiar', 'bar', 'carta_vinos'],
+  faq: [
+    {
+      _key: 'pu-faq1',
+      _type: 'faqItem',
+      pregunta: i18nStr('¿Qué tipo de cocina servís?', 'What type of cuisine do you serve?'),
+      respuesta: i18nTxt(
+        'Cocina catalana de mercado con recetas de siempre. Trabajamos con producto de proximidad y la carta cambia con la temporada. Servimos desayunos, menú del día al mediodía y cenas de martes a sábado.',
+        'Catalan market cuisine with traditional recipes. We work with local produce and the menu changes with the seasons. We serve breakfasts, a daily lunch menu, and dinners Tuesday to Saturday.'
+      )
+    },
+    {
+      _key: 'pu-faq2',
+      _type: 'faqItem',
+      pregunta: i18nStr('¿Dónde estáis?', 'Where are you located?'),
+      respuesta: i18nTxt(
+        'En Plaça de la Llibertat, 23, 08012 Barcelona, en el corazón del barrio de Gràcia. A 3 minutos andando del Mercat de la Llibertat y a 5 minutos de la parada de metro Fontana (L3 verde).',
+        'On Plaça de la Llibertat, 23, 08012 Barcelona, in the heart of Gràcia. A 3-minute walk from Mercat de la Llibertat and 5 minutes from Fontana metro station (L3 green line).'
+      )
+    },
+    {
+      _key: 'pu-faq3',
+      _type: 'faqItem',
+      pregunta: i18nStr('¿Cuál es vuestro horario?', 'What are your opening hours?'),
+      respuesta: i18nTxt(
+        'Desayunos y comidas de lunes a sábado, de 8:30 a 12:00 y de 13:15 a 16:00. Cenas de martes a sábado, de 20:00 a 23:30. Los domingos cerramos.',
+        'Breakfasts and lunches Monday to Saturday, from 8:30 to 12:00 and 13:15 to 16:00. Dinners Tuesday to Saturday, from 20:00 to 23:30. Closed on Sundays.'
+      )
+    },
+    {
+      _key: 'pu-faq4',
+      _type: 'faqItem',
+      pregunta: i18nStr('¿Tenéis menú del día?', 'Do you have a daily set menu?'),
+      respuesta: i18nTxt(
+        'Sí, de lunes a viernes al mediodía servimos menú del día con primero, segundo, postre o café y bebida por 15 €. Cambia cada día según lo que hay en el mercado.',
+        'Yes, Monday to Friday at lunchtime we serve a daily menu with starter, main, dessert or coffee and a drink for €15. It changes daily based on what is in the market.'
+      )
+    },
+    {
+      _key: 'pu-faq5',
+      _type: 'faqItem',
+      pregunta: i18nStr('¿Necesito reservar mesa?', 'Do I need to book a table?'),
+      respuesta: i18nTxt(
+        'Para el menú del día y desayunos no hace falta. Para cenas y comidas de fin de semana lo recomendamos. Puedes reservar desde el formulario de la web, escribiendo a lapubillallibertat@gmail.com o llamando al +34 932 18 29 94.',
+        'For the daily lunch menu and breakfasts there is no need to book. For dinners and weekend lunches we recommend it. You can book from the form on the website, by writing to lapubillallibertat@gmail.com or by calling +34 932 18 29 94.'
+      )
+    },
+    {
+      _key: 'pu-faq6',
+      _type: 'faqItem',
+      pregunta: i18nStr(
+        '¿Se puede reservar la sala para grupos?',
+        'Can I book the room for private groups?'
+      ),
+      respuesta: i18nTxt(
+        'Sí, tenemos un reservado interior para grupos de hasta 30 comensales. Menú cerrado a medida o carta. Escríbenos a lapubillallibertat@gmail.com con la fecha y el número aproximado de personas.',
+        'Yes, we have a private room for groups up to 30 guests. Set menu tailored to you or à la carte. Write to lapubillallibertat@gmail.com with the date and approximate number of guests.'
+      )
+    }
+  ]
 };
 
 const categoriasVinoPubilla = [
@@ -1541,6 +1640,41 @@ const paginasLegalesCasabella = [
   }
 ];
 
+// La Pubilla reutiliza las mismas plantillas base — el cliente rellena `[COMPLETAR]`
+// (CIF/NIF/titular/dirección fiscal) desde Sanity Studio para cada restaurante.
+const paginasLegalesPubilla = [
+  {
+    _id: 'paginaLegal-pubilla-aviso-legal',
+    _type: 'paginaLegal',
+    restaurante: ref(ID.restaurantePubilla),
+    tipo: 'aviso-legal',
+    titulo: i18nStr('Aviso legal', 'Legal notice'),
+    contenido: i18nPortable(avisoLegalCasabellaES, avisoLegalCasabellaEN),
+    ultimaActualizacion: '2026-08-21',
+    orden: 10
+  },
+  {
+    _id: 'paginaLegal-pubilla-privacidad',
+    _type: 'paginaLegal',
+    restaurante: ref(ID.restaurantePubilla),
+    tipo: 'privacidad',
+    titulo: i18nStr('Política de privacidad', 'Privacy policy'),
+    contenido: i18nPortable(privacidadCasabellaES, privacidadCasabellaEN),
+    ultimaActualizacion: '2026-08-21',
+    orden: 20
+  },
+  {
+    _id: 'paginaLegal-pubilla-cookies',
+    _type: 'paginaLegal',
+    restaurante: ref(ID.restaurantePubilla),
+    tipo: 'cookies',
+    titulo: i18nStr('Política de cookies', 'Cookie policy'),
+    contenido: i18nPortable(cookiesCasabellaES, cookiesCasabellaEN),
+    ultimaActualizacion: '2026-08-21',
+    orden: 30
+  }
+];
+
 // La Principal reutiliza las mismas plantillas base — el cliente rellena `[COMPLETAR]`
 // (CIF/NIF/titular/dirección fiscal) desde Sanity Studio para cada restaurante.
 const paginasLegalesLaPrincipal = [
@@ -2159,6 +2293,8 @@ async function main() {
   for (const v of vinosPubilla) await client.createOrReplace(v as never);
   for (const c of categoriasPlatoPubilla) await client.createOrReplace(c as never);
   for (const p of platosPubilla) await client.createOrReplace(p as never);
+  console.log('⚖️  Creando páginas legales La Pubilla…');
+  for (const pl of paginasLegalesPubilla) await client.createOrReplace(pl as never);
 
   console.log('🍽 Creando restaurante La Principal…');
   await client.createOrReplace(restauranteLaPrincipal as never);

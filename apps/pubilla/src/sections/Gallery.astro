@@ -1,0 +1,134 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import { img } from '../lib/sanity';
+import type { Restaurant } from '../lib/queries';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+
+const sec = restaurant.textosSecciones ?? {};
+
+const galeriaFallback = [
+  '/img/gal-table.jpg', '/img/gal-room.jpg', '/img/gal-soup.jpg',
+  '/img/gal-martini.jpg', '/img/cellar.jpg', '/img/pass.jpg',
+  '/img/glass.jpg', '/img/hire.jpg', '/img/kitchen.jpg'
+];
+const galeriaImgs = restaurant.galeria?.length
+  ? restaurant.galeria.map(g => img.url(g) ?? '/img/gal-room.jpg')
+  : galeriaFallback;
+
+// Rotación pseudo-aleatoria estable por índice (efecto álbum de recortes)
+const tiltFor = (i: number) => {
+  const values = [-1.4, 0.8, -0.6, 1.6, -2.1, 0.4, -1.1, 1.9, -0.3];
+  return values[i % values.length];
+};
+
+// Aspect variables por índice (mosaic con distintos formatos)
+const aspectFor = (i: number) => {
+  const values = ['aspect-[4/5]', 'aspect-[4/5]', 'aspect-[3/4]', 'aspect-[4/5]', 'aspect-[4/5]', 'aspect-[3/4]'];
+  return values[i % values.length];
+};
+---
+
+<!--
+  Pubilla Gallery: masonry estilo "álbum de recortes de cocina". Cada foto
+  con marco cream padding grueso, rotación sutil por índice (se endereza
+  al hover), aspects variables entre 4/5 y 3/4 para romper rigidez del grid
+  uniforme. Look "cuaderno de fotos pegadas con washi tape".
+-->
+<section
+  id='gallery'
+  class='mx-auto py-[14vh] px-(--gap) max-w-[var(--max)] max-[960px]:py-[10vh]'
+>
+  <div class='reveal text-center mb-[70px]'>
+    <div aria-hidden='true' class='flex items-center justify-center gap-3 mb-6 text-accent-alt'>
+      <span class='w-14 h-px bg-accent-alt/60'></span>
+      <span class='font-serif text-[20px] leading-none'>∗</span>
+      <span class='w-14 h-px bg-accent-alt/60'></span>
+    </div>
+    <h2
+      class='font-serif font-normal leading-[0.98] tracking-[-0.01em] text-[clamp(38px,5vw,72px)]'
+    >
+      {t(sec.galeriaTitulo, locale, defaultLocale) || 'Nuestro espacio'}
+    </h2>
+  </div>
+
+  <div
+    class='grid grid-cols-3 gap-x-8 gap-y-14 max-[960px]:grid-cols-2 max-[960px]:gap-x-6 max-[960px]:gap-y-10 max-[600px]:grid-cols-1 max-[600px]:gap-y-8'
+  >
+    {
+      galeriaImgs.map((src, i) => (
+        <button
+          type='button'
+          data-gallery-item
+          style={`--tilt: ${tiltFor(i)}deg;`}
+          class:list={[
+            'group relative block bg-bg p-3 shadow-[0_12px_28px_-8px_rgb(26_26_36/0.28),0_2px_6px_rgb(26_26_36/0.12)]',
+            'transition-[transform,box-shadow] duration-[400ms] ease-out',
+            'rotate-[var(--tilt)] hover:rotate-0 hover:-translate-y-1.5',
+            'hover:shadow-[0_22px_44px_-8px_rgb(26_26_36/0.4),0_4px_12px_rgb(26_26_36/0.2)]',
+            'cursor-zoom-in motion-reduce:hover:translate-y-0 motion-reduce:rotate-0'
+          ]}
+        >
+          <!-- Washi tape simulado (esquina superior izquierda) -->
+          <span
+            aria-hidden='true'
+            class='absolute -top-2 left-6 w-16 h-4 bg-accent-alt/40 rotate-[-8deg] shadow-[0_2px_4px_rgb(0_0_0/0.1)] opacity-0 group-hover:opacity-100 transition-opacity duration-300'
+          />
+
+          <div class:list={[aspectFor(i), 'relative overflow-hidden bg-surface']}>
+            <img
+              src={src}
+              alt=''
+              loading='lazy'
+              class='w-full h-full object-cover brightness-[0.96] saturate-[0.95]
+                     transition-[transform,filter] duration-[1100ms] ease-[cubic-bezier(.2,.6,.2,1)]
+                     group-hover:scale-[1.05] group-hover:brightness-100 group-hover:saturate-100'
+            />
+          </div>
+        </button>
+      ))
+    }
+  </div>
+</section>
+
+<!-- Lightbox -->
+<div
+  id='lightbox'
+  data-open='false'
+  class="fixed inset-0 z-[200] grid place-items-center cursor-zoom-out
+         invisible opacity-0
+         bg-[rgb(26_26_36/0.94)]
+         transition-[opacity,visibility] duration-[400ms] delay-[400ms]
+         data-[open='true']:visible data-[open='true']:opacity-100 data-[open='true']:delay-0"
+>
+  <img src='' alt='' class='w-auto max-w-[88vw] h-auto max-h-[86vh] object-contain' />
+</div>
+
+<script is:inline>
+  (function () {
+    const lb = document.getElementById('lightbox');
+    if (!lb) return;
+    const lbi = lb.querySelector('img');
+    const setOpen = open => {
+      lb.dataset.open = open ? 'true' : 'false';
+    };
+    document.querySelectorAll('[data-gallery-item]').forEach(c => {
+      const inner = c.querySelector('img');
+      if (!inner) return;
+      c.addEventListener('click', () => {
+        lbi.src = inner.src;
+        setOpen(true);
+      });
+    });
+    lb.addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') setOpen(false);
+    });
+  })();
+</script>

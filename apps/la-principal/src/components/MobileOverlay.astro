@@ -1,0 +1,292 @@
+---
+import { t, localizedPath } from '@hosteleria/i18n-utils';
+import type { LocaleRef, Restaurant } from '@hosteleria/sanity-client';
+import IconClose from '@hosteleria/ui/icons/IconClose.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+  activeLocales: LocaleRef[];
+  waHref: string;
+  whatsappRaw: string;
+  bookingPhone: string;
+  bookingEmail: string;
+  hrefPrefix?: string;
+  langSwitcherPath?: string;
+}
+
+const {
+  restaurant,
+  locale,
+  defaultLocale,
+  activeLocales,
+  waHref,
+  whatsappRaw,
+  bookingPhone,
+  bookingEmail,
+  hrefPrefix = '',
+  langSwitcherPath = '/'
+} = Astro.props;
+
+const nav = restaurant.textosNav ?? {};
+
+const A11Y: Record<string, { close: string; menu: string }> = {
+  es: { close: 'Cerrar menú', menu: 'Menú' },
+  en: { close: 'Close menu', menu: 'Menu' },
+  ca: { close: 'Tancar menú', menu: 'Menú' }
+};
+const a11y = A11Y[locale] ?? A11Y.es;
+
+const localesUi = activeLocales.length
+  ? activeLocales
+  : [{ codigo: defaultLocale, nombre: defaultLocale }];
+
+const partes = restaurant.nombre.match(/^(Casa|La|El)?\s?(.*)$/);
+const brandStart = partes?.[1] ?? '';
+const brandRest = partes?.[2] ?? restaurant.nombre;
+
+const links = [
+  { href: `${hrefPrefix}#about`, label: t(nav.linkLocal, locale, defaultLocale) || 'Historia' },
+  { href: `${hrefPrefix}#plates`, label: t(nav.linkCocina, locale, defaultLocale) || 'Carta' },
+  { href: `${hrefPrefix}#wines`, label: t(nav.linkVinos, locale, defaultLocale) || 'Vinos' },
+  { href: `${hrefPrefix}#gallery`, label: t(nav.linkGaleria, locale, defaultLocale) || 'Galería' }
+];
+const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
+
+// Numeración romana (i, ii, iii, iv) — coherente con el patrón editorial
+// del FAQ de la-principal. Firma tipográfica única de esta marca.
+const toRoman = (n: number): string => {
+  const map: Array<[number, string]> = [
+    [10, 'x'], [9, 'ix'], [5, 'v'], [4, 'iv'], [1, 'i']
+  ];
+  let result = '';
+  for (const [value, symbol] of map) {
+    while (n >= value) {
+      result += symbol;
+      n -= value;
+    }
+  }
+  return result;
+};
+
+// Sello dinámico "Est. {año} · {barrio}" — mismo patrón que el hero
+const anyo = restaurant.anyoFundacion;
+const ubicacion = restaurant.direccion?.barrio || restaurant.direccion?.ciudad;
+const selloParts = [
+  anyo ? `Est. ${anyo}` : null,
+  ubicacion || null
+].filter(Boolean);
+const sello = selloParts.join(' · ');
+---
+
+<!--
+  La Principal MobileOverlay: editorial ornamental "carta manuscrita".
+  Look distinto de casabella (dark editorial), pubilla (recetario numerado)
+  y guixot (brasserie navy). Firma única:
+    · Numeración romana i., ii., iii., iv. (patrón del faq de la-principal)
+    · Serif Cormorant Garamond italic para los links
+    · Header con brand + sello "Est. 1985 · Sant Antoni" + separador ❦
+    · Separadores hairline decorativos entre links (no listas de bullets)
+    · CTA botón filled bordó al ancho completo con rounded-sm
+    · Contact en italic serif, idiomas discretos al pie
+  Animación FADE puro sin translate ni stagger (limpia al abrir y cerrar).
+-->
+<div
+  id='mobileOverlay'
+  aria-hidden='true'
+  data-open='false'
+  class="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-bg
+         py-6 px-(--gap) pb-10
+         opacity-0 pointer-events-none
+         transition-opacity duration-[200ms] ease-out
+         data-[open='true']:opacity-100 data-[open='true']:pointer-events-auto
+         motion-reduce:transition-none motion-reduce:duration-0"
+>
+  <!-- Header: brand + sello + X -->
+  <div class='flex justify-between items-start pb-4'>
+    <div class='flex flex-col gap-1'>
+      <span class='font-serif text-ink font-normal text-[26px] leading-none tracking-tight'>
+        {
+          brandStart ? (
+            <>
+              {brandStart}{' '}
+              <em class='italic text-accent font-normal'>{brandRest}</em>
+            </>
+          ) : (
+            restaurant.nombre
+          )
+        }
+      </span>
+      {
+        sello && (
+          <span class='font-sans uppercase text-[10px] tracking-[0.3em] text-accent-alt font-semibold mt-2'>
+            {sello}
+          </span>
+        )
+      }
+    </div>
+    <button
+      id='mobileCloseBtn'
+      aria-label={a11y.close}
+      class='flex items-center justify-center w-11 h-11 -mr-2.5 bg-transparent border-none text-ink cursor-pointer transition-[color,transform] duration-300 hover:text-accent hover:rotate-90'
+    >
+      <IconClose />
+    </button>
+  </div>
+
+  <!-- Separador ornamental — ❦ — con reglas laterales (firma la-principal) -->
+  <div class='flex items-center justify-center gap-3 py-6'>
+    <span class='flex-1 h-px bg-line-strong/50'></span>
+    <span class='text-accent-alt text-base leading-none'>❦</span>
+    <span class='flex-1 h-px bg-line-strong/50'></span>
+  </div>
+
+  <!-- Nav: links con numeración romana + Cormorant italic -->
+  <nav aria-label={a11y.menu} class='flex-1 flex flex-col justify-center py-4'>
+    <ul class='flex flex-col divide-y divide-line/60 border-y border-line/60'>
+      {
+        links.map((link, i) => (
+          <li>
+            <a
+              href={link.href}
+              class='group flex items-baseline gap-5 py-5 cursor-pointer'
+            >
+              <span class='font-serif italic text-accent-alt text-[18px] tabular-nums tracking-wider shrink-0 min-w-[32px]'>
+                {toRoman(i + 1)}.
+              </span>
+              <span class='font-serif italic text-ink font-normal text-[clamp(34px,8.5vw,52px)] leading-[1.05] transition-colors duration-300 group-hover:text-accent'>
+                {link.label}
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+
+  <!-- CTA botón filled bordó al ancho completo -->
+  <div class='pt-8'>
+    <a
+      href={`${hrefPrefix}#book`}
+      class='group flex items-center justify-center gap-3 py-4 px-8 bg-accent text-bg border border-accent rounded-sm font-sans font-semibold uppercase text-[13px] tracking-[0.24em] cursor-pointer transition-[background-color,border-color,transform] duration-300 hover:bg-accent-hover hover:border-accent-hover hover:-translate-y-px shadow-[0_6px_18px_-6px_rgb(138_58_74/0.4)]'
+    >
+      <span>{reservarLabel}</span>
+      <span class='transition-transform duration-300 group-hover:translate-x-1'>→</span>
+    </a>
+  </div>
+
+  <!-- Separador — ❦ — antes del footer -->
+  <div class='flex items-center justify-center gap-3 py-6 mt-6'>
+    <span class='flex-1 h-px bg-line-strong/50'></span>
+    <span class='text-accent-alt text-sm leading-none'>❦</span>
+    <span class='flex-1 h-px bg-line-strong/50'></span>
+  </div>
+
+  <!-- Footer: contacto en italic serif + idiomas -->
+  <div class='flex flex-col gap-3'>
+    {
+      bookingPhone && (
+        <a
+          href={`tel:${bookingPhone}`}
+          class='font-serif italic text-ink text-[17px] transition-colors duration-300 hover:text-accent cursor-pointer'
+        >
+          {bookingPhone}
+        </a>
+      )
+    }
+    {
+      waHref && (
+        <a
+          href={waHref}
+          target='_blank'
+          rel='noopener'
+          class='font-serif italic text-ink text-[17px] transition-colors duration-300 hover:text-accent cursor-pointer'
+        >
+          WhatsApp <span class='not-italic text-accent-alt mx-1'>·</span> {whatsappRaw}
+        </a>
+      )
+    }
+    {
+      bookingEmail && (
+        <a
+          href={`mailto:${bookingEmail}`}
+          class='font-serif italic text-ink text-[17px] transition-colors duration-300 hover:text-accent cursor-pointer'
+        >
+          {bookingEmail}
+        </a>
+      )
+    }
+
+    {
+      localesUi.length > 1 && (
+        <div
+          aria-label='Idioma'
+          class='flex gap-3 pt-6 mt-4 border-t border-line/60 font-sans font-medium uppercase text-[10.5px] tracking-[0.26em] text-dim'
+        >
+          {localesUi.map((l, i) => (
+            <>
+              {i > 0 && <span class='text-dim opacity-50 -mx-0.5 select-none'>·</span>}
+              <a
+                href={
+                  l.codigo === locale
+                    ? '#'
+                    : localizedPath(langSwitcherPath, l.codigo, defaultLocale)
+                }
+                class:list={[
+                  'py-1 transition-colors duration-300',
+                  l.codigo === locale
+                    ? 'text-accent pointer-events-none'
+                    : 'hover:text-ink cursor-pointer'
+                ]}
+                aria-current={l.codigo === locale ? 'true' : undefined}
+              >
+                {l.codigo.toUpperCase()}
+              </a>
+            </>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    const hamburger = document.getElementById('hamburgerBtn');
+    const closeBtn = document.getElementById('mobileCloseBtn');
+    const overlay = document.getElementById('mobileOverlay');
+    if (!hamburger || !overlay) return;
+
+    const setOpen = open => {
+      overlay.dataset.open = open ? 'true' : 'false';
+      document.body.classList.toggle('overlay-open', open);
+      hamburger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      overlay.setAttribute('aria-hidden', open ? 'false' : 'true');
+      if (open) closeBtn?.focus();
+      else hamburger?.focus();
+    };
+
+    hamburger.addEventListener('click', () => setOpen(true));
+    closeBtn?.addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && overlay.dataset.open === 'true') setOpen(false);
+    });
+
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.onclick = e => {
+        const target = a.getAttribute('href');
+        if (target === '#') return;
+        const el = document.querySelector(target);
+        if (!el) return;
+        e.preventDefault();
+        const wasOpen = overlay.dataset.open === 'true';
+        if (wasOpen) setOpen(false);
+        setTimeout(
+          () => el.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+          wasOpen ? 240 : 0
+        );
+      };
+    });
+  })();
+</script>

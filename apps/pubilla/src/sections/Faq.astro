@@ -1,0 +1,157 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant } from '../lib/queries';
+import IconChevronDown from '@hosteleria/ui/icons/IconChevronDown.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+
+if (!restaurant.faq?.length) return null;
+
+// Header FAQ desde Sanity con fallbacks por locale
+const FALLBACK: Record<string, { eyebrow: string; title: string; titleAccent: string }> = {
+  es: {
+    eyebrow: 'Preguntas frecuentes',
+    title: 'Todo lo que',
+    titleAccent: 'necesitas saber'
+  },
+  en: {
+    eyebrow: 'Frequently asked',
+    title: 'Everything you',
+    titleAccent: 'need to know'
+  },
+  ca: {
+    eyebrow: 'Preguntes freqüents',
+    title: 'Tot el que',
+    titleAccent: 'has de saber'
+  }
+};
+const fb = FALLBACK[locale] ?? FALLBACK.es;
+const tt = {
+  eyebrow: t(restaurant.faqEyebrow, locale, defaultLocale) || fb.eyebrow,
+  title: t(restaurant.faqTitulo, locale, defaultLocale) || fb.title,
+  titleAccent: t(restaurant.faqTituloAcento, locale, defaultLocale) || fb.titleAccent
+};
+---
+
+<!--
+  Pubilla FAQ: estilo "recetario numerado" acorde con Dishes/Wines.
+  Numeración 01. / 02. en italic mostaza + glifo ✦ decorativo cuando abre.
+  Header centrado con eyebrow + título grande split italic.
+-->
+<section
+  id='faq'
+  class='mx-auto py-[14vh] px-(--gap) max-w-[900px] border-t border-line max-[700px]:py-[10vh]'
+>
+  <div class='reveal text-center mb-[60px] max-[700px]:mb-10'>
+    <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-accent font-semibold mb-4'>
+      {tt.eyebrow}
+    </span>
+    <h2
+      class='font-serif font-normal leading-[1] tracking-[-0.01em] text-[clamp(34px,4.2vw,58px)]'
+    >
+      {tt.title} <em class='italic text-accent'>{tt.titleAccent}</em>
+    </h2>
+  </div>
+
+  <div class='flex flex-col'>
+    {
+      restaurant.faq.map((item, i) => (
+        <details
+          class='reveal group border-b border-line first:border-t border-line
+                 transition-colors duration-[350ms]
+                 hover:bg-[rgb(47_75_124/0.04)]
+                 open:bg-[rgb(47_75_124/0.06)]'
+        >
+          <summary
+            class='grid items-baseline grid-cols-[54px_1fr_20px] gap-4 py-[24px] px-[clamp(6px,2vw,20px)] cursor-pointer list-none
+                   [&::-webkit-details-marker]:hidden
+                   transition-colors duration-300 hover:text-accent
+                   max-[700px]:grid-cols-[42px_1fr_16px] max-[700px]:gap-3 max-[700px]:py-[20px]'
+          >
+            <span class='flex items-baseline gap-1 font-serif italic text-accent leading-none'>
+              <span
+                aria-hidden='true'
+                class='text-accent-alt text-[16px] leading-none transition-opacity duration-300 group-open:opacity-100 opacity-40'
+              >
+                ✦
+              </span>
+              <span class='text-[18px] tabular-nums max-[700px]:text-[15px]'>
+                {String(i + 1).padStart(2, '0')}.
+              </span>
+            </span>
+            <span
+              class='font-serif text-ink font-normal leading-[1.35] tracking-[-0.005em] text-[clamp(17px,1.8vw,22px)]
+                     transition-colors duration-300 group-open:text-accent'
+            >
+              {t(item.pregunta, locale, defaultLocale)}
+            </span>
+            <span
+              aria-hidden='true'
+              class='flex items-center justify-center text-muted
+                     transition-[transform,color] duration-[450ms] ease-[cubic-bezier(.65,0,.35,1)]
+                     group-open:rotate-180 group-open:text-accent
+                     group-hover:text-accent motion-reduce:transition-none'
+            >
+              <IconChevronDown />
+            </span>
+          </summary>
+          <div
+            class='faq-body overflow-hidden opacity-0 -translate-y-1.5 h-0 will-change-[height]
+                   transition-[height,opacity,transform] duration-[420ms] ease-[cubic-bezier(.65,0,.35,1)]
+                   group-open:opacity-100 group-open:translate-y-0
+                   motion-reduce:transition-none'
+          >
+            <p class='font-sans text-ink-soft text-[15.5px] leading-[1.75] max-w-[62ch] py-0 pb-7 pl-[70px] pr-5 m-0 max-[700px]:pl-14 max-[700px]:pr-0 max-[700px]:pb-5'>
+              {t(item.respuesta, locale, defaultLocale)}
+            </p>
+          </div>
+        </details>
+      ))
+    }
+  </div>
+</section>
+
+<script is:inline>
+  (function () {
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.querySelectorAll('details.reveal').forEach(details => {
+      const summary = details.querySelector('summary');
+      const body = details.querySelector('.faq-body');
+      if (!summary || !body) return;
+      summary.addEventListener('click', e => {
+        if (reduce) return;
+        e.preventDefault();
+        const isOpen = details.hasAttribute('open');
+        body.style.height = body.scrollHeight + 'px';
+        if (isOpen) {
+          requestAnimationFrame(() => {
+            body.style.height = '0px';
+          });
+          body.addEventListener('transitionend', function once(ev) {
+            if (ev.propertyName !== 'height') return;
+            body.removeEventListener('transitionend', once);
+            details.removeAttribute('open');
+            body.style.height = '';
+          });
+        } else {
+          details.setAttribute('open', '');
+          body.style.height = '0px';
+          requestAnimationFrame(() => {
+            body.style.height = body.scrollHeight + 'px';
+          });
+          body.addEventListener('transitionend', function once(ev) {
+            if (ev.propertyName !== 'height') return;
+            body.removeEventListener('transitionend', once);
+            body.style.height = 'auto';
+          });
+        }
+      });
+    });
+  })();
+</script>

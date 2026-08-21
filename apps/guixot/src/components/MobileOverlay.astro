@@ -1,0 +1,256 @@
+---
+import { t, localizedPath } from '@hosteleria/i18n-utils';
+import { splitLastWord } from '@hosteleria/utils';
+import type { LocaleRef, Restaurant } from '@hosteleria/sanity-client';
+import IconClose from '@hosteleria/ui/icons/IconClose.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+  activeLocales: LocaleRef[];
+  waHref: string;
+  whatsappRaw: string;
+  bookingPhone: string;
+  bookingEmail: string;
+  hrefPrefix?: string;
+  langSwitcherPath?: string;
+}
+
+const {
+  restaurant,
+  locale,
+  defaultLocale,
+  activeLocales,
+  waHref,
+  whatsappRaw,
+  bookingPhone,
+  bookingEmail,
+  hrefPrefix = '',
+  langSwitcherPath = '/'
+} = Astro.props;
+
+const nav = restaurant.textosNav ?? {};
+
+const A11Y: Record<string, { close: string; menu: string }> = {
+  es: { close: 'Cerrar menú', menu: 'Menú' },
+  en: { close: 'Close menu', menu: 'Menu' },
+  ca: { close: 'Tancar menú', menu: 'Menú' }
+};
+const a11y = A11Y[locale] ?? A11Y.es;
+
+const localesUi = activeLocales.length
+  ? activeLocales
+  : [{ codigo: defaultLocale, nombre: defaultLocale }];
+
+const partes = restaurant.nombre.match(/^(Casa|La|El)?\s?(.*)$/);
+const brandStart = partes?.[1] ?? '';
+const brandRest = partes?.[2] ?? restaurant.nombre;
+
+const links = [
+  { href: `${hrefPrefix}#about`, label: t(nav.linkLocal, locale, defaultLocale) || 'Historia' },
+  { href: `${hrefPrefix}#plates`, label: t(nav.linkCocina, locale, defaultLocale) || 'Carta' },
+  { href: `${hrefPrefix}#wines`, label: t(nav.linkVinos, locale, defaultLocale) || 'Vinos' },
+  { href: `${hrefPrefix}#gallery`, label: t(nav.linkGaleria, locale, defaultLocale) || 'Galería' }
+];
+const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
+---
+
+<!--
+  Guixot MobileOverlay v2: brasserie parisina cream + navy. Rediseño más
+  aire, sin adornos "-", animación FADE puro (sin translate, sin stagger)
+  que se ve limpia al abrir y al cerrar sin traba.
+
+  Layout:
+    · Header: brand + X, hairline sutil abajo
+    · Nav: links serif Bodoni Moda 5xl con splitLastWord (última palabra
+      italic navy), separadores hairline entre links
+    · CTA rectangular navy filled al ancho completo
+    · Footer: contacto sencillo + idiomas discretos en línea
+-->
+<div
+  id='mobileOverlay'
+  aria-hidden='true'
+  data-open='false'
+  class="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-bg
+         py-6 px-(--gap) pb-10
+         opacity-0 pointer-events-none
+         transition-opacity duration-[200ms] ease-out
+         data-[open='true']:opacity-100 data-[open='true']:pointer-events-auto
+         motion-reduce:transition-none motion-reduce:duration-0"
+>
+  <!-- Header simple -->
+  <div class='flex justify-between items-center pb-6'>
+    <span class='font-serif text-ink font-medium text-[22px] leading-none tracking-tight'>
+      {
+        brandStart ? (
+          <>
+            {brandStart}{' '}
+            <em class='italic text-accent font-normal'>{brandRest}</em>
+          </>
+        ) : (
+          restaurant.nombre
+        )
+      }
+    </span>
+    <button
+      id='mobileCloseBtn'
+      aria-label={a11y.close}
+      class='flex items-center justify-center w-11 h-11 -mr-2.5 bg-transparent border-none text-ink cursor-pointer transition-[color,transform] duration-300 hover:text-accent hover:rotate-90'
+    >
+      <IconClose />
+    </button>
+  </div>
+
+  <!-- Nav: separadores hairline entre cada link, sin numeración ni adornos -->
+  <nav aria-label={a11y.menu} class='flex-1 flex flex-col justify-center'>
+    <ul class='flex flex-col divide-y divide-line-strong/30 border-y border-line-strong/30'>
+      {
+        links.map(link => {
+          const { head, tail } = splitLastWord(link.label);
+          return (
+            <li>
+              <a
+                href={link.href}
+                class='group block py-6 cursor-pointer'
+              >
+                <span class='font-serif text-ink font-medium text-[clamp(38px,9vw,56px)] leading-[1.05] tracking-tight transition-colors duration-300 group-hover:text-accent'>
+                  {tail ? (
+                    <>
+                      {head}{' '}
+                      <em class='italic text-accent font-normal transition-colors duration-300 group-hover:text-accent-hover'>
+                        {tail}
+                      </em>
+                    </>
+                  ) : (
+                    link.label
+                  )}
+                </span>
+              </a>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </nav>
+
+  <!-- CTA rectangular filled navy al ancho completo -->
+  <div class='pt-8'>
+    <a
+      href={`${hrefPrefix}#book`}
+      class='group flex items-center justify-center gap-3 py-4 px-8 bg-accent text-bg border border-accent rounded-sm font-sans font-semibold uppercase text-[13px] tracking-[0.24em] cursor-pointer transition-[background-color,border-color,transform] duration-300 hover:bg-accent-hover hover:border-accent-hover hover:-translate-y-px shadow-[0_6px_18px_-6px_rgb(30_58_95/0.42)]'
+    >
+      <span>{reservarLabel}</span>
+      <span class='transition-transform duration-300 group-hover:translate-x-1'>→</span>
+    </a>
+  </div>
+
+  <!-- Footer: contacto + idiomas en línea -->
+  <div class='flex flex-col gap-6 pt-10 mt-8 border-t border-line-strong/30'>
+    <div class='flex flex-col gap-2'>
+      {
+        bookingPhone && (
+          <a
+            href={`tel:${bookingPhone}`}
+            class='font-serif text-ink text-[16px] transition-colors duration-300 hover:text-accent cursor-pointer'
+          >
+            {bookingPhone}
+          </a>
+        )
+      }
+      {
+        waHref && (
+          <a
+            href={waHref}
+            target='_blank'
+            rel='noopener'
+            class='font-serif text-ink text-[16px] transition-colors duration-300 hover:text-accent cursor-pointer'
+          >
+            WhatsApp <span class='text-dim mx-1'>·</span> {whatsappRaw}
+          </a>
+        )
+      }
+      {
+        bookingEmail && (
+          <a
+            href={`mailto:${bookingEmail}`}
+            class='font-serif text-ink text-[16px] transition-colors duration-300 hover:text-accent cursor-pointer'
+          >
+            {bookingEmail}
+          </a>
+        )
+      }
+    </div>
+
+    {
+      localesUi.length > 1 && (
+        <div
+          aria-label='Idioma'
+          class='flex gap-3 font-sans font-medium uppercase text-[10.5px] tracking-[0.26em] text-dim'
+        >
+          {localesUi.map((l, i) => (
+            <>
+              {i > 0 && <span class='text-dim opacity-50 -mx-0.5 select-none'>·</span>}
+              <a
+                href={
+                  l.codigo === locale
+                    ? '#'
+                    : localizedPath(langSwitcherPath, l.codigo, defaultLocale)
+                }
+                class:list={[
+                  'py-1 transition-colors duration-300',
+                  l.codigo === locale
+                    ? 'text-accent pointer-events-none'
+                    : 'hover:text-ink cursor-pointer'
+                ]}
+                aria-current={l.codigo === locale ? 'true' : undefined}
+              >
+                {l.codigo.toUpperCase()}
+              </a>
+            </>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    const hamburger = document.getElementById('hamburgerBtn');
+    const closeBtn = document.getElementById('mobileCloseBtn');
+    const overlay = document.getElementById('mobileOverlay');
+    if (!hamburger || !overlay) return;
+
+    const setOpen = open => {
+      overlay.dataset.open = open ? 'true' : 'false';
+      document.body.classList.toggle('overlay-open', open);
+      hamburger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      overlay.setAttribute('aria-hidden', open ? 'false' : 'true');
+      if (open) closeBtn?.focus();
+      else hamburger?.focus();
+    };
+
+    hamburger.addEventListener('click', () => setOpen(true));
+    closeBtn?.addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && overlay.dataset.open === 'true') setOpen(false);
+    });
+
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.onclick = e => {
+        const target = a.getAttribute('href');
+        if (target === '#') return;
+        const el = document.querySelector(target);
+        if (!el) return;
+        e.preventDefault();
+        const wasOpen = overlay.dataset.open === 'true';
+        if (wasOpen) setOpen(false);
+        setTimeout(
+          () => el.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+          wasOpen ? 240 : 0
+        );
+      };
+    });
+  })();
+</script>

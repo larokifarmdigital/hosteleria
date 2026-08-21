@@ -1,0 +1,237 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant } from '../lib/queries';
+import { buildHoursByDay } from '@hosteleria/utils';
+import { bookingStrings } from '@hosteleria/booking-form';
+import CtaButton from '../components/CtaButton.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+  bookingEmail: string;
+}
+
+const { restaurant, locale, defaultLocale, bookingEmail } = Astro.props;
+
+const nav = restaurant.textosNav ?? {};
+const form = restaurant.textosForm ?? {};
+
+const hoursByDay = buildHoursByDay(restaurant.horariosSemana);
+const tt = bookingStrings(locale);
+const bookingConfig = {
+  hoursByDay,
+  strings: tt,
+  bookingEmail,
+  restaurantName: restaurant.nombre,
+  classSelectedDay: 'bg-accent text-bg font-semibold',
+  classSelectedSlot: 'bg-accent text-bg border-accent font-semibold'
+};
+
+// Inputs con font-serif italic placeholder (aire "recetario manuscrito")
+const inputCls =
+  'w-full bg-transparent border-0 border-b-2 border-line-strong/60 py-3 pb-3.5 px-0 font-serif text-ink text-[17px] font-normal transition-colors duration-300 focus:outline-none focus:border-accent placeholder:text-dim placeholder:italic';
+const labelCls =
+  'flex flex-col gap-2.5 font-sans uppercase text-muted font-medium text-[11px] tracking-[0.22em]';
+const errorCls =
+  'text-[11px] tracking-normal normal-case text-accent italic hidden data-[error]:block';
+const pickerBtnCls =
+  'w-full bg-transparent border-0 border-b-2 border-line-strong/60 py-3 pb-3.5 px-0 font-serif text-ink text-[17px] font-normal text-left transition-colors duration-300 hover:border-accent focus:outline-none focus:border-accent flex items-center justify-between gap-3 cursor-pointer';
+---
+
+<!--
+  Pubilla Booking: "hoja de reserva de la casa". Card cream con marco doble
+  (borde exterior + interior mostaza), asterisco decorativo, título serif
+  italic. Inputs con border-bottom más grueso, tipografía serif para dar
+  aire manuscrito. Todo dentro de un contenedor tipo "papelería".
+-->
+<section
+  id='book'
+  class='py-[14vh] px-(--gap) bg-bg-2/50 border-y border-line-strong/40 max-[960px]:py-[10vh]'
+>
+  <div class='mx-auto max-w-[860px]'>
+    <!-- Header con asterisco -->
+    <div class='reveal text-center mb-[60px] max-[960px]:mb-10'>
+      <div aria-hidden='true' class='flex items-center justify-center gap-3 mb-6 text-accent-alt'>
+        <span class='w-14 h-px bg-accent-alt/60'></span>
+        <span class='font-serif text-[20px] leading-none'>∗</span>
+        <span class='w-14 h-px bg-accent-alt/60'></span>
+      </div>
+      <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-accent-alt font-semibold mb-4'>
+        {t(nav.linkReservar, locale, defaultLocale) || 'Reserva'}
+      </span>
+      <h2
+        class='font-serif font-normal leading-[1] tracking-[-0.01em] text-[clamp(38px,5vw,68px)] mb-5'
+      >
+        {t(form.titulo, locale, defaultLocale)}
+      </h2>
+      <p class='font-serif italic text-muted text-[clamp(16px,1.6vw,20px)] leading-[1.55] mx-auto max-w-[52ch]'>
+        {t(form.intro, locale, defaultLocale)}
+      </p>
+    </div>
+
+    <!-- Form dentro de tarjeta con marco doble tipo "papel de reservas" -->
+    <div class='reveal relative bg-bg p-10 max-[700px]:p-6 border border-line-strong/40'>
+      <span
+        aria-hidden='true'
+        class='absolute inset-2 border border-accent/20 pointer-events-none'
+      ></span>
+
+      <form
+        id='reservaForm'
+        novalidate
+        class='relative grid grid-cols-2 gap-y-8 gap-x-10 max-[960px]:grid-cols-1 max-[960px]:gap-6'
+      >
+        <label class={labelCls}>
+          <span>{t(form.labelNombre, locale, defaultLocale) || 'Nombre'}</span>
+          <input type='text' name='nombre' required autocomplete='name' class={inputCls} />
+        </label>
+
+        <label class={labelCls}>
+          <span>{t(form.labelTelefono, locale, defaultLocale) || 'Teléfono'}</span>
+          <input
+            type='tel'
+            name='telefono'
+            required
+            autocomplete='tel'
+            inputmode='tel'
+            placeholder='612 345 678'
+            maxlength='17'
+            class={inputCls}
+            data-input-phone
+          />
+          <span class={errorCls} data-error-for='telefono'></span>
+        </label>
+
+        <label class={labelCls}>
+          <span>{t(form.labelEmail, locale, defaultLocale) || 'Email'}</span>
+          <input
+            type='email'
+            name='email'
+            autocomplete='email'
+            placeholder='hola@ejemplo.com'
+            class={inputCls}
+            data-input-email
+          />
+          <span class={errorCls} data-error-for='email'></span>
+        </label>
+
+        <label class={labelCls}>
+          <span>{t(form.labelComensales, locale, defaultLocale) || 'Comensales'}</span>
+          <input
+            type='text'
+            name='personas'
+            required
+            inputmode='numeric'
+            pattern='[0-9]{1,2}'
+            maxlength='2'
+            value='2'
+            placeholder='2'
+            class={inputCls}
+            data-input-guests
+          />
+          <span class={errorCls} data-error-for='personas'></span>
+        </label>
+
+        <label class={labelCls}>
+          <span>{t(form.labelFecha, locale, defaultLocale) || 'Fecha'}</span>
+          <div class='relative'>
+            <button type='button' class={pickerBtnCls} data-datepicker-btn>
+              <span data-datepicker-label class='text-dim italic'>{tt.pickDate}</span>
+              <svg
+                width='16'
+                height='16'
+                viewBox='0 0 20 20'
+                fill='none'
+                aria-hidden='true'
+                class='text-muted shrink-0'
+              >
+                <rect
+                  x='3'
+                  y='4'
+                  width='14'
+                  height='13'
+                  rx='1'
+                  stroke='currentColor'
+                  stroke-width='1.4'
+                />
+                <path
+                  d='M3 8h14M7 2v4M13 2v4'
+                  stroke='currentColor'
+                  stroke-width='1.4'
+                  stroke-linecap='round'
+                />
+              </svg>
+            </button>
+            <input type='hidden' name='fecha' required data-datepicker-input />
+            <div
+              data-datepicker-pop
+              class='hidden absolute z-50 left-0 top-[calc(100%+8px)] w-[300px] bg-bg border border-line-strong rounded shadow-[0_20px_50px_-15px_rgb(26_26_36/0.25)] p-4 max-[700px]:w-full max-[700px]:max-w-[320px]'
+            >
+            </div>
+          </div>
+          <span class={errorCls} data-error-for='fecha'></span>
+        </label>
+
+        <label class={labelCls}>
+          <span>{t(form.labelHora, locale, defaultLocale) || 'Hora'}</span>
+          <div class='relative'>
+            <button type='button' class={pickerBtnCls} data-timepicker-btn>
+              <span data-timepicker-label class='text-dim italic'>{tt.pickTime}</span>
+              <svg
+                width='16'
+                height='16'
+                viewBox='0 0 20 20'
+                fill='none'
+                aria-hidden='true'
+                class='text-muted shrink-0'
+              >
+                <circle cx='10' cy='10' r='7' stroke='currentColor' stroke-width='1.4' />
+                <path
+                  d='M10 6v4l2.5 2'
+                  stroke='currentColor'
+                  stroke-width='1.4'
+                  stroke-linecap='round'
+                />
+              </svg>
+            </button>
+            <input type='hidden' name='hora' required data-timepicker-input />
+            <div
+              data-timepicker-pop
+              class='hidden absolute z-50 left-0 top-[calc(100%+8px)] w-[320px] bg-bg border border-line-strong rounded shadow-[0_20px_50px_-15px_rgb(26_26_36/0.25)] p-4 max-[700px]:w-full max-[700px]:max-w-[340px]'
+            >
+            </div>
+          </div>
+          <span class={errorCls} data-error-for='hora'></span>
+        </label>
+
+        <label class:list={[labelCls, 'col-span-full']}>
+          <span>{t(form.labelNotas, locale, defaultLocale) || 'Notas'}</span>
+          <textarea
+            name='notas'
+            rows='3'
+            class:list={[inputCls, 'resize-y min-h-[90px] leading-normal']}
+          ></textarea>
+        </label>
+
+        <CtaButton type='submit' class='col-span-full justify-self-center mt-3'>
+          {t(form.submit, locale, defaultLocale) || 'Enviar'}
+        </CtaButton>
+        <p
+          id='reservaMsg'
+          role='status'
+          aria-live='polite'
+          class='col-span-full text-center min-h-[1.4em] text-[13px] tracking-[0.04em] text-muted'
+        >
+        </p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<script is:inline type='application/json' id='bookingConfig' set:html={JSON.stringify(bookingConfig)}></script>
+
+<script>
+  import { initBookingForm } from '@hosteleria/booking-form';
+  initBookingForm();
+</script>

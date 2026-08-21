@@ -1,18 +1,19 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import RestaurantePage from '../../components/RestaurantePage.astro';
-import { fetchDataRestaurante } from '../../lib/queries';
+import RestaurantPage from '../../components/RestaurantPage.astro';
+import { fetchRestaurantData, fetchLegalPages } from '../../lib/queries';
 import { img } from '../../lib/sanity';
+import { buildRestaurantJsonLd, buildFaqJsonLd } from '@hosteleria/seo';
 import { t, resolveActiveLocales, localizedPath } from '@hosteleria/i18n-utils';
 
 /**
  * Ruta dinámica por locale. Genera una página estática por cada idioma activo
- * del restaurante EXCEPTO el defaultLocale (que se sirve en `/` desde index.astro).
+ * del restaurant EXCEPTO el defaultLocale (que se sirve en `/` desde index.astro).
  */
 export async function getStaticPaths() {
-  const data = await fetchDataRestaurante();
-  const defaultLocale = data.restaurante.idiomaPorDefecto?.codigo ?? 'es';
-  const activeLocales = data.restaurante.idiomasActivos ?? [];
+  const data = await fetchRestaurantData();
+  const defaultLocale = data.restaurant.idiomaPorDefecto?.codigo ?? 'es';
+  const activeLocales = data.restaurant.idiomasActivos ?? [];
   const otros = resolveActiveLocales(defaultLocale, activeLocales.map((l) => l.codigo))
     .filter((code) => code !== defaultLocale);
   return otros.map((code) => ({ params: { lang: code }, props: { data, defaultLocale } }));
@@ -22,12 +23,13 @@ const { data, defaultLocale } = Astro.props;
 const { lang } = Astro.params;
 const locale = lang!;
 
-const { restaurante } = data;
-const activeLocales = restaurante.idiomasActivos?.length
-  ? restaurante.idiomasActivos
+const { restaurant } = data;
+const legalPages = await fetchLegalPages(restaurant._id);
+const activeLocales = restaurant.idiomasActivos?.length
+  ? restaurant.idiomasActivos
   : [{ codigo: defaultLocale, nombre: defaultLocale }];
 
-const siteUrl = restaurante.dominio ?? 'https://lapubilla.example.com';
+const siteUrl = restaurant.dominio ?? 'https://lapubilla.com';
 const canonical = `${siteUrl}${localizedPath('/', locale, defaultLocale)}`;
 
 const hreflangs = resolveActiveLocales(
@@ -38,31 +40,17 @@ const hreflangs = resolveActiveLocales(
   url: `${siteUrl}${localizedPath('/', l, defaultLocale)}`,
 }));
 
-const seoTitle = t(restaurante.seoTitulo, locale, defaultLocale) || restaurante.nombre;
-const seoDescription = t(restaurante.seoDescripcion, locale, defaultLocale) || '';
-const ogImage = img.url(restaurante.seoImagen) ?? img.url(restaurante.heroImagen);
-const logoUrl = img.url(restaurante.logo);
-const faviconUrl = img.url(restaurante.favicon);
-const appleTouchIconUrl = img.pngSquare(restaurante.iconoApp, 180);
+const seoTitle = t(restaurant.seoTitulo, locale, defaultLocale) || restaurant.nombre;
+const seoDescription = t(restaurant.seoDescripcion, locale, defaultLocale) || '';
+const ogImage = img.url(restaurant.seoImagen) ?? img.url(restaurant.heroImagen);
+const logoUrl = img.url(restaurant.logo);
+const faviconUrl = img.url(restaurant.favicon);
+const appleTouchIconUrl = img.pngSquare(restaurant.iconoApp, 180);
 
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Restaurant',
-  name: restaurante.nombre,
-  ...(logoUrl && { logo: logoUrl }),
-  ...(ogImage && { image: ogImage }),
-  ...(restaurante.direccion && {
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: restaurante.direccion.calle,
-      addressLocality: restaurante.direccion.ciudad,
-      postalCode: restaurante.direccion.codigoPostal,
-      addressCountry: restaurante.direccion.pais,
-    },
-  }),
-  ...(restaurante.contacto?.telefono && { telephone: restaurante.contacto.telefono }),
-  url: canonical,
-};
+const jsonLd = [
+  buildRestaurantJsonLd({ restaurant, locale, defaultLocale, canonical, img, servesCuisine: ['Mediterránea', 'Contemporánea', 'Catalana', 'Italiana'] }),
+  buildFaqJsonLd(restaurant.faq, locale, defaultLocale),
+];
 ---
 
 <BaseLayout
@@ -75,11 +63,13 @@ const jsonLd = {
   jsonLd={jsonLd}
   faviconUrl={faviconUrl}
   appleTouchIconUrl={appleTouchIconUrl}
+  cloudflareAnalyticsToken={restaurant.cloudflareAnalyticsToken}
 >
-  <RestaurantePage
+  <RestaurantPage
     locale={locale}
     defaultLocale={defaultLocale}
     activeLocales={activeLocales}
+    legalPages={legalPages}
     {...data}
   />
 </BaseLayout>

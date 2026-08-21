@@ -1,0 +1,35 @@
+---
+interface Props {
+  href?: string;
+  type?: 'submit' | 'button';
+  class?: string;
+}
+const { href, type = 'button', class: cls = '' } = Astro.props;
+
+// CtaButton editorial rectangular: rounded-sm (esquinas 2px suaves) para
+// mantener coherencia con las cards cuadradas del lenguaje "cartelería".
+// No pill — un pill sobre cards cuadradas se ve desconectado.
+const base = [
+  'inline-flex items-center gap-3 py-3.5 px-8',
+  'bg-accent text-bg rounded-sm',
+  'font-sans font-semibold uppercase text-[12px] tracking-[0.22em]',
+  'cursor-pointer border border-accent',
+  'shadow-[0_4px_14px_-4px_rgb(47_75_124/0.4)]',
+  'transition-[background-color,border-color,transform,box-shadow] duration-[350ms] ease-out',
+  'hover:bg-accent-hover hover:border-accent-hover hover:-translate-y-0.5',
+  'hover:shadow-[0_10px_24px_-6px_rgb(47_75_124/0.5)]',
+  '[&>.arrow]:transition-transform [&>.arrow]:duration-[350ms] hover:[&>.arrow]:translate-x-1',
+];
+---
+
+{href ? (
+  <a href={href} class:list={[...base, cls]}>
+    <slot />
+    <span class="arrow">→</span>
+  </a>
+) : (
+  <button type={type} class:list={[...base, cls]}>
+    <slot />
+    <span class="arrow">→</span>
+  </button>
+)}

@@ -47,11 +47,8 @@ const sello = selloParts.join(' · ');
   >
     <!-- Sello dinámico desde Sanity: anyoFundacion + barrio/ciudad -->
     {sello && (
-      <div class='reveal flex items-center gap-4'>
-        <span class='w-10 h-px bg-accent/70'></span>
-        <span class='font-sans uppercase text-[10px] tracking-[0.4em] text-accent font-semibold'>
-          {sello}
-        </span>
+      <div class='reveal font-sans uppercase text-[10px] tracking-[0.4em] text-accent font-semibold'>
+        {sello}
       </div>
     )}
 

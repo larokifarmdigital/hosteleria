@@ -1,0 +1,123 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant, WineCategory, Wine } from '../lib/queries';
+
+interface Props {
+  restaurant: Restaurant;
+  wineCategories: WineCategory[];
+  wines: Wine[];
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, wineCategories, wines, locale, defaultLocale } = Astro.props;
+
+const sec = restaurant.textosSecciones ?? {};
+
+const winesByCategory = wineCategories.map(cat => ({
+  category: cat,
+  items: wines.filter(w => w.categoria?._id === cat._id)
+}));
+
+const PRICE_LABELS: Record<string, { copa: string; botella: string }> = {
+  es: { copa: 'Copa', botella: 'Botella' },
+  en: { copa: 'Glass', botella: 'Bottle' },
+  ca: { copa: 'Copa', botella: 'Ampolla' }
+};
+const priceLabels = PRICE_LABELS[locale] ?? PRICE_LABELS.es;
+---
+
+<!--
+  Pubilla Wines: mismo lenguaje "cartelería de mercado" que Dishes con
+  badge circular numérico. Precios Copa/Botella en columnas a la derecha
+  con separación clara. Región en italic verde oliva.
+-->
+<section
+  id='wines'
+  class='py-[12vh] px-(--gap) bg-bg border-b border-line-strong/40 max-[960px]:py-[8vh]'
+>
+  <div class='reveal text-center mb-[70px] mx-auto max-w-[var(--max)] max-[960px]:mb-12'>
+    <div aria-hidden='true' class='flex items-center justify-center gap-3 mb-6 text-accent-alt'>
+      <span class='w-14 h-px bg-accent-alt/60'></span>
+      <span class='font-serif text-[20px] leading-none'>∗</span>
+      <span class='w-14 h-px bg-accent-alt/60'></span>
+    </div>
+    <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-accent-alt font-semibold mb-4'>
+      {t(sec.vinosEyebrow, locale, defaultLocale)}
+    </span>
+    <h2
+      class='font-serif font-normal leading-[0.98] tracking-[-0.01em] text-[clamp(42px,5.5vw,80px)]'
+    >
+      {t(sec.vinosTitulo, locale, defaultLocale)}
+    </h2>
+  </div>
+
+  <div class='mx-auto max-w-[860px] flex flex-col gap-14 max-[960px]:gap-10'>
+    {
+      winesByCategory.map(({ category, items }) =>
+        items.length > 0 && (
+          <div class='reveal'>
+            <h3 class='font-serif italic text-ink text-[clamp(22px,2.2vw,30px)] mb-4'>
+              {t(category.nombre, locale, defaultLocale)}
+            </h3>
+
+            <!-- Headers precio -->
+            <div class='flex items-baseline gap-3 mb-3 pl-[60px] max-[700px]:pl-[48px]'>
+              <span class='flex-1' />
+              <span class='w-[70px] text-right text-[10px] tracking-[0.22em] uppercase text-dim font-medium'>
+                {priceLabels.copa}
+              </span>
+              <span class='w-[70px] text-right text-[10px] tracking-[0.22em] uppercase text-dim font-medium'>
+                {priceLabels.botella}
+              </span>
+            </div>
+
+            <ul class='flex flex-col gap-4'>
+              {items.map((wine, i) => (
+                <li class='group flex items-start gap-4 py-3 max-[700px]:gap-3'>
+                  <!-- Número en italic azul, sin círculo (más editorial) -->
+                  <div class='shrink-0 w-11 max-[700px]:w-9 flex items-baseline justify-end font-serif italic text-accent text-[22px] max-[700px]:text-[18px] tabular-nums leading-none pt-[6px]'>
+                    {String(i + 1).padStart(2, '0')}
+                  </div>
+
+                  <div class='flex-1 min-w-0'>
+                    <div class='flex items-baseline gap-3'>
+                      <div class='flex-1 min-w-0 flex items-baseline gap-3 flex-wrap'>
+                        <span class='font-serif text-ink font-normal text-[clamp(18px,1.6vw,22px)]'>
+                          {wine.nombre}
+                        </span>
+                        {wine.region && (
+                          <span class='font-serif italic text-accent-alt text-[13px]'>
+                            · {wine.region}
+                          </span>
+                        )}
+                      </div>
+                      <span class='w-[70px] text-right font-serif italic text-accent-alt text-[15px] font-semibold tabular-nums'>
+                        {wine.precioCopa != null ? `${wine.precioCopa} €` : '—'}
+                      </span>
+                      <span class='w-[70px] text-right font-serif italic text-accent-alt text-[15px] font-semibold tabular-nums'>
+                        {wine.precioBotella != null ? `${wine.precioBotella} €` : '—'}
+                      </span>
+                    </div>
+                    {t(wine.nota, locale, defaultLocale) && (
+                      <p class='mt-1 text-muted text-[13.5px] leading-[1.55] italic max-w-[60ch]'>
+                        {t(wine.nota, locale, defaultLocale)}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      )
+    }
+    {
+      t(sec.vinosNotaFinal, locale, defaultLocale) && (
+        <p class='text-center pt-6 text-[11px] tracking-[0.3em] uppercase text-muted font-sans'>
+          {t(sec.vinosNotaFinal, locale, defaultLocale)}
+        </p>
+      )
+    }
+  </div>
+</section>
