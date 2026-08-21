@@ -1,0 +1,79 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import LegalPage from '../../components/LegalPage.astro';
+import type { RestaurantData, LegalPageDoc } from '../../lib/queries';
+import { fetchRestaurantData, fetchLegalPages } from '../../lib/queries';
+import { img } from '../../lib/sanity';
+import { t, resolveActiveLocales, localizedPath } from '@hosteleria/i18n-utils';
+import { toHTML } from '@portabletext/to-html';
+
+interface RouteProps {
+  data: RestaurantData;
+  legalPages: LegalPageDoc[];
+  page: LegalPageDoc;
+  defaultLocale: string;
+}
+
+export async function getStaticPaths() {
+  const data = await fetchRestaurantData();
+  const legalPages = await fetchLegalPages(data.restaurant._id);
+  const defaultLocale = data.restaurant.idiomaPorDefecto?.codigo ?? 'es';
+  return legalPages.map((page) => ({
+    params: { slug: page.tipo },
+    props: { data, legalPages, page, defaultLocale } satisfies RouteProps,
+  }));
+}
+
+const { data, legalPages, page, defaultLocale } = Astro.props as RouteProps;
+const { restaurant } = data;
+const locale = defaultLocale;
+
+const activeLocales = restaurant.idiomasActivos?.length
+  ? restaurant.idiomasActivos
+  : [{ codigo: defaultLocale, nombre: defaultLocale }];
+
+const siteUrl = restaurant.dominio ?? 'https://laprincipal.com';
+const canonical = `${siteUrl}${localizedPath(`/legal/${page.tipo}`, locale, defaultLocale)}`;
+
+const hreflangs = resolveActiveLocales(
+  defaultLocale,
+  activeLocales.map((l) => l.codigo),
+).map((l) => ({
+  locale: l,
+  url: `${siteUrl}${localizedPath(`/legal/${page.tipo}`, l, defaultLocale)}`,
+}));
+
+const title = t(page.titulo, locale, defaultLocale) || page.tipo;
+const contentBlocks = (page.contenido ?? []).find((x) => x?._key === locale)?.value
+  ?? (page.contenido ?? []).find((x) => x?._key === defaultLocale)?.value
+  ?? [];
+const contentHtml = Array.isArray(contentBlocks) ? toHTML(contentBlocks as never) : '';
+
+const faviconUrl = img.url(restaurant.favicon);
+const appleTouchIconUrl = img.pngSquare(restaurant.iconoApp, 180);
+
+const seoTitle = `${title} — ${restaurant.nombre}`;
+const seoDescription = t(restaurant.seoDescripcion, locale, defaultLocale) || '';
+---
+
+<BaseLayout
+  locale={locale}
+  title={seoTitle}
+  description={seoDescription}
+  canonical={canonical}
+  hreflangs={hreflangs}
+  faviconUrl={faviconUrl}
+  appleTouchIconUrl={appleTouchIconUrl}
+  cloudflareAnalyticsToken={restaurant.cloudflareAnalyticsToken}
+>
+  <LegalPage
+    restaurant={restaurant}
+    locale={locale}
+    defaultLocale={defaultLocale}
+    activeLocales={activeLocales}
+    legalPages={legalPages}
+    title={title}
+    contentHtml={contentHtml}
+    lastUpdated={page.ultimaActualizacion}
+  />
+</BaseLayout>

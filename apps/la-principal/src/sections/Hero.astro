@@ -1,0 +1,110 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import { img } from '../lib/sanity';
+import type { Restaurant } from '../lib/queries';
+import CtaButton from '../components/CtaButton.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+const heroImgUrl = img.url(restaurant.heroImagen) ?? '/img/hero.jpg';
+
+const titulo = t(restaurant.heroTitulo, locale, defaultLocale);
+const subtitulo = t(restaurant.heroSubtitulo, locale, defaultLocale);
+const metaIzq = t(restaurant.heroMetaIzq, locale, defaultLocale);
+const metaDer = t(restaurant.heroMetaDer, locale, defaultLocale);
+const cta = t(restaurant.heroCta, locale, defaultLocale);
+
+// Sello dinámico "Est. {año} · {barrio/ciudad}" — se compone desde Sanity.
+// Si falta `anyoFundacion`, solo se muestra la ubicación. Si tampoco hay
+// dirección, no se renderiza el sello.
+const anyo = restaurant.anyoFundacion;
+const ubicacion = restaurant.direccion?.barrio || restaurant.direccion?.ciudad;
+const selloEst = locale === 'en' ? 'Est.' : 'Est.'; // "Est." es abreviación universal
+const selloParts = [
+  anyo ? `${selloEst} ${anyo}` : null,
+  ubicacion || null
+].filter(Boolean);
+const sello = selloParts.join(' · ');
+---
+
+<!--
+  Hero split editorial: contenido a la izquierda (45%) sobre bg cream limpio,
+  foto a la derecha (55%) full-height sin overlay que la ensucie. Se ven
+  ambos totalmente. En mobile, foto arriba + texto debajo.
+-->
+<section
+  id='top'
+  class='relative grid pt-20 h-svh overflow-hidden grid-cols-[45%_55%] max-[960px]:grid-cols-1 max-[960px]:h-auto max-[960px]:overflow-visible'
+>
+  <!-- Bloque de contenido: bg cream limpio, texto centrado vertical -->
+  <div
+    class='flex flex-col justify-center gap-8 py-[6vh] px-(--gap) max-[960px]:order-2 max-[960px]:pt-16 max-[960px]:pb-14 max-[960px]:gap-6'
+  >
+    <!-- Sello dinámico desde Sanity: anyoFundacion + barrio/ciudad -->
+    {sello && (
+      <div class='reveal flex items-center gap-4'>
+        <span class='w-10 h-px bg-accent/70'></span>
+        <span class='font-sans uppercase text-[10px] tracking-[0.4em] text-accent font-semibold'>
+          {sello}
+        </span>
+      </div>
+    )}
+
+    <!-- Título grande -->
+    <h1
+      class='reveal font-serif font-normal leading-[0.95] tracking-[-0.02em] text-[clamp(48px,6.5vw,96px)]'
+    >
+      {titulo}<br />
+      <em class='italic font-light text-accent-alt'>{subtitulo}</em>
+    </h1>
+
+    <!-- Meta pill (barrio · ciudad) -->
+    <div
+      class='reveal flex items-center gap-2.5 py-2 px-4 w-fit border border-line-strong/70 rounded-full text-[11px] tracking-[0.22em] uppercase text-ink-soft bg-bg-2/60'
+    >
+      <span>{metaIzq}</span>
+      <span class='w-1 h-1 rounded-full bg-accent-alt'></span>
+      <span>{metaDer}</span>
+    </div>
+
+    <!-- CTA -->
+    <div class='reveal pt-2'>
+      <CtaButton href='#book'>{cta}</CtaButton>
+    </div>
+  </div>
+
+  <!-- Foto full-height sin overlay: se ve limpia. Fade suave hacia el bg cream
+       en el borde izquierdo (desktop) o superior (mobile) para fundir con el
+       bloque de contenido. -->
+  <div
+    class="relative overflow-hidden bg-surface max-[960px]:order-1 max-[960px]:aspect-[4/3]
+           after:content-[''] after:absolute after:inset-0 after:pointer-events-none
+           after:bg-[linear-gradient(90deg,var(--color-bg)_0%,transparent_15%,transparent_100%)]
+           max-[960px]:after:bg-[linear-gradient(180deg,transparent_0%,transparent_70%,var(--color-bg)_100%)]"
+  >
+    <img
+      src={heroImgUrl}
+      alt={titulo}
+      class='w-full h-full object-cover'
+    />
+  </div>
+
+  <!-- Scroll indicator (solo desktop) -->
+  <a
+    href='#about'
+    aria-hidden='true'
+    class="absolute bottom-8 left-[22.5%] -translate-x-1/2 z-[2] flex flex-col items-center gap-2.5
+           text-[10px] tracking-[0.28em] uppercase text-muted pointer-events-none
+           opacity-0 animate-[heroScrollFade_1s_ease_1.4s_forwards]
+           after:content-[''] after:w-px after:h-10 after:bg-[linear-gradient(to_bottom,var(--color-accent),transparent)]
+           after:animate-[heroScrollLine_2.2s_ease-in-out_infinite]
+           max-[960px]:hidden"
+  >
+    <span>Scroll</span>
+  </a>
+</section>

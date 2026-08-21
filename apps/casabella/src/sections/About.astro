@@ -13,52 +13,90 @@ interface Props {
 
 const { restaurant, locale, defaultLocale } = Astro.props;
 
-const aboutImg1 = img.url(restaurant.sobreImagenes?.[0]) ?? '/img/gal-room.jpg';
-const aboutImg2 = img.url(restaurant.sobreImagenes?.[1]) ?? '/img/kitchen.jpg';
+// Hasta 3 imágenes (schema limita a 3). Placeholders locales si Sanity aún
+// no tiene ninguna subida.
+const imagesInput = (restaurant.sobreImagenes ?? [])
+  .slice(0, 3)
+  .map(i => img.url(i))
+  .filter((u): u is string => Boolean(u));
+const images = imagesInput.length > 0 ? imagesInput : ['/img/gal-room.jpg'];
 
+const eyebrow = t(restaurant.sobreEyebrow, locale, defaultLocale);
+const titulo = t(restaurant.sobreTitulo, locale, defaultLocale);
 const paragraphs = extractI18nParagraphs(restaurant.sobreCuerpo, locale, defaultLocale);
 
-const aboutBlocks = paragraphs.length
-  ? [
-      { img: aboutImg1, text: paragraphs[0], showHeader: true },
-      ...(paragraphs.length > 1
-        ? [{ img: aboutImg2, text: paragraphs.slice(1).join('\n\n'), showHeader: false }]
-        : []),
-    ]
-  : [{ img: aboutImg1, text: '', showHeader: true }];
+// Sombra de imagen consistente con el fondo dark warm honey de casabella
+const imgShadow = 'shadow-[0_20px_50px_-20px_rgb(0_0_0/0.5)]';
 ---
 
+<!--
+  About: stack vertical secuencial. Header centrado, texto en columna
+  estrecha con drop-cap, y bloque de imágenes abajo en fila horizontal
+  que se adapta al número de imágenes (1/2/3). Sin full-bleed panorámico
+  para respetar la resolución original de las fotos subidas.
+-->
 <section
-  id="about"
-  class="grid mx-auto pt-[8vh] pb-[14vh] px-(--gap) max-w-[var(--max)] gap-[clamp(60px,10vh,120px)] max-[960px]:pt-[4vh] max-[960px]:pb-[10vh]"
+  id='about'
+  class='mx-auto pt-[8vh] pb-[14vh] px-(--gap) max-w-[var(--max)] max-[960px]:pt-[4vh] max-[960px]:pb-[10vh]'
 >
-  {aboutBlocks.map((block) => (
-    <!-- `group/about` + `even:` para bloque alternado; group-hover para escalar la imagen -->
-    <div
-      class="reveal grid items-center grid-cols-2 gap-[clamp(40px,6vw,80px)]
-             even:[&>.media]:order-2 group/about
-             max-[960px]:grid-cols-1 max-[960px]:gap-8 max-[960px]:even:[&>.media]:order-0"
+  <!-- Header centrado -->
+  <div class='reveal text-center mb-[9vh] max-[960px]:mb-10'>
+    <Eyebrow class='block mb-5'>{eyebrow}</Eyebrow>
+    <h2
+      class='font-serif font-light leading-[1] tracking-[-0.01em] text-[clamp(38px,5vw,72px)] max-w-[20ch] mx-auto'
     >
-      <div class="media aspect-[4/5] overflow-hidden bg-surface max-[960px]:aspect-[3/2]">
-        <img
-          src={block.img}
-          alt=""
-          class="w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover/about:scale-[1.03]"
-        />
-      </div>
-      <div>
-        {block.showHeader && (
-          <>
-            <Eyebrow class="block mb-5">{t(restaurant.sobreEyebrow, locale, defaultLocale)}</Eyebrow>
-            <h2 class="font-serif font-light leading-[1.05] tracking-[-0.01em] mb-7 text-[clamp(32px,4vw,60px)]">
-              {t(restaurant.sobreTitulo, locale, defaultLocale)}
-            </h2>
-          </>
-        )}
-        {block.text.split('\n\n').map((p) => (
-          <p class="text-ink-soft text-[17px] leading-[1.75] mb-[18px] max-w-[46ch]">{p}</p>
-        ))}
-      </div>
+      {titulo}
+    </h2>
+  </div>
+
+  <!-- Texto centrado — columna de lectura editorial estrecha -->
+  {paragraphs.length > 0 && (
+    <div class='reveal mx-auto max-w-[680px]'>
+      {paragraphs.map((p, i) => (
+        <p
+          class:list={[
+            'text-ink-soft text-[17px] leading-[1.85]',
+            i === 0 ? '' : 'mt-6'
+          ]}
+        >
+          {i === 0 && (
+            <span class='float-left font-serif italic text-accent leading-none text-[76px] mr-3 mt-2 max-[700px]:text-[62px]'>
+              {p.charAt(0)}
+            </span>
+          )}
+          {i === 0 ? p.slice(1) : p}
+        </p>
+      ))}
     </div>
-  ))}
+  )}
+
+  <!-- Bloque de imágenes · fila horizontal centrada. Composición se adapta
+       al conteo (1/2/3) manteniendo el mismo aspect 4/5 en todos los casos. -->
+  <div
+    class='reveal mx-auto mt-[9vh] max-[960px]:mt-12'
+    class:list={[
+      images.length === 1 && 'max-w-[560px]',
+      images.length === 2 && 'max-w-[900px]',
+      images.length === 3 && 'max-w-[1080px]'
+    ]}
+  >
+    <div
+      class:list={[
+        'grid gap-[clamp(20px,3vw,32px)] max-[700px]:grid-cols-1 max-[700px]:gap-5',
+        images.length === 1 && 'grid-cols-1',
+        images.length === 2 && 'grid-cols-2',
+        images.length === 3 && 'grid-cols-3'
+      ]}
+    >
+      {images.map(src => (
+        <div class:list={['group aspect-[4/5] overflow-hidden bg-surface', imgShadow]}>
+          <img
+            src={src}
+            alt=''
+            class='w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.03]'
+          />
+        </div>
+      ))}
+    </div>
+  </div>
 </section>

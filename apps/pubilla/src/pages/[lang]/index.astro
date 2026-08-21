@@ -44,7 +44,6 @@ const ogImage = img.url(restaurante.seoImagen) ?? img.url(restaurante.heroImagen
 const logoUrl = img.url(restaurante.logo);
 const faviconUrl = img.url(restaurante.favicon);
 const appleTouchIconUrl = img.pngSquare(restaurante.iconoApp, 180);
-const themeColor = restaurante.colorMarca;
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -76,7 +75,6 @@ const jsonLd = {
   jsonLd={jsonLd}
   faviconUrl={faviconUrl}
   appleTouchIconUrl={appleTouchIconUrl}
-  themeColor={themeColor}
 >
   <RestaurantePage
     locale={locale}

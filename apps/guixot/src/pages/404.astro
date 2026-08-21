@@ -27,7 +27,6 @@ const canonical = `${siteUrl}/404`;
 
 const faviconUrl = img.url(restaurant.favicon);
 const appleTouchIconUrl = img.pngSquare(restaurant.iconoApp, 180);
-const themeColor = restaurant.colorMarca;
 
 const bookingEmail = restaurant.contacto?.email ?? '';
 const bookingPhone = restaurant.contacto?.telefono ?? '';
@@ -96,7 +95,6 @@ const t = COPY[locale] ?? COPY.es;
   hreflangs={[]}
   faviconUrl={faviconUrl}
   appleTouchIconUrl={appleTouchIconUrl}
-  themeColor={themeColor}
   cloudflareAnalyticsToken={restaurant.cloudflareAnalyticsToken}
 >
   <Nav

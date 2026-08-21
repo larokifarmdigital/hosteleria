@@ -1,0 +1,89 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import { img } from '../lib/sanity';
+import type { Restaurant } from '../lib/queries';
+import CtaButton from '../components/CtaButton.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+const gruposImgUrl = img.url(restaurant.gruposImagen) ?? '/img/hire.jpg';
+const eyebrow = t(restaurant.gruposEyebrow, locale, defaultLocale);
+const titulo = t(restaurant.gruposTitulo, locale, defaultLocale);
+const cta = t(restaurant.gruposCta, locale, defaultLocale);
+
+// Puntos destacados desde Sanity (array de objects { texto: i18nStr }).
+// Se filtran los vacíos (por si el cliente crea items sin texto).
+const puntosDestacados = (restaurant.gruposDestacados ?? [])
+  .map(p => t(p.texto, locale, defaultLocale))
+  .filter(Boolean);
+---
+
+<!--
+  Groups: split editorial con imagen recuadrada tipo "postal" a la izquierda
+  y contenido a la derecha con tres puntos clave (capacidad · menú · reserva).
+  Fondo bg-2 para diferenciar del bg. Muy distinto del hero centrado con
+  imagen difuminada de casabella.
+-->
+<section
+  id='groups'
+  class='py-[14vh] px-(--gap) bg-bg-2 border-y border-line max-[960px]:py-[10vh]'
+>
+  <div
+    class='reveal grid mx-auto max-w-[var(--max)] grid-cols-[1.05fr_1fr] gap-[clamp(50px,7vw,100px)] items-center max-[960px]:grid-cols-1 max-[960px]:gap-10'
+  >
+    <!-- Imagen tipo postal: marco crema con sombra suave -->
+    <div
+      class='relative bg-bg p-3 shadow-[0_16px_44px_-12px_rgb(34_20_26/0.28),0_4px_10px_rgb(34_20_26/0.12)] max-[960px]:order-2'
+    >
+      <div class='aspect-[4/3] overflow-hidden bg-surface'>
+        <img
+          src={gruposImgUrl}
+          alt=''
+          class='w-full h-full object-cover'
+        />
+      </div>
+      <!-- Etiqueta esquina -->
+      <div
+        class='absolute -top-3 -left-3 bg-accent text-bg px-3 py-1.5 rotate-[-3deg] font-serif italic text-[13px] shadow-[0_4px_10px_rgb(34_20_26/0.25)]'
+      >
+        {eyebrow}
+      </div>
+    </div>
+
+    <div class='flex flex-col gap-8 max-[960px]:order-1 max-[960px]:gap-6'>
+      <div class='flex items-center gap-4'>
+        <span class='w-10 h-px bg-accent/70'></span>
+        <span class='font-sans uppercase text-[11px] tracking-[0.28em] text-accent font-medium'>
+          {eyebrow}
+        </span>
+      </div>
+
+      <h2
+        class='font-serif font-normal leading-[0.98] tracking-[-0.015em] text-[clamp(38px,5.2vw,72px)] max-w-[14ch]'
+      >
+        {titulo}
+      </h2>
+
+      <!-- Puntos destacados dinámicos desde Sanity (opcional) -->
+      {puntosDestacados.length > 0 && (
+        <ul class='flex flex-col divide-y divide-line/70'>
+          {puntosDestacados.map(punto => (
+            <li class='flex items-baseline gap-4 py-4'>
+              <span class='font-serif italic text-accent-alt text-2xl leading-none shrink-0'>·</span>
+              <span class='font-sans text-ink-soft text-[15px]'>{punto}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div class='pt-2'>
+        <CtaButton href='#book'>{cta}</CtaButton>
+      </div>
+    </div>
+  </div>
+</section>

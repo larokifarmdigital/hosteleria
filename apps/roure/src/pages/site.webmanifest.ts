@@ -11,7 +11,7 @@ export const prerender = true;
 export const GET: APIRoute = async () => {
   const { restaurante } = await fetchDataRestaurante();
   const iconoApp = restaurante.iconoApp;
-  const theme = restaurante.colorMarca ?? '#d2622a';
+  const theme = '#d2622a';
   const shortName = restaurante.nombre.split(' ').pop() ?? restaurante.nombre;
 
   const icons = iconoApp

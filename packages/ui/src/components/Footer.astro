@@ -39,9 +39,9 @@ const rutaLegal = (slug: string) =>
 
 const hoursByDay = buildHoursByDay(restaurant.horariosSemana);
 const scheduleRows = formatSchedule(restaurant.horariosSemana, locale);
-const openRows = scheduleRows.filter((r) => !r.closed);
-const closedRows = scheduleRows.filter((r) => r.closed);
-const closedLabel = closedRows.map((r) => r.label).join(', ');
+const openRows = scheduleRows.filter(r => !r.closed);
+const closedRows = scheduleRows.filter(r => r.closed);
+const closedLabel = closedRows.map(r => r.label).join(', ');
 const scheduleMessages = {
   abierto: t(restaurant.horariosAbierto, locale, defaultLocale) || 'Abierto hasta las {hora}.',
   proxima:
@@ -138,30 +138,34 @@ const linkCls =
       </p>
 
       <div class='flex flex-col gap-2 font-sans text-[13px] leading-[1.5] tabular-nums'>
-        {openRows.map((row) => (
-          <div>
-            <div
-              class:list={[
-                'uppercase text-[10px] tracking-[0.2em] font-semibold mb-0.5',
-                row.isToday ? 'text-accent' : 'text-muted'
-              ]}
-            >
-              {row.label}
-              {row.isToday && <span class='ml-1.5 text-[9px] opacity-70'>· HOY</span>}
+        {
+          openRows.map(row => (
+            <div>
+              <div
+                class:list={[
+                  'uppercase text-[10px] tracking-[0.2em] font-semibold mb-0.5',
+                  row.isToday ? 'text-accent' : 'text-muted'
+                ]}
+              >
+                {row.label}
+                {row.isToday && <span class='ml-1.5 text-[9px] opacity-70'>· HOY</span>}
+              </div>
+              <div class:list={[row.isToday ? 'text-ink font-medium' : 'text-ink-soft']}>
+                {row.shifts.join(' · ')}
+              </div>
             </div>
-            <div class:list={[row.isToday ? 'text-ink font-medium' : 'text-ink-soft']}>
-              {row.shifts.join(' · ')}
+          ))
+        }
+        {
+          closedLabel && (
+            <div class='pt-2 mt-1 border-t border-line/50 flex items-baseline gap-2'>
+              <span class='uppercase text-[10px] tracking-[0.2em] font-semibold text-dim'>
+                {locale === 'en' ? 'Closed' : locale === 'ca' ? 'Tancat' : 'Cerrado'}
+              </span>
+              <span class='italic text-dim text-[12.5px]'>{closedLabel}</span>
             </div>
-          </div>
-        ))}
-        {closedLabel && (
-          <div class='pt-2 mt-1 border-t border-line/50 flex items-baseline gap-2'>
-            <span class='uppercase text-[10px] tracking-[0.2em] font-semibold text-dim'>
-              {locale === 'en' ? 'Closed' : locale === 'ca' ? 'Tancat' : 'Cerrado'}
-            </span>
-            <span class='italic text-dim text-[12.5px]'>{closedLabel}</span>
-          </div>
-        )}
+          )
+        }
       </div>
     </div>
   </div>
@@ -208,7 +212,7 @@ const linkCls =
   (function () {
     const HOURS = hoursByDay;
     const msg = scheduleMessages;
-    const fmt = (n) => {
+    const fmt = n => {
       const h = Math.floor(n);
       const m = Math.round((n - h) * 60);
       return `${h}:${m.toString().padStart(2, '0')}`;

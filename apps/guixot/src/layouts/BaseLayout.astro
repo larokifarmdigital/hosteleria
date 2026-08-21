@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { accentColor } from '../lib/theme';
 
 interface Hreflang {
   locale: string;
@@ -16,7 +17,6 @@ interface Props {
   jsonLd?: Record<string, unknown> | Array<Record<string, unknown> | null | undefined>;
   faviconUrl?: string;
   appleTouchIconUrl?: string;
-  themeColor?: string;
   cloudflareAnalyticsToken?: string;
 }
 
@@ -30,7 +30,6 @@ const {
   jsonLd,
   faviconUrl,
   appleTouchIconUrl,
-  themeColor,
   cloudflareAnalyticsToken
 } = Astro.props;
 
@@ -41,7 +40,6 @@ const cfBeaconConfig = cloudflareAnalyticsToken
 const xDefault = hreflangs[0]?.url ?? canonical;
 const finalFavicon = faviconUrl ?? '/favicon.svg';
 const finalAppleTouch = appleTouchIconUrl ?? '/apple-touch-icon.png';
-const finalTheme = themeColor ?? '#d4a655';
 
 // `<html lang>` regional: mejora hreflang matching y a11y screen readers
 const HTML_LANG: Record<string, string> = {
@@ -80,7 +78,7 @@ const skipToContent = SKIP_TO_CONTENT[locale] ?? SKIP_TO_CONTENT.es;
     <link rel='icon' href={finalFavicon} />
     <link rel='apple-touch-icon' sizes='180x180' href={finalAppleTouch} />
     <link rel='manifest' href='/site.webmanifest' />
-    <meta name='theme-color' content={finalTheme} />
+    <meta name='theme-color' content={accentColor} />
 
     {/* Robots: explícito aunque sea el default (evita ambigüedad para bots agresivos) */}
     <meta name='robots' content='index,follow' />

@@ -2,7 +2,7 @@ import { defineConfig } from "astro/config";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  site: "https://pubilla.example.com",
+  site: "https://laprincipal.vercel.app",
   vite: {
     plugins: [tailwindcss()],
   },

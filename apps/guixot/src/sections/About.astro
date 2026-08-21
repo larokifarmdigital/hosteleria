@@ -2,8 +2,7 @@
 import { t } from '@hosteleria/i18n-utils';
 import { img } from '../lib/sanity';
 import type { Restaurant } from '../lib/queries';
-import { extractI18nParagraphs } from '@hosteleria/utils';
-import { splitAtHalf } from '@hosteleria/utils';
+import { extractI18nParagraphs, splitAtHalf } from '@hosteleria/utils';
 import Tag from '../components/Tag.astro';
 
 interface Props {
@@ -13,23 +12,44 @@ interface Props {
 }
 
 const { restaurant, locale, defaultLocale } = Astro.props;
-const aboutImg = img.url(restaurant.sobreImagenes?.[0]) ?? '/img/gal-room.jpg';
-const paragraphs = extractI18nParagraphs(restaurant.sobreCuerpo, locale, defaultLocale);
+
+// Hasta 3 imágenes (schema limita a 3). Placeholders locales si Sanity aún
+// no tiene ninguna subida.
+const imagesInput = (restaurant.sobreImagenes ?? [])
+  .slice(0, 3)
+  .map(i => img.url(i))
+  .filter((u): u is string => Boolean(u));
+const images = imagesInput.length > 0 ? imagesInput : ['/img/gal-room.jpg'];
+
+const eyebrow = t(restaurant.sobreEyebrow, locale, defaultLocale);
 const title = t(restaurant.sobreTitulo, locale, defaultLocale);
 const { head, tail } = splitAtHalf(title);
+const paragraphs = extractI18nParagraphs(restaurant.sobreCuerpo, locale, defaultLocale);
+
+// Sombra con navy suave para respetar la paleta ivory + navy + brass
+const imgShadow = 'shadow-[0_20px_60px_-20px_rgb(30_58_95/0.25)]';
 ---
 
 <!--
-  Guixot About: cabecera con tag + título split-at-half, cuerpo con foto a la
-  izq y texto a la der (invertido vs Casabella, más rustic-column style).
+  Guixot About: stack vertical secuencial estilo brasserie parisina.
+  Header con Tag + título split-at-half (italic navy en la mitad final),
+  texto centrado con drop-cap grande brass, y bloque de imágenes adaptativo
+  (1/2/3) abajo con sombras navy suaves. Sin full-bleed panorámico para
+  respetar la resolución original de las fotos subidas.
 -->
-<section id="about" class="py-[14vh] px-(--gap) max-w-[var(--max)] mx-auto max-[900px]:py-[10vh]">
-  <div class="reveal text-center mb-16 max-[900px]:mb-10">
-    <Tag class="mb-6 mx-auto">{t(restaurant.sobreEyebrow, locale, defaultLocale)}</Tag>
-    <h2 class="font-serif font-medium leading-[1.05] tracking-[-0.01em] text-[clamp(38px,5.5vw,72px)] max-w-[18ch] mx-auto">
+<section
+  id='about'
+  class='mx-auto pt-[8vh] pb-[14vh] px-(--gap) max-w-[var(--max)] max-[960px]:pt-[4vh] max-[960px]:pb-[10vh]'
+>
+  <!-- Header centrado con Tag + título split-at-half -->
+  <div class='reveal text-center mb-[9vh] max-[960px]:mb-10'>
+    <Tag class='mb-6 mx-auto'>{eyebrow}</Tag>
+    <h2
+      class='font-serif font-medium leading-[1.05] tracking-[-0.01em] text-[clamp(38px,5.5vw,72px)] max-w-[20ch] mx-auto'
+    >
       {tail ? (
         <>
-          {head} <em class="italic text-accent font-normal">{tail}</em>
+          {head} <em class='italic text-accent font-normal'>{tail}</em>
         </>
       ) : (
         title
@@ -37,15 +57,49 @@ const { head, tail } = splitAtHalf(title);
     </h2>
   </div>
 
-  <div class="grid grid-cols-[1fr_1.2fr] gap-[clamp(40px,6vw,96px)] items-start max-[900px]:grid-cols-1 max-[900px]:gap-8">
-    <figure class="reveal aspect-[4/5] overflow-hidden bg-surface shadow-[0_20px_60px_-20px_rgb(30_58_95/0.25)] max-[900px]:aspect-[4/3]">
-      <img src={aboutImg} alt="" class="w-full h-full object-cover" />
-    </figure>
-    <div class="reveal pt-4 max-[900px]:pt-0">
-      {paragraphs.map((p) => (
-        <p class="text-ink-soft text-[17px] leading-[1.8] mb-5 max-w-[52ch] first:first-letter:font-serif first:first-letter:text-[64px] first:first-letter:leading-[0.85] first:first-letter:font-medium first:first-letter:text-accent first:first-letter:float-left first:first-letter:mr-2 first:first-letter:mt-1">
-          {p}
+  <!-- Texto centrado — columna de lectura editorial estrecha con drop-cap navy -->
+  {paragraphs.length > 0 && (
+    <div class='reveal mx-auto max-w-[680px]'>
+      {paragraphs.map((p, i) => (
+        <p
+          class:list={[
+            'text-ink-soft text-[17px] leading-[1.8]',
+            i === 0 ? '' : 'mt-6'
+          ]}
+        >
+          {i === 0 && (
+            <span class='float-left font-serif font-medium text-accent leading-[0.85] text-[76px] mr-3 mt-1 max-[700px]:text-[62px]'>
+              {p.charAt(0)}
+            </span>
+          )}
+          {i === 0 ? p.slice(1) : p}
         </p>
+      ))}
+    </div>
+  )}
+
+  <!-- Bloque de imágenes · fila horizontal centrada. Composición se adapta
+       al conteo (1/2/3) manteniendo el mismo aspect 4/5. -->
+  <div
+    class='reveal mx-auto mt-[9vh] max-[960px]:mt-12'
+    class:list={[
+      images.length === 1 && 'max-w-[560px]',
+      images.length === 2 && 'max-w-[900px]',
+      images.length === 3 && 'max-w-[1080px]'
+    ]}
+  >
+    <div
+      class:list={[
+        'grid gap-[clamp(20px,3vw,32px)] max-[700px]:grid-cols-1 max-[700px]:gap-5',
+        images.length === 1 && 'grid-cols-1',
+        images.length === 2 && 'grid-cols-2',
+        images.length === 3 && 'grid-cols-3'
+      ]}
+    >
+      {images.map(src => (
+        <figure class:list={['aspect-[4/5] overflow-hidden bg-surface', imgShadow]}>
+          <img src={src} alt='' class='w-full h-full object-cover' />
+        </figure>
       ))}
     </div>
   </div>

@@ -1,0 +1,129 @@
+---
+import { localizedPath, t } from '@hosteleria/i18n-utils';
+import type { RestaurantData, LocaleRef, LegalPageDoc } from '../lib/queries';
+import { buildWhatsAppHref } from '@hosteleria/utils';
+import Nav from './Nav.astro';
+import MobileOverlay from '@hosteleria/ui/components/MobileOverlay.astro';
+import Footer from '@hosteleria/ui/components/Footer.astro';
+import WhatsAppFab from '@hosteleria/ui/components/WhatsAppFab.astro';
+import CtaButton from './CtaButton.astro';
+
+interface Props {
+  restaurant: RestaurantData['restaurant'];
+  locale: string;
+  defaultLocale: string;
+  activeLocales: LocaleRef[];
+  legalPages: LegalPageDoc[];
+  title: string;
+  contentHtml: string;
+  lastUpdated?: string;
+}
+
+const {
+  restaurant,
+  locale,
+  defaultLocale,
+  activeLocales,
+  legalPages,
+  title,
+  contentHtml,
+  lastUpdated,
+} = Astro.props;
+
+const bookingEmail = restaurant.contacto?.email ?? '';
+const bookingPhone = restaurant.contacto?.telefono ?? '';
+const whatsappRaw = restaurant.contacto?.whatsapp ?? '';
+const waHref = buildWhatsAppHref(whatsappRaw, restaurant.nombre, locale);
+
+const homePath = localizedPath('/', locale, defaultLocale);
+const slug = Astro.params.slug as string;
+// El language switcher debe apuntar a la misma página legal en el otro locale
+const langSwitcherPath = `/legal/${slug}`;
+
+const T = {
+  back: locale === 'en' ? 'Back to home' : 'Volver al inicio',
+  updated: locale === 'en' ? 'Last updated' : 'Última actualización',
+};
+
+const formattedDate = lastUpdated
+  ? new Date(lastUpdated).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
+      day: 'numeric', month: 'long', year: 'numeric',
+    })
+  : '';
+---
+
+<Nav
+  restaurant={restaurant}
+  locale={locale}
+  defaultLocale={defaultLocale}
+  activeLocales={activeLocales}
+  hrefPrefix={homePath}
+  langSwitcherPath={langSwitcherPath}
+  forceScrolled={true}
+/>
+
+<MobileOverlay
+  restaurant={restaurant}
+  locale={locale}
+  defaultLocale={defaultLocale}
+  activeLocales={activeLocales}
+  waHref={waHref}
+  whatsappRaw={whatsappRaw}
+  bookingPhone={bookingPhone}
+  bookingEmail={bookingEmail}
+  hrefPrefix={homePath}
+  langSwitcherPath={langSwitcherPath}
+/>
+
+<main id="main" class="pt-[140px] pb-[12vh] px-(--gap) min-h-[70vh] max-[700px]:pt-[110px] max-[700px]:pb-[8vh]">
+  <div class="max-w-[780px] mx-auto">
+    <a
+      href={homePath}
+      class="inline-flex items-center gap-2 font-sans font-medium uppercase text-muted text-xs tracking-[0.22em] mb-10 transition-colors duration-300 hover:text-accent"
+    >
+      ← {T.back}
+    </a>
+    <h1 class="font-serif font-light leading-none tracking-[-0.015em] mb-[clamp(40px,5vw,60px)] pb-[clamp(24px,3vw,36px)] border-b border-line text-[clamp(40px,5.4vw,68px)] max-[700px]:text-[clamp(32px,8vw,44px)]">
+      {title}
+    </h1>
+    <!-- Portable Text renderiza HTML crudo (h2, h3, p, a, strong, ul, ol, li).
+         Estilos aplicados via arbitrary child variants [&_h2]:, [&_a]:, etc. -->
+    <article
+      class="text-ink-soft leading-[1.75] text-base max-[700px]:text-[15.5px]
+             [&_h2]:font-serif [&_h2]:text-ink [&_h2]:font-normal [&_h2]:leading-[1.25]
+             [&_h2]:text-[clamp(22px,2.4vw,28px)] [&_h2]:mt-[2.2em] [&_h2]:mb-[0.6em]
+             [&_h2:first-child]:mt-0
+             [&_h3]:font-serif [&_h3]:text-ink [&_h3]:font-normal [&_h3]:text-[20px]
+             [&_h3]:mt-[1.8em] [&_h3]:mb-[0.4em]
+             [&_p]:mb-4 [&_p]:max-w-[65ch]
+             [&_a]:text-accent [&_a]:border-b [&_a]:border-accent [&_a]:transition-colors [&_a]:duration-300 [&_a]:cursor-pointer
+             [&_a:hover]:text-accent-hover [&_a:hover]:border-accent-hover
+             [&_strong]:text-ink [&_strong]:font-medium
+             [&_ul]:pl-[1.4em] [&_ul]:mb-4 [&_ol]:pl-[1.4em] [&_ol]:mb-4
+             [&_li]:mb-[0.4em]"
+      set:html={contentHtml}
+    />
+    {formattedDate && (
+      <p class="text-muted italic mt-[clamp(50px,6vw,80px)] pt-[clamp(20px,3vw,30px)] border-t border-line text-[13px] tracking-[0.02em]">
+        {T.updated}: {formattedDate}
+      </p>
+    )}
+  </div>
+</main>
+
+<Footer
+  restaurant={restaurant}
+  locale={locale}
+  defaultLocale={defaultLocale}
+  legalPages={legalPages}
+  waHref={waHref}
+  whatsappRaw={whatsappRaw}
+  bookingPhone={bookingPhone}
+  bookingEmail={bookingEmail}
+>
+  <CtaButton slot='cta' href={`${homePath}#book`}>
+    {t(restaurant.textosNav?.linkReservar, locale, defaultLocale) || 'Reservar'}
+  </CtaButton>
+</Footer>
+
+<WhatsAppFab href={waHref} locale={locale} />

@@ -33,7 +33,6 @@ const ogImage = img.url(restaurant.seoImagen) ?? img.url(restaurant.heroImagen);
 const logoUrl = img.url(restaurant.logo);
 const faviconUrl = img.url(restaurant.favicon);
 const appleTouchIconUrl = img.pngSquare(restaurant.iconoApp, 180);
-const themeColor = restaurant.colorMarca;
 
 const jsonLd = [
   buildRestaurantJsonLd({ restaurant, locale, defaultLocale, canonical, img, servesCuisine: ['Mediterránea', 'Contemporánea', 'Catalana', 'Italiana'] }),
@@ -51,7 +50,6 @@ const jsonLd = [
   jsonLd={jsonLd}
   faviconUrl={faviconUrl}
   appleTouchIconUrl={appleTouchIconUrl}
-  themeColor={themeColor}
   cloudflareAnalyticsToken={restaurant.cloudflareAnalyticsToken}
 >
   <RestaurantPage

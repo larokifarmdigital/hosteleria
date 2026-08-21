@@ -63,7 +63,6 @@ const contentHtml = Array.isArray(contentBlocks) ? toHTML(contentBlocks as never
 
 const faviconUrl = img.url(restaurant.favicon);
 const appleTouchIconUrl = img.pngSquare(restaurant.iconoApp, 180);
-const themeColor = restaurant.colorMarca;
 
 const seoTitle = `${title} — ${restaurant.nombre}`;
 const seoDescription = t(restaurant.seoDescripcion, locale, defaultLocale) || '';
@@ -77,7 +76,6 @@ const seoDescription = t(restaurant.seoDescripcion, locale, defaultLocale) || ''
   hreflangs={hreflangs}
   faviconUrl={faviconUrl}
   appleTouchIconUrl={appleTouchIconUrl}
-  themeColor={themeColor}
   cloudflareAnalyticsToken={restaurant.cloudflareAnalyticsToken}
 >
   <LegalPage

@@ -1,0 +1,92 @@
+---
+import type { Restaurant } from '../lib/queries';
+import {
+  extractMapSrc,
+  withMapLocale,
+  extractCoords,
+  extractFTID,
+  ftidToCID,
+  buildMapsExternalUrl
+} from '@hosteleria/utils';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+}
+
+const { restaurant, locale } = Astro.props;
+
+const rawMapSrc = extractMapSrc(restaurant.mapaUrl);
+if (!rawMapSrc) return null;
+
+const mapSrc = withMapLocale(rawMapSrc, locale);
+const dir = restaurant.direccion ?? {};
+
+const coords = extractCoords(rawMapSrc);
+const ftid = extractFTID(rawMapSrc);
+const cid = ftidToCID(ftid);
+const fullAddress = [dir.calle, dir.codigoPostal, dir.ciudad, dir.pais]
+  .filter(Boolean)
+  .join(', ');
+const mapsExternalUrl = buildMapsExternalUrl(cid, coords, fullAddress, locale);
+
+const headerTitle = locale === 'en' ? 'How to find us' : 'Cómo llegar';
+const openMapsLabel = locale === 'en' ? 'Open in Google Maps' : 'Ver en Google Maps';
+---
+
+<!--
+  Map: header ornamental consistente con Dishes/Wines/Gallery/Faq.
+  Mapa embebido con filtro suave (menos grayscale que casabella) para
+  respetar la paleta cálida crema/borgoña.
+-->
+<section
+  id='map'
+  class='py-[14vh] px-(--gap) border-t border-line max-[900px]:py-[10vh]'
+>
+  <div class='reveal max-w-[var(--max)] mx-auto mb-[clamp(50px,6vw,70px)] text-center max-[900px]:mb-10'>
+    <div class='flex items-center justify-center gap-3 mb-6'>
+      <span class='w-12 h-px bg-accent/60'></span>
+      <span class='text-accent-alt text-sm leading-none'>❦</span>
+      <span class='w-12 h-px bg-accent/60'></span>
+    </div>
+    <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-accent font-medium mb-4'>
+      {headerTitle}
+    </span>
+    <h2
+      class='font-serif font-normal leading-[1] tracking-[-0.01em] text-[clamp(36px,4.6vw,60px)]'
+    >
+      {restaurant.nombre},
+      <em class='italic font-normal text-accent'>{dir.barrio || dir.ciudad || ''}</em>
+    </h2>
+  </div>
+
+  <div
+    class='reveal overflow-hidden bg-surface mx-auto max-w-[var(--max)] border border-line-strong/60 shadow-[0_16px_44px_-16px_rgb(34_20_26/0.28)]'
+  >
+    <iframe
+      src={mapSrc}
+      title={`${restaurant.nombre} — ${headerTitle}`}
+      loading='lazy'
+      referrerpolicy='no-referrer-when-downgrade'
+      allowfullscreen
+      class='block w-full border-0 h-[clamp(340px,52vh,500px)] max-[900px]:h-[clamp(280px,44vh,380px)] filter [filter:grayscale(0.1)_contrast(0.98)_sepia(0.06)]'
+    ></iframe>
+  </div>
+
+  {
+    mapsExternalUrl && (
+      <div class='reveal max-w-[var(--max)] mx-auto mt-[clamp(28px,3.5vw,42px)] text-center'>
+        <a
+          href={mapsExternalUrl}
+          target='_blank'
+          rel='noopener'
+          class='group inline-flex items-center gap-2.5 font-sans font-medium uppercase text-accent text-[13px] tracking-[0.14em] py-1 border-b border-accent cursor-pointer
+                 transition-[color,border-color] duration-300 hover:text-accent-hover hover:border-accent-hover'
+        >
+          {openMapsLabel}
+          <span class='transition-transform duration-300 group-hover:translate-x-1'>→</span>
+        </a>
+      </div>
+    )
+  }
+</section>

@@ -1,0 +1,96 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant, DishCategory, Dish } from '../lib/queries';
+
+interface Props {
+  restaurant: Restaurant;
+  dishCategories: DishCategory[];
+  dishes: Dish[];
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, dishCategories, dishes, locale, defaultLocale } = Astro.props;
+
+const sec = restaurant.textosSecciones ?? {};
+
+const dishesByCategory = dishCategories.map(cat => ({
+  category: cat,
+  items: dishes.filter(d => d.categoria?._id === cat._id)
+}));
+---
+
+<!--
+  Carta clásica de brasserie: título de sección con floritura ornamental,
+  categorías con reglas ornamentales, y cada plato con "leader dots"
+  (puntitos que unen nombre y precio, típico de menús físicos).
+  Distinto de la grid de 2 columnas de casabella.
+-->
+<section
+  id='plates'
+  class='py-[12vh] px-(--gap) bg-surface border-t border-line max-[960px]:py-[8vh]'
+>
+  <div class='reveal text-center mb-[70px] mx-auto max-w-[var(--max)] max-[960px]:mb-12'>
+    <div class='flex items-center justify-center gap-3 mb-6'>
+      <span class='w-12 h-px bg-accent/60'></span>
+      <span class='text-accent-alt text-sm leading-none'>❦</span>
+      <span class='w-12 h-px bg-accent/60'></span>
+    </div>
+    <h2
+      class='font-serif font-normal leading-[0.95] tracking-[-0.01em] text-[clamp(42px,5.5vw,80px)]'
+    >
+      {t(sec.platosTitulo, locale, defaultLocale)}
+    </h2>
+    {
+      sec.platosSubtitulo && (
+        <p class='mt-4 font-serif italic text-muted text-[clamp(16px,1.6vw,20px)]'>
+          {t(sec.platosSubtitulo, locale, defaultLocale)}
+        </p>
+      )
+    }
+  </div>
+
+  <div class='mx-auto max-w-[820px] flex flex-col gap-14 max-[960px]:gap-10'>
+    {
+      dishesByCategory.map(({ category, items }) =>
+        items.length > 0 && (
+          <div class='reveal'>
+            <!-- Category header con reglas ornamentales a los lados -->
+            <div class='flex items-center gap-4 mb-7'>
+              <span class='flex-1 h-px bg-line-strong/70'></span>
+              <h3 class='font-serif italic text-accent text-[clamp(20px,2vw,26px)] whitespace-nowrap'>
+                {t(category.nombre, locale, defaultLocale)}
+              </h3>
+              <span class='flex-1 h-px bg-line-strong/70'></span>
+            </div>
+
+            <!-- Items con leader dots -->
+            <ul class='flex flex-col gap-5'>
+              {items.map(dish => (
+                <li class='group'>
+                  <div class='flex items-baseline gap-3'>
+                    <span class='font-serif text-ink font-normal text-[clamp(19px,1.7vw,23px)] shrink-0'>
+                      {t(dish.nombre, locale, defaultLocale)}
+                    </span>
+                    <span
+                      class='flex-1 min-w-[24px] border-b border-dotted border-line-strong/60 translate-y-[-4px]'
+                      aria-hidden='true'
+                    />
+                    <span class='font-sans text-[15px] font-semibold text-accent tabular-nums whitespace-nowrap shrink-0'>
+                      {dish.precio != null ? `${dish.precio} €` : '—'}
+                    </span>
+                  </div>
+                  {t(dish.nota, locale, defaultLocale) && (
+                    <p class='mt-1 text-muted text-[14px] leading-[1.55] italic max-w-[60ch]'>
+                      {t(dish.nota, locale, defaultLocale)}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      )
+    }
+  </div>
+</section>

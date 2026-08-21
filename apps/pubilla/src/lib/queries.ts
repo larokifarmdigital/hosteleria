@@ -22,7 +22,6 @@ export type Restaurante = {
   nombre: string;
   slug?: { current: string };
   dominio?: string;
-  colorMarca?: string;
   logo?: SanityImg;
   favicon?: SanityImg;
   iconoApp?: SanityImg;

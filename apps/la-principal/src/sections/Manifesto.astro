@@ -1,0 +1,55 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant } from '../lib/queries';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+const eyebrow = t(restaurant.manifiestoEyebrow, locale, defaultLocale);
+const texto = t(restaurant.manifiestoTexto, locale, defaultLocale);
+---
+
+<!--
+  Manifesto tipo "carta de la casa": marco superior/inferior con reglas
+  ornamentales + comillas grandes decorativas + firma "La Familia" al pie.
+  Muy distinto del blockquote centrado sin firma de casabella.
+-->
+<section class='py-[14vh] px-(--gap) max-w-[860px] mx-auto max-[960px]:py-[10vh]'>
+  <div class='reveal relative py-14 px-8 max-[700px]:py-10 max-[700px]:px-4 text-center'>
+    <!-- Regla ornamental superior -->
+    <div class='flex items-center justify-center gap-4 mb-10'>
+      <span class='w-16 h-px bg-line-strong'></span>
+      <span class='text-accent-alt text-lg leading-none'>❦</span>
+      <span class='w-16 h-px bg-line-strong'></span>
+    </div>
+
+    <!-- Comillas gigantes decorativas encima del texto -->
+    <span
+      class='block font-serif italic text-accent/25 leading-none text-[120px] max-[700px]:text-[80px] mb-[-40px] max-[700px]:mb-[-24px] select-none'
+      aria-hidden='true'>“</span>
+
+    <p
+      class='font-serif text-ink font-light italic leading-[1.28] text-[clamp(24px,3vw,44px)] max-w-[22ch] mx-auto'
+    >
+      {texto}
+    </p>
+
+    <!-- Firma familiar -->
+    <div class='mt-10 flex flex-col items-center gap-1'>
+      <span class='font-serif italic text-accent text-[clamp(20px,2vw,28px)]'>
+        — {eyebrow}
+      </span>
+    </div>
+
+    <!-- Regla ornamental inferior -->
+    <div class='flex items-center justify-center gap-4 mt-10'>
+      <span class='w-16 h-px bg-line-strong'></span>
+      <span class='text-accent-alt text-lg leading-none'>❦</span>
+      <span class='w-16 h-px bg-line-strong'></span>
+    </div>
+  </div>
+</section>

@@ -53,17 +53,13 @@ export const restaurante = defineType({
       description: 'URL pública del sitio. Ej: https://lapubilla.com'
     }),
     defineField({
-      name: 'colorMarca',
-      title: 'Color accent de marca (hex)',
-      type: 'string',
+      name: 'anyoFundacion',
+      title: 'Año de fundación',
+      type: 'number',
       group: 'identidad',
-      description: 'Ej: #d2622a. Se usa como theme_color en PWA.',
-      validation: r =>
-        r.custom((value?: string) =>
-          !value || /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value)
-            ? true
-            : 'Debe ser un color hexadecimal válido (ej: #d2622a)'
-        )
+      description:
+        'Opcional. Si lo rellenas se muestra en el hero como "Est. {año}" junto al barrio (aire clasicista "casa con historia"). Si lo dejas vacío, no se muestra.',
+      validation: r => r.min(1800).max(new Date().getFullYear()).integer().positive()
     }),
     defineField({
       name: 'logo',
@@ -224,7 +220,9 @@ export const restaurante = defineType({
     }),
     defineField({
       name: 'sobreImagenes',
-      title: 'Imágenes (3 recomendadas)',
+      title: 'Imágenes (máx. 3)',
+      description:
+        'Hasta 3 imágenes. El diseño se adapta automáticamente: con 1 imagen se muestra grande junto al texto; con 2 se añade una panorámica de cierre; con 3 se completa con un díptico bajo el texto.',
       type: 'array',
       group: 'sobre',
       of: [
@@ -241,7 +239,7 @@ export const restaurante = defineType({
           ]
         }
       ],
-      validation: r => r.max(6)
+      validation: r => r.max(3)
     }),
 
     // ── Galería ──────────────────────────────────────────────────────
@@ -288,6 +286,33 @@ export const restaurante = defineType({
       type: i18nStr,
       group: 'grupos',
       validation: r => validarTodosIdiomasOninguno(r)
+    }),
+    defineField({
+      name: 'gruposDestacados',
+      title: 'Puntos destacados (lista)',
+      description:
+        'Lista de puntos clave del servicio de grupos (capacidad, tipo de menú, sala privada, etc.). Se muestran como bullets al lado del título. Máx. 6.',
+      type: 'array',
+      group: 'grupos',
+      of: [
+        {
+          type: 'object',
+          name: 'puntoDestacado',
+          fields: [
+            {
+              name: 'texto',
+              title: 'Texto',
+              type: i18nStr,
+              validation: r => validarTodosIdiomasOninguno(r)
+            }
+          ],
+          preview: {
+            select: { title: 'texto.0.value' },
+            prepare: ({ title }: { title?: string }) => ({ title: title || '(Sin texto)' })
+          }
+        }
+      ],
+      validation: r => r.max(6)
     }),
     defineField({
       name: 'gruposImagen',
@@ -812,6 +837,31 @@ export const restaurante = defineType({
           { title: 'Aparcamiento cercano', value: 'aparcamiento' }
         ]
       }
+    }),
+    defineField({
+      name: 'faqEyebrow',
+      title: 'FAQ · Eyebrow',
+      description: 'Etiqueta superior del bloque FAQ. Ej: "Preguntas frecuentes".',
+      type: i18nStr,
+      group: 'ia',
+      validation: r => validarTodosIdiomasOninguno(r)
+    }),
+    defineField({
+      name: 'faqTitulo',
+      title: 'FAQ · Título',
+      description: 'Título grande del bloque FAQ. Ej: "Todo lo que".',
+      type: i18nStr,
+      group: 'ia',
+      validation: r => validarTodosIdiomasOninguno(r)
+    }),
+    defineField({
+      name: 'faqTituloAcento',
+      title: 'FAQ · Título (acento italic)',
+      description:
+        'Continuación del título en italic burdeos. Ej: "necesitas saber". Opcional — si lo dejas vacío se muestra solo el título principal.',
+      type: i18nStr,
+      group: 'ia',
+      validation: r => validarTodosIdiomasOninguno(r)
     }),
     defineField({
       name: 'faq',

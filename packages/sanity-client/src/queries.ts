@@ -25,12 +25,12 @@ export type Restaurant = {
   nombre: string;
   slug?: { current: string };
   dominio?: string;
-  colorMarca?: string;
   logo?: SanityImg;
   favicon?: SanityImg;
   iconoApp?: SanityImg;
   idiomaPorDefecto?: LocaleRef;
   idiomasActivos?: LocaleRef[];
+  anyoFundacion?: number;
   heroTitulo?: CampoI18nSanity;
   heroSubtitulo?: CampoI18nSanity;
   heroMetaIzq?: CampoI18nSanity;
@@ -49,6 +49,7 @@ export type Restaurant = {
   gruposTitulo?: CampoI18nSanity;
   gruposCta?: CampoI18nSanity;
   gruposImagen?: SanityImg;
+  gruposDestacados?: Array<{ _key?: string; texto?: CampoI18nSanity }>;
   horariosTitulo?: CampoI18nSanity;
   horariosTexto?: CampoI18nSanity;
   horariosAbierto?: CampoI18nSanity;
@@ -81,6 +82,9 @@ export type Restaurant = {
   cloudflareAnalyticsToken?: string;
   formasPago?: string[];
   serviciosExtras?: string[];
+  faqEyebrow?: CampoI18nSanity;
+  faqTitulo?: CampoI18nSanity;
+  faqTituloAcento?: CampoI18nSanity;
   faq?: Array<{
     _key?: string;
     pregunta?: CampoI18nSanity;

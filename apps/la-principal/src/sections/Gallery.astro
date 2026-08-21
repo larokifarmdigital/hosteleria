@@ -1,0 +1,123 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import { img } from '../lib/sanity';
+import type { Restaurant } from '../lib/queries';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+const sec = restaurant.textosSecciones ?? {};
+
+const galeriaFallback = [
+  '/img/gal-table.jpg', '/img/gal-room.jpg', '/img/gal-soup.jpg',
+  '/img/gal-martini.jpg', '/img/cellar.jpg', '/img/pass.jpg',
+  '/img/glass.jpg', '/img/hire.jpg', '/img/kitchen.jpg'
+];
+const galeriaImgs = restaurant.galeria?.length
+  ? restaurant.galeria.map(g => img.url(g) ?? '/img/gal-room.jpg')
+  : galeriaFallback;
+
+// Rotación pseudo-aleatoria estable por índice (look "polaroid en la pared").
+const tiltFor = (i: number) => {
+  const values = [-1.4, 0.8, -0.6, 1.6, -2.1, 0.4, -1.1, 1.9, -0.3];
+  return values[i % values.length];
+};
+---
+
+<!--
+  Gallery estilo "polaroids sobre la pared": cada foto con marco crema,
+  ligera rotación por índice, sombra suave. Muy distinto del grid limpio
+  de casabella y del asimétrico span-2 de guixot. Refuerza el aire
+  familiar/casa con historia.
+-->
+<section
+  id='gallery'
+  class='mx-auto py-[14vh] px-(--gap) max-w-[var(--max)] max-[960px]:py-[10vh]'
+>
+  <div class='reveal text-center mb-[70px]'>
+    <div class='flex items-center justify-center gap-3 mb-6'>
+      <span class='w-12 h-px bg-accent/60'></span>
+      <span class='text-accent-alt text-sm leading-none'>❦</span>
+      <span class='w-12 h-px bg-accent/60'></span>
+    </div>
+    <h2
+      class='font-serif font-normal leading-[0.95] tracking-[-0.01em] text-[clamp(38px,5vw,72px)]'
+    >
+      {t(sec.galeriaTitulo, locale, defaultLocale) || 'Nuestro espacio'}
+    </h2>
+  </div>
+
+  <div
+    class='grid grid-cols-3 gap-x-8 gap-y-14 max-[960px]:grid-cols-2 max-[960px]:gap-x-6 max-[960px]:gap-y-10 max-[600px]:grid-cols-1 max-[600px]:gap-y-8'
+  >
+    {
+      galeriaImgs.map((src, i) => (
+        <button
+          type='button'
+          data-gallery-item
+          style={`--tilt: ${tiltFor(i)}deg;`}
+          class='group relative block bg-bg-2 p-3 pb-14 max-[600px]:pb-12
+                 shadow-[0_10px_28px_-8px_rgb(42_26_30/0.28),0_2px_6px_rgb(42_26_30/0.12)]
+                 transition-[transform,box-shadow] duration-[400ms] ease-out
+                 rotate-[var(--tilt)] hover:rotate-0 hover:-translate-y-1.5
+                 hover:shadow-[0_20px_42px_-8px_rgb(42_26_30/0.4),0_4px_10px_rgb(42_26_30/0.18)]
+                 cursor-zoom-in motion-reduce:hover:translate-y-0 motion-reduce:rotate-0'
+        >
+          <div class='relative overflow-hidden bg-surface aspect-[4/5]'>
+            <img
+              src={src}
+              alt=''
+              loading='lazy'
+              class='w-full h-full object-cover brightness-[0.94] saturate-[0.95]
+                     transition-[transform,filter] duration-[1100ms] ease-[cubic-bezier(.2,.6,.2,1)]
+                     group-hover:scale-[1.05] group-hover:brightness-100 group-hover:saturate-100'
+            />
+          </div>
+          <span
+            class='absolute bottom-4 left-0 right-0 text-center font-serif italic text-muted/70 text-[13px] tracking-wide select-none'
+            aria-hidden='true'>·  ·  ·</span>
+        </button>
+      ))
+    }
+  </div>
+</section>
+
+<!-- Lightbox -->
+<div
+  id='lightbox'
+  data-open='false'
+  class="fixed inset-0 z-[200] grid place-items-center cursor-zoom-out
+         invisible opacity-0
+         bg-[rgb(42_26_30/0.94)]
+         transition-[opacity,visibility] duration-[400ms] delay-[400ms]
+         data-[open='true']:visible data-[open='true']:opacity-100 data-[open='true']:delay-0"
+>
+  <img src='' alt='' class='w-auto max-w-[88vw] h-auto max-h-[86vh] object-contain' />
+</div>
+
+<script is:inline>
+  (function () {
+    const lb = document.getElementById('lightbox');
+    if (!lb) return;
+    const lbi = lb.querySelector('img');
+    const setOpen = open => {
+      lb.dataset.open = open ? 'true' : 'false';
+    };
+    document.querySelectorAll('[data-gallery-item]').forEach(c => {
+      const inner = c.querySelector('img');
+      if (!inner) return;
+      c.addEventListener('click', () => {
+        lbi.src = inner.src;
+        setOpen(true);
+      });
+    });
+    lb.addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') setOpen(false);
+    });
+  })();
+</script>

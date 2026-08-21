@@ -1,0 +1,179 @@
+---
+import { t, localizedPath } from '@hosteleria/i18n-utils';
+import type { LocaleRef, Restaurant } from '../lib/queries';
+import IconHamburger from '@hosteleria/ui/icons/IconHamburger.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+  activeLocales: LocaleRef[];
+  /** Prefijo para los anchors internos (útil desde páginas legales: `/` → `/#about`). Vacío por defecto. */
+  hrefPrefix?: string;
+  /** Path base para el language switcher (útil para mantener la misma URL al cambiar de locale). Default '/'. */
+  langSwitcherPath?: string;
+  /** Fuerza la clase `scrolled` en el nav (para páginas no-hero como legal). */
+  forceScrolled?: boolean;
+}
+
+const {
+  restaurant,
+  locale,
+  defaultLocale,
+  activeLocales,
+  hrefPrefix = '',
+  langSwitcherPath = '/',
+  forceScrolled = false
+} = Astro.props;
+
+const nav = restaurant.textosNav ?? {};
+
+const localesUi = activeLocales.length
+  ? activeLocales
+  : [{ codigo: defaultLocale, nombre: defaultLocale }];
+
+const partes = restaurant.nombre.match(/^(Casa|La|El)?\s?(.*)$/);
+const brandStart = partes?.[1] ?? '';
+const brandRest = partes?.[2] ?? restaurant.nombre;
+
+// Estados basados en JS: `.scrolled` se toggle por scroll (`data-force-scrolled` la fuerza en páginas legales).
+// El script inline usa Tailwind arbitrary + `data-[scrolled='true']:` para reaccionar a un data attribute.
+const scrolledAttr = forceScrolled ? 'true' : 'false';
+
+const A11Y_OPEN_MENU: Record<string, string> = {
+  es: 'Abrir menú',
+  en: 'Open menu',
+  ca: 'Obrir menú'
+};
+const openMenuLabel = A11Y_OPEN_MENU[locale] ?? A11Y_OPEN_MENU.es;
+---
+
+<nav
+  id='nav'
+  data-scrolled={scrolledAttr}
+  data-force-scrolled={forceScrolled ? '1' : undefined}
+  class:list={[
+    'fixed z-50 inset-x-0 top-0 flex items-center justify-between gap-8',
+    'py-4 px-(--gap)',
+    'backdrop-blur-[14px] backdrop-saturate-[140%]',
+    'bg-[rgb(250_244_234/0.72)] border-b border-transparent',
+    'transition-[background-color,padding,border-color] duration-[350ms] ease-out',
+    "data-[scrolled='true']:py-3 data-[scrolled='true']:bg-[rgb(250_244_234/0.94)] data-[scrolled='true']:border-b-line"
+  ]}
+>
+  <a
+    href={hrefPrefix || '#top'}
+    class='font-serif text-ink font-normal leading-none tracking-[-0.005em] shrink-0 text-[clamp(24px,2.4vw,32px)] transition-colors duration-300 group/logo'
+  >
+    {
+      brandStart ? (
+        <>
+          {brandStart}
+          <em class='italic text-accent group-hover/logo:text-accent-hover font-normal transition-colors'>
+            {brandRest}
+          </em>
+        </>
+      ) : (
+        restaurant.nombre
+      )
+    }
+  </a>
+
+  <div class='hidden items-center gap-[clamp(22px,3vw,40px)] min-[961px]:flex'>
+    <ul
+      class='flex list-none gap-[clamp(20px,2.4vw,32px)] font-sans font-medium uppercase text-[11px] tracking-[0.22em]'
+    >
+      <li>
+        <a
+          href={`${hrefPrefix}#about`}
+          class="text-muted relative py-1 transition-colors duration-300 hover:text-ink after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:right-0 after:h-px after:bg-accent after:origin-left after:scale-x-0 after:transition-transform after:duration-[350ms] after:ease-[cubic-bezier(.77,0,.18,1)] hover:after:scale-x-100"
+        >
+          {t(nav.linkLocal, locale, defaultLocale) || 'Historia'}
+        </a>
+      </li>
+      <li>
+        <a
+          href={`${hrefPrefix}#plates`}
+          class="text-muted relative py-1 transition-colors duration-300 hover:text-ink after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:right-0 after:h-px after:bg-accent after:origin-left after:scale-x-0 after:transition-transform after:duration-[350ms] after:ease-[cubic-bezier(.77,0,.18,1)] hover:after:scale-x-100"
+        >
+          {t(nav.linkCocina, locale, defaultLocale) || 'Carta'}
+        </a>
+      </li>
+      <li>
+        <a
+          href={`${hrefPrefix}#wines`}
+          class="text-muted relative py-1 transition-colors duration-300 hover:text-ink after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:right-0 after:h-px after:bg-accent after:origin-left after:scale-x-0 after:transition-transform after:duration-[350ms] after:ease-[cubic-bezier(.77,0,.18,1)] hover:after:scale-x-100"
+        >
+          {t(nav.linkVinos, locale, defaultLocale) || 'Vinos'}
+        </a>
+      </li>
+      <li>
+        <a
+          href={`${hrefPrefix}#gallery`}
+          class="text-muted relative py-1 transition-colors duration-300 hover:text-ink after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:right-0 after:h-px after:bg-accent after:origin-left after:scale-x-0 after:transition-transform after:duration-[350ms] after:ease-[cubic-bezier(.77,0,.18,1)] hover:after:scale-x-100"
+        >
+          {t(nav.linkGaleria, locale, defaultLocale) || 'Galería'}
+        </a>
+      </li>
+    </ul>
+
+    {
+      localesUi.length > 1 && (
+        <div
+          class='flex items-center gap-2 pl-[clamp(8px,1.4vw,18px)] border-l border-line font-sans font-medium uppercase text-[10.5px] tracking-[0.22em] text-dim'
+          aria-label='Idioma'
+        >
+          {localesUi.map((l, i) => (
+            <>
+              {i > 0 && <span class='text-dim opacity-50 -mx-1 select-none'>·</span>}
+              <a
+                href={
+                  l.codigo === locale
+                    ? '#'
+                    : localizedPath(langSwitcherPath, l.codigo, defaultLocale)
+                }
+                class:list={[
+                  'py-1 px-0.5 transition-colors duration-300',
+                  l.codigo === locale
+                    ? 'text-accent pointer-events-none'
+                    : 'hover:text-ink cursor-pointer'
+                ]}
+                aria-current={l.codigo === locale ? 'true' : undefined}
+              >
+                {l.codigo.toUpperCase()}
+              </a>
+            </>
+          ))}
+        </div>
+      )
+    }
+
+    <a
+      href={`${hrefPrefix}#book`}
+      class='inline-flex items-center gap-2.5 py-3 px-6 bg-accent text-bg border border-accent rounded-full font-sans font-medium uppercase text-[11px] tracking-[0.2em] whitespace-nowrap cursor-pointer shadow-[0_4px_14px_rgb(212_166_85/0.25)] transition-[background-color,border-color,transform,box-shadow] duration-300 hover:bg-accent-hover hover:border-accent-hover hover:-translate-y-px hover:shadow-[0_8px_22px_rgb(212_166_85/0.38)] focus-visible:outline-offset-[4px]'
+    >
+      {t(nav.linkReservar, locale, defaultLocale) || 'Reservar'}
+    </a>
+  </div>
+
+  <button
+    id='hamburgerBtn'
+    aria-label={openMenuLabel}
+    aria-expanded='false'
+    aria-controls='mobileOverlay'
+    class='flex items-center justify-center w-11 h-11 -mr-2.5 bg-transparent border-none rounded-full text-ink cursor-pointer transition-colors duration-300 hover:bg-surface-2 min-[961px]:hidden [&>svg]:block'
+  >
+    <IconHamburger />
+  </button>
+</nav>
+
+<script is:inline>
+  (function () {
+    const nav = document.getElementById('nav');
+    if (!nav) return;
+    if (nav.dataset.forceScrolled === '1') return; // legal pages siempre scrolled
+    const onScroll = () => (nav.dataset.scrolled = window.scrollY > 40 ? 'true' : 'false');
+    onScroll();
+    addEventListener('scroll', onScroll, { passive: true });
+  })();
+</script>

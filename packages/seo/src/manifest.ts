@@ -6,7 +6,7 @@ export type CreateManifestOpts = {
   img: ImageBuilder;
   /** Color de fondo del splash PWA (fallback: '#f5f1e8'). */
   backgroundColor?: string;
-  /** Color del tema PWA (fallback: `restaurant.colorMarca` o '#d2622a'). */
+  /** Color del tema PWA (color hex de la marca — mismo tono del CSS accent). */
   themeColor?: string;
 };
 
@@ -23,7 +23,7 @@ export function createManifestGET({
   return async () => {
     const { restaurant } = await fetchRestaurantData();
     const iconoApp = restaurant.iconoApp;
-    const theme = themeColor ?? restaurant.colorMarca ?? '#d2622a';
+    const theme = themeColor ?? '#d2622a';
     const shortName = restaurant.nombre.split(' ').pop() ?? restaurant.nombre;
 
     const icons = iconoApp

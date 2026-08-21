@@ -234,7 +234,6 @@ const restaurantePubilla = {
   nombre: 'La Pubilla',
   slug: { _type: 'slug', current: 'pubilla' },
   dominio: 'https://lapubilla.com',
-  colorMarca: '#d2622a',
   idiomaPorDefecto: ref(ID.idiomaEs),
   idiomasActivos: [
     { _key: 'la-es', ...ref(ID.idiomaEs) },
@@ -537,7 +536,7 @@ const restauranteLaPrincipal = {
   nombre: 'La Principal',
   slug: { _type: 'slug', current: 'la-principal' },
   dominio: 'https://laprincipal.com',
-  colorMarca: '#7a4a56',
+  anyoFundacion: 1985,
   idiomaPorDefecto: ref(ID.idiomaEs),
   idiomasActivos: [
     { _key: 'la-es', ...ref(ID.idiomaEs) },
@@ -572,6 +571,23 @@ const restauranteLaPrincipal = {
   gruposEyebrow: i18nStr('Eventos privados', 'Private events'),
   gruposTitulo: i18nStr('Reserva la sala entera', 'Book the whole room'),
   gruposCta: i18nStr('Consultar', 'Enquire'),
+  gruposDestacados: [
+    {
+      _key: 'gd1',
+      _type: 'puntoDestacado',
+      texto: i18nStr('Hasta 40 comensales', 'Up to 40 guests')
+    },
+    {
+      _key: 'gd2',
+      _type: 'puntoDestacado',
+      texto: i18nStr('Menú cerrado a medida', 'Set menu on request')
+    },
+    {
+      _key: 'gd3',
+      _type: 'puntoDestacado',
+      texto: i18nStr('Sala entera privada', 'Book the whole room')
+    }
+  ],
   horariosTitulo: i18nStr('Nos encontrarás aquí', 'Find us here'),
   horariosTexto: i18nTxt(
     'Comidas y cenas de lunes a sábado, 13:00–16:00 y 20:00–23:30. Domingos, cerrado.',
@@ -607,7 +623,103 @@ const restauranteLaPrincipal = {
   seoDescripcion: i18nTxt(
     'Restaurante familiar desde 1985. Cocina catalana de temporada en el corazón de Sant Antoni. Reserva mesa hoy.',
     'Family restaurant since 1985. Seasonal Catalan cuisine in the heart of Sant Antoni. Book your table today.'
-  )
+  ),
+  faqEyebrow: i18nStr('Preguntas frecuentes', 'Frequently asked'),
+  faqTitulo: i18nStr('Todo lo que', 'Everything you'),
+  faqTituloAcento: i18nStr('necesitas saber', 'need to know'),
+  mostrarRedes: true,
+  // IA · SEO avanzado
+  resumenIA: i18nTxt(
+    'La Principal es un restaurante familiar de cocina catalana contemporánea en Sant Antoni, Barcelona. Abierto desde 1985 y en manos de la misma familia durante tres generaciones. Cocina de temporada con producto del Mercat de Sant Antoni y proveedores de proximidad. La carta cambia cada temporada manteniendo los platos icónicos de la casa. Abierto de lunes a sábado, comidas (13:00–16:00) y cenas (20:00–23:30). Domingos cerrado. Precio medio 32 € por persona con dos platos y bebida. Reservas recomendadas, especialmente fin de semana.',
+    'La Principal is a family restaurant of contemporary Catalan cuisine in Sant Antoni, Barcelona. Open since 1985 and run by the same family for three generations. Seasonal cuisine with produce from the Mercat de Sant Antoni and local suppliers. The menu changes with the seasons while keeping the classic house dishes. Open Monday to Saturday for lunch (13:00–16:00) and dinner (20:00–23:30). Closed Sundays. Average €32 per person for two courses and a drink. Reservations recommended, especially at weekends.'
+  ),
+  aceptaReservas: true,
+  precioMedio: 32,
+  cloudflareAnalyticsToken: '[COMPLETAR - pegar token desde dash.cloudflare.com]',
+  formasPago: [
+    'cash',
+    'credit_card',
+    'debit_card',
+    'contactless',
+    'apple_pay',
+    'google_pay',
+    'bizum'
+  ],
+  serviciosExtras: ['grupos', 'sala_privada', 'carta_vinos', 'menu_dia', 'familiar'],
+  faq: [
+    {
+      _key: 'lp-faq1',
+      _type: 'faqItem',
+      pregunta: i18nStr('¿Qué tipo de cocina servís?', 'What type of cuisine do you serve?'),
+      respuesta: i18nTxt(
+        'Cocina catalana contemporánea con base en el recetario de siempre. Trabajamos con producto del Mercat de Sant Antoni y proveedores de proximidad. La carta cambia con las temporadas manteniendo los platos icónicos que llevan en la casa desde 1985.',
+        'Contemporary Catalan cuisine grounded in traditional recipes. We work with produce from the Mercat de Sant Antoni and local suppliers. The menu changes with the seasons while keeping the signature dishes that have been in the house since 1985.'
+      )
+    },
+    {
+      _key: 'lp-faq2',
+      _type: 'faqItem',
+      pregunta: i18nStr('¿Dónde estáis?', 'Where are you located?'),
+      respuesta: i18nTxt(
+        'En el barrio de Sant Antoni, Barcelona: Carrer del Comte Borrell, 55, 08015 Barcelona. A 3 minutos andando del Mercat de Sant Antoni y a 5 minutos de la parada de metro Sant Antoni (L2 morada).',
+        'In the Sant Antoni neighborhood of Barcelona: Carrer del Comte Borrell, 55, 08015 Barcelona. A 3-minute walk from Mercat de Sant Antoni and 5 minutes from Sant Antoni metro station (L2 purple line).'
+      )
+    },
+    {
+      _key: 'lp-faq3',
+      _type: 'faqItem',
+      pregunta: i18nStr('¿Cuál es vuestro horario?', 'What are your opening hours?'),
+      respuesta: i18nTxt(
+        'De lunes a sábado servimos comidas de 13:00 a 16:00 y cenas de 20:00 a 23:30. Los domingos cerramos.',
+        'Monday to Saturday we serve lunch from 13:00 to 16:00 and dinner from 20:00 to 23:30. Closed on Sundays.'
+      )
+    },
+    {
+      _key: 'lp-faq4',
+      _type: 'faqItem',
+      pregunta: i18nStr('¿Necesito reservar mesa?', 'Do I need to book a table?'),
+      respuesta: i18nTxt(
+        'Sí, siempre lo recomendamos, sobre todo los fines de semana. Puedes reservar desde el formulario de la web, escribiéndonos a hola@laprincipal.com o llamando al +34 934 42 55 76.',
+        'Yes, we always recommend it, especially at weekends. You can book from the form on the website, by writing to hola@laprincipal.com or by calling +34 934 42 55 76.'
+      )
+    },
+    {
+      _key: 'lp-faq5',
+      _type: 'faqItem',
+      pregunta: i18nStr(
+        '¿Cuál es el precio medio por persona?',
+        'What is the average price per person?'
+      ),
+      respuesta: i18nTxt(
+        'Alrededor de 32 € por persona con dos platos y una bebida. También tenemos menú del día de lunes a viernes al mediodía a 18 €, con opción de bebida y postre incluidos.',
+        'Around €32 per person for two courses and a drink. We also offer a weekday lunch set menu Monday to Friday at €18, drink and dessert included.'
+      )
+    },
+    {
+      _key: 'lp-faq6',
+      _type: 'faqItem',
+      pregunta: i18nStr(
+        '¿Tenéis opciones vegetarianas o sin gluten?',
+        'Do you have vegetarian or gluten-free options?'
+      ),
+      respuesta: i18nTxt(
+        'Sí, siempre hay platos vegetarianos en la carta. Para sin gluten o cualquier otra intolerancia, avisadnos al reservar y adaptamos la propuesta.',
+        'Yes, there are always vegetarian dishes on the menu. For gluten-free or any other intolerance, let us know when booking and we adapt the offer.'
+      )
+    },
+    {
+      _key: 'lp-faq7',
+      _type: 'faqItem',
+      pregunta: i18nStr(
+        '¿Se puede reservar la sala entera para eventos?',
+        'Can I book the whole room for private events?'
+      ),
+      respuesta: i18nTxt(
+        'Sí, ofrecemos la sala entera para eventos privados (hasta 40 comensales) con menú cerrado a medida. Escríbenos a hola@laprincipal.com con la fecha y el número aproximado de personas y te preparamos una propuesta.',
+        'Yes, the whole room is available for private events (up to 40 guests) with a set menu tailored to you. Write to hola@laprincipal.com with the date and approximate number of guests and we\'ll prepare a proposal.'
+      )
+    }
+  ]
 };
 
 const categoriasVinoPrincipal = [
@@ -792,7 +904,6 @@ const restauranteCasabella = {
   nombre: 'Casabella',
   slug: { _type: 'slug', current: 'casabella' },
   dominio: 'https://casabella.com',
-  colorMarca: '#d4a655',
   idiomaPorDefecto: ref(ID.idiomaEs),
   idiomasActivos: [
     { _key: 'la-es', ...ref(ID.idiomaEs) },
@@ -1430,6 +1541,41 @@ const paginasLegalesCasabella = [
   }
 ];
 
+// La Principal reutiliza las mismas plantillas base — el cliente rellena `[COMPLETAR]`
+// (CIF/NIF/titular/dirección fiscal) desde Sanity Studio para cada restaurante.
+const paginasLegalesLaPrincipal = [
+  {
+    _id: 'paginaLegal-la-principal-aviso-legal',
+    _type: 'paginaLegal',
+    restaurante: ref(ID.restaurantePrincipal),
+    tipo: 'aviso-legal',
+    titulo: i18nStr('Aviso legal', 'Legal notice'),
+    contenido: i18nPortable(avisoLegalCasabellaES, avisoLegalCasabellaEN),
+    ultimaActualizacion: '2026-08-19',
+    orden: 10
+  },
+  {
+    _id: 'paginaLegal-la-principal-privacidad',
+    _type: 'paginaLegal',
+    restaurante: ref(ID.restaurantePrincipal),
+    tipo: 'privacidad',
+    titulo: i18nStr('Política de privacidad', 'Privacy policy'),
+    contenido: i18nPortable(privacidadCasabellaES, privacidadCasabellaEN),
+    ultimaActualizacion: '2026-08-19',
+    orden: 20
+  },
+  {
+    _id: 'paginaLegal-la-principal-cookies',
+    _type: 'paginaLegal',
+    restaurante: ref(ID.restaurantePrincipal),
+    tipo: 'cookies',
+    titulo: i18nStr('Política de cookies', 'Cookie policy'),
+    contenido: i18nPortable(cookiesCasabellaES, cookiesCasabellaEN),
+    ultimaActualizacion: '2026-08-19',
+    orden: 30
+  }
+];
+
 // Guixot reutiliza las mismas plantillas base — el cliente rellena `[COMPLETAR]`
 // (CIF/NIF/titular/dirección fiscal) desde Sanity Studio para cada restaurante.
 const paginasLegalesGuixot = [
@@ -1480,7 +1626,6 @@ const restauranteGuixot = {
   nombre: 'Guixot',
   slug: { _type: 'slug', current: 'guixot' },
   dominio: 'https://guixot.cat',
-  colorMarca: '#c85a3b',
   idiomaPorDefecto: ref(ID.idiomaEs),
   idiomasActivos: [
     { _key: 'la-es', ...ref(ID.idiomaEs) },
@@ -1733,7 +1878,6 @@ const restauranteRoure = {
   nombre: 'Roure',
   slug: { _type: 'slug', current: 'roure' },
   dominio: 'https://roure.cat',
-  colorMarca: '#2b3d2c',
   idiomaPorDefecto: ref(ID.idiomaEs),
   idiomasActivos: [
     { _key: 'la-es', ...ref(ID.idiomaEs) },
@@ -2022,6 +2166,8 @@ async function main() {
   for (const v of vinosPrincipal) await client.createOrReplace(v as never);
   for (const c of categoriasPlatoPrincipal) await client.createOrReplace(c as never);
   for (const p of platosPrincipal) await client.createOrReplace(p as never);
+  console.log('⚖️  Creando páginas legales La Principal…');
+  for (const pl of paginasLegalesLaPrincipal) await client.createOrReplace(pl as never);
 
   console.log('🍽 Creando restaurante Casabella…');
   await client.createOrReplace(restauranteCasabella as never);
