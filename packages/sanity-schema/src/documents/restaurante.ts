@@ -621,6 +621,15 @@ export const restaurante = defineType({
 
     // ── 📝 Formulario de reserva ──────────────────────────────────────
     defineField({
+      name: 'aceptaReservas',
+      title: 'Acepta reservas online',
+      description:
+        'Si está desactivado, el formulario de reserva no aparece en la landing y el botón "Reservar" cae en cascada: abre WhatsApp si hay número configurado, o llama al teléfono (con etiqueta "Llamar"), o se oculta si no hay ninguno.',
+      type: 'boolean',
+      group: 'textosForm',
+      initialValue: true
+    }),
+    defineField({
       name: 'textosForm',
       title: 'Textos del formulario de reserva',
       type: 'object',
@@ -768,13 +777,6 @@ export const restaurante = defineType({
       type: 'internationalizedArrayText',
       group: 'ia',
       validation: r => validarTodosIdiomasOninguno(r)
-    }),
-    defineField({
-      name: 'aceptaReservas',
-      title: 'Acepta reservas',
-      type: 'boolean',
-      group: 'ia',
-      initialValue: true
     }),
     defineField({
       name: 'cloudflareAnalyticsToken',
