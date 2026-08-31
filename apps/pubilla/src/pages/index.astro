@@ -29,7 +29,7 @@ const hreflangs = resolveActiveLocales(
 
 const seoTitle = t(restaurant.seoTitulo, locale, defaultLocale) || restaurant.nombre;
 const seoDescription = t(restaurant.seoDescripcion, locale, defaultLocale) || '';
-const ogImage = img.url(restaurant.seoImagen) ?? img.url(restaurant.heroImagen);
+const ogImage = img.url(restaurant.seoImagen) ?? img.url(restaurant.espacios?.[0]?.heroImagen);
 const logoUrl = img.url(restaurant.logo);
 const faviconUrl = img.url(restaurant.favicon);
 const appleTouchIconUrl = img.pngSquare(restaurant.iconoApp, 180);

@@ -1,18 +1,19 @@
 ---
 import { t } from '@hosteleria/i18n-utils';
 import { img } from '../lib/sanity';
-import type { Restaurant } from '../lib/queries';
+import type { Restaurant, Espacio } from '../lib/queries';
 import CtaButton from '../components/CtaButton.astro';
 import { resolveBookingAction } from '@hosteleria/utils';
 
 interface Props {
   restaurant: Restaurant;
+  espacio: Espacio;
   locale: string;
   defaultLocale: string;
 }
 
-const { restaurant, locale, defaultLocale } = Astro.props;
-const heroImgUrl = img.url(restaurant.heroImagen) ?? '/img/hero.jpg';
+const { restaurant, espacio, locale, defaultLocale } = Astro.props;
+const heroImgUrl = img.url(espacio.heroImagen) ?? '/img/hero.jpg';
 const bookingAction = resolveBookingAction(restaurant, locale);
 ---
 
@@ -29,7 +30,7 @@ const bookingAction = resolveBookingAction(restaurant, locale);
   >
     <img
       src={heroImgUrl}
-      alt={t(restaurant.heroTitulo, locale, defaultLocale)}
+      alt={t(espacio.heroTitulo, locale, defaultLocale)}
       class='w-full h-full object-cover'
     />
   </div>
@@ -38,19 +39,19 @@ const bookingAction = resolveBookingAction(restaurant, locale);
     class='flex flex-col justify-center gap-8 py-[6vh] px-(--gap) max-[960px]:pt-24 max-[960px]:pb-12 max-[960px]:gap-6 max-[960px]:order-1'
   >
     <div class='flex items-center gap-3.5 text-[11px] tracking-[0.28em] uppercase text-muted'>
-      <span>{t(restaurant.heroMetaIzq, locale, defaultLocale)}</span>
+      <span>{t(espacio.heroMetaIzq, locale, defaultLocale)}</span>
       <span class='w-[3px] h-[3px] rounded-full bg-accent'></span>
-      <span>{t(restaurant.heroMetaDer, locale, defaultLocale)}</span>
+      <span>{t(espacio.heroMetaDer, locale, defaultLocale)}</span>
     </div>
     <h1 class='font-serif font-light leading-none tracking-[-0.02em] text-[clamp(48px,6.5vw,96px)]'>
-      {t(restaurant.heroTitulo, locale, defaultLocale)}<br />
+      {t(espacio.heroTitulo, locale, defaultLocale)}<br />
       <em class='text-accent italic font-light'>
-        {t(restaurant.heroSubtitulo, locale, defaultLocale)}
+        {t(espacio.heroSubtitulo, locale, defaultLocale)}
       </em>
     </h1>
     <p
       class='text-ink-soft text-[17px] leading-[1.7] max-w-[42ch]'
-      set:html={t(restaurant.heroNota, locale, defaultLocale).replace(/\n/g, '<br />')}
+      set:html={t(espacio.heroNota, locale, defaultLocale).replace(/\n/g, '<br />')}
     />
     {bookingAction && (
       <CtaButton
@@ -59,7 +60,7 @@ const bookingAction = resolveBookingAction(restaurant, locale);
         rel={bookingAction.external ? 'noopener' : undefined}
         class='w-fit'
       >
-        {t(restaurant.heroCta, locale, defaultLocale)}
+        {t(espacio.heroCta, locale, defaultLocale)}
       </CtaButton>
     )}
   </div>

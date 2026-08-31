@@ -1,21 +1,22 @@
 ---
 import { t } from '@hosteleria/i18n-utils';
 import { img } from '../lib/sanity';
-import type { Restaurant } from '../lib/queries';
+import type { Restaurant, Espacio } from '../lib/queries';
 import Tag from '../components/Tag.astro';
 import CtaButton from '../components/CtaButton.astro';
 import { resolveBookingAction } from '@hosteleria/utils';
 
 interface Props {
   restaurant: Restaurant;
+  espacio: Espacio;
   locale: string;
   defaultLocale: string;
 }
 
-const { restaurant, locale, defaultLocale } = Astro.props;
-const heroImgUrl = img.url(restaurant.heroImagen) ?? '/img/hero.jpg';
-const heroTitle = t(restaurant.heroTitulo, locale, defaultLocale);
-const heroSubtitle = t(restaurant.heroSubtitulo, locale, defaultLocale);
+const { restaurant, espacio, locale, defaultLocale } = Astro.props;
+const heroImgUrl = img.url(espacio.heroImagen) ?? '/img/hero.jpg';
+const heroTitle = t(espacio.heroTitulo, locale, defaultLocale);
+const heroSubtitle = t(espacio.heroSubtitulo, locale, defaultLocale);
 const bookingAction = resolveBookingAction(restaurant, locale);
 ---
 
@@ -31,11 +32,11 @@ const bookingAction = resolveBookingAction(restaurant, locale);
     <div class="flex items-center gap-4 mb-12 max-[700px]:flex-wrap max-[700px]:gap-2">
       <span class="w-[60px] h-px bg-line-strong flex-shrink-0"></span>
       <Tag class="!before:hidden">
-        {t(restaurant.heroMetaIzq, locale, defaultLocale)}
+        {t(espacio.heroMetaIzq, locale, defaultLocale)}
       </Tag>
       <span class="text-dim opacity-60">·</span>
       <Tag class="!before:hidden">
-        {t(restaurant.heroMetaDer, locale, defaultLocale)}
+        {t(espacio.heroMetaDer, locale, defaultLocale)}
       </Tag>
     </div>
 
@@ -48,7 +49,7 @@ const bookingAction = resolveBookingAction(restaurant, locale);
         </h1>
         <p
           class="text-ink-soft text-[17px] leading-[1.7] max-w-[42ch]"
-          set:html={t(restaurant.heroNota, locale, defaultLocale).replace(/\n/g, '<br />')}
+          set:html={t(espacio.heroNota, locale, defaultLocale).replace(/\n/g, '<br />')}
         />
         {bookingAction && (
           <div class="max-[900px]:self-start">
@@ -57,7 +58,7 @@ const bookingAction = resolveBookingAction(restaurant, locale);
               target={bookingAction.external ? '_blank' : undefined}
               rel={bookingAction.external ? 'noopener' : undefined}
             >
-              {t(restaurant.heroCta, locale, defaultLocale)}
+              {t(espacio.heroCta, locale, defaultLocale)}
             </CtaButton>
           </div>
         )}

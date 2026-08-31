@@ -10,12 +10,10 @@ export const restaurante = defineType({
   type: 'document',
   groups: [
     { name: 'identidad', title: '🪪 Identidad', default: true },
-    { name: 'hero', title: '🦸 Hero' },
-    { name: 'manifiesto', title: '💬 Manifiesto' },
+    { name: 'espacios', title: '🏛 Espacios' },
+    { name: 'bloquesHome', title: '🎴 Bloques destacados (home)' },
     { name: 'sobre', title: '👥 Sobre nosotros' },
-    { name: 'galeria', title: '🖼 Galería' },
     { name: 'grupos', title: '👨‍👩‍👧 Grupos y eventos' },
-    { name: 'horarios', title: '🕐 Horarios' },
     { name: 'contacto', title: '📞 Contacto' },
     { name: 'redes', title: '📱 Redes sociales' },
     { name: 'textosNav', title: '🧭 Menú de navegación' },
@@ -123,78 +121,90 @@ export const restaurante = defineType({
           })
     }),
 
-    // ── Hero ─────────────────────────────────────────────────────────
+    // ── Espacios ────────────────────────────────────────────────────
     defineField({
-      name: 'heroTitulo',
-      title: 'Título principal (H1)',
-      type: i18nStr,
-      group: 'hero',
-      validation: r => validarTodosIdiomasOninguno(r)
-    }),
-    defineField({
-      name: 'heroSubtitulo',
-      title: 'Título superpuesto sobre la imagen (H2)',
-      type: i18nStr,
-      group: 'hero',
-      validation: r => validarTodosIdiomasOninguno(r)
-    }),
-    defineField({
-      name: 'heroMetaIzq',
-      title: 'Meta izquierda',
-      type: i18nStr,
-      group: 'hero',
-      description: 'Ej: "Restaurante en Plaça de la Llibertat."',
-      validation: r => validarTodosIdiomasOninguno(r)
-    }),
-    defineField({
-      name: 'heroMetaDer',
-      title: 'Meta derecha',
-      type: i18nStr,
-      group: 'hero',
-      description: 'Ej: "Barrio de Gràcia"',
-      validation: r => validarTodosIdiomasOninguno(r)
-    }),
-    defineField({
-      name: 'heroNota',
-      title: 'Nota inferior sobre la imagen',
-      type: i18nTxt,
-      group: 'hero',
-      validation: r => validarTodosIdiomasOninguno(r)
-    }),
-    defineField({
-      name: 'heroCta',
-      title: 'Texto del botón CTA',
-      type: i18nStr,
-      group: 'hero',
-      description: 'Ej: "Reservar mesa"',
-      validation: r => validarTodosIdiomasOninguno(r)
-    }),
-    defineField({
-      name: 'heroImagen',
-      title: 'Imagen del hero',
-      type: 'image',
-      group: 'hero',
-      options: { hotspot: true },
-      validation: r => r.required()
+      name: 'espacios',
+      title: 'Espacios de este restaurante',
+      description:
+        'Cada espacio es una experiencia (Restaurante, Café, Coctelería, Club, Terraza…). La mayoría de restaurantes tienen 1 solo espacio. Grupos multi-experiencia como Ocaña tienen varios. Se ordenan por el campo `orden` de cada espacio.',
+      type: 'array',
+      group: 'espacios',
+      of: [{ type: 'reference', to: [{ type: 'espacio' }] }],
+      validation: r => r.required().min(1).unique()
     }),
 
-    // ── Manifiesto (statement) ───────────────────────────────────────
+    // ── Bloques destacados del home ──────────────────────────────────
+    // Opt-in por contenido: si el array está vacío, la sección del home no
+    // se renderiza. Sirve tanto para grupos multi-espacio (Ocaña con "¿Qué es
+    // Ocaña?", "Terraza", "Eventos y Grupos") como para restaurantes mono-
+    // espacio que quieran añadir highlights sueltos en su landing.
     defineField({
-      name: 'manifiestoEyebrow',
-      title: 'Eyebrow',
-      type: i18nStr,
-      group: 'manifiesto',
-      validation: r => validarTodosIdiomasOninguno(r)
-    }),
-    defineField({
-      name: 'manifiestoTexto',
-      title: 'Frase manifiesto',
-      type: i18nTxt,
-      group: 'manifiesto',
-      validation: r => validarTodosIdiomasOninguno(r)
+      name: 'bloquesHome',
+      title: 'Bloques destacados del home',
+      description:
+        'Cards cortas que aparecen en la home (después del grid de espacios). Cada bloque = título + texto corto + imagen opcional + botón opcional. Máx 6. Si está vacío, no se muestra la sección.',
+      type: 'array',
+      group: 'bloquesHome',
+      of: [
+        {
+          type: 'object',
+          name: 'bloqueDestacado',
+          title: 'Bloque destacado',
+          fields: [
+            {
+              name: 'titulo',
+              title: 'Título',
+              type: i18nStr,
+              validation: (r) => validarTodosIdiomasOninguno(r),
+            },
+            {
+              name: 'texto',
+              title: 'Texto corto',
+              description: '1–2 frases. Se muestra debajo del título.',
+              type: i18nTxt,
+              validation: (r) => validarTodosIdiomasOninguno(r),
+            },
+            {
+              name: 'imagen',
+              title: 'Imagen (opcional)',
+              type: 'image',
+              options: { hotspot: true },
+            },
+            {
+              name: 'ctaTexto',
+              title: 'Texto del botón (opcional)',
+              description: 'Si no se rellena, la card no muestra botón.',
+              type: i18nStr,
+              validation: (r) => validarTodosIdiomasOninguno(r),
+            },
+            {
+              name: 'ctaHref',
+              title: 'URL del botón (opcional)',
+              description: 'Puede ser URL absoluta (https://…) o relativa (/terrassa, #book, mailto:).',
+              type: 'string',
+            },
+          ],
+          preview: {
+            select: {
+              title: 'titulo.0.value',
+              subtitle: 'texto.0.value',
+              media: 'imagen',
+            },
+            prepare: ({ title, subtitle, media }) => ({
+              title: title ?? '(Sin título)',
+              subtitle: subtitle ?? '',
+              media,
+            }),
+          },
+        },
+      ],
+      validation: (r) => r.max(6),
     }),
 
-    // ── Sobre nosotros ───────────────────────────────────────────────
+    // ── Sobre nosotros (compartido por todos los espacios) ───────────
+    // La historia del sitio es de la marca, no de cada espacio: en Ocaña
+    // el mismo bloque aplica al Restaurant, Apotheke y Sala. En restaurantes
+    // mono-espacio también vive aquí (más natural de editar).
     defineField({
       name: 'sobreEyebrow',
       title: 'Eyebrow',
@@ -211,9 +221,9 @@ export const restaurante = defineType({
     }),
     defineField({
       name: 'sobreCuerpo',
-      title: 'Cuerpo de la sección (texto enriquecido)',
+      title: 'Cuerpo',
       description:
-        'Texto principal de "Sobre nosotros". Acepta varios párrafos y formato básico. Rellena en cada idioma activo (o deja vacío en todos).',
+        'Texto principal de "Sobre nosotros". Acepta varios párrafos. Rellena en cada idioma activo (o deja vacío en todos).',
       type: 'internationalizedArrayPortableText',
       group: 'sobre',
       validation: r => validarTodosIdiomasOninguno(r)
@@ -222,7 +232,7 @@ export const restaurante = defineType({
       name: 'sobreImagenes',
       title: 'Imágenes (máx. 3)',
       description:
-        'Hasta 3 imágenes. El diseño se adapta automáticamente: con 1 imagen se muestra grande junto al texto; con 2 se añade una panorámica de cierre; con 3 se completa con un díptico bajo el texto.',
+        'Hasta 3 imágenes. El diseño se adapta automáticamente al número: 1 grande junto al texto, 2 con panorámica de cierre, 3 con díptico bajo el texto.',
       type: 'array',
       group: 'sobre',
       of: [
@@ -242,30 +252,10 @@ export const restaurante = defineType({
       validation: r => r.max(3)
     }),
 
-    // ── Galería ──────────────────────────────────────────────────────
-    defineField({
-      name: 'galeria',
-      title: 'Galería (carrusel del local)',
-      type: 'array',
-      group: 'galeria',
-      description: '8 imágenes recomendadas.',
-      of: [
-        {
-          type: 'image',
-          options: { hotspot: true },
-          fields: [
-            {
-              name: 'alt',
-              title: 'Texto alternativo (alt)',
-              type: i18nStr,
-              validation: r => validarTodosIdiomasOninguno(r)
-            }
-          ]
-        }
-      ]
-    }),
-
-    // ── Grupos y eventos ─────────────────────────────────────────────
+    // ── Grupos y eventos (compartido) ────────────────────────────────
+    // La política de reservado privado es de la marca, aplica a todos los
+    // espacios. Los aforos/menús concretos por espacio se cuentan en el
+    // copy — no hace falta desglose por espacio.
     defineField({
       name: 'gruposEyebrow',
       title: 'Eyebrow',
@@ -291,7 +281,7 @@ export const restaurante = defineType({
       name: 'gruposDestacados',
       title: 'Puntos destacados (lista)',
       description:
-        'Lista de puntos clave del servicio de grupos (capacidad, tipo de menú, sala privada, etc.). Se muestran como bullets al lado del título. Máx. 6.',
+        'Lista de puntos clave del servicio de grupos (capacidad, tipo de menú, sala privada, etc.). Máx. 6.',
       type: 'array',
       group: 'grupos',
       of: [
@@ -316,135 +306,10 @@ export const restaurante = defineType({
     }),
     defineField({
       name: 'gruposImagen',
-      title: 'Imagen de fondo',
+      title: 'Imagen',
       type: 'image',
       group: 'grupos',
       options: { hotspot: true }
-    }),
-
-    // ── Horarios ─────────────────────────────────────────────────────
-    defineField({
-      name: 'horariosTitulo',
-      title: 'Título de la sección',
-      type: i18nStr,
-      group: 'horarios',
-      validation: r => validarTodosIdiomasOninguno(r)
-    }),
-    defineField({
-      name: 'horariosTexto',
-      title: 'Texto descriptivo de horarios',
-      type: i18nTxt,
-      group: 'horarios',
-      validation: r => validarTodosIdiomasOninguno(r)
-    }),
-    defineField({
-      name: 'horariosAbierto',
-      title: 'Mensaje "estamos abiertos"',
-      description:
-        'Usa {hora} como placeholder para la hora de cierre. Ej: "Estamos abiertos hasta las {hora}."',
-      type: i18nStr,
-      group: 'horarios',
-      validation: r => validarTodosIdiomasOninguno(r)
-    }),
-    defineField({
-      name: 'horariosProximaApertura',
-      title: 'Mensaje "hoy abrimos a las"',
-      description: 'Usa {hora} como placeholder. Ej: "Hoy abrimos a las {hora}."',
-      type: i18nStr,
-      group: 'horarios',
-      validation: r => validarTodosIdiomasOninguno(r)
-    }),
-    defineField({
-      name: 'horariosCerrado',
-      title: 'Mensaje "cerrado hoy"',
-      type: i18nStr,
-      group: 'horarios',
-      validation: r => validarTodosIdiomasOninguno(r)
-    }),
-    defineField({
-      name: 'horariosSemana',
-      title: 'Horario semanal',
-      description:
-        'Un bloque por día. Cada día puede tener varios turnos (mañana, mediodía, noche). Si no añades turnos, ese día está cerrado.',
-      type: 'array',
-      group: 'horarios',
-      of: [
-        {
-          type: 'object',
-          name: 'diaHorario',
-          fields: [
-            {
-              name: 'dia',
-              title: 'Día',
-              type: 'string',
-              options: {
-                list: [
-                  { title: 'Lunes', value: 'Mo' },
-                  { title: 'Martes', value: 'Tu' },
-                  { title: 'Miércoles', value: 'We' },
-                  { title: 'Jueves', value: 'Th' },
-                  { title: 'Viernes', value: 'Fr' },
-                  { title: 'Sábado', value: 'Sa' },
-                  { title: 'Domingo', value: 'Su' }
-                ]
-              },
-              validation: r => r.required()
-            },
-            {
-              name: 'turnos',
-              title: 'Turnos',
-              description: 'Deja vacío si está cerrado.',
-              type: 'array',
-              of: [
-                {
-                  type: 'object',
-                  name: 'turno',
-                  fields: [
-                    {
-                      name: 'apertura',
-                      title: 'Apertura (HH:MM)',
-                      type: 'string',
-                      validation: r => r.required().regex(/^([01]\d|2[0-3]):[0-5]\d$/)
-                    },
-                    {
-                      name: 'cierre',
-                      title: 'Cierre (HH:MM)',
-                      description: 'Usa 24:00–27:59 si cierra pasada la medianoche.',
-                      type: 'string',
-                      validation: r => r.required().regex(/^(([01]\d|2[0-7]):[0-5]\d)$/)
-                    }
-                  ],
-                  preview: {
-                    select: { open: 'apertura', close: 'cierre' },
-                    prepare: ({ open, close }) => ({ title: `${open} – ${close}` })
-                  }
-                }
-              ]
-            }
-          ],
-          preview: {
-            select: { dia: 'dia', turnos: 'turnos' },
-            prepare: ({ dia, turnos }) => {
-              const DIAS: Record<string, string> = {
-                Mo: 'Lunes',
-                Tu: 'Martes',
-                We: 'Miércoles',
-                Th: 'Jueves',
-                Fr: 'Viernes',
-                Sa: 'Sábado',
-                Su: 'Domingo'
-              };
-              const label = DIAS[dia] ?? dia;
-              const summary = turnos?.length
-                ? turnos
-                    .map((t: { apertura: string; cierre: string }) => `${t.apertura}–${t.cierre}`)
-                    .join(' · ')
-                : 'Cerrado';
-              return { title: label, subtitle: summary };
-            }
-          }
-        }
-      ]
     }),
 
     // ── Contacto ─────────────────────────────────────────────────────
@@ -613,6 +478,20 @@ export const restaurante = defineType({
           name: 'galeriaTitulo',
           title: 'Título grande de la sección Galería',
           description: 'Título grande en serif de la galería. Ejemplo: "Nuestro espacio".',
+          type: i18nStr,
+          validation: (r) => validarTodosIdiomasOninguno(r),
+        },
+        {
+          name: 'bebidasEyebrow',
+          title: 'Etiqueta pequeña encima de "Bebidas"',
+          description: 'Ejemplo: "TRAS LA BARRA".',
+          type: i18nStr,
+          validation: (r) => validarTodosIdiomasOninguno(r),
+        },
+        {
+          name: 'bebidasTitulo',
+          title: 'Título grande de la sección Bebidas',
+          description: 'Título grande en serif de la carta de bebidas. Ejemplo: "Para beber".',
           type: i18nStr,
           validation: (r) => validarTodosIdiomasOninguno(r),
         },

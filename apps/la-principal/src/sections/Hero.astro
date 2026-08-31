@@ -1,24 +1,25 @@
 ---
 import { t } from '@hosteleria/i18n-utils';
 import { img } from '../lib/sanity';
-import type { Restaurant } from '../lib/queries';
+import type { Restaurant, Espacio } from '../lib/queries';
 import CtaButton from '../components/CtaButton.astro';
 import { resolveBookingAction } from '@hosteleria/utils';
 
 interface Props {
   restaurant: Restaurant;
+  espacio: Espacio;
   locale: string;
   defaultLocale: string;
 }
 
-const { restaurant, locale, defaultLocale } = Astro.props;
-const heroImgUrl = img.url(restaurant.heroImagen) ?? '/img/hero.jpg';
+const { restaurant, espacio, locale, defaultLocale } = Astro.props;
+const heroImgUrl = img.url(espacio.heroImagen) ?? '/img/hero.jpg';
 
-const titulo = t(restaurant.heroTitulo, locale, defaultLocale);
-const subtitulo = t(restaurant.heroSubtitulo, locale, defaultLocale);
-const metaIzq = t(restaurant.heroMetaIzq, locale, defaultLocale);
-const metaDer = t(restaurant.heroMetaDer, locale, defaultLocale);
-const cta = t(restaurant.heroCta, locale, defaultLocale);
+const titulo = t(espacio.heroTitulo, locale, defaultLocale);
+const subtitulo = t(espacio.heroSubtitulo, locale, defaultLocale);
+const metaIzq = t(espacio.heroMetaIzq, locale, defaultLocale);
+const metaDer = t(espacio.heroMetaDer, locale, defaultLocale);
+const cta = t(espacio.heroCta, locale, defaultLocale);
 const bookingAction = resolveBookingAction(restaurant, locale);
 
 // Sello dinámico "Est. {año} · {barrio/ciudad}" — se compone desde Sanity.

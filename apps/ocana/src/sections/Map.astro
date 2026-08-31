@@ -1,0 +1,113 @@
+---
+import type { Restaurant } from '../lib/queries';
+import {
+  extractMapSrc,
+  withMapLocale,
+  extractCoords,
+  extractFTID,
+  ftidToCID,
+  buildMapsExternalUrl
+} from '@hosteleria/utils';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+}
+
+const { restaurant, locale } = Astro.props;
+
+const rawMapSrc = extractMapSrc(restaurant.mapaUrl);
+if (!rawMapSrc) return null;
+
+const mapSrc = withMapLocale(rawMapSrc, locale);
+const dir = restaurant.direccion ?? {};
+
+const coords = extractCoords(rawMapSrc);
+const ftid = extractFTID(rawMapSrc);
+const cid = ftidToCID(ftid);
+const fullAddress = [dir.calle, dir.codigoPostal, dir.ciudad, dir.pais]
+  .filter(Boolean)
+  .join(', ');
+const mapsExternalUrl = buildMapsExternalUrl(cid, coords, fullAddress, locale);
+
+const headerTitle = locale === 'en' ? 'Come find us' : 'Ven a encontrarnos';
+const openMapsLabel = locale === 'en' ? 'Open in Google Maps' : 'Ver en Google Maps';
+---
+
+<!--
+  Pubilla Map: estilo "tarjeta postal". Iframe dentro de marco cream con
+  padding grueso + sombra tipo postal. Etiqueta "recomendado / tarjeta
+  postal" rotada tipo sticker superior derecha. Dirección estampada abajo
+  con doble regla tipo sello. Filtro suave sepia+desaturado al iframe.
+-->
+<section
+  id='map'
+  class='py-[14vh] px-(--gap) border-t border-line max-[900px]:py-[10vh]'
+>
+  <div class='reveal max-w-[var(--max)] mx-auto mb-[clamp(50px,6vw,70px)] text-center max-[900px]:mb-10'>
+    <div aria-hidden='true' class='flex items-center justify-center gap-3 mb-6 text-accent-alt'>
+      <span class='w-14 h-px bg-accent-alt/60'></span>
+      <span class='font-serif text-[20px] leading-none'>∗</span>
+      <span class='w-14 h-px bg-accent-alt/60'></span>
+    </div>
+    <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-accent-alt font-semibold mb-4'>
+      {headerTitle}
+    </span>
+    <h2
+      class='font-serif font-normal leading-[1] tracking-[-0.01em] text-[clamp(36px,4.6vw,60px)]'
+    >
+      {restaurant.nombre},
+      <em class='italic font-normal text-accent'>{dir.barrio || dir.ciudad || ''}</em>
+    </h2>
+  </div>
+
+  <!-- Tarjeta postal: marco cream con iframe + sticker rotado -->
+  <div class='reveal relative max-w-[var(--max)] mx-auto'>
+    <div
+      class='relative bg-bg-2 p-4 max-[700px]:p-3 shadow-[0_18px_44px_-16px_rgb(26_26_36/0.3),0_4px_10px_rgb(26_26_36/0.14)]'
+    >
+      <div class='overflow-hidden bg-surface border border-line-strong/40'>
+        <iframe
+          src={mapSrc}
+          title={`${restaurant.nombre} — ${headerTitle}`}
+          loading='lazy'
+          referrerpolicy='no-referrer-when-downgrade'
+          allowfullscreen
+          class='block w-full border-0 h-[clamp(360px,55vh,540px)] max-[900px]:h-[clamp(280px,44vh,380px)] filter [filter:grayscale(0.15)_sepia(0.15)_contrast(0.95)]'
+        ></iframe>
+      </div>
+    </div>
+
+    <!-- Sticker rotado esquina superior derecha -->
+    <div
+      class='absolute -top-3 -right-3 max-[700px]:-top-2 max-[700px]:-right-2 bg-accent text-bg px-4 py-2 max-[700px]:px-3 max-[700px]:py-1.5 rotate-[3deg] shadow-[0_4px_10px_rgb(26_26_36/0.25)]'
+    >
+      <span class='font-serif italic text-[14px] max-[700px]:text-[12px]'>
+        {locale === 'en' ? 'Postcard' : 'Postal'}
+      </span>
+    </div>
+  </div>
+
+  <!-- Dirección estampada con doble regla -->
+  {
+    fullAddress && (
+      <div class='reveal max-w-[var(--max)] mx-auto mt-[clamp(28px,3.5vw,42px)] text-center flex flex-col items-center gap-4'>
+        <p class='font-serif italic text-ink text-[clamp(16px,1.7vw,20px)] max-w-[52ch]'>
+          {fullAddress}
+        </p>
+        {mapsExternalUrl && (
+          <a
+            href={mapsExternalUrl}
+            target='_blank'
+            rel='noopener'
+            class='group inline-flex items-center gap-2.5 font-sans font-medium uppercase text-accent text-[13px] tracking-[0.14em] py-1 border-b border-accent cursor-pointer
+                   transition-[color,border-color] duration-300 hover:text-accent-hover hover:border-accent-hover'
+          >
+            {openMapsLabel}
+            <span class='transition-transform duration-300 group-hover:translate-x-1'>→</span>
+          </a>
+        )}
+      </div>
+    )
+  }
+</section>

@@ -1,0 +1,132 @@
+---
+import { localizedPath } from '@hosteleria/i18n-utils';
+import type { LocaleRef, Restaurant, Espacio } from '../lib/queries';
+import IconHamburger from '@hosteleria/ui/icons/IconHamburger.astro';
+import LangSwitcher from '@hosteleria/ui/components/LangSwitcher.astro';
+
+/**
+ * Nav de Ocaña (grupo multi-espacio en Plaça Reial).
+ *
+ * DECISIÓN — divergemos del Nav de las 5 apps mono-espacio:
+ *   Aquí NO hay anchor-links a Historia/Carta/Vinos/Galería (esos van en el
+ *   EspacioSwitcher + navegación dentro del scroll). El Nav de Ocaña es un
+ *   "hub nav" minimalista: brand Ocaña (link al hub), language switcher y
+ *   CTA de reserva. La navegación entre los 3 espacios (Restaurant, Apotheke,
+ *   Sala) vive en el EspacioSwitcher que se muestra bajo el nav en cada
+ *   landing de espacio, y en el grid de espacios del hub.
+ */
+interface Props {
+  restaurant: Restaurant;
+  espacios: Espacio[];
+  locale: string;
+  defaultLocale: string;
+  activeLocales: LocaleRef[];
+  /** Path base para el language switcher (mantiene la misma URL al cambiar de locale). Default '/'. */
+  langSwitcherPath?: string;
+  /** Fuerza la clase `scrolled` (nav opaco desde el inicio para páginas no-hero como legal). */
+  forceScrolled?: boolean;
+}
+
+const {
+  restaurant,
+  espacios,
+  locale,
+  defaultLocale,
+  activeLocales,
+  langSwitcherPath = '/',
+  forceScrolled = false
+} = Astro.props;
+
+const homePath = localizedPath('/', locale, defaultLocale);
+
+// CTA de reserva → primer espacio con aceptaReservas (o el hub por defecto).
+// Como aceptaReservas vive a nivel de restaurant en el modelo actual, mandamos
+// a la URL del restaurant (espacio "restaurant") si existe.
+const reservableEspacio = espacios.find(e => e.tipo === 'restaurant') ?? espacios[0];
+const reservaHref = reservableEspacio
+  ? localizedPath(`/${reservableEspacio.slug?.current}#book`, locale, defaultLocale)
+  : null;
+
+const RESERVAR: Record<string, string> = {
+  es: 'Reservar',
+  ca: 'Reservar',
+  en: 'Book',
+  fr: 'Réserver',
+  it: 'Prenota'
+};
+const reservarLabel = RESERVAR[locale] ?? RESERVAR.es;
+
+const A11Y_OPEN_MENU: Record<string, string> = {
+  es: 'Abrir menú',
+  ca: 'Obrir menú',
+  en: 'Open menu',
+  fr: 'Ouvrir le menu',
+  it: 'Apri il menu'
+};
+const openMenuLabel = A11Y_OPEN_MENU[locale] ?? A11Y_OPEN_MENU.es;
+
+const scrolledAttr = forceScrolled ? 'true' : 'false';
+---
+
+<nav
+  id='nav'
+  data-scrolled={scrolledAttr}
+  data-force-scrolled={forceScrolled ? '1' : undefined}
+  class:list={[
+    'fixed z-50 inset-x-0 top-0 flex items-center justify-between gap-8',
+    'py-4 px-(--gap)',
+    'backdrop-blur-[14px] backdrop-saturate-[140%]',
+    'bg-[rgb(14_13_11/0.55)] border-b border-transparent',
+    'transition-[background-color,padding,border-color] duration-[350ms] ease-out',
+    "data-[scrolled='true']:py-3 data-[scrolled='true']:bg-[rgb(14_13_11/0.88)] data-[scrolled='true']:border-b-line"
+  ]}
+>
+  <a
+    href={homePath}
+    aria-label={restaurant.nombre}
+    class='font-serif font-normal leading-none tracking-[0.02em] shrink-0 text-[clamp(24px,2.4vw,32px)] text-ink transition-colors duration-300 hover:text-accent'
+  >
+    <em class='italic'>{restaurant.nombre}</em>
+  </a>
+
+  <div class='hidden items-center gap-[clamp(18px,2.4vw,32px)] min-[961px]:flex'>
+    <LangSwitcher
+      activeLocales={activeLocales}
+      locale={locale}
+      defaultLocale={defaultLocale}
+      path={langSwitcherPath}
+      variant='desktop'
+      align='right'
+    />
+
+    {reservaHref && (
+      <a
+        href={reservaHref}
+        class='inline-flex items-center gap-2.5 py-3 px-6 bg-accent text-bg border border-accent font-sans font-semibold uppercase text-[11px] tracking-[0.22em] whitespace-nowrap cursor-pointer transition-[background-color,border-color,transform,color] duration-300 hover:bg-accent-hover hover:border-accent-hover hover:-translate-y-px'
+      >
+        {reservarLabel}
+      </a>
+    )}
+  </div>
+
+  <button
+    id='hamburgerBtn'
+    aria-label={openMenuLabel}
+    aria-expanded='false'
+    aria-controls='mobileOverlay'
+    class='flex items-center justify-center w-11 h-11 -mr-2.5 bg-transparent border-none rounded-full text-ink cursor-pointer transition-colors duration-300 hover:bg-surface min-[961px]:hidden [&>svg]:block'
+  >
+    <IconHamburger />
+  </button>
+</nav>
+
+<script is:inline>
+  (function () {
+    const nav = document.getElementById('nav');
+    if (!nav) return;
+    if (nav.dataset.forceScrolled === '1') return; // legal/404 siempre scrolled
+    const onScroll = () => (nav.dataset.scrolled = window.scrollY > 40 ? 'true' : 'false');
+    onScroll();
+    addEventListener('scroll', onScroll, { passive: true });
+  })();
+</script>

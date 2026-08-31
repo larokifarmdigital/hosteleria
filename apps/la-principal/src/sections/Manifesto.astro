@@ -1,16 +1,17 @@
 ---
 import { t } from '@hosteleria/i18n-utils';
-import type { Restaurant } from '../lib/queries';
+import type { Restaurant, Espacio } from '../lib/queries';
 
 interface Props {
   restaurant: Restaurant;
+  espacio: Espacio;
   locale: string;
   defaultLocale: string;
 }
 
-const { restaurant, locale, defaultLocale } = Astro.props;
-const eyebrow = t(restaurant.manifiestoEyebrow, locale, defaultLocale);
-const texto = t(restaurant.manifiestoTexto, locale, defaultLocale);
+const { espacio, locale, defaultLocale } = Astro.props;
+const eyebrow = t(espacio.manifiestoEyebrow, locale, defaultLocale);
+const texto = t(espacio.manifiestoTexto, locale, defaultLocale);
 ---
 
 <!--

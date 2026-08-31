@@ -1,0 +1,125 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import HubPage from '../../components/HubPage.astro';
+import { fetchGrupoData, fetchLegalPages } from '../../lib/queries';
+import { img } from '../../lib/sanity';
+import { t, resolveActiveLocales, localizedPath } from '@hosteleria/i18n-utils';
+import { buildFaqJsonLd } from '@hosteleria/seo';
+
+/**
+ * Hub por idioma alternativo (no-default). Un doc `restaurante` con
+ * `idiomasActivos = [es, ca, en]` e `idiomaPorDefecto = ca` genera aquí
+ * páginas `/es/` y `/en/`. El default (`ca`) se sirve desde `index.astro`.
+ */
+export async function getStaticPaths() {
+  const data = await fetchGrupoData();
+  const defaultLocale = data.restaurant.idiomaPorDefecto?.codigo ?? 'ca';
+  const activeLocales = data.restaurant.idiomasActivos ?? [];
+  const otros = resolveActiveLocales(defaultLocale, activeLocales.map((l) => l.codigo))
+    .filter((code) => code !== defaultLocale);
+  return otros.map((code) => ({ params: { lang: code }, props: { data, defaultLocale } }));
+}
+
+const { data, defaultLocale } = Astro.props;
+const { lang } = Astro.params;
+const locale = lang!;
+
+const { restaurant, espacios } = data;
+const legalPages = await fetchLegalPages(restaurant._id);
+const activeLocales = restaurant.idiomasActivos?.length
+  ? restaurant.idiomasActivos
+  : [{ codigo: defaultLocale, nombre: defaultLocale }];
+
+const siteUrl = restaurant.dominio ?? 'https://ocana.vercel.app';
+const canonical = `${siteUrl}${localizedPath('/', locale, defaultLocale)}`;
+
+const hreflangs = resolveActiveLocales(
+  defaultLocale,
+  activeLocales.map((l) => l.codigo),
+).map((l) => ({
+  locale: l,
+  url: `${siteUrl}${localizedPath('/', l, defaultLocale)}`,
+}));
+
+const seoTitle = t(restaurant.seoTitulo, locale, defaultLocale) || restaurant.nombre;
+const seoDescription = t(restaurant.seoDescripcion, locale, defaultLocale) || '';
+const ogImage =
+  img.url(restaurant.seoImagen) ??
+  img.url(espacios[0]?.heroImagen);
+const faviconUrl = img.url(restaurant.favicon);
+const appleTouchIconUrl = img.pngSquare(restaurant.iconoApp, 180);
+
+const dir = restaurant.direccion ?? {};
+const contacto = restaurant.contacto ?? {};
+const sameAs = restaurant.mostrarRedes
+  ? [restaurant.redes?.instagram, restaurant.redes?.facebook, restaurant.redes?.tiktok].filter(Boolean)
+  : [];
+
+const departments = espacios.map((esp) => {
+  const slug = esp.slug?.current ?? '';
+  const url = `${siteUrl}${localizedPath(`/${slug}`, locale, defaultLocale)}`;
+  const typeMap: Record<string, string> = {
+    restaurant: 'Restaurant',
+    coctel: 'BarOrPub',
+    club: 'NightClub',
+    cafe: 'CafeOrCoffeeShop',
+    terraza: 'Restaurant',
+    live_music: 'NightClub',
+    otro: 'LocalBusiness'
+  };
+  return {
+    '@type': typeMap[esp.tipo ?? 'otro'] ?? 'LocalBusiness',
+    '@id': `${url}#place`,
+    name: `${restaurant.nombre} ${esp.nombre}`,
+    url,
+    image: img.url(esp.heroImagen)
+  };
+});
+
+const hubJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'LocalBusiness',
+  '@id': `${canonical}#group`,
+  name: restaurant.nombre,
+  description: seoDescription,
+  url: canonical,
+  ...(ogImage && { image: ogImage }),
+  address: {
+    '@type': 'PostalAddress',
+    ...(dir.calle && { streetAddress: dir.calle }),
+    ...(dir.ciudad && { addressLocality: dir.ciudad }),
+    ...(dir.provincia && { addressRegion: dir.provincia }),
+    ...(dir.codigoPostal && { postalCode: dir.codigoPostal }),
+    ...(dir.pais && { addressCountry: dir.pais })
+  },
+  ...(contacto.telefono && { telephone: contacto.telefono }),
+  ...(contacto.email && { email: contacto.email }),
+  ...(sameAs.length && { sameAs }),
+  ...(restaurant.mapaUrl && { hasMap: restaurant.mapaUrl }),
+  department: departments
+};
+
+const jsonLd = [hubJsonLd, buildFaqJsonLd(restaurant.faq, locale, defaultLocale)];
+---
+
+<BaseLayout
+  locale={locale}
+  title={seoTitle}
+  description={seoDescription}
+  canonical={canonical}
+  ogImage={ogImage}
+  hreflangs={hreflangs}
+  jsonLd={jsonLd}
+  faviconUrl={faviconUrl}
+  appleTouchIconUrl={appleTouchIconUrl}
+  cloudflareAnalyticsToken={restaurant.cloudflareAnalyticsToken}
+>
+  <HubPage
+    locale={locale}
+    defaultLocale={defaultLocale}
+    activeLocales={activeLocales}
+    legalPages={legalPages}
+    restaurant={restaurant}
+    espacios={espacios}
+  />
+</BaseLayout>

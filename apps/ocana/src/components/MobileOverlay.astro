@@ -1,0 +1,243 @@
+---
+import { localizedPath } from '@hosteleria/i18n-utils';
+import type { LocaleRef, Restaurant, Espacio } from '../lib/queries';
+import IconClose from '@hosteleria/ui/icons/IconClose.astro';
+import LangSwitcher from '@hosteleria/ui/components/LangSwitcher.astro';
+
+/**
+ * MobileOverlay para Ocaña. A diferencia del de las 5 apps mono-espacio (que
+ * lista anchor-links a las secciones de la landing), aquí se listan los 3
+ * espacios del grupo — es la navegación principal en móvil.
+ */
+interface Props {
+  restaurant: Restaurant;
+  espacios: Espacio[];
+  locale: string;
+  defaultLocale: string;
+  activeLocales: LocaleRef[];
+  waHref: string;
+  whatsappRaw: string;
+  bookingPhone: string;
+  bookingEmail: string;
+  langSwitcherPath?: string;
+  /** Slug del espacio actual (para marcarlo en la lista); undefined en el hub. */
+  currentEspacioSlug?: string;
+}
+
+const {
+  restaurant,
+  espacios,
+  locale,
+  defaultLocale,
+  activeLocales,
+  waHref,
+  whatsappRaw,
+  bookingPhone,
+  bookingEmail,
+  langSwitcherPath = '/',
+  currentEspacioSlug
+} = Astro.props;
+
+const A11Y: Record<string, { close: string; menu: string }> = {
+  es: { close: 'Cerrar menú', menu: 'Menú' },
+  ca: { close: 'Tancar menú', menu: 'Menú' },
+  en: { close: 'Close menu', menu: 'Menu' },
+  fr: { close: 'Fermer le menu', menu: 'Menu' },
+  it: { close: 'Chiudi il menu', menu: 'Menu' }
+};
+const a11y = A11Y[locale] ?? A11Y.es;
+
+const DESDE_PREFIX: Record<string, string> = {
+  es: 'Desde',
+  ca: 'Des de',
+  en: 'Since',
+  fr: 'Depuis',
+  it: 'Dal'
+};
+const anyo = restaurant.anyoFundacion;
+const desde = anyo ? `${DESDE_PREFIX[locale] ?? DESDE_PREFIX.es} ${anyo}` : null;
+
+const LANG_LABEL: Record<string, string> = {
+  es: 'Idioma',
+  ca: 'Idioma',
+  en: 'Language',
+  fr: 'Langue',
+  it: 'Lingua'
+};
+const langLabel = LANG_LABEL[locale] ?? LANG_LABEL.es;
+
+const links = espacios.map((esp, i) => ({
+  href: localizedPath(`/${esp.slug?.current ?? ''}`, locale, defaultLocale),
+  label: esp.nombre,
+  isCurrent: esp.slug?.current === currentEspacioSlug,
+  n: String(i + 1).padStart(2, '0')
+}));
+
+const CONTACT_LABELS: Record<string, { tel: string; wa: string; mail: string }> = {
+  es: { tel: 'Teléfono', wa: 'WhatsApp', mail: 'Email' },
+  ca: { tel: 'Telèfon', wa: 'WhatsApp', mail: 'Correu' },
+  en: { tel: 'Phone', wa: 'WhatsApp', mail: 'Email' },
+  fr: { tel: 'Téléphone', wa: 'WhatsApp', mail: 'Email' },
+  it: { tel: 'Telefono', wa: 'WhatsApp', mail: 'Email' }
+};
+const cLabels = CONTACT_LABELS[locale] ?? CONTACT_LABELS.es;
+---
+
+<div
+  id='mobileOverlay'
+  aria-hidden='true'
+  data-open='false'
+  class="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-bg
+         py-5 px-(--gap) pb-10
+         opacity-0 pointer-events-none -translate-y-3
+         transition-[opacity,transform] duration-[260ms] ease-out
+         data-[open='true']:opacity-100 data-[open='true']:pointer-events-auto data-[open='true']:translate-y-0
+         motion-reduce:transition-none motion-reduce:duration-0"
+>
+  <div class='flex justify-between items-start pb-6 border-b border-line-strong'>
+    <div class='flex flex-col gap-1'>
+      <span class='font-serif italic text-ink font-normal text-[22px] leading-none'>
+        {restaurant.nombre}
+      </span>
+      {desde && (
+        <span class='font-sans uppercase text-accent-alt text-[10px] tracking-[0.32em] mt-1'>
+          {desde}
+        </span>
+      )}
+    </div>
+    <button
+      id='mobileCloseBtn'
+      aria-label={a11y.close}
+      class='flex items-center justify-center w-11 h-11 -mr-2.5 bg-transparent border-none text-ink cursor-pointer transition-[background-color,transform] duration-300 hover:bg-surface hover:rotate-90'
+    >
+      <IconClose />
+    </button>
+  </div>
+
+  <nav aria-label={a11y.menu} class='flex-1 flex flex-col justify-center py-4'>
+    {
+      links.map((link, i) => (
+        <a
+          href={link.href}
+          style={`--d: ${0.05 + i * 0.04}s`}
+          aria-current={link.isCurrent ? 'page' : undefined}
+          class:list={[
+            "group flex items-baseline gap-4 py-5 border-b border-line",
+            "opacity-0 translate-x-[-8px]",
+            "transition-[opacity,transform] duration-[220ms] ease-out",
+            "hover:pl-2 cursor-pointer",
+            "group-data-[open='true']/overlay:opacity-100 group-data-[open='true']/overlay:translate-x-0",
+            "group-data-[open='true']/overlay:[transition-delay:var(--d)] group-data-[open='true']/overlay:duration-[380ms]",
+            "motion-reduce:transition-none motion-reduce:opacity-100 motion-reduce:translate-x-0"
+          ]}
+        >
+          <span class='font-serif italic text-accent-alt text-[16px] tabular-nums shrink-0'>
+            {link.n}
+          </span>
+          <span
+            class:list={[
+              'font-serif font-light text-[clamp(30px,7vw,40px)] leading-none transition-colors duration-300',
+              link.isCurrent ? 'text-accent' : 'text-ink group-hover:text-accent'
+            ]}
+          >
+            {link.label}
+          </span>
+        </a>
+      ))
+    }
+  </nav>
+
+  <div class='flex flex-col gap-6 pt-6'>
+    {activeLocales.length > 1 && (
+      <div class='flex items-center gap-4'>
+        <span class='font-sans uppercase text-[10px] tracking-[0.3em] text-dim font-semibold'>
+          {langLabel}
+        </span>
+        <LangSwitcher
+          activeLocales={activeLocales}
+          locale={locale}
+          defaultLocale={defaultLocale}
+          path={langSwitcherPath}
+          variant='mobile'
+          align='left'
+        />
+      </div>
+    )}
+
+    <div class='flex flex-col gap-3'>
+      {
+        bookingPhone && (
+          <a
+            href={`tel:${bookingPhone}`}
+            class='group flex items-baseline gap-3 transition-colors duration-300 hover:text-accent cursor-pointer'
+          >
+            <span class='font-sans uppercase text-accent-alt text-[10px] tracking-[0.28em] shrink-0 min-w-[80px]'>
+              {cLabels.tel}
+            </span>
+            <span class='font-serif text-ink-soft text-[15px] group-hover:text-accent transition-colors'>
+              {bookingPhone}
+            </span>
+          </a>
+        )
+      }
+      {
+        waHref && (
+          <a
+            href={waHref}
+            target='_blank'
+            rel='noopener'
+            class='group flex items-baseline gap-3 transition-colors duration-300 hover:text-accent cursor-pointer'
+          >
+            <span class='font-sans uppercase text-accent-alt text-[10px] tracking-[0.28em] shrink-0 min-w-[80px]'>
+              {cLabels.wa}
+            </span>
+            <span class='font-serif text-ink-soft text-[15px] group-hover:text-accent transition-colors'>
+              {whatsappRaw}
+            </span>
+          </a>
+        )
+      }
+      {
+        bookingEmail && (
+          <a
+            href={`mailto:${bookingEmail}`}
+            class='group flex items-baseline gap-3 transition-colors duration-300 hover:text-accent cursor-pointer'
+          >
+            <span class='font-sans uppercase text-accent-alt text-[10px] tracking-[0.28em] shrink-0 min-w-[80px]'>
+              {cLabels.mail}
+            </span>
+            <span class='font-serif text-ink-soft text-[15px] group-hover:text-accent transition-colors'>
+              {bookingEmail}
+            </span>
+          </a>
+        )
+      }
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    const hamburger = document.getElementById('hamburgerBtn');
+    const closeBtn = document.getElementById('mobileCloseBtn');
+    const overlay = document.getElementById('mobileOverlay');
+    if (!hamburger || !overlay) return;
+
+    overlay.classList.add('group/overlay');
+
+    const setOpen = open => {
+      overlay.dataset.open = open ? 'true' : 'false';
+      document.body.classList.toggle('overlay-open', open);
+      hamburger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      overlay.setAttribute('aria-hidden', open ? 'false' : 'true');
+      if (open) closeBtn?.focus();
+      else hamburger?.focus();
+    };
+
+    hamburger.addEventListener('click', () => setOpen(true));
+    closeBtn?.addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && overlay.dataset.open === 'true') setOpen(false);
+    });
+  })();
+</script>

@@ -1,0 +1,94 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant, DishCategory, Dish } from '../lib/queries';
+
+interface Props {
+  restaurant: Restaurant;
+  dishCategories: DishCategory[];
+  dishes: Dish[];
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, dishCategories, dishes, locale, defaultLocale } = Astro.props;
+
+const sec = restaurant.textosSecciones ?? {};
+
+const dishesByCategory = dishCategories.map(cat => ({
+  category: cat,
+  items: dishes.filter(d => d.categoria?._id === cat._id)
+}));
+---
+
+<!--
+  Pubilla Dishes: cada plato con BADGE CIRCULAR mostaza a la izquierda con
+  su número correlativo (01, 02...), leader dots, y precio en badge redondo
+  verde oliva a la derecha. Header con doble regla decorativa y asterisco.
+  Look "cartelería de mercado".
+-->
+<section
+  id='plates'
+  class='py-[12vh] px-(--gap) bg-bg-2 border-y border-line-strong/40 max-[960px]:py-[8vh]'
+>
+  <!-- Header con doble regla -->
+  <div class='reveal text-center mb-[70px] mx-auto max-w-[var(--max)] max-[960px]:mb-12'>
+    <div aria-hidden='true' class='flex items-center justify-center gap-3 mb-6 text-accent-alt'>
+      <span class='w-14 h-px bg-accent-alt/60'></span>
+      <span class='font-serif text-[20px] leading-none'>∗</span>
+      <span class='w-14 h-px bg-accent-alt/60'></span>
+    </div>
+    <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-accent-alt font-semibold mb-4'>
+      {t(sec.platosEyebrow, locale, defaultLocale)}
+    </span>
+    <h2
+      class='font-serif font-normal leading-[0.98] tracking-[-0.01em] text-[clamp(42px,5.5vw,80px)]'
+    >
+      {t(sec.platosTitulo, locale, defaultLocale)}
+    </h2>
+  </div>
+
+  <div class='mx-auto max-w-[860px] flex flex-col gap-14 max-[960px]:gap-10'>
+    {
+      dishesByCategory.map(({ category, items }) =>
+        items.length > 0 && (
+          <div class='reveal'>
+            <h3 class='font-serif italic text-ink text-[clamp(22px,2.2vw,30px)] mb-6'>
+              {t(category.nombre, locale, defaultLocale)}
+            </h3>
+
+            <ul class='flex flex-col gap-4'>
+              {items.map((dish, i) => (
+                <li class='group flex items-start gap-4 py-3 max-[700px]:gap-3'>
+                  <!-- Número en italic azul, sin círculo (más editorial) -->
+                  <div class='shrink-0 w-11 max-[700px]:w-9 flex items-baseline justify-end font-serif italic text-accent text-[22px] max-[700px]:text-[18px] tabular-nums leading-none pt-[6px]'>
+                    {String(i + 1).padStart(2, '0')}
+                  </div>
+
+                  <div class='flex-1 min-w-0'>
+                    <div class='flex items-baseline gap-3'>
+                      <span class='font-serif text-ink font-normal text-[clamp(18px,1.7vw,23px)] shrink-0'>
+                        {t(dish.nombre, locale, defaultLocale)}
+                      </span>
+                      <span
+                        class='flex-1 min-w-[24px] border-b border-dotted border-line-strong/60 translate-y-[-4px]'
+                        aria-hidden='true'
+                      />
+                      <span class='font-serif italic text-accent-alt text-[16px] font-semibold tabular-nums whitespace-nowrap shrink-0'>
+                        {dish.precio != null ? `${dish.precio} €` : '—'}
+                      </span>
+                    </div>
+                    {t(dish.nota, locale, defaultLocale) && (
+                      <p class='mt-1 text-muted text-[14px] leading-[1.6] italic max-w-[60ch]'>
+                        {t(dish.nota, locale, defaultLocale)}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      )
+    }
+  </div>
+</section>

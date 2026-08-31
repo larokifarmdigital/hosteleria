@@ -16,6 +16,7 @@ export type {
   PortableBlock,
   I18nPortable,
   Restaurant,
+  Espacio,
   WineCategory,
   Wine,
   DishCategory,

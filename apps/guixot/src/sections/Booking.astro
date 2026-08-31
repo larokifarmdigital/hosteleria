@@ -1,6 +1,6 @@
 ---
 import { t } from '@hosteleria/i18n-utils';
-import type { Restaurant } from '../lib/queries';
+import type { Restaurant, Espacio } from '../lib/queries';
 import { splitLastWord, buildHoursByDay } from '@hosteleria/utils';
 import { bookingStrings } from '@hosteleria/booking-form';
 import Tag from '../components/Tag.astro';
@@ -8,12 +8,13 @@ import CtaButton from '../components/CtaButton.astro';
 
 interface Props {
   restaurant: Restaurant;
+  espacio: Espacio;
   locale: string;
   defaultLocale: string;
   bookingEmail: string;
 }
 
-const { restaurant, locale, defaultLocale, bookingEmail } = Astro.props;
+const { restaurant, espacio, locale, defaultLocale, bookingEmail } = Astro.props;
 
 // Switch en Sanity: si aceptaReservas === false ocultamos la sección Booking
 // completa. El botón "Reservar" del Nav/Hero/etc cae en cascada a WhatsApp/tel
@@ -26,7 +27,7 @@ const title = t(form.titulo, locale, defaultLocale);
 const { head, tail } = splitLastWord(title);
 
 // Horas por día en decimal (0=Dom, 1=Lun...6=Sáb) → para date/time pickers
-const hoursByDay = buildHoursByDay(restaurant.horariosSemana);
+const hoursByDay = buildHoursByDay(espacio.horariosSemana);
 
 const tt = bookingStrings(locale);
 const bookingConfig = {

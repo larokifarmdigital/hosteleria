@@ -1,0 +1,217 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Nav from '../components/Nav.astro';
+import MobileOverlay from '../components/MobileOverlay.astro';
+import Footer from '@hosteleria/ui/components/Footer.astro';
+import WhatsAppFab from '@hosteleria/ui/components/WhatsAppFab.astro';
+import { fetchGrupoData, fetchLegalPages } from '../lib/queries';
+import { img } from '../lib/sanity';
+import { buildWhatsAppHref } from '@hosteleria/utils';
+import { localizedPath } from '@hosteleria/i18n-utils';
+
+const { restaurant, espacios } = await fetchGrupoData();
+const legalPages = await fetchLegalPages(restaurant._id);
+
+const defaultLocale = restaurant.idiomaPorDefecto?.codigo ?? 'ca';
+const activeLocales = restaurant.idiomasActivos?.length
+  ? restaurant.idiomasActivos
+  : [{ codigo: defaultLocale, nombre: defaultLocale }];
+const activeLocaleCodes = activeLocales.map(l => l.codigo);
+const locale = defaultLocale;
+
+const siteUrl = restaurant.dominio ?? '';
+const canonical = `${siteUrl}/404`;
+
+const faviconUrl = img.url(restaurant.favicon);
+const appleTouchIconUrl = img.pngSquare(restaurant.iconoApp, 180);
+
+const bookingEmail = restaurant.contacto?.email ?? '';
+const bookingPhone = restaurant.contacto?.telefono ?? '';
+const whatsappRaw = restaurant.contacto?.whatsapp ?? '';
+const waHref = buildWhatsAppHref(whatsappRaw, restaurant.nombre, locale);
+
+const COPY: Record<
+  string,
+  { title: string; message: string; back: string; sections: string }
+> = {
+  es: {
+    title: 'Página no encontrada',
+    message:
+      'La página que buscas no existe o ha cambiado de dirección. Vuelve al hub o entra directo a uno de los espacios.',
+    back: 'Volver al hub',
+    sections: 'O entra a un espacio'
+  },
+  ca: {
+    title: 'Pàgina no trobada',
+    message:
+      "La pàgina que busques no existeix o ha canviat d'adreça. Torna al hub o entra directament a un dels espais.",
+    back: 'Tornar al hub',
+    sections: "O entra a un espai"
+  },
+  en: {
+    title: 'Page not found',
+    message:
+      'The page you are looking for does not exist or has moved. Head back to the hub or step straight into one of the spaces.',
+    back: 'Back to hub',
+    sections: 'Or step into a space'
+  },
+  fr: {
+    title: 'Page introuvable',
+    message:
+      "La page que vous cherchez n'existe pas ou a changé d'adresse. Revenez au hub ou entrez directement dans l'un des espaces.",
+    back: 'Retour au hub',
+    sections: 'Ou entrez dans un espace'
+  },
+  it: {
+    title: 'Pagina non trovata',
+    message:
+      "La pagina che cerchi non esiste o è stata spostata. Torna all'hub o entra direttamente in uno degli spazi.",
+    back: "Torna all'hub",
+    sections: 'Oppure entra in uno spazio'
+  }
+};
+const t = COPY[locale] ?? COPY.es;
+
+const espacioLinks = espacios.map((esp) => ({
+  href: localizedPath(`/${esp.slug?.current ?? ''}`, locale, defaultLocale),
+  label: esp.nombre
+}));
+---
+
+<BaseLayout
+  locale={locale}
+  title={`404 — ${restaurant.nombre}`}
+  description={t.message}
+  canonical={canonical}
+  hreflangs={[]}
+  faviconUrl={faviconUrl}
+  appleTouchIconUrl={appleTouchIconUrl}
+  cloudflareAnalyticsToken={restaurant.cloudflareAnalyticsToken}
+>
+  <Nav
+    restaurant={restaurant}
+    espacios={espacios}
+    locale={locale}
+    defaultLocale={defaultLocale}
+    activeLocales={activeLocales}
+    forceScrolled={true}
+  />
+  <MobileOverlay
+    restaurant={restaurant}
+    espacios={espacios}
+    locale={locale}
+    defaultLocale={defaultLocale}
+    activeLocales={activeLocales}
+    waHref={waHref}
+    whatsappRaw={whatsappRaw}
+    bookingPhone={bookingPhone}
+    bookingEmail={bookingEmail}
+  />
+
+  <main id='main' class='min-h-svh flex items-center justify-center px-(--gap) pt-32 pb-24'>
+    <div class='max-w-[640px] w-full text-center'>
+      <p
+        class='font-serif font-light leading-none tracking-[-0.03em] text-accent text-[clamp(120px,22vw,240px)]'
+      >
+        4<em class='italic'>0</em>4
+      </p>
+      <h1
+        data-i18n='title'
+        class='font-serif font-light leading-tight tracking-[-0.01em] mt-4 mb-6 text-[clamp(28px,4vw,44px)]'
+      >
+        {t.title}
+      </h1>
+      <p
+        data-i18n='message'
+        class='text-ink-soft text-[17px] leading-[1.7] mb-10 max-w-[46ch] mx-auto'
+      >
+        {t.message}
+      </p>
+
+      <div class='flex flex-wrap items-center justify-center gap-4 mb-14'>
+        <a
+          href='/'
+          class='inline-flex items-center gap-2.5 py-3 px-6 bg-accent text-bg border border-accent font-sans font-semibold uppercase text-[11px] tracking-[0.22em] whitespace-nowrap cursor-pointer transition-[background-color,border-color,transform] duration-300 hover:bg-accent-hover hover:border-accent-hover hover:-translate-y-px'
+        >
+          <span data-i18n='back'>{t.back}</span>
+        </a>
+      </div>
+
+      <div class='pt-8 border-t border-line'>
+        <p
+          data-i18n='sections'
+          class='text-muted text-[11px] tracking-[0.32em] uppercase mb-5 font-medium'
+        >
+          {t.sections}
+        </p>
+        <nav
+          class='flex flex-wrap justify-center gap-x-5 gap-y-2 font-sans font-medium uppercase text-[11px] tracking-[0.22em]'
+          aria-label='Quick links'
+        >
+          {espacioLinks.map((link, i) => (
+            <>
+              {i > 0 && <span class='text-dim opacity-40 select-none'>·</span>}
+              <a
+                href={link.href}
+                class='text-muted hover:text-accent transition-colors duration-300 cursor-pointer'
+              >
+                {link.label}
+              </a>
+            </>
+          ))}
+        </nav>
+      </div>
+    </div>
+  </main>
+
+  <Footer
+    restaurant={restaurant}
+    locale={locale}
+    defaultLocale={defaultLocale}
+    legalPages={legalPages}
+    waHref={waHref}
+    whatsappRaw={whatsappRaw}
+    bookingPhone={bookingPhone}
+    bookingEmail={bookingEmail}
+    showCta={false}
+  />
+
+  <WhatsAppFab href={waHref} locale={locale} />
+</BaseLayout>
+
+<script is:inline define:vars={{ COPY, defaultLocale, activeLocaleCodes }}>
+  (function () {
+    const path = location.pathname;
+    const firstSegment = path.split('/').filter(Boolean)[0];
+    const detectedLocale =
+      firstSegment && activeLocaleCodes.includes(firstSegment) && firstSegment !== defaultLocale
+        ? firstSegment
+        : defaultLocale;
+
+    if (detectedLocale === defaultLocale) return;
+
+    const t = COPY[detectedLocale] || COPY[defaultLocale];
+    const prefix = '/' + detectedLocale;
+
+    document.documentElement.lang =
+      detectedLocale === 'es' ? 'es-ES' : detectedLocale === 'ca' ? 'ca-ES' : detectedLocale;
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (key && t[key]) el.textContent = t[key];
+    });
+
+    // Prefija con /es o /en los enlaces del hub y de los espacios.
+    document.querySelectorAll('a[href="/"]').forEach(el => {
+      el.setAttribute('href', prefix + '/');
+    });
+    document.querySelectorAll('nav[aria-label="Quick links"] a').forEach(a => {
+      const href = a.getAttribute('href') || '';
+      if (href.startsWith('/') && !href.startsWith(prefix + '/')) {
+        a.setAttribute('href', prefix + href);
+      }
+    });
+
+    document.title = '404 — ' + document.title.split('—').slice(1).join('—').trim();
+  })();
+</script>

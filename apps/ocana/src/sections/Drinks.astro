@@ -1,0 +1,105 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant, DrinkCategory, Drink } from '../lib/queries';
+
+/**
+ * Carta de bebidas — paralela a Wines/Dishes. Opt-in por contenido: si el
+ * espacio no tiene bebidas, no se renderiza. Sirve tanto para cocteles como
+ * café/cervezas/softs (el modelo permite N categorías por espacio).
+ *
+ * Layout: precio único a la derecha (a diferencia de Wines que tiene copa +
+ * botella). Estructura similar en cabecera y agrupación por categoría.
+ */
+interface Props {
+  restaurant: Restaurant;
+  drinkCategories: DrinkCategory[];
+  drinks: Drink[];
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, drinkCategories, drinks, locale, defaultLocale } = Astro.props;
+
+if (!drinks?.length) return null;
+
+const sec = restaurant.textosSecciones ?? {};
+
+// Fallback COPY para el header — si el cliente aún no rellenó los campos
+// bebidasEyebrow/Titulo en Sanity, mostramos un default traducido.
+const FALLBACK_HEADER: Record<string, { eyebrow: string; titulo: string }> = {
+  es: { eyebrow: 'Tras la barra', titulo: 'Para beber' },
+  ca: { eyebrow: 'Darrere la barra', titulo: 'Per beure' },
+  en: { eyebrow: 'From the bar', titulo: 'To drink' },
+  fr: { eyebrow: 'Au comptoir', titulo: 'À boire' },
+  it: { eyebrow: 'Dal bancone', titulo: 'Da bere' }
+};
+const fb = FALLBACK_HEADER[locale] ?? FALLBACK_HEADER.es;
+const eyebrow = t(sec.bebidasEyebrow, locale, defaultLocale) || fb.eyebrow;
+const titulo = t(sec.bebidasTitulo, locale, defaultLocale) || fb.titulo;
+
+const drinksByCategory = drinkCategories.map(cat => ({
+  category: cat,
+  items: drinks.filter(d => d.categoria?._id === cat._id)
+}));
+---
+
+<section
+  id='drinks'
+  class='py-[12vh] px-(--gap) bg-bg-2 border-b border-line-strong/40 max-[960px]:py-[8vh]'
+>
+  <div class='reveal text-center mb-[70px] mx-auto max-w-[var(--max)] max-[960px]:mb-12'>
+    <div aria-hidden='true' class='flex items-center justify-center gap-3 mb-6 text-accent-alt'>
+      <span class='w-14 h-px bg-accent-alt/60'></span>
+      <span class='font-serif text-[20px] leading-none'>∗</span>
+      <span class='w-14 h-px bg-accent-alt/60'></span>
+    </div>
+    <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-accent-alt font-semibold mb-4'>
+      {eyebrow}
+    </span>
+    <h2
+      class='font-serif font-normal leading-[0.98] tracking-[-0.01em] text-[clamp(42px,5.5vw,80px)]'
+    >
+      {titulo}
+    </h2>
+  </div>
+
+  <div class='mx-auto max-w-[860px] flex flex-col gap-14 max-[960px]:gap-10'>
+    {
+      drinksByCategory.map(({ category, items }) =>
+        items.length > 0 && (
+          <div class='reveal'>
+            <h3 class='font-serif italic text-ink text-[clamp(22px,2.2vw,30px)] mb-4'>
+              {t(category.nombre, locale, defaultLocale)}
+            </h3>
+
+            <ul class='flex flex-col gap-4'>
+              {items.map((drink, i) => (
+                <li class='group flex items-start gap-4 py-3 max-[700px]:gap-3'>
+                  <div class='shrink-0 w-11 max-[700px]:w-9 flex items-baseline justify-end font-serif italic text-accent text-[22px] max-[700px]:text-[18px] tabular-nums leading-none pt-[6px]'>
+                    {String(i + 1).padStart(2, '0')}
+                  </div>
+
+                  <div class='flex-1 min-w-0'>
+                    <div class='flex items-baseline gap-3'>
+                      <span class='flex-1 font-serif text-ink font-normal text-[clamp(18px,1.6vw,22px)]'>
+                        {t(drink.nombre, locale, defaultLocale)}
+                      </span>
+                      <span class='w-[70px] text-right font-serif italic text-accent-alt text-[15px] font-semibold tabular-nums'>
+                        {drink.precio != null ? `${drink.precio} €` : '—'}
+                      </span>
+                    </div>
+                    {t(drink.nota, locale, defaultLocale) && (
+                      <p class='mt-1 text-muted text-[13.5px] leading-[1.55] italic max-w-[60ch]'>
+                        {t(drink.nota, locale, defaultLocale)}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      )
+    }
+  </div>
+</section>

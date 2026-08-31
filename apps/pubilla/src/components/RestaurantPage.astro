@@ -38,6 +38,9 @@ const {
   legalPages = [],
 } = Astro.props;
 
+const espacio = restaurant.espacios?.[0];
+if (!espacio) throw new Error('Restaurante sin espacios[]');
+
 const bookingEmail = restaurant.contacto?.email ?? '';
 const bookingPhone = restaurant.contacto?.telefono ?? '';
 const whatsappRaw = restaurant.contacto?.whatsapp ?? '';
@@ -63,8 +66,8 @@ const waHref = buildWhatsAppHref(whatsappRaw, restaurant.nombre, locale);
 />
 
 <main id="main">
-  <Hero restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
-  <Manifesto restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
+  <Hero restaurant={restaurant} espacio={espacio} locale={locale} defaultLocale={defaultLocale} />
+  <Manifesto restaurant={restaurant} espacio={espacio} locale={locale} defaultLocale={defaultLocale} />
   <About restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
   <Dishes
     restaurant={restaurant}
@@ -80,11 +83,12 @@ const waHref = buildWhatsAppHref(whatsappRaw, restaurant.nombre, locale);
     locale={locale}
     defaultLocale={defaultLocale}
   />
-  <Gallery restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
+  <Gallery restaurant={restaurant} espacio={espacio} locale={locale} defaultLocale={defaultLocale} />
   <Groups restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
   <Faq restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
   <Booking
     restaurant={restaurant}
+    espacio={espacio}
     locale={locale}
     defaultLocale={defaultLocale}
     bookingEmail={bookingEmail}

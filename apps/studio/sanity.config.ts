@@ -54,14 +54,104 @@ export default defineConfig({
   title: 'Hosteleria CMS',
   projectId,
   dataset,
+  /**
+   * Al pulsar "+ Create" en una lista de vinos/platos/categorías bajo un
+   * espacio, el structure builder invoca uno de estos initial value templates
+   * pasando `espacioId` como parámetro. El nuevo doc arranca con
+   * `espacio: ref(espacioId)` y el editor no tiene que elegir espacio a mano
+   * (evita asignar por error contenido a otro restaurante).
+   *
+   * Ojo: en Sanity v3 estos templates van en `schema.templates`, no en
+   * `document.templates` (esa key es para el menú "+ Create" del top-nav).
+   */
+  document: {
+    // Ocultamos los templates "hijos-de-espacio" del menú global de creación:
+    // sin `espacioId` no tienen sentido y confundirían al editor.
+    newDocumentOptions: (prev, { creationContext }) => {
+      if (creationContext.type === 'global') {
+        return prev.filter(
+          t =>
+            ![
+              'categoriaVinoEnEspacio',
+              'vinoEnEspacio',
+              'categoriaPlatoEnEspacio',
+              'platoEnEspacio',
+              'categoriaBebidaEnEspacio',
+              'bebidaEnEspacio'
+            ].includes(t.templateId)
+        );
+      }
+      return prev;
+    }
+  },
+  schema: {
+    types: schemaTypes,
+    templates: prev => [
+      ...prev,
+      {
+        id: 'categoriaVinoEnEspacio',
+        title: 'Categoría de vino (en este espacio)',
+        schemaType: 'categoriaVino',
+        parameters: [{ name: 'espacioId', type: 'string' }],
+        value: ({ espacioId }: { espacioId: string }) => ({
+          espacio: { _type: 'reference', _ref: espacioId }
+        })
+      },
+      {
+        id: 'vinoEnEspacio',
+        title: 'Vino (en este espacio)',
+        schemaType: 'vino',
+        parameters: [{ name: 'espacioId', type: 'string' }],
+        value: ({ espacioId }: { espacioId: string }) => ({
+          espacio: { _type: 'reference', _ref: espacioId }
+        })
+      },
+      {
+        id: 'categoriaPlatoEnEspacio',
+        title: 'Categoría de plato (en este espacio)',
+        schemaType: 'categoriaPlato',
+        parameters: [{ name: 'espacioId', type: 'string' }],
+        value: ({ espacioId }: { espacioId: string }) => ({
+          espacio: { _type: 'reference', _ref: espacioId }
+        })
+      },
+      {
+        id: 'platoEnEspacio',
+        title: 'Plato (en este espacio)',
+        schemaType: 'plato',
+        parameters: [{ name: 'espacioId', type: 'string' }],
+        value: ({ espacioId }: { espacioId: string }) => ({
+          espacio: { _type: 'reference', _ref: espacioId }
+        })
+      },
+      {
+        id: 'categoriaBebidaEnEspacio',
+        title: 'Categoría de bebida (en este espacio)',
+        schemaType: 'categoriaBebida',
+        parameters: [{ name: 'espacioId', type: 'string' }],
+        value: ({ espacioId }: { espacioId: string }) => ({
+          espacio: { _type: 'reference', _ref: espacioId }
+        })
+      },
+      {
+        id: 'bebidaEnEspacio',
+        title: 'Bebida (en este espacio)',
+        schemaType: 'bebida',
+        parameters: [{ name: 'espacioId', type: 'string' }],
+        value: ({ espacioId }: { espacioId: string }) => ({
+          espacio: { _type: 'reference', _ref: espacioId }
+        })
+      }
+    ]
+  },
   plugins: [
     structureTool({ structure }),
     internationalizedArray({
       languages: cargarIdiomas,
       // Al hacer "Add language" en un campo i18n vacío, el plugin pre-crea entradas
-      // para estos idiomas. Si añades un idioma nuevo al catálogo (fr, pt, de…),
+      // para estos idiomas. Si añades un idioma nuevo al catálogo (pt, de…),
       // acuérdate de añadirlo también aquí.
-      defaultLanguages: ['es', 'ca', 'en'],
+      defaultLanguages: ['ca', 'es', 'en', 'fr', 'it'],
       fieldTypes: [
         'string',
         defineField({
@@ -79,6 +169,5 @@ export default defineConfig({
       ],
     }),
     visionTool(),
-  ],
-  schema: { types: schemaTypes },
+  ]
 });

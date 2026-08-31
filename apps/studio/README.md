@@ -87,3 +87,11 @@ pnpm --filter studio dev
 pnpm --filter studio exec sanity deploy
 # → pide subdominio, publica en <subdominio>.sanity.studio
 ```
+
+
+
+
+farmacia-chamarro-resenas.  - project id
+431332033937 - project number
+
+

@@ -1,0 +1,102 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import { img } from '../lib/sanity';
+import type { Restaurant } from '../lib/queries';
+import { extractI18nParagraphs } from '@hosteleria/utils';
+import Eyebrow from '@hosteleria/ui/components/Eyebrow.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+
+// Hasta 3 imágenes (schema limita a 3). Placeholders locales si Sanity aún
+// no tiene ninguna subida.
+const imagesInput = (restaurant.sobreImagenes ?? [])
+  .slice(0, 3)
+  .map(i => img.url(i))
+  .filter((u): u is string => Boolean(u));
+const images = imagesInput.length > 0 ? imagesInput : ['/img/gal-room.jpg'];
+
+const eyebrow = t(restaurant.sobreEyebrow, locale, defaultLocale);
+const titulo = t(restaurant.sobreTitulo, locale, defaultLocale);
+const paragraphs = extractI18nParagraphs(restaurant.sobreCuerpo, locale, defaultLocale);
+
+// Sombra de imagen consistente con el fondo dark warm honey de casabella
+const imgShadow = 'shadow-[0_20px_50px_-20px_rgb(0_0_0/0.5)]';
+---
+
+<!--
+  About: stack vertical secuencial. Header centrado, texto en columna
+  estrecha con drop-cap, y bloque de imágenes abajo en fila horizontal
+  que se adapta al número de imágenes (1/2/3). Sin full-bleed panorámico
+  para respetar la resolución original de las fotos subidas.
+-->
+<section
+  id='about'
+  class='mx-auto pt-[8vh] pb-[14vh] px-(--gap) max-w-[var(--max)] max-[960px]:pt-[4vh] max-[960px]:pb-[10vh]'
+>
+  <!-- Header centrado -->
+  <div class='reveal text-center mb-[9vh] max-[960px]:mb-10'>
+    <Eyebrow class='block mb-5'>{eyebrow}</Eyebrow>
+    <h2
+      class='font-serif font-light leading-[1] tracking-[-0.01em] text-[clamp(38px,5vw,72px)] max-w-[20ch] mx-auto'
+    >
+      {titulo}
+    </h2>
+  </div>
+
+  <!-- Texto centrado — columna de lectura editorial estrecha -->
+  {paragraphs.length > 0 && (
+    <div class='reveal mx-auto max-w-[680px]'>
+      {paragraphs.map((p, i) => (
+        <p
+          class:list={[
+            'text-ink-soft text-[17px] leading-[1.85]',
+            i === 0 ? '' : 'mt-6'
+          ]}
+        >
+          {i === 0 && (
+            <span class='float-left font-serif italic text-accent leading-none text-[76px] mr-3 mt-2 max-[700px]:text-[62px]'>
+              {p.charAt(0)}
+            </span>
+          )}
+          {i === 0 ? p.slice(1) : p}
+        </p>
+      ))}
+    </div>
+  )}
+
+  <!-- Bloque de imágenes · fila horizontal centrada. Composición se adapta
+       al conteo (1/2/3) manteniendo el mismo aspect 4/5 en todos los casos. -->
+  <div
+    class='reveal mx-auto mt-[9vh] max-[960px]:mt-12'
+    class:list={[
+      images.length === 1 && 'max-w-[560px]',
+      images.length === 2 && 'max-w-[900px]',
+      images.length === 3 && 'max-w-[1080px]'
+    ]}
+  >
+    <div
+      class:list={[
+        'grid gap-[clamp(20px,3vw,32px)] max-[700px]:grid-cols-1 max-[700px]:gap-5',
+        images.length === 1 && 'grid-cols-1',
+        images.length === 2 && 'grid-cols-2',
+        images.length === 3 && 'grid-cols-3'
+      ]}
+    >
+      {images.map(src => (
+        <div class:list={['group aspect-[4/5] overflow-hidden bg-surface', imgShadow]}>
+          <img
+            src={src}
+            alt=''
+            class='w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.03]'
+          />
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

@@ -137,10 +137,13 @@ function crearTextosUiMock(email: string, telefono: string) {
 const TIPOS = [
   'idioma',
   'restaurante',
+  'espacio',
   'categoriaVino',
   'vino',
   'categoriaPlato',
   'plato',
+  'categoriaBebida',
+  'bebida',
   'resena',
   'paginaLegal'
 ];
@@ -152,6 +155,39 @@ const TIPOS = [
 const ID = {
   idiomaEs: 'idioma-es',
   idiomaEn: 'idioma-en',
+  idiomaCa: 'idioma-ca',
+  idiomaFr: 'idioma-fr',
+  idiomaIt: 'idioma-it',
+  // Espacios (1 por restaurante en el resto; Ocaña tiene 3)
+  espacioPubilla: 'espacio-pubilla',
+  espacioPrincipal: 'espacio-la-principal',
+  espacioCasabella: 'espacio-casabella',
+  espacioGuixot: 'espacio-guixot',
+  espacioRoure: 'espacio-roure',
+  // Ocaña — grupo multi-espacio en Plaça Reial (Terraza NO es un espacio;
+  // vive solo como card en bloquesHome del hub).
+  restauranteOcana: 'restaurante-ocana',
+  espacioOcanaRestaurant: 'espacio-ocana-restaurant',
+  espacioOcanaApotheke: 'espacio-ocana-apotheke',
+  espacioOcanaSala: 'espacio-ocana-sala',
+  catVinoOcanaRestaurant: {
+    blancos: 'catVino-ocana-restaurant-blancos',
+    tintos: 'catVino-ocana-restaurant-tintos'
+  },
+  catPlatoOcanaRestaurant: {
+    entrantes: 'catPlato-ocana-restaurant-entrantes',
+    principales: 'catPlato-ocana-restaurant-principales',
+    postres: 'catPlato-ocana-restaurant-postres'
+  },
+  catPlatoOcanaApotheke: {
+    signature: 'catPlato-ocana-apotheke-signature',
+    classics: 'catPlato-ocana-apotheke-classics',
+    picoteo: 'catPlato-ocana-apotheke-picoteo'
+  },
+  catPlatoOcanaSala: {
+    copas: 'catPlato-ocana-sala-copas',
+    espumosos: 'catPlato-ocana-sala-espumosos'
+  },
   // Pubilla
   restaurantePubilla: 'restaurante-pubilla',
   catVinoPubilla: {
@@ -2401,6 +2437,1083 @@ const platosRoure = [
 }));
 
 // ─────────────────────────────────────────────────────────────────────────────
+// OCAÑA — grupo multi-espacio en Plaça Reial, Barcelona
+// 3 espacios en un mismo local: Restaurant, Apotheke (coctelería), Sala (club)
+// Idiomas: ES, CA, EN
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** i18n string en ES/CA/EN. Ocaña opera en 3 idiomas. */
+function i18n3Str(es: string, ca: string, en: string): I18nEntry[] {
+  return [
+    { _key: 'es', _type: 'internationalizedArrayStringValue', value: es },
+    { _key: 'ca', _type: 'internationalizedArrayStringValue', value: ca },
+    { _key: 'en', _type: 'internationalizedArrayStringValue', value: en }
+  ];
+}
+
+/** i18n text en ES/CA/EN. */
+function i18n3Txt(es: string, ca: string, en: string): I18nEntry[] {
+  return [
+    { _key: 'es', _type: 'internationalizedArrayTextValue', value: es },
+    { _key: 'ca', _type: 'internationalizedArrayTextValue', value: ca },
+    { _key: 'en', _type: 'internationalizedArrayTextValue', value: en }
+  ];
+}
+
+/** i18n rich (portable text) en ES/CA/EN — array de párrafos por idioma. */
+function i18n3Rich(esArr: string[], caArr: string[], enArr: string[]): I18nEntry[] {
+  return [
+    {
+      _key: 'es',
+      _type: 'internationalizedArrayPortableTextValue',
+      value: esArr.map((t, i) => parrafo(t, `es${i}`))
+    },
+    {
+      _key: 'ca',
+      _type: 'internationalizedArrayPortableTextValue',
+      value: caArr.map((t, i) => parrafo(t, `ca${i}`))
+    },
+    {
+      _key: 'en',
+      _type: 'internationalizedArrayPortableTextValue',
+      value: enArr.map((t, i) => parrafo(t, `en${i}`))
+    }
+  ];
+}
+
+// Doc Restaurante Ocaña (solo datos globales del grupo)
+const restauranteOcana = {
+  _id: ID.restauranteOcana,
+  _type: 'restaurante',
+  nombre: 'Ocaña',
+  slug: { _type: 'slug', current: 'ocana' },
+  dominio: 'https://ocana.vercel.app',
+  anyoFundacion: 2011,
+  idiomaPorDefecto: ref(ID.idiomaCa),
+  idiomasActivos: [
+    { _key: 'la-ca', ...ref(ID.idiomaCa) },
+    { _key: 'la-es', ...ref(ID.idiomaEs) },
+    { _key: 'la-en', ...ref(ID.idiomaEn) },
+    { _key: 'la-fr', ...ref(ID.idiomaFr) },
+    { _key: 'la-it', ...ref(ID.idiomaIt) }
+  ],
+  espacios: [
+    { _key: `esp-${ID.espacioOcanaRestaurant}`, ...ref(ID.espacioOcanaRestaurant) },
+    { _key: `esp-${ID.espacioOcanaApotheke}`, ...ref(ID.espacioOcanaApotheke) },
+    { _key: `esp-${ID.espacioOcanaSala}`, ...ref(ID.espacioOcanaSala) }
+  ],
+  bloquesHome: [
+    {
+      _key: 'bh-que-es',
+      _type: 'bloqueDestacado',
+      titulo: i18n3Str('¿Qué es Ocaña?', 'Què és Ocaña?', 'What is Ocaña?'),
+      texto: i18n3Txt(
+        'Un edificio histórico en Plaça Reial con tres espacios y una terraza: cocina mediterránea, coctelería de autor y sala nocturna bajo bóvedas de ladrillo original.',
+        "Un edifici històric a la Plaça Reial amb tres espais i una terrassa: cuina mediterrània, cocteleria d'autor i sala nocturna sota voltes de maó original.",
+        'A historic building on Plaça Reial with three spaces and a terrace: Mediterranean cuisine, signature cocktails and a night hall under original brick vaults.'
+      ),
+      ctaTexto: i18n3Str('Conoce el grupo', 'Coneix el grup', 'Meet the group'),
+      ctaHref: '#sobre-nosotros'
+    },
+    {
+      _key: 'bh-terraza',
+      _type: 'bloqueDestacado',
+      titulo: i18n3Str('La Terraza', 'La Terrassa', 'The Terrace'),
+      texto: i18n3Txt(
+        'La esencia de la Plaça Reial: flores, colores y gente. Mesas de los sesenta y setenta con un ambiente de ahora. Café por la mañana, vermut al mediodía y coctel al caer la tarde.',
+        'La essència de la Plaça Reial: flors, colors i gent. Taules dels seixanta i setanta amb un ambient d\'ara. Cafè al matí, vermut al migdia i còctel al capvespre.',
+        'The essence of Plaça Reial: flowers, colours and people. Sixties and seventies tables with a contemporary vibe. Coffee in the morning, vermouth at noon, cocktails at sunset.'
+      ),
+      ctaTexto: i18n3Str('Reservar mesa', 'Reservar taula', 'Book a table'),
+      ctaHref: 'mailto:comercial@ocana.cat'
+    },
+    {
+      _key: 'bh-eventos',
+      _type: 'bloqueDestacado',
+      titulo: i18n3Str('Eventos y Grupos', 'Esdeveniments i Grups', 'Events & Groups'),
+      texto: i18n3Txt(
+        'Cuatro espacios que se combinan a medida para tu evento: desde una comida privada hasta un concierto con hasta 200 personas.',
+        'Quatre espais que es combinen a mida per al teu esdeveniment: des d\'un dinar privat fins a un concert amb fins a 200 persones.',
+        'Four spaces that combine to your needs — from a private lunch to a concert for up to 200 guests.'
+      ),
+      ctaTexto: i18n3Str('Escríbenos', 'Escriu-nos', 'Write to us'),
+      ctaHref: 'mailto:comercial@ocana.cat'
+    }
+  ],
+  direccion: {
+    calle: 'Plaça Reial, 13-15',
+    codigoPostal: '08002',
+    ciudad: 'Barcelona',
+    provincia: 'Barcelona',
+    barrio: 'Barri Gòtic',
+    pais: 'ES'
+  },
+  contacto: {
+    telefono: '+34 936 76 48 14',
+    email: 'comercial@ocana.cat',
+    web: 'https://ocana.vercel.app'
+  },
+  mapaUrl:
+    'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2993.031!2d2.174!3d41.379!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDHCsDIyJzQ0LjQiTiAywrAxMCcyNi40IkU!5e0!3m2!1sca!2ses!4v1700000000000',
+  mostrarRedes: true,
+  redes: {
+    instagram: 'https://www.instagram.com/ocanabcn',
+    facebook: 'https://www.facebook.com/ocanabcn'
+  },
+  textosNav: {
+    linkLocal: i18n3Str('Historia', 'Història', 'About'),
+    linkCocina: i18n3Str('Carta', 'Carta', 'Menu'),
+    linkVinos: i18n3Str('Vinos', 'Vins', 'Wines'),
+    linkGaleria: i18n3Str('Galería', 'Galeria', 'Gallery'),
+    linkReservar: i18n3Str('Reservar', 'Reservar', 'Book')
+  },
+  textosSecciones: {
+    platosEyebrow: i18n3Str('De la cocina', 'De la cuina', 'From the kitchen'),
+    platosTitulo: i18n3Str('La carta', 'La carta', 'The menu'),
+    vinosEyebrow: i18n3Str('Bodega', 'Celler', 'Cellar'),
+    vinosTitulo: i18n3Str('Selección', 'Selecció', 'Selection'),
+    vinosNotaFinal: i18n3Str(
+      'Carta larga de bodega, pregunta al equipo',
+      'Carta llarga de celler, pregunta a l\'equip',
+      'Extended cellar list, ask the team'
+    ),
+    galeriaEyebrow: i18n3Str('El local', 'L\'espai', 'The space'),
+    galeriaTitulo: i18n3Str('Ambiente', 'Ambient', 'Ambience')
+  },
+  textosForm: {
+    titulo: i18n3Str('Reserva tu mesa', 'Reserva la teva taula', 'Book your table'),
+    intro: i18n3Txt(
+      'Rellena el formulario y te confirmamos por email. También puedes escribirnos a comercial@ocana.cat.',
+      'Omple el formulari i et confirmarem per email. També pots escriure\'ns a comercial@ocana.cat.',
+      "Fill in the form and we'll confirm by email. Or write to comercial@ocana.cat."
+    ),
+    labelNombre: i18n3Str('Nombre', 'Nom', 'Name'),
+    labelTelefono: i18n3Str('Teléfono', 'Telèfon', 'Phone'),
+    labelEmail: i18n3Str('Email', 'Correu', 'Email'),
+    labelComensales: i18n3Str('Comensales', 'Comensals', 'Guests'),
+    labelFecha: i18n3Str('Fecha', 'Data', 'Date'),
+    labelHora: i18n3Str('Hora', 'Hora', 'Time'),
+    labelNotas: i18n3Str(
+      'Notas (alergias, celebración, etc.)',
+      'Notes (al·lèrgies, celebració, etc.)',
+      'Notes (allergies, celebration, etc.)'
+    ),
+    submit: i18n3Str('Enviar reserva', 'Enviar reserva', 'Send booking'),
+    exito: i18n3Str(
+      'Abriendo tu cliente de correo…',
+      'Obrint el teu client de correu…',
+      'Opening your email client…'
+    )
+  },
+  textosFooter: {
+    colContacto: i18n3Str('Contacto', 'Contacte', 'Contact'),
+    bylineIzq: i18n3Str(
+      'Restaurante, coctelería y sala en Plaça Reial',
+      'Restaurant, cocteleria i sala a la Plaça Reial',
+      'Restaurant, cocktail bar and hall on Plaça Reial'
+    )
+  },
+  seoTitulo: i18n3Str(
+    'Ocaña — Restaurant, Apotheke & Sala en Plaça Reial, Barcelona',
+    'Ocaña — Restaurant, Apotheke i Sala a la Plaça Reial, Barcelona',
+    'Ocaña — Restaurant, Apotheke & Sala on Plaça Reial, Barcelona'
+  ),
+  seoDescripcion: i18n3Txt(
+    'Grupo Ocaña en Plaça Reial: restaurante de cocina mediterránea, coctelería de autor Apotheke y sala de eventos bajo bóvedas de ladrillo original.',
+    'Grup Ocaña a la Plaça Reial: restaurant de cuina mediterrània, cocteleria d\'autor Apotheke i sala d\'esdeveniments sota voltes de maó original.',
+    'Ocaña group on Plaça Reial: Mediterranean restaurant, signature cocktail bar Apotheke and events hall under original brick vaults.'
+  ),
+  faqEyebrow: i18n3Str('Preguntas frecuentes', 'Preguntes freqüents', 'Frequently asked'),
+  faqTitulo: i18n3Str('Todo lo que', 'Tot el que', 'Everything you'),
+  faqTituloAcento: i18n3Str('necesitas saber', 'has de saber', 'need to know'),
+  resumenIA: i18n3Txt(
+    'Ocaña es un grupo hostelero en Plaça Reial 13-15, 08002 Barcelona, dentro del edificio histórico con bóvedas de ladrillo original. Reúne tres espacios en una misma dirección: Restaurant Ocaña (cocina mediterránea de temporada), Apotheke (coctelería de autor dirigida por Mario Greenfield, con música en vivo en las Underground Sessions) y Sala Ocaña (sala de eventos y sesiones bajo bóvedas de ladrillo). Nombre en homenaje al pintor José Pérez Ocaña. Idiomas ES/CA/EN. Reservas por email a comercial@ocana.cat.',
+    'Ocaña és un grup hostaler a la Plaça Reial 13-15, 08002 Barcelona, dins de l\'edifici històric amb voltes de maó original. Aplega tres espais a la mateixa adreça: Restaurant Ocaña (cuina mediterrània de temporada), Apotheke (cocteleria d\'autor dirigida per Mario Greenfield, amb música en viu a les Underground Sessions) i Sala Ocaña (sala d\'esdeveniments i sessions sota voltes de maó). Nom en homenatge al pintor José Pérez Ocaña. Idiomes ES/CA/EN. Reserves per email a comercial@ocana.cat.',
+    'Ocaña is a hospitality group at Plaça Reial 13-15, 08002 Barcelona, inside the historic building with original brick vaults. Three spaces at one address: Restaurant Ocaña (seasonal Mediterranean cuisine), Apotheke (signature cocktail bar led by Mario Greenfield, with live music at the Underground Sessions) and Sala Ocaña (events hall and sessions under brick vaults). Name in homage to painter José Pérez Ocaña. Languages ES/CA/EN. Bookings by email to comercial@ocana.cat.'
+  ),
+  aceptaReservas: true,
+  precioMedio: 45,
+  formasPago: ['cash', 'credit_card', 'debit_card', 'contactless', 'apple_pay', 'google_pay'],
+  serviciosExtras: ['grupos', 'sala_privada', 'coctel', 'live_music', 'terraza', 'carta_vinos'],
+  faq: [
+    {
+      _key: 'oc-faq1',
+      _type: 'faqItem',
+      pregunta: i18n3Str(
+        '¿Cuántos espacios tiene Ocaña?',
+        'Quants espais té Ocaña?',
+        'How many spaces does Ocaña have?'
+      ),
+      respuesta: i18n3Txt(
+        'Tres: Restaurant Ocaña (cocina mediterránea), Apotheke (coctelería) y Sala Ocaña (sala/club). Todos en la misma dirección, Plaça Reial 13-15.',
+        'Tres: Restaurant Ocaña (cuina mediterrània), Apotheke (cocteleria) i Sala Ocaña (sala/club). Tots a la mateixa adreça, Plaça Reial 13-15.',
+        'Three: Restaurant Ocaña (Mediterranean cuisine), Apotheke (cocktail bar) and Sala Ocaña (hall/club). All at the same address, Plaça Reial 13-15.'
+      )
+    },
+    {
+      _key: 'oc-faq2',
+      _type: 'faqItem',
+      pregunta: i18n3Str('¿Dónde estáis?', 'On sou?', 'Where are you located?'),
+      respuesta: i18n3Txt(
+        'En Plaça Reial 13-15, 08002 Barcelona, dentro del Barri Gòtic. Metro Liceu (L3) a 2 minutos andando.',
+        'A la Plaça Reial 13-15, 08002 Barcelona, dins del Barri Gòtic. Metro Liceu (L3) a 2 minuts caminant.',
+        'On Plaça Reial 13-15, 08002 Barcelona, in the Barri Gòtic. Liceu metro station (L3) is a 2-minute walk.'
+      )
+    },
+    {
+      _key: 'oc-faq3',
+      _type: 'faqItem',
+      pregunta: i18n3Str(
+        '¿Necesito reservar?',
+        'Cal reservar?',
+        'Do I need to book?'
+      ),
+      respuesta: i18n3Txt(
+        'Para el restaurante sí, especialmente fines de semana. Para la coctelería y la sala no hace falta salvo eventos privados. Escríbenos a comercial@ocana.cat.',
+        'Per al restaurant sí, sobretot els caps de setmana. Per a la cocteleria i la sala no cal, tret d\'esdeveniments privats. Escriu-nos a comercial@ocana.cat.',
+        'Yes for the restaurant, especially at weekends. For the cocktail bar and hall not needed unless private event. Write to comercial@ocana.cat.'
+      )
+    }
+  ],
+  sobreEyebrow: i18n3Str('El grupo', 'El grup', 'The group'),
+  sobreTitulo: i18n3Str(
+    'Historia bajo bóvedas',
+    'Història sota voltes',
+    'A story under the vaults'
+  ),
+  sobreCuerpo: i18n3Rich(
+    [
+      'Ocaña ocupa desde 2011 el edificio histórico de Plaça Reial 13-15, con las bóvedas de ladrillo original descubiertas durante la rehabilitación. Debe el nombre a José Pérez Ocaña, pintor y performer catalán de la Barcelona de los 70.',
+      'Tres espacios distintos comparten dirección y equipo: el Restaurant, con cocina mediterránea de temporada; Apotheke, coctelería de autor dirigida por Mario Greenfield; y la Sala, para conciertos, eventos privados y sesiones nocturnas.'
+    ],
+    [
+      "Ocaña ocupa des de 2011 l'edifici històric de la Plaça Reial 13-15, amb les voltes de maó original descobertes durant la rehabilitació. Deu el nom a José Pérez Ocaña, pintor i performer català de la Barcelona dels 70.",
+      'Tres espais diferents comparteixen adreça i equip: el Restaurant, amb cuina mediterrània de temporada; Apotheke, cocteleria d\'autor dirigida per Mario Greenfield; i la Sala, per a concerts, esdeveniments privats i sessions nocturnes.'
+    ],
+    [
+      'Since 2011, Ocaña has occupied the historic Plaça Reial 13-15 building, with original brick vaults revealed during the renovation. It is named after José Pérez Ocaña, Catalan painter and performer of 1970s Barcelona.',
+      "Three distinct spaces share address and team: the Restaurant, with seasonal Mediterranean cuisine; Apotheke, a signature cocktail bar led by Mario Greenfield; and the Sala, for concerts, private events and late-night sessions."
+    ]
+  ),
+  gruposEyebrow: i18n3Str('Eventos y privados', 'Esdeveniments i privats', 'Events & private hire'),
+  gruposTitulo: i18n3Str(
+    'Reserva un espacio a medida',
+    'Reserva un espai a mida',
+    'Book a space tailored to you'
+  ),
+  gruposCta: i18n3Str('Escríbenos', 'Escriu-nos', 'Write to us'),
+  gruposDestacados: [
+    {
+      _key: 'oc-gr-gd1',
+      _type: 'puntoDestacado',
+      texto: i18n3Str(
+        'Restaurant hasta 60 comensales',
+        'Restaurant fins a 60 comensals',
+        'Restaurant up to 60 guests'
+      )
+    },
+    {
+      _key: 'oc-gr-gd2',
+      _type: 'puntoDestacado',
+      texto: i18n3Str(
+        'Apotheke hasta 30 personas',
+        'Apotheke fins a 30 persones',
+        'Apotheke up to 30 people'
+      )
+    },
+    {
+      _key: 'oc-gr-gd3',
+      _type: 'puntoDestacado',
+      texto: i18n3Str(
+        'Sala hasta 200 con sonido pro',
+        'Sala fins a 200 amb so professional',
+        'Sala up to 200 with pro sound'
+      )
+    },
+    {
+      _key: 'oc-gr-gd4',
+      _type: 'puntoDestacado',
+      texto: i18n3Str(
+        'Menús cerrados a medida',
+        'Menús tancats a mida',
+        'Custom set menus'
+      )
+    }
+  ]
+};
+
+// Espacio 1 — RESTAURANT
+const espacioOcanaRestaurant = {
+  _id: ID.espacioOcanaRestaurant,
+  _type: 'espacio',
+  restaurante: ref(ID.restauranteOcana),
+  nombre: 'Restaurant',
+  slug: { _type: 'slug', current: 'restaurant' },
+  tipo: 'restaurant',
+  orden: 10,
+  heroTitulo: i18n3Str('Cocina mediterránea', 'Cuina mediterrània', 'Mediterranean cuisine'),
+  heroSubtitulo: i18n3Str('En Plaça Reial', 'A la Plaça Reial', 'On Plaça Reial'),
+  heroMetaIzq: i18n3Str(
+    'Bajo bóvedas de ladrillo original.',
+    'Sota voltes de maó original.',
+    'Under original brick vaults.'
+  ),
+  heroMetaDer: i18n3Str('Barri Gòtic', 'Barri Gòtic', 'Barri Gòtic'),
+  heroNota: i18n3Txt(
+    'Producto de temporada, recetario mediterráneo y salón con carácter propio.',
+    'Producte de temporada, receptari mediterrani i saló amb caràcter propi.',
+    'Seasonal produce, Mediterranean recipes and a hall with character.'
+  ),
+  heroCta: i18n3Str('Reservar mesa', 'Reservar taula', 'Book a table'),
+  manifiestoEyebrow: i18n3Str(
+    'Restaurant Ocaña',
+    'Restaurant Ocaña',
+    'Restaurant Ocaña'
+  ),
+  manifiestoTexto: i18n3Txt(
+    'Cocina mediterránea de temporada, servida bajo bóvedas de ladrillo original de la Plaça Reial.',
+    'Cuina mediterrània de temporada, servida sota voltes de maó original de la Plaça Reial.',
+    "Seasonal Mediterranean cuisine, served under Plaça Reial's original brick vaults."
+  ),
+  horariosTitulo: i18n3Str('Horarios del restaurante', 'Horaris del restaurant', 'Restaurant hours'),
+  horariosTexto: i18n3Txt(
+    'Comidas de miércoles a domingo, 13:00–16:00. Cenas de miércoles a sábado, 20:00–00:00.',
+    'Dinars de dimecres a diumenge, 13:00–16:00. Sopars de dimecres a dissabte, 20:00–00:00.',
+    'Lunches Wednesday to Sunday, 13:00–16:00. Dinners Wednesday to Saturday, 20:00–00:00.'
+  ),
+  horariosAbierto: i18n3Str(
+    'Estamos abiertos hasta las {hora}.',
+    'Estem oberts fins a les {hora}.',
+    'Open now until {hora}.'
+  ),
+  horariosProximaApertura: i18n3Str(
+    'Hoy abrimos a las {hora}.',
+    'Avui obrim a les {hora}.',
+    'Opens today at {hora}.'
+  ),
+  horariosCerrado: i18n3Str(
+    'Hoy no abrimos. Nos vemos mañana.',
+    "Avui no obrim. Ens veiem demà.",
+    'Closed today. See you tomorrow.'
+  ),
+  horariosSemana: [
+    { _key: 'd1', _type: 'diaHorario', dia: 'Mo', turnos: [] },
+    { _key: 'd2', _type: 'diaHorario', dia: 'Tu', turnos: [] },
+    {
+      _key: 'd3',
+      _type: 'diaHorario',
+      dia: 'We',
+      turnos: [
+        { _key: 't1', _type: 'turno', apertura: '13:00', cierre: '16:00' },
+        { _key: 't2', _type: 'turno', apertura: '20:00', cierre: '00:00' }
+      ]
+    },
+    {
+      _key: 'd4',
+      _type: 'diaHorario',
+      dia: 'Th',
+      turnos: [
+        { _key: 't1', _type: 'turno', apertura: '13:00', cierre: '16:00' },
+        { _key: 't2', _type: 'turno', apertura: '20:00', cierre: '00:00' }
+      ]
+    },
+    {
+      _key: 'd5',
+      _type: 'diaHorario',
+      dia: 'Fr',
+      turnos: [
+        { _key: 't1', _type: 'turno', apertura: '13:00', cierre: '16:00' },
+        { _key: 't2', _type: 'turno', apertura: '20:00', cierre: '00:00' }
+      ]
+    },
+    {
+      _key: 'd6',
+      _type: 'diaHorario',
+      dia: 'Sa',
+      turnos: [
+        { _key: 't1', _type: 'turno', apertura: '13:00', cierre: '16:00' },
+        { _key: 't2', _type: 'turno', apertura: '20:00', cierre: '00:00' }
+      ]
+    },
+    {
+      _key: 'd7',
+      _type: 'diaHorario',
+      dia: 'Su',
+      turnos: [{ _key: 't1', _type: 'turno', apertura: '13:00', cierre: '16:00' }]
+    }
+  ]
+};
+
+// Espacio 2 — APOTHEKE (coctelería de autor)
+const espacioOcanaApotheke = {
+  _id: ID.espacioOcanaApotheke,
+  _type: 'espacio',
+  restaurante: ref(ID.restauranteOcana),
+  nombre: 'Apotheke',
+  slug: { _type: 'slug', current: 'apotheke' },
+  tipo: 'coctel',
+  orden: 20,
+  heroTitulo: i18n3Str('Coctelería de autor', "Cocteleria d'autor", 'Signature cocktails'),
+  heroSubtitulo: i18n3Str(
+    'Laboratorio de sensaciones',
+    'Laboratori de sensacions',
+    'A laboratory of the senses'
+  ),
+  heroMetaIzq: i18n3Str(
+    'Dirigida por Mario Greenfield.',
+    'Dirigida per Mario Greenfield.',
+    'Led by Mario Greenfield.'
+  ),
+  heroMetaDer: i18n3Str('Barra de farmacia antigua', 'Barra de farmàcia antiga', 'Old apothecary bar'),
+  heroNota: i18n3Txt(
+    'Aromas, licores caseros y amargos elaborados en la propia barra. Underground Sessions con música en vivo cada semana.',
+    'Aromes, licors casolans i amargs elaborats a la mateixa barra. Underground Sessions amb música en viu cada setmana.',
+    'Aromas, house liqueurs and bitters made behind the bar. Underground Sessions with live music every week.'
+  ),
+  heroCta: i18n3Str('Descubrir', 'Descobrir', 'Discover'),
+  manifiestoEyebrow: i18n3Str('Apotheke', 'Apotheke', 'Apotheke'),
+  manifiestoTexto: i18n3Txt(
+    'Cócteles como fórmulas: cada trago se destila, se infusiona o se ahúma en la barra.',
+    'Còctels com a fórmules: cada glop es destil·la, s\'infusiona o es fuma a la barra.',
+    'Cocktails as formulas: every drink is distilled, infused or smoked at the bar.'
+  ),
+  horariosTitulo: i18n3Str('Horarios de Apotheke', 'Horaris d\'Apotheke', 'Apotheke hours'),
+  horariosTexto: i18n3Txt(
+    'Abierto de miércoles a sábado, 19:00–02:30. Domingos 19:00–01:00. Underground Sessions los jueves.',
+    'Obert de dimecres a dissabte, 19:00–02:30. Diumenges 19:00–01:00. Underground Sessions els dijous.',
+    'Open Wednesday to Saturday, 19:00–02:30. Sundays 19:00–01:00. Underground Sessions on Thursdays.'
+  ),
+  horariosAbierto: i18n3Str(
+    'Estamos abiertos hasta las {hora}.',
+    'Estem oberts fins a les {hora}.',
+    'Open now until {hora}.'
+  ),
+  horariosProximaApertura: i18n3Str(
+    'Hoy abrimos a las {hora}.',
+    'Avui obrim a les {hora}.',
+    'Opens today at {hora}.'
+  ),
+  horariosCerrado: i18n3Str(
+    'Hoy no abrimos. Nos vemos mañana.',
+    "Avui no obrim. Ens veiem demà.",
+    'Closed today. See you tomorrow.'
+  ),
+  horariosSemana: [
+    { _key: 'd1', _type: 'diaHorario', dia: 'Mo', turnos: [] },
+    { _key: 'd2', _type: 'diaHorario', dia: 'Tu', turnos: [] },
+    {
+      _key: 'd3',
+      _type: 'diaHorario',
+      dia: 'We',
+      turnos: [{ _key: 't1', _type: 'turno', apertura: '19:00', cierre: '02:30' }]
+    },
+    {
+      _key: 'd4',
+      _type: 'diaHorario',
+      dia: 'Th',
+      turnos: [{ _key: 't1', _type: 'turno', apertura: '19:00', cierre: '02:30' }]
+    },
+    {
+      _key: 'd5',
+      _type: 'diaHorario',
+      dia: 'Fr',
+      turnos: [{ _key: 't1', _type: 'turno', apertura: '19:00', cierre: '02:30' }]
+    },
+    {
+      _key: 'd6',
+      _type: 'diaHorario',
+      dia: 'Sa',
+      turnos: [{ _key: 't1', _type: 'turno', apertura: '19:00', cierre: '02:30' }]
+    },
+    {
+      _key: 'd7',
+      _type: 'diaHorario',
+      dia: 'Su',
+      turnos: [{ _key: 't1', _type: 'turno', apertura: '19:00', cierre: '01:00' }]
+    }
+  ]
+};
+
+// Espacio 3 — SALA OCAÑA (sala/club bajo bóvedas)
+const espacioOcanaSala = {
+  _id: ID.espacioOcanaSala,
+  _type: 'espacio',
+  restaurante: ref(ID.restauranteOcana),
+  nombre: 'Sala Ocaña',
+  slug: { _type: 'slug', current: 'sala' },
+  tipo: 'club',
+  orden: 30,
+  heroTitulo: i18n3Str('Sala Ocaña', 'Sala Ocaña', 'Sala Ocaña'),
+  heroSubtitulo: i18n3Str(
+    'Bajo bóvedas de ladrillo',
+    'Sota voltes de maó',
+    'Under brick vaults'
+  ),
+  heroMetaIzq: i18n3Str(
+    'Sala de eventos y sesiones.',
+    'Sala d\'esdeveniments i sessions.',
+    'Events and sessions hall.'
+  ),
+  heroMetaDer: i18n3Str('Aforo 200', 'Aforament 200', 'Capacity 200'),
+  heroNota: i18n3Txt(
+    'Gran sala con sofás, alfombras e iluminación tenue, bajo las bóvedas originales de Plaça Reial.',
+    'Gran sala amb sofàs, catifes i il·luminació tènue, sota les voltes originals de la Plaça Reial.',
+    "A large room with sofas, rugs and dim light, under Plaça Reial's original vaults."
+  ),
+  heroCta: i18n3Str('Reservar sala', 'Reservar sala', 'Book the hall'),
+  manifiestoEyebrow: i18n3Str('Sala Ocaña', 'Sala Ocaña', 'Sala Ocaña'),
+  manifiestoTexto: i18n3Txt(
+    'Un salón de otra época para escuchar música, bailar y celebrar.',
+    'Un saló d\'una altra època per escoltar música, ballar i celebrar.',
+    'A room from another era to listen to music, dance and celebrate.'
+  ),
+  horariosTitulo: i18n3Str('Sala Ocaña', 'Sala Ocaña', 'Sala Ocaña'),
+  horariosTexto: i18n3Txt(
+    'Apertura según programación. Consulta calendario o escríbenos a comercial@ocana.cat.',
+    'Obertura segons programació. Consulta calendari o escriu-nos a comercial@ocana.cat.',
+    'Opens per program. Check calendar or write to comercial@ocana.cat.'
+  ),
+  horariosAbierto: i18n3Str('Sesión hasta {hora}.', 'Sessió fins a les {hora}.', 'Session until {hora}.'),
+  horariosProximaApertura: i18n3Str(
+    'Próxima sesión a las {hora}.',
+    'Pròxima sessió a les {hora}.',
+    'Next session at {hora}.'
+  ),
+  horariosCerrado: i18n3Str(
+    'Hoy sin sesión. Consulta calendario.',
+    'Avui sense sessió. Consulta calendari.',
+    'No session today. Check calendar.'
+  ),
+  horariosSemana: [
+    { _key: 'd1', _type: 'diaHorario', dia: 'Mo', turnos: [] },
+    { _key: 'd2', _type: 'diaHorario', dia: 'Tu', turnos: [] },
+    { _key: 'd3', _type: 'diaHorario', dia: 'We', turnos: [] },
+    {
+      _key: 'd4',
+      _type: 'diaHorario',
+      dia: 'Th',
+      turnos: [{ _key: 't1', _type: 'turno', apertura: '23:00', cierre: '03:00' }]
+    },
+    {
+      _key: 'd5',
+      _type: 'diaHorario',
+      dia: 'Fr',
+      turnos: [{ _key: 't1', _type: 'turno', apertura: '23:00', cierre: '05:00' }]
+    },
+    {
+      _key: 'd6',
+      _type: 'diaHorario',
+      dia: 'Sa',
+      turnos: [{ _key: 't1', _type: 'turno', apertura: '23:00', cierre: '05:00' }]
+    },
+    { _key: 'd7', _type: 'diaHorario', dia: 'Su', turnos: [] }
+  ]
+};
+
+// Cartas por espacio (concisas, solo para poblar la UI)
+
+const catsVinoOcanaRestaurant = [
+  {
+    _id: ID.catVinoOcanaRestaurant.blancos,
+    _type: 'categoriaVino',
+    espacio: ref(ID.espacioOcanaRestaurant),
+    nombre: i18n3Str('Blancos', 'Blancs', 'Whites'),
+    orden: 10
+  },
+  {
+    _id: ID.catVinoOcanaRestaurant.tintos,
+    _type: 'categoriaVino',
+    espacio: ref(ID.espacioOcanaRestaurant),
+    nombre: i18n3Str('Tintos', 'Negres', 'Reds'),
+    orden: 20
+  }
+];
+
+const vinosOcanaRestaurant = [
+  {
+    catId: ID.catVinoOcanaRestaurant.blancos,
+    nombre: 'Xarel·lo Vell 2022',
+    region: 'Penedès',
+    nota: ['Mineral, cítrico, honesto', 'Mineral, cítric, honest', 'Mineral, citrus, honest'],
+    copa: 6,
+    botella: 28
+  },
+  {
+    catId: ID.catVinoOcanaRestaurant.blancos,
+    nombre: 'Albariño Ribeira 2023',
+    region: 'Rías Baixas',
+    nota: ['Salino, tenso', 'Salí, tens', 'Saline, tense'],
+    copa: 7,
+    botella: 32
+  },
+  {
+    catId: ID.catVinoOcanaRestaurant.tintos,
+    nombre: 'Priorat de la Bodega 2020',
+    region: 'Priorat',
+    nota: ['Piedra, cereza, kilómetros', 'Pedra, cirera, quilòmetres', 'Stone, cherry, miles'],
+    copa: 11,
+    botella: 48
+  },
+  {
+    catId: ID.catVinoOcanaRestaurant.tintos,
+    nombre: 'Garnacha del Priorat 2021',
+    region: 'Priorat',
+    nota: ['Fruta oscura, especias', 'Fruita fosca, espècies', 'Dark fruit, spice'],
+    copa: 9,
+    botella: 42
+  }
+].map((v, i) => ({
+  _id: `vino-ocana-restaurant-${i + 1}`,
+  _type: 'vino',
+  espacio: ref(ID.espacioOcanaRestaurant),
+  categoria: ref(v.catId),
+  nombre: v.nombre,
+  region: v.region,
+  nota: i18n3Txt(v.nota[0], v.nota[1], v.nota[2]),
+  precioCopa: v.copa,
+  precioBotella: v.botella,
+  orden: (i + 1) * 10,
+  activo: true
+}));
+
+const catsPlatoOcanaRestaurant = [
+  {
+    _id: ID.catPlatoOcanaRestaurant.entrantes,
+    _type: 'categoriaPlato',
+    espacio: ref(ID.espacioOcanaRestaurant),
+    nombre: i18n3Str('Entrantes', 'Entrants', 'Starters'),
+    orden: 10
+  },
+  {
+    _id: ID.catPlatoOcanaRestaurant.principales,
+    _type: 'categoriaPlato',
+    espacio: ref(ID.espacioOcanaRestaurant),
+    nombre: i18n3Str('Principales', 'Principals', 'Mains'),
+    orden: 20
+  },
+  {
+    _id: ID.catPlatoOcanaRestaurant.postres,
+    _type: 'categoriaPlato',
+    espacio: ref(ID.espacioOcanaRestaurant),
+    nombre: i18n3Str('Postres', 'Postres', 'Desserts'),
+    orden: 30
+  }
+];
+
+const platosOcanaRestaurant = [
+  {
+    cat: ID.catPlatoOcanaRestaurant.entrantes,
+    nombre: ['Escalivada con anchoa', 'Escalivada amb anxova', 'Escalivada with anchovy'],
+    nota: ['Ahumada al momento', 'Fumada al moment', 'Smoked to order'],
+    precio: 13
+  },
+  {
+    cat: ID.catPlatoOcanaRestaurant.entrantes,
+    nombre: ['Croquetas de rustido', 'Croquetes de rostit', 'Roast croquettes'],
+    nota: ['Cremosas por dentro', 'Cremoses per dins', 'Creamy inside'],
+    precio: 10
+  },
+  {
+    cat: ID.catPlatoOcanaRestaurant.principales,
+    nombre: ['Arroz de sepia', 'Arròs de sípia', 'Cuttlefish rice'],
+    nota: ['Para dos, sepia del día', 'Per a dos, sípia del dia', "For two, day's catch"],
+    precio: 24
+  },
+  {
+    cat: ID.catPlatoOcanaRestaurant.principales,
+    nombre: ['Rape a la brasa', 'Rap a la brasa', 'Charcoal monkfish'],
+    nota: ['Con verduras de temporada', 'Amb verdures de temporada', 'Seasonal vegetables'],
+    precio: 26
+  },
+  {
+    cat: ID.catPlatoOcanaRestaurant.postres,
+    nombre: ['Crema catalana', 'Crema catalana', 'Crema catalana'],
+    nota: ['Quemada al momento', 'Cremada al moment', 'Torched to order'],
+    precio: 7
+  }
+].map((p, i) => ({
+  _id: `plato-ocana-restaurant-${i + 1}`,
+  _type: 'plato',
+  espacio: ref(ID.espacioOcanaRestaurant),
+  categoria: ref(p.cat),
+  nombre: i18n3Str(p.nombre[0], p.nombre[1], p.nombre[2]),
+  nota: i18n3Txt(p.nota[0], p.nota[1], p.nota[2]),
+  precio: p.precio,
+  orden: (i + 1) * 10,
+  activo: true
+}));
+
+const catsPlatoOcanaApotheke = [
+  {
+    _id: ID.catPlatoOcanaApotheke.signature,
+    _type: 'categoriaPlato',
+    espacio: ref(ID.espacioOcanaApotheke),
+    nombre: i18n3Str('Firma de la casa', 'Signatura de la casa', 'Signature'),
+    orden: 10
+  },
+  {
+    _id: ID.catPlatoOcanaApotheke.classics,
+    _type: 'categoriaPlato',
+    espacio: ref(ID.espacioOcanaApotheke),
+    nombre: i18n3Str('Clásicos', 'Clàssics', 'Classics'),
+    orden: 20
+  },
+  {
+    _id: ID.catPlatoOcanaApotheke.picoteo,
+    _type: 'categoriaPlato',
+    espacio: ref(ID.espacioOcanaApotheke),
+    nombre: i18n3Str('Para picar', 'Per picar', 'Small bites'),
+    orden: 30
+  }
+];
+
+const platosOcanaApotheke = [
+  {
+    cat: ID.catPlatoOcanaApotheke.signature,
+    nombre: ['Apotheke Old Fashioned', 'Apotheke Old Fashioned', 'Apotheke Old Fashioned'],
+    nota: [
+      'Bourbon, bitters caseros, azúcar de cacao',
+      'Bourbon, amargs casolans, sucre de cacau',
+      'Bourbon, house bitters, cacao sugar'
+    ],
+    precio: 14
+  },
+  {
+    cat: ID.catPlatoOcanaApotheke.signature,
+    nombre: ['Farmacia Sour', 'Farmàcia Sour', 'Apothecary Sour'],
+    nota: [
+      'Ginebra, cítricos, jarabe de eucalipto',
+      'Ginebra, cítrics, xarop d\'eucaliptus',
+      'Gin, citrus, eucalyptus syrup'
+    ],
+    precio: 13
+  },
+  {
+    cat: ID.catPlatoOcanaApotheke.signature,
+    nombre: ['Elixir Oriental', 'Elixir Oriental', 'Oriental Elixir'],
+    nota: [
+      'Ron especiado, chai, cardamomo',
+      'Rom especiat, chai, cardamom',
+      'Spiced rum, chai, cardamom'
+    ],
+    precio: 14
+  },
+  {
+    cat: ID.catPlatoOcanaApotheke.classics,
+    nombre: ['Negroni', 'Negroni', 'Negroni'],
+    nota: ['Perfecto, sin descubrir la rueda', 'Perfecte, sense descobrir la roda', 'Perfect, no wheel-reinventing'],
+    precio: 11
+  },
+  {
+    cat: ID.catPlatoOcanaApotheke.classics,
+    nombre: ['Martini seco', 'Martini sec', 'Dry Martini'],
+    nota: ['Al gusto, con o sin twist', 'Al gust, amb o sense twist', 'To taste, with or without twist'],
+    precio: 12
+  },
+  {
+    cat: ID.catPlatoOcanaApotheke.picoteo,
+    nombre: ['Aceitunas Gordal', 'Olives Gordal', 'Gordal olives'],
+    nota: ['Con piel de naranja', 'Amb pell de taronja', 'With orange peel'],
+    precio: 5
+  },
+  {
+    cat: ID.catPlatoOcanaApotheke.picoteo,
+    nombre: ['Boquerones en vinagre', 'Anxoves amb vinagre', 'Marinated anchovies'],
+    nota: ['Con pan crujiente', 'Amb pa cruixent', 'With crusty bread'],
+    precio: 8
+  }
+].map((p, i) => ({
+  _id: `plato-ocana-apotheke-${i + 1}`,
+  _type: 'plato',
+  espacio: ref(ID.espacioOcanaApotheke),
+  categoria: ref(p.cat),
+  nombre: i18n3Str(p.nombre[0], p.nombre[1], p.nombre[2]),
+  nota: i18n3Txt(p.nota[0], p.nota[1], p.nota[2]),
+  precio: p.precio,
+  orden: (i + 1) * 10,
+  activo: true
+}));
+
+const catsPlatoOcanaSala = [
+  {
+    _id: ID.catPlatoOcanaSala.copas,
+    _type: 'categoriaPlato',
+    espacio: ref(ID.espacioOcanaSala),
+    nombre: i18n3Str('Copas', 'Copes', 'Drinks'),
+    orden: 10
+  },
+  {
+    _id: ID.catPlatoOcanaSala.espumosos,
+    _type: 'categoriaPlato',
+    espacio: ref(ID.espacioOcanaSala),
+    nombre: i18n3Str('Espumosos', 'Escumosos', 'Sparkling'),
+    orden: 20
+  }
+];
+
+const platosOcanaSala = [
+  {
+    cat: ID.catPlatoOcanaSala.copas,
+    nombre: ['Gin tonic Premium', 'Gin tonic Premium', 'Premium G&T'],
+    nota: ['Ginebras de autor', "Ginebres d'autor", 'Craft gins'],
+    precio: 12
+  },
+  {
+    cat: ID.catPlatoOcanaSala.copas,
+    nombre: ['Whisky sour', 'Whisky sour', 'Whisky sour'],
+    nota: ['Con clara de huevo', "Amb clara d'ou", 'With egg white'],
+    precio: 12
+  },
+  {
+    cat: ID.catPlatoOcanaSala.copas,
+    nombre: ['Mojito de la casa', 'Mojito de la casa', 'House mojito'],
+    nota: ['Ron 7 años, hierbabuena fresca', 'Rom 7 anys, menta fresca', '7-year rum, fresh mint'],
+    precio: 11
+  },
+  {
+    cat: ID.catPlatoOcanaSala.espumosos,
+    nombre: ['Cava Brut Nature', 'Cava Brut Nature', 'Cava Brut Nature'],
+    nota: ['Copa', 'Copa', 'Glass'],
+    precio: 6
+  },
+  {
+    cat: ID.catPlatoOcanaSala.espumosos,
+    nombre: ['Champagne por copa', 'Xampany per copa', 'Champagne by the glass'],
+    nota: ['Selección de la casa', 'Selecció de la casa', 'House selection'],
+    precio: 14
+  }
+].map((p, i) => ({
+  _id: `plato-ocana-sala-${i + 1}`,
+  _type: 'plato',
+  espacio: ref(ID.espacioOcanaSala),
+  categoria: ref(p.cat),
+  nombre: i18n3Str(p.nombre[0], p.nombre[1], p.nombre[2]),
+  nota: i18n3Txt(p.nota[0], p.nota[1], p.nota[2]),
+  precio: p.precio,
+  orden: (i + 1) * 10,
+  activo: true
+}));
+
+// ── Bebidas por espacio (Apotheke, Restaurant, Sala, Terrassa) ──────────────
+// Apotheke: fuerte en café + cerveza + sin alcohol (además de los cocteles que
+//   ya van como "platos-signature"; ver nota abajo).
+// Restaurant: minimal — café y aguas de acompañamiento.
+// Sala: cervezas y softs para el club.
+// Terrassa: café + cerveza + refrescos + vermut.
+
+const bebidasCategoriasOcana: Array<Record<string, unknown>> = [];
+const bebidasOcana: Array<Record<string, unknown>> = [];
+
+function pushCategoriaBebida(
+  espacioId: string,
+  suffix: string,
+  nombre: [string, string, string],
+  orden: number
+): string {
+  const _id = `catBebida-${suffix}`;
+  bebidasCategoriasOcana.push({
+    _id,
+    _type: 'categoriaBebida',
+    espacio: ref(espacioId),
+    nombre: i18n3Str(nombre[0], nombre[1], nombre[2]),
+    orden
+  });
+  return _id;
+}
+
+function pushBebidas(
+  espacioId: string,
+  suffix: string,
+  catId: string,
+  items: Array<{ nombre: [string, string, string]; nota?: [string, string, string]; precio: number }>
+) {
+  items.forEach((it, i) => {
+    bebidasOcana.push({
+      _id: `bebida-${suffix}-${i + 1}`,
+      _type: 'bebida',
+      espacio: ref(espacioId),
+      categoria: ref(catId),
+      nombre: i18n3Str(it.nombre[0], it.nombre[1], it.nombre[2]),
+      nota: it.nota ? i18n3Txt(it.nota[0], it.nota[1], it.nota[2]) : undefined,
+      precio: it.precio,
+      orden: (i + 1) * 10,
+      activo: true
+    });
+  });
+}
+
+// APOTHEKE — café + cerveza + sin alcohol
+const catAppCafe = pushCategoriaBebida(
+  ID.espacioOcanaApotheke,
+  'ocana-apotheke-cafe',
+  ['Café e infusiones', 'Cafè i infusions', 'Coffee & tea'],
+  20
+);
+pushBebidas(ID.espacioOcanaApotheke, 'ocana-apotheke-cafe', catAppCafe, [
+  { nombre: ['Espresso', 'Espresso', 'Espresso'], precio: 2.2 },
+  { nombre: ['Cortado', 'Tallat', 'Macchiato'], precio: 2.4 },
+  { nombre: ['Café con leche', 'Cafè amb llet', 'White coffee'], precio: 2.8 },
+  { nombre: ['Té matcha', 'Té matcha', 'Matcha latte'], nota: ['Ceremonial', 'Ceremonial', 'Ceremonial'], precio: 4.5 }
+]);
+
+const catAppCerveza = pushCategoriaBebida(
+  ID.espacioOcanaApotheke,
+  'ocana-apotheke-cerveza',
+  ['Cervezas', 'Cerveses', 'Beers'],
+  30
+);
+pushBebidas(ID.espacioOcanaApotheke, 'ocana-apotheke-cerveza', catAppCerveza, [
+  { nombre: ['Estrella Damm', 'Estrella Damm', 'Estrella Damm'], nota: ['Caña', 'Canya', 'Draft'], precio: 3.5 },
+  { nombre: ['IPA artesana local', 'IPA artesana local', 'Local craft IPA'], precio: 5.5 },
+  { nombre: ['Guinness', 'Guinness', 'Guinness'], precio: 5 }
+]);
+
+const catAppSin = pushCategoriaBebida(
+  ID.espacioOcanaApotheke,
+  'ocana-apotheke-sin',
+  ['Sin alcohol', 'Sense alcohol', 'Alcohol-free'],
+  40
+);
+pushBebidas(ID.espacioOcanaApotheke, 'ocana-apotheke-sin', catAppSin, [
+  { nombre: ['Agua con gas', 'Aigua amb gas', 'Sparkling water'], precio: 3 },
+  { nombre: ['Kombucha de jengibre', 'Kombucha de gingebre', 'Ginger kombucha'], precio: 4.5 },
+  { nombre: ['Zumo de naranja natural', 'Suc de taronja natural', 'Fresh orange juice'], precio: 4 }
+]);
+
+// RESTAURANT — minimal
+const catResCafe = pushCategoriaBebida(
+  ID.espacioOcanaRestaurant,
+  'ocana-restaurant-cafe',
+  ['Café e infusiones', 'Cafè i infusions', 'Coffee & tea'],
+  40
+);
+pushBebidas(ID.espacioOcanaRestaurant, 'ocana-restaurant-cafe', catResCafe, [
+  { nombre: ['Espresso', 'Espresso', 'Espresso'], precio: 2.5 },
+  { nombre: ['Cortado', 'Tallat', 'Macchiato'], precio: 2.7 },
+  { nombre: ['Té selección', 'Té selecció', 'Selection tea'], precio: 3.5 }
+]);
+
+const catResAguas = pushCategoriaBebida(
+  ID.espacioOcanaRestaurant,
+  'ocana-restaurant-aguas',
+  ['Aguas', 'Aigües', 'Waters'],
+  50
+);
+pushBebidas(ID.espacioOcanaRestaurant, 'ocana-restaurant-aguas', catResAguas, [
+  { nombre: ['Agua mineral', 'Aigua mineral', 'Still water'], nota: ['75cl', '75cl', '75cl'], precio: 3.5 },
+  { nombre: ['Agua con gas', 'Aigua amb gas', 'Sparkling water'], nota: ['75cl', '75cl', '75cl'], precio: 4 }
+]);
+
+// SALA — cervezas + softs
+const catSalaCerveza = pushCategoriaBebida(
+  ID.espacioOcanaSala,
+  'ocana-sala-cerveza',
+  ['Cervezas', 'Cerveses', 'Beers'],
+  30
+);
+pushBebidas(ID.espacioOcanaSala, 'ocana-sala-cerveza', catSalaCerveza, [
+  { nombre: ['Estrella Damm', 'Estrella Damm', 'Estrella Damm'], nota: ['Tercio', 'Tercio', 'Bottle'], precio: 4 },
+  { nombre: ['Heineken', 'Heineken', 'Heineken'], precio: 4.5 }
+]);
+
+const catSalaSofts = pushCategoriaBebida(
+  ID.espacioOcanaSala,
+  'ocana-sala-softs',
+  ['Refrescos', 'Refrescs', 'Soft drinks'],
+  40
+);
+pushBebidas(ID.espacioOcanaSala, 'ocana-sala-softs', catSalaSofts, [
+  { nombre: ['Coca-Cola', 'Coca-Cola', 'Coca-Cola'], precio: 3.5 },
+  { nombre: ['Tónica premium', 'Tònica premium', 'Premium tonic'], precio: 4 }
+]);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Migración a modelo multi-espacio
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Los mocks de arriba definen todos los campos (hero, manifiesto, sobre,
+// galería, grupos, horarios…) directamente en el doc `restaurante` — pensados
+// para el modelo antiguo de 1 restaurante = 1 doc.
+//
+// Con la nueva estructura, esos campos viven en un doc `espacio` aparte,
+// y el restaurante los referencia vía `espacios[]`. En vez de reescribir los
+// 5 mocks completos, aquí extraemos on-the-fly cada campo "de espacio" hacia
+// un nuevo doc `espacio`, dejando el restaurante solo con datos globales.
+
+// Campos que se extraen del mock de `restaurante` y se mueven al doc `espacio`.
+// `sobre*` y `grupos*` ya NO están aquí — viven al nivel restaurante porque son
+// de la marca (compartidos entre espacios en grupos multi-espacio, iguales al
+// único espacio en mono-espacio).
+const CAMPOS_DE_ESPACIO = [
+  // Hero
+  'heroTitulo',
+  'heroSubtitulo',
+  'heroMetaIzq',
+  'heroMetaDer',
+  'heroNota',
+  'heroCta',
+  'heroImagen',
+  // Manifiesto
+  'manifiestoEyebrow',
+  'manifiestoTexto',
+  // Galería
+  'galeria',
+  // Horarios
+  'horariosTitulo',
+  'horariosTexto',
+  'horariosAbierto',
+  'horariosProximaApertura',
+  'horariosCerrado',
+  'horariosSemana'
+] as const;
+
+/**
+ * Divide un doc `restaurante` (con campos de espacio embebidos) en:
+ *  - restaurante limpio (sin esos campos, con `espacios: [ref(espacioId)]`)
+ *  - espacio nuevo (con los campos extraídos + ref al restaurante padre)
+ */
+function dividirRestaurante(
+  restauranteMock: Record<string, unknown>,
+  espacioId: string,
+  nombreEspacio: string
+): { restaurante: Record<string, unknown>; espacio: Record<string, unknown> } {
+  const restaurante: Record<string, unknown> = {};
+  const camposDeEspacio: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(restauranteMock)) {
+    if ((CAMPOS_DE_ESPACIO as readonly string[]).includes(k)) {
+      camposDeEspacio[k] = v;
+    } else {
+      restaurante[k] = v;
+    }
+  }
+  restaurante.espacios = [{ _key: `esp-${espacioId}`, ...ref(espacioId) }];
+
+  const espacio = {
+    _id: espacioId,
+    _type: 'espacio',
+    restaurante: ref(restauranteMock._id as string),
+    nombre: nombreEspacio,
+    slug: { _type: 'slug', current: 'principal' },
+    tipo: 'restaurant',
+    orden: 10,
+    ...camposDeEspacio
+  };
+
+  return { restaurante, espacio };
+}
+
+/** Repunta un doc `categoriaVino|vino|categoriaPlato|plato` de `restaurante` a `espacio`. */
+function repuntarAEspacio(
+  docs: Array<Record<string, unknown>>,
+  espacioId: string
+): Array<Record<string, unknown>> {
+  return docs.map(d => {
+    const { restaurante: _drop, ...resto } = d;
+    return { ...resto, espacio: ref(espacioId) };
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Ejecución
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -2432,55 +3545,160 @@ async function main() {
     codigo: 'en',
     nombre: 'English'
   });
+  await client.createOrReplace({
+    _id: ID.idiomaCa,
+    _type: 'idioma',
+    codigo: 'ca',
+    nombre: 'Català'
+  });
+  await client.createOrReplace({
+    _id: ID.idiomaFr,
+    _type: 'idioma',
+    codigo: 'fr',
+    nombre: 'Français'
+  });
+  await client.createOrReplace({
+    _id: ID.idiomaIt,
+    _type: 'idioma',
+    codigo: 'it',
+    nombre: 'Italiano'
+  });
 
-  console.log('🍽 Creando restaurante La Pubilla…');
-  await client.createOrReplace(restaurantePubilla as never);
-  for (const c of categoriasVinoPubilla) await client.createOrReplace(c as never);
-  for (const v of vinosPubilla) await client.createOrReplace(v as never);
-  for (const c of categoriasPlatoPubilla) await client.createOrReplace(c as never);
-  for (const p of platosPubilla) await client.createOrReplace(p as never);
-  console.log('⚖️  Creando páginas legales La Pubilla…');
-  for (const pl of paginasLegalesPubilla) await client.createOrReplace(pl as never);
+  const bloques: Array<{
+    etiqueta: string;
+    mockRestaurante: Record<string, unknown>;
+    espacioId: string;
+    nombreEspacio: string;
+    catsVino: Array<Record<string, unknown>>;
+    vinos: Array<Record<string, unknown>>;
+    catsPlato: Array<Record<string, unknown>>;
+    platos: Array<Record<string, unknown>>;
+    legales: Array<Record<string, unknown>>;
+  }> = [
+    {
+      etiqueta: 'La Pubilla',
+      mockRestaurante: restaurantePubilla as Record<string, unknown>,
+      espacioId: ID.espacioPubilla,
+      nombreEspacio: 'Restaurante',
+      catsVino: categoriasVinoPubilla,
+      vinos: vinosPubilla,
+      catsPlato: categoriasPlatoPubilla,
+      platos: platosPubilla,
+      legales: paginasLegalesPubilla
+    },
+    {
+      etiqueta: 'La Principal',
+      mockRestaurante: restauranteLaPrincipal as Record<string, unknown>,
+      espacioId: ID.espacioPrincipal,
+      nombreEspacio: 'Restaurante',
+      catsVino: categoriasVinoPrincipal,
+      vinos: vinosPrincipal,
+      catsPlato: categoriasPlatoPrincipal,
+      platos: platosPrincipal,
+      legales: paginasLegalesLaPrincipal
+    },
+    {
+      etiqueta: 'Casabella',
+      mockRestaurante: restauranteCasabella as Record<string, unknown>,
+      espacioId: ID.espacioCasabella,
+      nombreEspacio: 'Restaurante',
+      catsVino: categoriasVinoCasabella,
+      vinos: vinosCasabella,
+      catsPlato: categoriasPlatoCasabella,
+      platos: platosCasabella,
+      legales: paginasLegalesCasabella
+    },
+    {
+      etiqueta: 'Guixot',
+      mockRestaurante: restauranteGuixot as Record<string, unknown>,
+      espacioId: ID.espacioGuixot,
+      nombreEspacio: 'Restaurante',
+      catsVino: categoriasVinoGuixot,
+      vinos: vinosGuixot,
+      catsPlato: categoriasPlatoGuixot,
+      platos: platosGuixot,
+      legales: paginasLegalesGuixot
+    },
+    {
+      etiqueta: 'Roure',
+      mockRestaurante: restauranteRoure as Record<string, unknown>,
+      espacioId: ID.espacioRoure,
+      nombreEspacio: 'Restaurante',
+      catsVino: categoriasVinoRoure,
+      vinos: vinosRoure,
+      catsPlato: categoriasPlatoRoure,
+      platos: platosRoure,
+      legales: paginasLegalesRoure
+    }
+  ];
 
-  console.log('🍽 Creando restaurante La Principal…');
-  await client.createOrReplace(restauranteLaPrincipal as never);
-  for (const c of categoriasVinoPrincipal) await client.createOrReplace(c as never);
-  for (const v of vinosPrincipal) await client.createOrReplace(v as never);
-  for (const c of categoriasPlatoPrincipal) await client.createOrReplace(c as never);
-  for (const p of platosPrincipal) await client.createOrReplace(p as never);
-  console.log('⚖️  Creando páginas legales La Principal…');
-  for (const pl of paginasLegalesLaPrincipal) await client.createOrReplace(pl as never);
+  for (const b of bloques) {
+    console.log(`🍽 Creando restaurante + espacio ${b.etiqueta}…`);
+    const { restaurante, espacio } = dividirRestaurante(
+      b.mockRestaurante,
+      b.espacioId,
+      b.nombreEspacio
+    );
+    // Restaurante ↔ espacio se referencian mutuamente; hay que crear ambos en
+    // una transacción atómica para que Sanity valide las refs al commit final,
+    // no en cada request individual.
+    await client
+      .transaction()
+      .createOrReplace(restaurante as never)
+      .createOrReplace(espacio as never)
+      .commit();
+    for (const c of repuntarAEspacio(b.catsVino, b.espacioId)) {
+      await client.createOrReplace(c as never);
+    }
+    for (const v of repuntarAEspacio(b.vinos, b.espacioId)) {
+      await client.createOrReplace(v as never);
+    }
+    for (const c of repuntarAEspacio(b.catsPlato, b.espacioId)) {
+      await client.createOrReplace(c as never);
+    }
+    for (const p of repuntarAEspacio(b.platos, b.espacioId)) {
+      await client.createOrReplace(p as never);
+    }
+    console.log(`⚖️  Creando páginas legales ${b.etiqueta}…`);
+    for (const pl of b.legales) await client.createOrReplace(pl as never);
+  }
 
-  console.log('🍽 Creando restaurante Casabella…');
-  await client.createOrReplace(restauranteCasabella as never);
-  for (const c of categoriasVinoCasabella) await client.createOrReplace(c as never);
-  for (const v of vinosCasabella) await client.createOrReplace(v as never);
-  for (const c of categoriasPlatoCasabella) await client.createOrReplace(c as never);
-  for (const p of platosCasabella) await client.createOrReplace(p as never);
-  console.log('⚖️  Creando páginas legales Casabella…');
-  for (const pl of paginasLegalesCasabella) await client.createOrReplace(pl as never);
+  // ── OCAÑA — grupo multi-espacio ──────────────────────────────────────
+  console.log('\n🏛 Creando grupo Ocaña (restaurante + 3 espacios)…');
+  // Ref cruzada: restauranteOcana → espacios[], y cada espacio → restaurante.
+  // Los 4 docs se crean en la misma transacción para que la validación de refs
+  // pase al commit final, no en cada request.
+  await client
+    .transaction()
+    .createOrReplace(restauranteOcana as never)
+    .createOrReplace(espacioOcanaRestaurant as never)
+    .createOrReplace(espacioOcanaApotheke as never)
+    .createOrReplace(espacioOcanaSala as never)
+    .commit();
 
-  console.log('🍽 Creando restaurante Guixot…');
-  await client.createOrReplace(restauranteGuixot as never);
-  for (const c of categoriasVinoGuixot) await client.createOrReplace(c as never);
-  for (const v of vinosGuixot) await client.createOrReplace(v as never);
-  for (const c of categoriasPlatoGuixot) await client.createOrReplace(c as never);
-  for (const p of platosGuixot) await client.createOrReplace(p as never);
-  console.log('⚖️  Creando páginas legales Guixot…');
-  for (const pl of paginasLegalesGuixot) await client.createOrReplace(pl as never);
+  console.log('   → Categorías y carta del Restaurant…');
+  for (const c of catsVinoOcanaRestaurant) await client.createOrReplace(c as never);
+  for (const v of vinosOcanaRestaurant) await client.createOrReplace(v as never);
+  for (const c of catsPlatoOcanaRestaurant) await client.createOrReplace(c as never);
+  for (const p of platosOcanaRestaurant) await client.createOrReplace(p as never);
 
-  console.log('🍽 Creando restaurante Roure…');
-  await client.createOrReplace(restauranteRoure as never);
-  for (const c of categoriasVinoRoure) await client.createOrReplace(c as never);
-  for (const v of vinosRoure) await client.createOrReplace(v as never);
-  for (const c of categoriasPlatoRoure) await client.createOrReplace(c as never);
-  for (const p of platosRoure) await client.createOrReplace(p as never);
-  console.log('⚖️  Creando páginas legales Roure…');
-  for (const pl of paginasLegalesRoure) await client.createOrReplace(pl as never);
+  console.log('   → Carta de Apotheke…');
+  for (const c of catsPlatoOcanaApotheke) await client.createOrReplace(c as never);
+  for (const p of platosOcanaApotheke) await client.createOrReplace(p as never);
+
+  console.log('   → Carta de Sala Ocaña…');
+  for (const c of catsPlatoOcanaSala) await client.createOrReplace(c as never);
+  for (const p of platosOcanaSala) await client.createOrReplace(p as never);
+
+  console.log('   → Bebidas (Apotheke, Restaurant, Sala)…');
+  for (const c of bebidasCategoriasOcana) await client.createOrReplace(c as never);
+  for (const b of bebidasOcana) await client.createOrReplace(b as never);
 
   console.log('\n✅ Seed completado.');
-  console.log(`   Idiomas:       2 (es, en)`);
-  console.log(`   Restaurantes:  5 (La Pubilla, La Principal, Casabella, Guixot, Roure)`);
+  console.log(`   Idiomas:       5 (es, ca, en, fr, it) · Ocaña usa los 5, resto usa es+en`);
+  console.log(`   Restaurantes:  6 (La Pubilla, La Principal, Casabella, Guixot, Roure, Ocaña)`);
+  console.log(`   Espacios:      8 (5 principales + Ocaña con 3: Restaurant, Apotheke, Sala)`);
+  console.log(`   Bebidas:       ${bebidasOcana.length} en ${bebidasCategoriasOcana.length} categorías (Ocaña)`);
   console.log(
     `   Vinos:         ${vinosPubilla.length} + ${vinosPrincipal.length} + ${vinosCasabella.length} + ${vinosGuixot.length} + ${vinosRoure.length}`
   );

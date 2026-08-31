@@ -1,9 +1,12 @@
 import { idioma } from './documents/idioma';
 import { restaurante } from './documents/restaurante';
+import { espacio } from './documents/espacio';
 import { categoriaVino } from './documents/categoriaVino';
 import { vino } from './documents/vino';
 import { categoriaPlato } from './documents/categoriaPlato';
 import { plato } from './documents/plato';
+import { categoriaBebida } from './documents/categoriaBebida';
+import { bebida } from './documents/bebida';
 import { resena } from './documents/resena';
 import { paginaLegal } from './documents/paginaLegal';
 
@@ -15,15 +18,20 @@ import { paginaLegal } from './documents/paginaLegal';
 export const schemaTypes = [
   // Config global
   idioma,
-  // Por restaurante
+  // Por restaurante (nivel grupo/marca)
   restaurante,
+  paginaLegal,
+  // Por espacio (nivel experiencia: restaurante, café, coctel, club…)
+  espacio,
   categoriaVino,
   vino,
   categoriaPlato,
   plato,
+  categoriaBebida,
+  bebida,
   resena,
-  paginaLegal,
 ];
 
 export * from './constants';
 export * from './lib/validacionI18n';
+export * from './lib/referenciaEspacio';

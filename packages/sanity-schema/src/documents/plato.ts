@@ -1,4 +1,8 @@
 import { defineField, defineType } from 'sanity';
+import {
+  filtroCategoriasDelMismoEspacio,
+  filtroEspaciosDelMismoRestaurante
+} from '../lib/referenciaEspacio';
 
 export const plato = defineType({
   name: 'plato',
@@ -6,10 +10,12 @@ export const plato = defineType({
   type: 'document',
   fields: [
     defineField({
-      name: 'restaurante',
-      title: 'Restaurante',
+      name: 'espacio',
+      title: 'Espacio',
+      description: 'Espacio (Restaurante, Café, Coctelería…) al que pertenece este plato.',
       type: 'reference',
-      to: [{ type: 'restaurante' }],
+      to: [{ type: 'espacio' }],
+      options: filtroEspaciosDelMismoRestaurante(),
       validation: (r) => r.required(),
     }),
     defineField({
@@ -17,6 +23,7 @@ export const plato = defineType({
       title: 'Categoría',
       type: 'reference',
       to: [{ type: 'categoriaPlato' }],
+      options: filtroCategoriasDelMismoEspacio(),
       validation: (r) => r.required(),
     }),
     defineField({

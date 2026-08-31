@@ -20,6 +20,64 @@ export type SanityImg = { asset?: { _ref?: string; _id?: string; url?: string } 
 export type PortableBlock = { _type: string; children?: { text?: string }[] };
 export type I18nPortable = { _key: string; value?: PortableBlock[] }[] | null | undefined;
 
+/**
+ * Un "espacio" es una experiencia concreta dentro de un restaurante/grupo
+ * (Restaurant, Café, Coctelería, Club, Terraza…). Cada restaurante tiene 1+
+ * espacios en `restaurant.espacios[]`. Los campos hero/manifiesto/sobre/
+ * galería/grupos/horarios viven aquí, no en el restaurante.
+ */
+export type Espacio = {
+  _id: string;
+  nombre: string;
+  slug?: { current: string };
+  tipo?: 'restaurant' | 'cafe' | 'coctel' | 'club' | 'terraza' | 'live_music' | 'otro';
+  orden?: number;
+  // Hero
+  heroTitulo?: CampoI18nSanity;
+  heroSubtitulo?: CampoI18nSanity;
+  heroMetaIzq?: CampoI18nSanity;
+  heroMetaDer?: CampoI18nSanity;
+  heroNota?: CampoI18nSanity;
+  heroCta?: CampoI18nSanity;
+  heroImagen?: SanityImg;
+  // Manifiesto
+  manifiestoEyebrow?: CampoI18nSanity;
+  manifiestoTexto?: CampoI18nSanity;
+  // Galería
+  galeria?: SanityImg[];
+  // Horarios
+  horariosTitulo?: CampoI18nSanity;
+  horariosTexto?: CampoI18nSanity;
+  horariosAbierto?: CampoI18nSanity;
+  horariosProximaApertura?: CampoI18nSanity;
+  horariosCerrado?: CampoI18nSanity;
+  horariosSemana?: DayHours[];
+  // Contacto propio del espacio (opcional; fallback al del restaurante)
+  direccion?: {
+    calle?: string;
+    codigoPostal?: string;
+    ciudad?: string;
+    provincia?: string;
+    barrio?: string;
+    pais?: string;
+  };
+  mapaUrl?: string;
+  contactoReserva?: { telefono?: string; whatsapp?: string; email?: string };
+};
+
+/**
+ * Bloque destacado del home. Opcional; el hub renderiza N cards en grid
+ * adaptativo. Si el array está vacío o ausente, la sección no se muestra.
+ */
+export type BloqueHome = {
+  _key?: string;
+  titulo?: CampoI18nSanity;
+  texto?: CampoI18nSanity;
+  imagen?: SanityImg;
+  ctaTexto?: CampoI18nSanity;
+  ctaHref?: string;
+};
+
 export type Restaurant = {
   _id: string;
   nombre: string;
@@ -31,31 +89,19 @@ export type Restaurant = {
   idiomaPorDefecto?: LocaleRef;
   idiomasActivos?: LocaleRef[];
   anyoFundacion?: number;
-  heroTitulo?: CampoI18nSanity;
-  heroSubtitulo?: CampoI18nSanity;
-  heroMetaIzq?: CampoI18nSanity;
-  heroMetaDer?: CampoI18nSanity;
-  heroNota?: CampoI18nSanity;
-  heroCta?: CampoI18nSanity;
-  heroImagen?: SanityImg;
-  manifiestoEyebrow?: CampoI18nSanity;
-  manifiestoTexto?: CampoI18nSanity;
+  espacios?: Espacio[];
+  bloquesHome?: BloqueHome[];
+  // Sobre nosotros (marca — compartido por todos los espacios)
   sobreEyebrow?: CampoI18nSanity;
   sobreTitulo?: CampoI18nSanity;
   sobreCuerpo?: I18nPortable;
   sobreImagenes?: SanityImg[];
-  galeria?: SanityImg[];
+  // Grupos y eventos (compartido)
   gruposEyebrow?: CampoI18nSanity;
   gruposTitulo?: CampoI18nSanity;
   gruposCta?: CampoI18nSanity;
   gruposImagen?: SanityImg;
   gruposDestacados?: Array<{ _key?: string; texto?: CampoI18nSanity }>;
-  horariosTitulo?: CampoI18nSanity;
-  horariosTexto?: CampoI18nSanity;
-  horariosAbierto?: CampoI18nSanity;
-  horariosProximaApertura?: CampoI18nSanity;
-  horariosCerrado?: CampoI18nSanity;
-  horariosSemana?: DayHours[];
   direccion?: {
     calle?: string;
     codigoPostal?: string;
@@ -116,6 +162,17 @@ export type Dish = {
   categoria?: { _id: string; orden?: number; nombre?: CampoI18nSanity };
 };
 
+export type DrinkCategory = { _id: string; nombre?: CampoI18nSanity; orden?: number };
+export type Drink = {
+  _id: string;
+  nombre?: CampoI18nSanity;
+  nota?: CampoI18nSanity;
+  precio?: number;
+  orden?: number;
+  activo?: boolean;
+  categoria?: { _id: string; orden?: number; nombre?: CampoI18nSanity };
+};
+
 export type LegalPageDoc = {
   _id: string;
   tipo: 'aviso-legal' | 'privacidad' | 'cookies';
@@ -125,12 +182,22 @@ export type LegalPageDoc = {
   orden?: number;
 };
 
+/**
+ * Datos completos de un restaurante para una landing.
+ * - `restaurant.espacios[]` está siempre poblado (mín. 1 espacio).
+ * - `wineCategories/wines/dishCategories/dishes` son los del **espacio principal**
+ *   (`restaurant.espacios[0]`), para mantener el flujo simple del caso más
+ *   común (restaurante mono-espacio). Landings multi-espacio consultan por
+ *   espacio con `fetchEspacioMenu(espacioId)`.
+ */
 export type RestaurantData = {
   restaurant: Restaurant;
   wineCategories: WineCategory[];
   wines: Wine[];
   dishCategories: DishCategory[];
   dishes: Dish[];
+  drinkCategories: DrinkCategory[];
+  drinks: Drink[];
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -141,27 +208,39 @@ const RESTAURANT_QUERY = /* groq */ `
   *[_type == "restaurante" && slug.current == $slug][0]{
     ...,
     "idiomaPorDefecto": idiomaPorDefecto->{codigo, nombre},
-    "idiomasActivos": idiomasActivos[]->{codigo, nombre}
+    "idiomasActivos": idiomasActivos[]->{codigo, nombre},
+    "espacios": espacios[]->{ ... } | order(orden asc)
   }
 `;
 
 const WINE_CATEGORIES_QUERY = /* groq */ `
-  *[_type == "categoriaVino" && restaurante._ref == $rid] | order(orden asc)
+  *[_type == "categoriaVino" && espacio._ref == $eid] | order(orden asc)
 `;
 
 const WINES_QUERY = /* groq */ `
-  *[_type == "vino" && restaurante._ref == $rid && activo == true]{
+  *[_type == "vino" && espacio._ref == $eid && activo == true]{
     ...,
     "categoria": categoria->{_id, orden, nombre}
   } | order(categoria->orden asc, orden asc)
 `;
 
 const DISH_CATEGORIES_QUERY = /* groq */ `
-  *[_type == "categoriaPlato" && restaurante._ref == $rid] | order(orden asc)
+  *[_type == "categoriaPlato" && espacio._ref == $eid] | order(orden asc)
 `;
 
 const DISHES_QUERY = /* groq */ `
-  *[_type == "plato" && restaurante._ref == $rid && activo == true]{
+  *[_type == "plato" && espacio._ref == $eid && activo == true]{
+    ...,
+    "categoria": categoria->{_id, orden, nombre}
+  } | order(categoria->orden asc, orden asc)
+`;
+
+const DRINK_CATEGORIES_QUERY = /* groq */ `
+  *[_type == "categoriaBebida" && espacio._ref == $eid] | order(orden asc)
+`;
+
+const DRINKS_QUERY = /* groq */ `
+  *[_type == "bebida" && espacio._ref == $eid && activo == true]{
     ...,
     "categoria": categoria->{_id, orden, nombre}
   } | order(categoria->orden asc, orden asc)
@@ -175,10 +254,66 @@ const LEGAL_PAGES_QUERY = /* groq */ `
 // Factory de fetchers — cada app instancia con su client + slug
 // ─────────────────────────────────────────────────────────────────────────────
 
+export type EspacioMenu = {
+  wineCategories: WineCategory[];
+  wines: Wine[];
+  dishCategories: DishCategory[];
+  dishes: Dish[];
+  drinkCategories: DrinkCategory[];
+  drinks: Drink[];
+};
+
+/**
+ * Datos completos para una landing multi-espacio, para una URL como
+ * `/apotheke`, `/sala`, etc. Contiene el `restaurant` (grupo) con TODOS sus
+ * espacios (para el nav cross-espacio) y el `espacio` concreto seleccionado
+ * junto con su menú (cartas filtradas por ese espacio).
+ */
+export type EspacioData = {
+  restaurant: Restaurant;
+  espacio: Espacio;
+  wineCategories: WineCategory[];
+  wines: Wine[];
+  dishCategories: DishCategory[];
+  dishes: Dish[];
+  drinkCategories: DrinkCategory[];
+  drinks: Drink[];
+};
+
+/** Datos ligeros para el hub del grupo — solo restaurante + lista de espacios, sin cartas. */
+export type GrupoData = {
+  restaurant: Restaurant;
+  espacios: Espacio[];
+};
+
 export type RestaurantQueries = {
   fetchRestaurantData(): Promise<RestaurantData>;
   fetchLegalPages(restaurantId: string): Promise<LegalPageDoc[]>;
+  fetchEspacioMenu(espacioId: string): Promise<EspacioMenu>;
+  /** Trae restaurante + todos sus espacios (sin cartas). Para el hub del grupo. */
+  fetchGrupoData(): Promise<GrupoData>;
+  /**
+   * Trae restaurante + el espacio con `slug.current === espacioSlug` + su menú.
+   * Para landings de espacio en grupos multi-espacio (Ocaña).
+   */
+  fetchEspacioBySlug(espacioSlug: string): Promise<EspacioData>;
 };
+
+async function fetchEspacioMenuFor(
+  client: SanityClient,
+  espacioId: string
+): Promise<EspacioMenu> {
+  const [wineCategories, wines, dishCategories, dishes, drinkCategories, drinks] =
+    await Promise.all([
+      client.fetch<WineCategory[]>(WINE_CATEGORIES_QUERY, { eid: espacioId }),
+      client.fetch<Wine[]>(WINES_QUERY, { eid: espacioId }),
+      client.fetch<DishCategory[]>(DISH_CATEGORIES_QUERY, { eid: espacioId }),
+      client.fetch<Dish[]>(DISHES_QUERY, { eid: espacioId }),
+      client.fetch<DrinkCategory[]>(DRINK_CATEGORIES_QUERY, { eid: espacioId }),
+      client.fetch<Drink[]>(DRINKS_QUERY, { eid: espacioId })
+    ]);
+  return { wineCategories, wines, dishCategories, dishes, drinkCategories, drinks };
+}
 
 export function crearRestaurantQueries(client: SanityClient, slug: string): RestaurantQueries {
   return {
@@ -189,16 +324,55 @@ export function crearRestaurantQueries(client: SanityClient, slug: string): Rest
           `Restaurante '${slug}' no encontrado en Sanity. Crea el doc en el Studio o corre 'pnpm --filter studio run seed'.`
         );
       }
-      const [wineCategories, wines, dishCategories, dishes] = await Promise.all([
-        client.fetch<WineCategory[]>(WINE_CATEGORIES_QUERY, { rid: restaurant._id }),
-        client.fetch<Wine[]>(WINES_QUERY, { rid: restaurant._id }),
-        client.fetch<DishCategory[]>(DISH_CATEGORIES_QUERY, { rid: restaurant._id }),
-        client.fetch<Dish[]>(DISHES_QUERY, { rid: restaurant._id })
-      ]);
-      return { restaurant, wineCategories, wines, dishCategories, dishes };
+      const espacioPrincipal = restaurant.espacios?.[0];
+      if (!espacioPrincipal) {
+        throw new Error(
+          `Restaurante '${slug}' no tiene ningún espacio asociado. Añade al menos un doc 'espacio' con referencia a este restaurante desde el Studio.`
+        );
+      }
+      const menu = await fetchEspacioMenuFor(client, espacioPrincipal._id);
+      return { restaurant, ...menu };
     },
     async fetchLegalPages(restaurantId: string) {
       return client.fetch<LegalPageDoc[]>(LEGAL_PAGES_QUERY, { rid: restaurantId });
+    },
+    async fetchEspacioMenu(espacioId: string) {
+      return fetchEspacioMenuFor(client, espacioId);
+    },
+    async fetchGrupoData() {
+      const restaurant = await client.fetch<Restaurant | null>(RESTAURANT_QUERY, { slug });
+      if (!restaurant) {
+        throw new Error(
+          `Restaurante '${slug}' no encontrado en Sanity. Crea el doc en el Studio o corre 'pnpm --filter studio run seed'.`
+        );
+      }
+      const espacios = restaurant.espacios ?? [];
+      if (espacios.length === 0) {
+        throw new Error(
+          `Restaurante '${slug}' no tiene espacios. Un hub multi-espacio necesita 2+ espacios; el modelo single-espacio usa fetchRestaurantData().`
+        );
+      }
+      return { restaurant, espacios };
+    },
+    async fetchEspacioBySlug(espacioSlug: string) {
+      const restaurant = await client.fetch<Restaurant | null>(RESTAURANT_QUERY, { slug });
+      if (!restaurant) {
+        throw new Error(
+          `Restaurante '${slug}' no encontrado en Sanity.`
+        );
+      }
+      const espacio = restaurant.espacios?.find(e => e.slug?.current === espacioSlug);
+      if (!espacio) {
+        const disponibles = (restaurant.espacios ?? [])
+          .map(e => e.slug?.current)
+          .filter(Boolean)
+          .join(', ');
+        throw new Error(
+          `Espacio '${espacioSlug}' no encontrado en '${slug}'. Disponibles: ${disponibles || '(ninguno)'}`
+        );
+      }
+      const menu = await fetchEspacioMenuFor(client, espacio._id);
+      return { restaurant, espacio, ...menu };
     }
   };
 }

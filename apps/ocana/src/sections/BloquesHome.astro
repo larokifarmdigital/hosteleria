@@ -1,0 +1,172 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import { img } from '../lib/sanity';
+import type { Restaurant } from '../lib/queries';
+
+/**
+ * Bloques destacados del home — layout editorial zig-zag.
+ *
+ * Cada bloque ocupa una fila full-width con split 55/45 imagen+texto,
+ * alternando el lado (imagen izq / imagen der / imagen izq…). En móvil todos
+ * stackean con imagen encima del texto. Numeración romana (I, II, III…) como
+ * decoración editorial, título italic grande, texto respirado, CTA como link
+ * con línea diagonal en hover.
+ *
+ * Cuando el cliente no rellena imagen, el lado "vacío" se sustituye por un
+ * tratamiento tipográfico grande del número romano centrado sobre un panel
+ * de textura sutil — para que el bloque no colapse.
+ */
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+
+if (!restaurant.bloquesHome?.length) return null;
+
+const bloques = restaurant.bloquesHome.map((b, i) => ({
+  key: b._key ?? `bh-${i}`,
+  titulo: t(b.titulo, locale, defaultLocale),
+  texto: t(b.texto, locale, defaultLocale),
+  imagen: img.url(b.imagen),
+  ctaTexto: t(b.ctaTexto, locale, defaultLocale),
+  ctaHref: b.ctaHref,
+  index: i
+}));
+
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI'];
+
+// Copy del "explora" nunca cambia — hint tipográfico.
+const CONECTOR: Record<string, string> = {
+  es: 'Explorar',
+  ca: 'Explorar',
+  en: 'Explore',
+  fr: 'Explorer',
+  it: 'Esplora'
+};
+const explorar = CONECTOR[locale] ?? CONECTOR.es;
+---
+
+<section
+  id='destacados'
+  class='py-[10vh] px-(--gap) max-w-[var(--max)] mx-auto max-[960px]:py-[8vh]'
+>
+  <ul class='flex flex-col gap-[clamp(80px,10vh,140px)] max-[900px]:gap-[clamp(50px,8vh,80px)]'>
+    {bloques.map((b) => {
+      const imagenEnDerecha = b.index % 2 === 1;
+      const roman = ROMAN[b.index] ?? String(b.index + 1);
+      return (
+        <li class='reveal' style={`--d: ${b.index * 0.08}s`}>
+          <article
+            class:list={[
+              'grid gap-[clamp(30px,5vw,80px)] items-center',
+              'grid-cols-[minmax(0,6fr)_minmax(0,5fr)]',
+              'max-[900px]:grid-cols-1 max-[900px]:gap-8'
+            ]}
+          >
+            <!-- MEDIA: imagen o placeholder tipográfico -->
+            <div
+              class:list={[
+                'relative overflow-hidden aspect-[5/4] max-[900px]:aspect-[3/2]',
+                'border border-line bg-bg-2',
+                imagenEnDerecha ? 'max-[900px]:order-1 order-2' : 'order-1'
+              ]}
+            >
+              {b.imagen ? (
+                <>
+                  <img
+                    src={b.imagen}
+                    alt={b.titulo ?? ''}
+                    loading='lazy'
+                    class='w-full h-full object-cover brightness-[0.82] hover:brightness-100 hover:scale-[1.02] transition-[filter,transform] duration-[900ms] ease-out'
+                  />
+                  <div
+                    aria-hidden='true'
+                    class='absolute inset-0 pointer-events-none'
+                    style='background: linear-gradient(180deg, transparent 60%, rgb(14 13 11 / 0.55) 100%);'
+                  ></div>
+                </>
+              ) : (
+                <div
+                  aria-hidden='true'
+                  class='relative w-full h-full flex items-center justify-center'
+                  style='background:
+                    radial-gradient(ellipse at 40% 40%, rgb(201 169 97 / 0.10), transparent 60%),
+                    linear-gradient(135deg, rgb(139 58 38 / 0.14), rgb(14 13 11 / 0.55));'
+                >
+                  <span class='font-serif italic text-accent/30 leading-none' style='font-size: clamp(120px, 18vw, 220px);'>
+                    {roman}
+                  </span>
+                </div>
+              )}
+
+              <!-- Overlay decorativo esquina: número romano pequeño -->
+              {b.imagen && (
+                <span
+                  aria-hidden='true'
+                  class:list={[
+                    'absolute top-5 font-serif italic text-accent/80 leading-none',
+                    'text-[26px] max-[700px]:text-[22px]',
+                    imagenEnDerecha ? 'right-5' : 'left-5'
+                  ]}
+                >
+                  {roman}
+                </span>
+              )}
+            </div>
+
+            <!-- TEXTO -->
+            <div
+              class:list={[
+                'flex flex-col',
+                imagenEnDerecha ? 'max-[900px]:order-2 order-1' : 'order-2'
+              ]}
+            >
+              <!-- Eyebrow con número romano + regla -->
+              <div class='flex items-center gap-3 mb-6 text-accent-alt max-[900px]:mb-4'>
+                <span class='font-serif italic text-accent text-[22px] leading-none'>
+                  {roman}
+                </span>
+                <span class='flex-1 h-px bg-accent-alt/40 max-w-[80px]'></span>
+                <span class='font-sans uppercase text-[10.5px] tracking-[0.32em] text-accent-alt font-semibold'>
+                  {explorar}
+                </span>
+              </div>
+
+              {b.titulo && (
+                <h3 class='font-serif italic font-normal leading-[1.05] tracking-[-0.01em] text-[clamp(32px,4.4vw,54px)] mb-6 max-[900px]:text-[clamp(28px,7vw,42px)] max-[900px]:mb-4'>
+                  {b.titulo}
+                </h3>
+              )}
+
+              {b.texto && (
+                <p class='font-serif italic text-ink-soft text-[clamp(16px,1.55vw,19px)] leading-[1.65] max-w-[52ch] mb-8 max-[900px]:mb-6'>
+                  {b.texto}
+                </p>
+              )}
+
+              {b.ctaTexto && b.ctaHref && (
+                <a
+                  href={b.ctaHref}
+                  {...(b.ctaHref.startsWith('http') ? { target: '_blank', rel: 'noopener' } : {})}
+                  class='group inline-flex items-center gap-3 self-start font-sans uppercase text-[11px] tracking-[0.28em] text-accent hover:text-accent-hover transition-colors cursor-pointer'
+                >
+                  <span class='relative pb-1'>
+                    {b.ctaTexto}
+                    <span
+                      aria-hidden='true'
+                      class='absolute left-0 right-0 -bottom-0.5 h-px bg-current origin-left scale-x-[0.35] group-hover:scale-x-100 transition-transform duration-500 ease-out'
+                    ></span>
+                  </span>
+                  <span aria-hidden='true' class='transition-transform duration-300 group-hover:translate-x-1.5'>→</span>
+                </a>
+              )}
+            </div>
+          </article>
+        </li>
+      );
+    })}
+  </ul>
+</section>

@@ -1,0 +1,648 @@
+---
+import type { GrupoData, LocaleRef, LegalPageDoc } from '../lib/queries';
+import { t, localizedPath } from '@hosteleria/i18n-utils';
+import { buildWhatsAppHref, buildMapsExternalUrl, extractCoords, extractMapSrc } from '@hosteleria/utils';
+import { img } from '../lib/sanity';
+
+import Nav from './Nav.astro';
+import MobileOverlay from './MobileOverlay.astro';
+import WhatsAppFab from '@hosteleria/ui/components/WhatsAppFab.astro';
+import RevealScript from '@hosteleria/ui/components/RevealScript.astro';
+import About from '../sections/About.astro';
+import Groups from '../sections/Groups.astro';
+import BloquesHome from '../sections/BloquesHome.astro';
+import Faq from '../sections/Faq.astro';
+import Map from '../sections/Map.astro';
+
+interface Props extends GrupoData {
+  locale: string;
+  defaultLocale: string;
+  activeLocales: LocaleRef[];
+  legalPages?: LegalPageDoc[];
+}
+
+const {
+  locale,
+  defaultLocale,
+  activeLocales,
+  restaurant,
+  espacios,
+  legalPages = []
+} = Astro.props;
+
+const bookingEmail = restaurant.contacto?.email ?? '';
+const bookingPhone = restaurant.contacto?.telefono ?? '';
+const whatsappRaw = restaurant.contacto?.whatsapp ?? '';
+const waHref = buildWhatsAppHref(whatsappRaw, restaurant.nombre, locale);
+
+const heroTagline = t(restaurant.seoDescripcion, locale, defaultLocale);
+const dir = restaurant.direccion ?? {};
+
+// Labels UI genéricos por locale — chrome del layout, no copy de marca.
+// Los textos específicos (sobre nosotros, grupos, tagline) vienen de Sanity.
+const COPY: Record<string, {
+  discover: string;
+  spaces: string;
+  spacesLead: string;
+  visit: string;
+  contact: string;
+  hoursNote: string;
+  bylineDefault: string;
+  openNow: string;
+  opensAt: string;
+  closedToday: string;
+  scrollHint: string;
+  visitCtaTitle: string;
+  visitCtaAction: string;
+  espaciosCol: string;
+}> = {
+  es: {
+    discover: 'Descubrir',
+    spaces: 'Tres espacios, un edificio',
+    spacesLead: 'Restaurante, coctelería y sala nocturna bajo las mismas bóvedas.',
+    visit: 'Visítanos',
+    contact: 'Contacto',
+    hoursNote: 'Cada espacio guarda su propio horario · consulta el detalle en su página',
+    bylineDefault: 'Restaurante, coctelería y sala en Plaça Reial',
+    openNow: 'Abierto',
+    opensAt: 'Abre hoy a las',
+    closedToday: 'Cerrado hoy',
+    scrollHint: 'Explorar',
+    visitCtaTitle: 'Ven a vernos',
+    visitCtaAction: 'Cómo llegar',
+    espaciosCol: 'Espacios'
+  },
+  ca: {
+    discover: 'Descobrir',
+    spaces: 'Tres espais, un edifici',
+    spacesLead: 'Restaurant, cocteleria i sala nocturna sota les mateixes voltes.',
+    visit: "Visita'ns",
+    contact: 'Contacte',
+    hoursNote: "Cada espai té el seu propi horari · consulta el detall a la seva pàgina",
+    bylineDefault: 'Restaurant, cocteleria i sala a la Plaça Reial',
+    openNow: 'Obert',
+    opensAt: 'Avui obre a les',
+    closedToday: 'Tancat avui',
+    scrollHint: 'Explorar',
+    visitCtaTitle: 'Vine a veure\'ns',
+    visitCtaAction: 'Com arribar',
+    espaciosCol: 'Espais'
+  },
+  en: {
+    discover: 'Discover',
+    spaces: 'Three spaces, one building',
+    spacesLead: 'Restaurant, cocktail bar and night hall under the same vaults.',
+    visit: 'Visit us',
+    contact: 'Contact',
+    hoursNote: 'Each space keeps its own hours · see the detail on its page',
+    bylineDefault: 'Restaurant, cocktail bar and hall on Plaça Reial',
+    openNow: 'Open',
+    opensAt: 'Opens today at',
+    closedToday: 'Closed today',
+    scrollHint: 'Explore',
+    visitCtaTitle: 'Come find us',
+    visitCtaAction: 'Get directions',
+    espaciosCol: 'Spaces'
+  },
+  fr: {
+    discover: 'Découvrir',
+    spaces: 'Trois espaces, un seul bâtiment',
+    spacesLead: 'Restaurant, bar à cocktails et salle de nuit sous les mêmes voûtes.',
+    visit: 'Nous rendre visite',
+    contact: 'Contact',
+    hoursNote: 'Chaque espace a ses propres horaires · consultez le détail sur sa page',
+    bylineDefault: 'Restaurant, bar à cocktails et salle sur la Plaça Reial',
+    openNow: 'Ouvert',
+    opensAt: 'Ouvre aujourd\'hui à',
+    closedToday: 'Fermé aujourd\'hui',
+    scrollHint: 'Explorer',
+    visitCtaTitle: 'Venez nous voir',
+    visitCtaAction: 'Itinéraire',
+    espaciosCol: 'Espaces'
+  },
+  it: {
+    discover: 'Scopri',
+    spaces: 'Tre spazi, un edificio',
+    spacesLead: 'Ristorante, cocktail bar e sala notturna sotto le stesse volte.',
+    visit: 'Vieni a trovarci',
+    contact: 'Contatti',
+    hoursNote: 'Ogni spazio ha i suoi orari · consulta il dettaglio nella sua pagina',
+    bylineDefault: 'Ristorante, cocktail bar e sala in Plaça Reial',
+    openNow: 'Aperto',
+    opensAt: 'Oggi apre alle',
+    closedToday: 'Chiuso oggi',
+    scrollHint: 'Esplora',
+    visitCtaTitle: 'Vieni a trovarci',
+    visitCtaAction: 'Come arrivare',
+    espaciosCol: 'Spazi'
+  }
+};
+const c = COPY[locale] ?? COPY.es;
+
+// Eyebrow del hero derivado de la dirección (evita hardcodear "Plaça Reial · Barcelona").
+// En Ocaña: "Barri Gòtic · Barcelona". En restaurantes sin barrio, cae a solo ciudad.
+const heroEyebrow = [dir.barrio, dir.ciudad].filter(Boolean).join(' · ');
+
+const TYPE_LABEL: Record<string, Record<string, string>> = {
+  es: { restaurant: 'Restaurante', coctel: 'Coctelería', club: 'Sala / Club', cafe: 'Café', terraza: 'Terraza', live_music: 'Música en vivo', otro: 'Espacio' },
+  ca: { restaurant: 'Restaurant', coctel: 'Cocteleria', club: 'Sala / Club', cafe: 'Cafè', terraza: 'Terrassa', live_music: 'Música en viu', otro: 'Espai' },
+  en: { restaurant: 'Restaurant', coctel: 'Cocktail bar', club: 'Hall / Club', cafe: 'Café', terraza: 'Terrace', live_music: 'Live music', otro: 'Space' },
+  fr: { restaurant: 'Restaurant', coctel: 'Bar à cocktails', club: 'Salle / Club', cafe: 'Café', terraza: 'Terrasse', live_music: 'Musique live', otro: 'Espace' },
+  it: { restaurant: 'Ristorante', coctel: 'Cocktail bar', club: 'Sala / Club', cafe: 'Caffè', terraza: 'Terrazza', live_music: 'Musica dal vivo', otro: 'Spazio' }
+};
+const typeLabels = TYPE_LABEL[locale] ?? TYPE_LABEL.es;
+
+// Deriva el estado "hoy" de un espacio a partir de horariosSemana.
+// Devuelve etiqueta compacta con el próximo evento relevante: abierto ahora
+// hasta HH:MM, abre hoy a las HH:MM, o cerrado hoy. Usa la hora actual del
+// server (build time); en producción el rebuild se dispara al publicar así
+// que la info se refresca en cada deploy — suficientemente fresca para un hub.
+const DAY_KEYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+function hmToDecimal(hm: string): number {
+  const [h, m] = hm.split(':').map(Number);
+  return h + (m || 0) / 60;
+}
+function statusHoy(espacio: { horariosSemana?: Array<{ dia: string; turnos?: Array<{ apertura: string; cierre: string }> }> }) {
+  const now = new Date();
+  const dayKey = DAY_KEYS[now.getDay()];
+  const nowDec = now.getHours() + now.getMinutes() / 60;
+  const dia = (espacio.horariosSemana ?? []).find(d => d.dia === dayKey);
+  const turnos = dia?.turnos ?? [];
+  if (turnos.length === 0) return { kind: 'closed' as const, label: c.closedToday, at: '' };
+  for (const tu of turnos) {
+    const open = hmToDecimal(tu.apertura);
+    // El cierre después de medianoche (ej. 02:30) se guarda como valor bajo;
+    // si es menor que apertura, sumamos 24 para comparar bien contra `nowDec`.
+    const closeRaw = hmToDecimal(tu.cierre);
+    const close = closeRaw < open ? closeRaw + 24 : closeRaw;
+    if (nowDec >= open && nowDec < close) {
+      return { kind: 'open' as const, label: c.openNow, at: tu.cierre };
+    }
+    if (nowDec < open) {
+      return { kind: 'later' as const, label: c.opensAt, at: tu.apertura };
+    }
+  }
+  return { kind: 'closed' as const, label: c.closedToday, at: '' };
+}
+
+const espacioCards = espacios.map((esp) => ({
+  slug: esp.slug?.current ?? '',
+  href: localizedPath(`/${esp.slug?.current ?? ''}`, locale, defaultLocale),
+  imageUrl: img.url(esp.heroImagen) ?? img.url(esp.galeria?.[0]),
+  tagline: t(esp.manifiestoTexto, locale, defaultLocale) || t(esp.heroNota, locale, defaultLocale),
+  typeLabel: esp.tipo ? (typeLabels[esp.tipo] ?? esp.tipo) : '',
+  nombre: esp.nombre,
+  status: statusHoy(esp)
+}));
+
+// Imagen atmosférica para el hero: primera disponible entre los espacios.
+const heroBgImage =
+  espacioCards.find(e => e.imageUrl)?.imageUrl ??
+  img.url(espacios[0]?.galeria?.[0]) ??
+  '';
+
+// Layout asimétrico: la primera card ocupa 2 columnas en desktop; el resto
+// caen debajo en una fila de 2. Con 3 espacios este patrón queda editorial.
+const [heroCard, ...restCards] = espacioCards;
+
+// Numeración editorial de las cards
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI'];
+
+const bylineFromCms = t(restaurant.textosFooter?.bylineIzq, locale, defaultLocale);
+const byline = bylineFromCms || c.bylineDefault;
+
+const rutaLegal = (slug: string) => localizedPath(`/legal/${slug}`, locale, defaultLocale);
+
+const mostrarRedes = restaurant.mostrarRedes === true;
+const instagram = mostrarRedes ? (restaurant.redes?.instagram ?? '') : '';
+const instagramHandle = instagram ? '@' + instagram.replace(/\/$/, '').split('/').pop() : '';
+
+// Enlace directo a Google Maps para el CTA "Cómo llegar".
+const rawMapSrc = extractMapSrc(restaurant.mapaUrl);
+const coords = rawMapSrc ? extractCoords(rawMapSrc) : null;
+const fullAddress = [dir.calle, dir.codigoPostal, dir.ciudad, dir.pais]
+  .filter(Boolean)
+  .join(', ');
+const mapsExternalUrl = buildMapsExternalUrl('', coords, fullAddress, locale);
+---
+
+<Nav
+  restaurant={restaurant}
+  espacios={espacios}
+  locale={locale}
+  defaultLocale={defaultLocale}
+  activeLocales={activeLocales}
+/>
+
+<MobileOverlay
+  restaurant={restaurant}
+  espacios={espacios}
+  locale={locale}
+  defaultLocale={defaultLocale}
+  activeLocales={activeLocales}
+  waHref={waHref}
+  whatsappRaw={whatsappRaw}
+  bookingPhone={bookingPhone}
+  bookingEmail={bookingEmail}
+/>
+
+<main id="main">
+  <!-- HERO del grupo: imagen atmosférica de fondo + título gigante + pills
+       de status "hoy" de cada espacio (info accionable arriba del pliegue). -->
+  <section
+    id='top'
+    class='relative min-h-svh flex flex-col items-center justify-center px-(--gap) pt-32 pb-16 text-center overflow-hidden'
+  >
+    {heroBgImage && (
+      <img
+        src={heroBgImage}
+        alt=''
+        aria-hidden='true'
+        class='absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none'
+        style='filter: blur(2px) saturate(0.7);'
+      />
+    )}
+    <div
+      aria-hidden='true'
+      class='absolute inset-0 pointer-events-none'
+      style='background:
+        radial-gradient(ellipse at 50% 35%, rgb(201 169 97 / 0.14), transparent 50%),
+        linear-gradient(180deg, rgb(14 13 11 / 0.55) 0%, rgb(14 13 11 / 0.92) 90%);'
+    ></div>
+
+    {heroEyebrow && (
+      <div class='reveal relative flex items-center gap-4 text-accent-alt mb-8'>
+        <span class='w-16 h-px bg-accent-alt/60'></span>
+        <span class='font-sans uppercase text-[11px] tracking-[0.36em] text-accent-alt font-semibold'>
+          {heroEyebrow}
+        </span>
+        <span class='w-16 h-px bg-accent-alt/60'></span>
+      </div>
+    )}
+
+    <h1
+      class='reveal relative font-serif font-normal leading-[0.9] tracking-[-0.02em] text-[clamp(80px,16vw,220px)] mb-10'
+    >
+      <em class='italic text-accent'>{restaurant.nombre}</em>
+    </h1>
+
+    {heroTagline && (
+      <p class='reveal relative font-serif italic text-ink-soft text-[clamp(17px,1.9vw,22px)] leading-[1.5] max-w-[56ch] mx-auto'>
+        {heroTagline}
+      </p>
+    )}
+
+    <div class='reveal relative mt-10 flex items-center gap-3 font-sans uppercase text-[10.5px] tracking-[0.28em] text-muted'>
+      {restaurant.anyoFundacion && (
+        <>
+          <span>{restaurant.anyoFundacion}</span>
+          <span aria-hidden='true' class='w-1 h-1 rounded-full bg-accent-alt'></span>
+        </>
+      )}
+      <span>{dir.calle}, {dir.ciudad}</span>
+    </div>
+
+    <!-- Pills "hoy" de cada espacio: micro-status con horario en vivo -->
+    <ul class='reveal relative mt-14 flex flex-wrap items-center justify-center gap-3 max-w-[900px]'>
+      {espacioCards.map((e) => (
+        <li>
+          <a
+            href={e.href}
+            class:list={[
+              'group inline-flex items-center gap-2.5 px-4 py-2 border rounded-full cursor-pointer transition-colors',
+              e.status.kind === 'open'
+                ? 'border-accent/50 bg-accent/[0.06] hover:bg-accent/10'
+                : 'border-line hover:border-accent-alt/60 bg-bg-2/40 hover:bg-bg-2'
+            ]}
+          >
+            <span
+              aria-hidden='true'
+              class:list={[
+                'inline-block w-1.5 h-1.5 rounded-full',
+                e.status.kind === 'open'
+                  ? 'bg-accent animate-pulse'
+                  : e.status.kind === 'later' ? 'bg-accent-alt/80' : 'bg-muted/50'
+              ]}
+            ></span>
+            <span class='font-serif italic text-ink text-[13.5px] leading-none'>
+              {e.nombre}
+            </span>
+            <span class='font-sans uppercase text-[10px] tracking-[0.2em] text-ink-soft leading-none'>
+              {e.status.label}{e.status.at && (<> <span class='text-accent'>{e.status.at}</span></>)}
+            </span>
+          </a>
+        </li>
+      ))}
+    </ul>
+
+    <!-- Scroll hint fino: línea vertical con la palabra en vertical -->
+    <a
+      href='#espacios'
+      aria-label={c.scrollHint}
+      class='reveal absolute left-1/2 -translate-x-1/2 bottom-6 flex flex-col items-center gap-3 text-dim hover:text-accent transition-colors cursor-pointer'
+    >
+      <span class='font-sans uppercase text-[9.5px] tracking-[0.32em] rotate-90 origin-center whitespace-nowrap mt-4'>
+        {c.scrollHint}
+      </span>
+      <span
+        aria-hidden='true'
+        class='block w-px h-14 bg-current opacity-40'
+        style='animation: hubDrop 2.2s ease-in-out infinite;'
+      ></span>
+    </a>
+  </section>
+
+  <!-- GRID DE ESPACIOS: layout asimétrico (1 grande + 2 medianas debajo).
+       Cada card muestra número romano, tipo, nombre italic, tagline y el
+       status "hoy". CTA de descubrir con flecha animada al hover. -->
+  <section
+    id='espacios'
+    class='py-[10vh] px-(--gap) max-w-[var(--max)] mx-auto max-[900px]:py-[8vh]'
+  >
+    <div class='reveal text-center mb-[clamp(50px,6vw,80px)]'>
+      <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-accent-alt font-semibold mb-4'>
+        {c.discover}
+      </span>
+      <h2 class='font-serif font-normal leading-[1] tracking-[-0.01em] text-[clamp(38px,5vw,64px)] mb-5'>
+        {c.spaces}
+      </h2>
+      <p class='font-serif italic text-ink-soft text-[clamp(15px,1.5vw,18px)] leading-[1.5] max-w-[52ch] mx-auto'>
+        {c.spacesLead}
+      </p>
+    </div>
+
+    <div class='grid grid-cols-2 gap-[clamp(20px,3vw,40px)] max-[960px]:grid-cols-1 max-[960px]:gap-8'>
+      <!-- Card grande (izquierda): ocupa el alto de las 2 medianas -->
+      {heroCard && (
+        <a
+          href={heroCard.href}
+          class='reveal group relative overflow-hidden bg-bg-2 border border-line hover:border-accent transition-[border-color,transform] duration-500 hover:-translate-y-1 cursor-pointer'
+        >
+          <div class='aspect-[4/5] max-[960px]:aspect-[3/4] overflow-hidden bg-surface relative'>
+            {heroCard.imageUrl ? (
+              <img
+                src={heroCard.imageUrl}
+                alt={heroCard.nombre}
+                loading='lazy'
+                class='w-full h-full object-cover brightness-[0.72] group-hover:brightness-90 group-hover:scale-[1.03] transition-[filter,transform] duration-[900ms] ease-out'
+              />
+            ) : (
+              <div
+                aria-hidden='true'
+                class='w-full h-full'
+                style='background: linear-gradient(135deg, rgb(139 58 38 / 0.28), rgb(14 13 11 / 0.7));'
+              ></div>
+            )}
+            <div
+              aria-hidden='true'
+              class='absolute inset-0'
+              style='background: linear-gradient(180deg, transparent 30%, rgb(14 13 11 / 0.9) 100%);'
+            ></div>
+
+            <span class='absolute top-6 left-6 font-serif italic text-accent/80 text-[42px] leading-none max-[700px]:top-4 max-[700px]:left-4 max-[700px]:text-[32px]' aria-hidden='true'>
+              {ROMAN[0]}
+            </span>
+
+            <div class='absolute bottom-0 left-0 right-0 p-8 max-[700px]:p-5'>
+              <span class='block font-sans uppercase text-[10.5px] tracking-[0.28em] text-accent mb-3'>
+                {heroCard.typeLabel}
+              </span>
+              <h3 class='font-serif italic font-normal text-ink leading-none text-[clamp(40px,5vw,64px)] mb-4'>
+                {heroCard.nombre}
+              </h3>
+              {heroCard.tagline && (
+                <p class='font-serif italic text-ink-soft text-[15.5px] leading-[1.5] max-w-[42ch] mb-5'>
+                  {heroCard.tagline}
+                </p>
+              )}
+              <div class='flex items-center justify-between gap-4 pt-5 border-t border-ink/15'>
+                <span class:list={[
+                  'inline-flex items-center gap-2 font-sans uppercase text-[10.5px] tracking-[0.22em]',
+                  heroCard.status.kind === 'open' ? 'text-accent' : 'text-ink-soft'
+                ]}>
+                  <span
+                    aria-hidden='true'
+                    class:list={[
+                      'w-1.5 h-1.5 rounded-full',
+                      heroCard.status.kind === 'open' ? 'bg-accent animate-pulse' : heroCard.status.kind === 'later' ? 'bg-accent-alt/80' : 'bg-muted/60'
+                    ]}
+                  ></span>
+                  {heroCard.status.label}{heroCard.status.at && (<> · {heroCard.status.at}</>)}
+                </span>
+                <span class='inline-flex items-center gap-2 font-sans uppercase text-[10.5px] tracking-[0.22em] text-accent transition-transform duration-300 group-hover:translate-x-1'>
+                  {c.discover}
+                  <span aria-hidden='true'>→</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </a>
+      )}
+
+      <!-- Columna derecha: 2 cards medianas apiladas -->
+      <div class='grid grid-rows-2 gap-[clamp(20px,3vw,40px)] max-[960px]:grid-rows-none max-[960px]:grid-cols-1'>
+        {restCards.map((card, i) => (
+          <a
+            href={card.href}
+            class='reveal group relative overflow-hidden bg-bg-2 border border-line hover:border-accent transition-[border-color,transform] duration-500 hover:-translate-y-1 cursor-pointer'
+            style={`--d: ${(i + 1) * 0.08}s`}
+          >
+            <div class='aspect-[3/2] max-[960px]:aspect-[3/4] overflow-hidden bg-surface relative h-full'>
+              {card.imageUrl ? (
+                <img
+                  src={card.imageUrl}
+                  alt={card.nombre}
+                  loading='lazy'
+                  class='w-full h-full object-cover brightness-[0.72] group-hover:brightness-90 group-hover:scale-[1.03] transition-[filter,transform] duration-[900ms] ease-out'
+                />
+              ) : (
+                <div
+                  aria-hidden='true'
+                  class='w-full h-full'
+                  style={`background: linear-gradient(135deg, ${i === 0 ? 'rgb(139 58 38 / 0.22)' : 'rgb(201 169 97 / 0.18)'}, rgb(14 13 11 / 0.7));`}
+                ></div>
+              )}
+              <div
+                aria-hidden='true'
+                class='absolute inset-0'
+                style='background: linear-gradient(180deg, transparent 20%, rgb(14 13 11 / 0.92) 100%);'
+              ></div>
+
+              <span class='absolute top-4 left-4 font-serif italic text-accent/70 text-[26px] leading-none' aria-hidden='true'>
+                {ROMAN[i + 1]}
+              </span>
+
+              <div class='absolute bottom-0 left-0 right-0 p-6 max-[700px]:p-5'>
+                <span class='block font-sans uppercase text-[10px] tracking-[0.28em] text-accent mb-2'>
+                  {card.typeLabel}
+                </span>
+                <h3 class='font-serif italic font-normal text-ink leading-none text-[clamp(28px,3.6vw,40px)] mb-3'>
+                  {card.nombre}
+                </h3>
+                <div class='flex items-center justify-between gap-3 pt-3 border-t border-ink/15'>
+                  <span class:list={[
+                    'inline-flex items-center gap-2 font-sans uppercase text-[10px] tracking-[0.22em]',
+                    card.status.kind === 'open' ? 'text-accent' : 'text-ink-soft'
+                  ]}>
+                    <span
+                      aria-hidden='true'
+                      class:list={[
+                        'w-1.5 h-1.5 rounded-full',
+                        card.status.kind === 'open' ? 'bg-accent animate-pulse' : card.status.kind === 'later' ? 'bg-accent-alt/80' : 'bg-muted/60'
+                      ]}
+                    ></span>
+                    {card.status.label}{card.status.at && (<> · {card.status.at}</>)}
+                  </span>
+                  <span class='inline-flex items-center gap-1.5 font-sans uppercase text-[10px] tracking-[0.22em] text-accent transition-transform duration-300 group-hover:translate-x-1'>
+                    →
+                  </span>
+                </div>
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOQUES DESTACADOS: cards cortas editables desde Sanity.
+       Opt-in por contenido: si el cliente no rellena `bloquesHome[]`, la
+       sección se auto-oculta y el hub queda igual que antes. -->
+  <BloquesHome restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
+
+  <!-- SOBRE NOSOTROS: la historia de la marca (editable desde Sanity).
+       La sección compartida reutiliza el mismo componente <About> que las
+       páginas de espacio, así se mantiene consistente y todo lo edita el cliente. -->
+  <About restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
+
+  <!-- GRUPOS Y EVENTOS: política de reservado privado del grupo. -->
+  <Groups restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
+
+  <!-- FAQ del grupo: preguntas frecuentes de marca (dónde estáis, cómo reservar,
+       cuántos espacios hay). Solo vive aquí; no se duplica en cada espacio. -->
+  <Faq restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
+
+  <!-- CTA "VISITANOS": dirección grande + link Maps + contactos rápidos.
+       Cierre limpio antes del mapa; sin subtítulos específicos de ubicación
+       para que sirva a cualquier grupo. -->
+  <section class='py-[14vh] px-(--gap) max-w-[var(--max)] mx-auto text-center max-[960px]:py-[10vh]'>
+    <div class='reveal'>
+      <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-accent-alt font-semibold mb-5'>
+        {c.visit}
+      </span>
+      <h2 class='font-serif font-normal leading-[1.05] tracking-[-0.01em] text-[clamp(38px,5.5vw,72px)] mb-10'>
+        <em class='italic text-accent'>{c.visitCtaTitle}</em>
+      </h2>
+      <address class='not-italic font-serif text-ink text-[clamp(22px,2.6vw,32px)] leading-[1.4] mb-10'>
+        {dir.calle}<br />
+        <span class='text-ink-soft'>{dir.codigoPostal} {dir.ciudad}</span>
+      </address>
+      <div class='flex flex-wrap items-center justify-center gap-x-8 gap-y-4'>
+        {mapsExternalUrl && (
+          <a
+            href={mapsExternalUrl}
+            target='_blank'
+            rel='noopener'
+            class='inline-flex items-center gap-3 px-6 py-3 border border-accent text-accent uppercase text-[11px] tracking-[0.28em] font-sans hover:bg-accent hover:text-bg transition-colors cursor-pointer'
+          >
+            {c.visitCtaAction}
+            <span aria-hidden='true'>→</span>
+          </a>
+        )}
+        {bookingPhone && (
+          <a
+            href={`tel:${bookingPhone}`}
+            class='inline-flex items-center gap-3 font-serif italic text-ink-soft text-[17px] hover:text-accent transition-colors cursor-pointer'
+          >
+            {bookingPhone}
+          </a>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <Map restaurant={restaurant} locale={locale} />
+</main>
+
+<!--
+  Footer del hub: 3 columnas (Espacios / Visita / Contacto) + byline + legales.
+  Sin columna de horarios general — cada espacio tiene el suyo en su página.
+-->
+<footer class='pt-[12vh] pb-8 px-(--gap) border-t border-line bg-surface [&_a]:cursor-pointer max-[960px]:py-[8vh] max-[960px]:pb-8'>
+  <div class='mx-auto max-w-[var(--max)] grid grid-cols-3 gap-[clamp(40px,6vw,80px)] mb-14 max-[900px]:grid-cols-1 max-[900px]:gap-10 max-[900px]:mb-10'>
+    <div>
+      <h4 class='uppercase text-accent font-medium text-[11px] tracking-[0.32em] mb-5'>{c.espaciosCol}</h4>
+      <ul class='space-y-3'>
+        {espacioCards.map((e) => (
+          <li>
+            <a
+              href={e.href}
+              class='group inline-flex items-baseline gap-3 text-ink-soft hover:text-accent transition-colors'
+            >
+              <span class='font-serif italic text-[16px]'>{e.nombre}</span>
+              <span class='font-sans uppercase text-[10px] tracking-[0.24em] text-dim'>{e.typeLabel}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+    <div>
+      <h4 class='uppercase text-accent font-medium text-[11px] tracking-[0.32em] mb-5'>{c.visit}</h4>
+      <p class='text-ink-soft text-[15px] leading-[1.9]'>
+        {dir.calle}<br />
+        {dir.codigoPostal} {dir.ciudad}<br />
+        {dir.barrio && (<>{dir.barrio}<br /></>)}
+      </p>
+      <p class='mt-4 text-dim text-[13px] italic'>{c.hoursNote}</p>
+    </div>
+    <div>
+      <h4 class='uppercase text-accent font-medium text-[11px] tracking-[0.32em] mb-5'>{c.contact}</h4>
+      {bookingPhone && (
+        <p><a href={`tel:${bookingPhone}`} class='text-ink-soft text-[15px] leading-[1.9] hover:text-accent transition-colors'>{bookingPhone}</a></p>
+      )}
+      {bookingEmail && (
+        <p><a href={`mailto:${bookingEmail}`} class='text-ink-soft text-[15px] leading-[1.9] hover:text-accent transition-colors'>{bookingEmail}</a></p>
+      )}
+      {waHref && (
+        <p><a href={waHref} target='_blank' rel='noopener' class='text-ink-soft text-[15px] leading-[1.9] hover:text-accent transition-colors'>WhatsApp · {whatsappRaw}</a></p>
+      )}
+    </div>
+  </div>
+
+  {byline && (
+    <p class='mx-auto max-w-[var(--max)] font-serif italic text-muted text-[15px] mb-8 max-[700px]:text-[14px]'>{byline}</p>
+  )}
+
+  <div class='mx-auto max-w-[var(--max)] border-t border-line pt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 text-dim text-xs tracking-[0.04em] max-[700px]:flex-col max-[700px]:items-start'>
+    {legalPages.length > 0 && (
+      <div class='flex flex-wrap items-center gap-x-3 gap-y-2'>
+        {legalPages.map((p, i) => (
+          <>
+            {i > 0 && <span class='opacity-40'>·</span>}
+            <a href={rutaLegal(p.tipo)} class='hover:text-accent transition-colors'>
+              {t(p.titulo, locale, defaultLocale)}
+            </a>
+          </>
+        ))}
+      </div>
+    )}
+    <div class='flex items-center gap-6 max-[700px]:gap-4'>
+      {instagramHandle && (
+        <a href={instagram} target='_blank' rel='noopener' class='hover:text-accent transition-colors'>
+          {instagramHandle}
+        </a>
+      )}
+      <span>© {new Date().getFullYear()} {restaurant.nombre}</span>
+    </div>
+  </div>
+</footer>
+
+<WhatsAppFab href={waHref} locale={locale} />
+<RevealScript />
+
+<style>
+  @keyframes hubDrop {
+    0%, 100% { transform: scaleY(0.4); transform-origin: top; opacity: .3; }
+    50% { transform: scaleY(1); opacity: .8; }
+  }
+</style>

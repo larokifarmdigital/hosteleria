@@ -1,0 +1,153 @@
+---
+import type { EspacioData, Espacio, LocaleRef, LegalPageDoc } from '../lib/queries';
+import { buildWhatsAppHref } from '@hosteleria/utils';
+
+import Nav from './Nav.astro';
+import MobileOverlay from './MobileOverlay.astro';
+import EspacioSwitcher from './EspacioSwitcher.astro';
+import Footer from '@hosteleria/ui/components/Footer.astro';
+import WhatsAppFab from '@hosteleria/ui/components/WhatsAppFab.astro';
+import RevealScript from '@hosteleria/ui/components/RevealScript.astro';
+
+import Hero from '../sections/Hero.astro';
+import Manifesto from '../sections/Manifesto.astro';
+import Dishes from '../sections/Dishes.astro';
+import Drinks from '../sections/Drinks.astro';
+import Wines from '../sections/Wines.astro';
+import Gallery from '../sections/Gallery.astro';
+import Booking from '../sections/Booking.astro';
+import Map from '../sections/Map.astro';
+
+interface Props extends EspacioData {
+  /** Todos los espacios del grupo (para nav / switcher). */
+  espacios: Espacio[];
+  locale: string;
+  defaultLocale: string;
+  activeLocales: LocaleRef[];
+  legalPages?: LegalPageDoc[];
+}
+
+const {
+  locale,
+  defaultLocale,
+  activeLocales,
+  restaurant,
+  espacio,
+  espacios,
+  wineCategories,
+  wines,
+  dishCategories,
+  dishes,
+  drinkCategories,
+  drinks,
+  legalPages = []
+} = Astro.props;
+
+const bookingEmail = restaurant.contacto?.email ?? '';
+const bookingPhone = restaurant.contacto?.telefono ?? '';
+const whatsappRaw = restaurant.contacto?.whatsapp ?? '';
+const waHref = buildWhatsAppHref(whatsappRaw, restaurant.nombre, locale);
+
+// Footer (compartido en @hosteleria/ui) lee `horariosSemana` y los strings
+// horariosAbierto/Cerrado/Proxima desde `restaurant`. En Ocaña esos datos
+// viven POR ESPACIO, así que le pasamos un restaurant "aumentado" con los
+// horarios del espacio actual — así cada landing muestra su propio horario
+// en el footer sin tocar el paquete compartido.
+const restaurantForFooter = {
+  ...restaurant,
+  horariosSemana: espacio.horariosSemana,
+  horariosAbierto: espacio.horariosAbierto,
+  horariosProximaApertura: espacio.horariosProximaApertura,
+  horariosCerrado: espacio.horariosCerrado
+} as typeof restaurant & Partial<Espacio>;
+
+const currentSlug = espacio.slug?.current ?? '';
+---
+
+<Nav
+  restaurant={restaurant}
+  espacios={espacios}
+  locale={locale}
+  defaultLocale={defaultLocale}
+  activeLocales={activeLocales}
+  langSwitcherPath={`/${currentSlug}`}
+/>
+
+<MobileOverlay
+  restaurant={restaurant}
+  espacios={espacios}
+  locale={locale}
+  defaultLocale={defaultLocale}
+  activeLocales={activeLocales}
+  waHref={waHref}
+  whatsappRaw={whatsappRaw}
+  bookingPhone={bookingPhone}
+  bookingEmail={bookingEmail}
+  langSwitcherPath={`/${currentSlug}`}
+  currentEspacioSlug={currentSlug}
+/>
+
+<EspacioSwitcher
+  restaurant={restaurant}
+  espacios={espacios}
+  currentEspacioSlug={currentSlug}
+  locale={locale}
+  defaultLocale={defaultLocale}
+/>
+
+<!--
+  En landings de espacio solo va lo específico del espacio: Hero, Manifesto,
+  su carta (Dishes/Wines), Gallery, Booking y Map. Las secciones de MARCA
+  (Sobre nosotros, Grupos y eventos, FAQ) viven una sola vez en el hub —
+  duplicarlas en cada espacio es ruido.
+-->
+<main id="main">
+  <Hero restaurant={restaurant} espacio={espacio} locale={locale} defaultLocale={defaultLocale} />
+  <Manifesto restaurant={restaurant} espacio={espacio} locale={locale} defaultLocale={defaultLocale} />
+  <Dishes
+    restaurant={restaurant}
+    dishCategories={dishCategories}
+    dishes={dishes}
+    locale={locale}
+    defaultLocale={defaultLocale}
+  />
+  <Drinks
+    restaurant={restaurant}
+    drinkCategories={drinkCategories}
+    drinks={drinks}
+    locale={locale}
+    defaultLocale={defaultLocale}
+  />
+  <Wines
+    restaurant={restaurant}
+    wineCategories={wineCategories}
+    wines={wines}
+    locale={locale}
+    defaultLocale={defaultLocale}
+  />
+  <Gallery restaurant={restaurant} espacio={espacio} locale={locale} defaultLocale={defaultLocale} />
+  <Booking
+    restaurant={restaurant}
+    espacio={espacio}
+    locale={locale}
+    defaultLocale={defaultLocale}
+    bookingEmail={bookingEmail}
+  />
+  <Map restaurant={restaurant} locale={locale} />
+</main>
+
+<Footer
+  restaurant={restaurantForFooter}
+  locale={locale}
+  defaultLocale={defaultLocale}
+  legalPages={legalPages}
+  waHref={waHref}
+  whatsappRaw={whatsappRaw}
+  bookingPhone={bookingPhone}
+  bookingEmail={bookingEmail}
+  showCta={false}
+/>
+
+<WhatsAppFab href={waHref} locale={locale} />
+
+<RevealScript />

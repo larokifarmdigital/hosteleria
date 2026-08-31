@@ -1,0 +1,78 @@
+---
+import { localizedPath } from '@hosteleria/i18n-utils';
+import type { Espacio, Restaurant } from '../lib/queries';
+
+/**
+ * Barra secundaria bajo el <Nav> en cada landing de espacio. Muestra los 3
+ * espacios como chips (con el actual marcado) y un link "← Ocaña" al hub.
+ *
+ * En el hub no se renderiza (el grid de espacios de la home ya cumple esa
+ * función). Solo aparece dentro de <EspacioPage>.
+ */
+interface Props {
+  /** Reservado para futuras variantes (branding); no se usa aún, mantenido por consistencia con el resto de la app. */
+  restaurant?: Restaurant;
+  espacios: Espacio[];
+  currentEspacioSlug: string;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { espacios, currentEspacioSlug, locale, defaultLocale } = Astro.props;
+
+// El "← Ocaña" es el mismo en cualquier idioma (nombre propio); no lo tocamos.
+const BACK = '← Ocaña';
+const ALL_SPACES: Record<string, string> = {
+  es: 'Los espacios',
+  ca: 'Els espais',
+  en: 'The spaces',
+  fr: 'Les espaces',
+  it: 'Gli spazi'
+};
+
+const backLabel = BACK;
+const allLabel = ALL_SPACES[locale] ?? ALL_SPACES.es;
+
+const homePath = localizedPath('/', locale, defaultLocale);
+---
+
+<section
+  aria-label={allLabel}
+  class='sticky top-[64px] z-40 border-y border-line bg-[rgb(14_13_11/0.85)] backdrop-blur-[12px] backdrop-saturate-[140%] px-(--gap) py-3'
+>
+  <div class='mx-auto max-w-[var(--max)] flex items-center justify-between gap-4 max-[600px]:flex-col max-[600px]:items-start max-[600px]:gap-2'>
+    <a
+      href={homePath}
+      class='font-sans uppercase text-[10.5px] tracking-[0.28em] text-muted transition-colors duration-300 hover:text-accent whitespace-nowrap cursor-pointer'
+    >
+      {backLabel}
+    </a>
+
+    <ul class='flex items-center gap-1 flex-wrap font-sans font-medium uppercase text-[11px] tracking-[0.22em]'>
+      {
+        espacios.map((esp) => {
+          const slug = esp.slug?.current ?? '';
+          const isCurrent = slug === currentEspacioSlug;
+          const href = localizedPath(`/${slug}`, locale, defaultLocale);
+          const displayName = esp.nombre;
+          return (
+            <li>
+              <a
+                href={isCurrent ? '#' : href}
+                aria-current={isCurrent ? 'page' : undefined}
+                class:list={[
+                  'inline-block px-3 py-1.5 border transition-[color,border-color,background-color] duration-300',
+                  isCurrent
+                    ? 'border-accent text-accent pointer-events-none'
+                    : 'border-line text-muted hover:text-ink hover:border-line-strong cursor-pointer'
+                ]}
+              >
+                {displayName}
+              </a>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </div>
+</section>

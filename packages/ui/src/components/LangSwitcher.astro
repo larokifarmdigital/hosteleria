@@ -1,0 +1,158 @@
+---
+import type { LocaleRef } from '@hosteleria/sanity-client';
+import { localizedPath } from '@hosteleria/i18n-utils';
+import IconChevronDown from '../icons/IconChevronDown.astro';
+
+/**
+ * Selector de idioma tipo dropdown, escala a N idiomas (probado hasta 6).
+ *
+ * Reemplaza el patrón viejo "ES · CA · EN" en línea, que solo aguanta bien
+ * hasta 3 códigos. Al crecer el catálogo (ES/CA/EN/FR/IT/…), los códigos
+ * en línea se ven ruidosos y en móvil rompen el layout.
+ *
+ * Implementación: `<details>` nativo — accesible, sin JS necesario para abrir
+ * ni cerrar por teclado. Un script ligero solo cierra al click fuera y al
+ * navegar, cosas que el elemento nativo no cubre.
+ *
+ * Estética: minimalista, hereda `--color-*` de la app padre para respetar
+ * la paleta de cada restaurante sin acoplarse a ninguna.
+ */
+interface Props {
+  activeLocales: LocaleRef[];
+  locale: string;
+  defaultLocale: string;
+  /** Path base al que apunta cada opción (misma URL cambiando de locale). Default '/'. */
+  path?: string;
+  /** Tamaño y padding. Desktop = compacto para nav; mobile = un pelín más grande. */
+  variant?: 'desktop' | 'mobile';
+  /**
+   * Alineación del panel desplegable respecto al trigger. Útil para pegarlo
+   * a la derecha del nav (default 'right') o alinearlo a la izquierda del
+   * trigger en overlays móvil.
+   */
+  align?: 'left' | 'right';
+}
+
+const {
+  activeLocales,
+  locale,
+  defaultLocale,
+  path = '/',
+  variant = 'desktop',
+  align = 'right'
+} = Astro.props;
+
+if (activeLocales.length <= 1) return null;
+
+const current = activeLocales.find(l => l.codigo === locale) ?? activeLocales[0];
+
+// Label del "botón" i18n para lectores de pantalla.
+const LABEL: Record<string, string> = {
+  es: 'Cambiar idioma',
+  ca: 'Canviar d\'idioma',
+  en: 'Change language',
+  fr: 'Changer de langue',
+  it: 'Cambia lingua',
+  pt: 'Mudar idioma',
+  de: 'Sprache ändern'
+};
+const a11yLabel = LABEL[locale] ?? LABEL.en;
+
+const triggerSize = variant === 'desktop' ? 'text-[10.5px]' : 'text-[11px]';
+const triggerPad = variant === 'desktop' ? 'py-1.5 px-2.5' : 'py-2 px-3';
+---
+
+<details
+  class:list={[
+    'lang-switcher relative inline-block',
+    variant === 'desktop' ? 'text-dim' : 'text-ink-soft'
+  ]}
+>
+  <summary
+    aria-label={a11yLabel}
+    class:list={[
+      'flex items-center gap-2 border border-line font-sans font-medium uppercase tracking-[0.22em] cursor-pointer',
+      'transition-[color,border-color,background-color] duration-300',
+      'hover:text-ink hover:border-line-strong',
+      'list-none [&::-webkit-details-marker]:hidden',
+      triggerSize,
+      triggerPad
+    ]}
+  >
+    <span aria-hidden='true' class='inline-block w-3.5 h-3.5 opacity-70'>
+      <!-- Globo minimalista SVG inline (evita nuevo icon file) -->
+      <svg viewBox='0 0 20 20' fill='none' stroke='currentColor' stroke-width='1.5'>
+        <circle cx='10' cy='10' r='7.5'/>
+        <ellipse cx='10' cy='10' rx='3.5' ry='7.5'/>
+        <line x1='2.5' y1='10' x2='17.5' y2='10'/>
+      </svg>
+    </span>
+    <span class='font-semibold text-current'>{current.codigo.toUpperCase()}</span>
+    <span aria-hidden='true' class='chev inline-block w-2.5 h-2.5 -mr-0.5 opacity-70 transition-transform duration-300'>
+      <IconChevronDown />
+    </span>
+  </summary>
+
+  <ul
+    role='menu'
+    class:list={[
+      'lang-panel absolute z-[60] mt-2 min-w-[180px] py-1.5',
+      'bg-bg-2 border border-line-strong shadow-[0_20px_50px_-20px_rgb(0_0_0/0.6)]',
+      'font-sans normal-case tracking-normal',
+      align === 'right' ? 'right-0' : 'left-0'
+    ]}
+  >
+    {activeLocales.map(l => (
+      <li role='none'>
+        <a
+          role='menuitem'
+          href={l.codigo === locale ? '#' : localizedPath(path, l.codigo, defaultLocale)}
+          aria-current={l.codigo === locale ? 'true' : undefined}
+          class:list={[
+            'flex items-center gap-3 py-2 px-3.5 text-[13px] cursor-pointer',
+            'transition-colors duration-200',
+            l.codigo === locale
+              ? 'text-accent'
+              : 'text-ink-soft hover:text-accent hover:bg-surface'
+          ]}
+        >
+          <span
+            aria-hidden='true'
+            class:list={[
+              'w-1.5 h-1.5 rounded-full shrink-0',
+              l.codigo === locale ? 'bg-accent' : 'bg-transparent border border-line-strong'
+            ]}
+          ></span>
+          <span class='font-medium uppercase tracking-[0.18em] text-[10.5px] w-6 shrink-0'>
+            {l.codigo.toUpperCase()}
+          </span>
+          <span class='font-serif italic text-[14px]'>{l.nombre}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</details>
+
+<style>
+  details.lang-switcher[open] .chev {
+    transform: rotate(180deg);
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    // Cierra cualquier lang-switcher abierto al click fuera o al presionar Escape.
+    const closeAll = () => {
+      document.querySelectorAll('details.lang-switcher[open]').forEach(d => d.removeAttribute('open'));
+    };
+    document.addEventListener('click', (e) => {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      if (target.closest('details.lang-switcher')) return;
+      closeAll();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeAll();
+    });
+  })();
+</script>

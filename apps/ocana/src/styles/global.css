@@ -1,0 +1,115 @@
+/* Self-hosted fonts (privacy/perf: no request a Google Fonts) */
+@import "@fontsource-variable/newsreader";
+@import "@fontsource-variable/karla";
+
+@import "tailwindcss";
+
+/* Escanea también los packages del workspace (Tailwind v4 excluye node_modules
+   por defecto; los @hosteleria/* están linkeados ahí como symlinks). */
+@source "../../../../packages/ui/src/**/*.{astro,ts}";
+@source "../../../../packages/booking-form/src/**/*.ts";
+
+/* ═════════════════════════════════════════════════════════════════ DESIGN TOKENS
+   Ocaña — grupo hostelero en Plaça Reial (Barri Gòtic, Barcelona).
+   Salón bajo bóvedas de ladrillo original: dorado envejecido, penumbra
+   cálida y terracota. Tono nocturno / lujoso / editorial oscuro, muy
+   distinto del resto de apps del monorepo (pubilla cream+cobalto,
+   casabella cream+ocre, guixot cream+navy, la-principal cream+bordó,
+   roure cream+verde). Es la única app oscura y multi-espacio.
+*/
+@theme {
+  --color-bg: #0e0d0b;            /* negro carbón */
+  --color-bg-2: #17130e;          /* marrón muy oscuro */
+  --color-surface: #1c1712;
+  --color-ink: #e8e2d5;           /* crema tenue (fg principal) */
+  --color-ink-soft: #cfc7b6;
+  --color-muted: #a89f8f;
+  --color-dim: #7a7264;
+  --color-line: rgb(232 226 213 / 0.12);
+  --color-line-strong: rgb(232 226 213 / 0.28);
+
+  /* Accent principal: dorado envejecido (evoca la barra de Apotheke y los
+     marcos dorados del salón) */
+  --color-accent: #c9a961;
+  --color-accent-hover: #d8bd7f;
+  /* Accent secundario: terracota / ladrillo (evoca las bóvedas) */
+  --color-accent-alt: #8b3a26;
+
+  /* WhatsApp FAB outline (marca-específico) */
+  --wa-outline: rgb(201 169 97 / 0.35);
+  --wa-outline-hover: rgb(201 169 97 / 0.55);
+
+  --font-serif: 'Newsreader Variable', 'Newsreader', 'Cormorant Garamond', serif;
+  --font-sans: 'Karla Variable', 'Karla', system-ui, sans-serif;
+
+  /* Keyframes registrados en @theme para animate-[name_...] utility */
+  --animate-heroScrollFade: heroScrollFade 1s ease 1.4s forwards;
+  --animate-heroScrollLine: heroScrollLine 2.2s ease-in-out infinite;
+}
+
+/* Tokens no-Tailwind (medidas globales) */
+:root {
+  --gap: clamp(24px, 5vw, 80px);
+  --max: 1440px;
+}
+
+/* ═════════════════════════════════════════════════════════════════ BASE */
+@layer base {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    min-width: 375px;
+
+    /* Textura sutil de "bóveda de ladrillo": dos radiales tenues en terracota
+       + un vignette dorado, para evitar que el negro plano se sienta digital.
+       Sin overlay = fondo aburrido; con overlay = salón. */
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgb(139 58 38 / 0.10), transparent 55%),
+      radial-gradient(ellipse at 80% 100%, rgb(201 169 97 / 0.06), transparent 60%);
+    background-attachment: fixed;
+  }
+  body.overlay-open { overflow: hidden; }
+
+  ::selection { background: var(--color-accent); color: var(--color-bg); }
+
+  img { max-width: 100%; height: auto; display: block; }
+  a { color: inherit; text-decoration: none; }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════ KEYFRAMES */
+@keyframes heroScrollFade { to { opacity: 1; } }
+@keyframes heroScrollLine {
+  0%   { transform: scaleY(0.4); transform-origin: top; }
+  50%  { transform: scaleY(1); transform-origin: top; }
+  50.01% { transform-origin: bottom; }
+  100% { transform: scaleY(0); transform-origin: bottom; }
+}
+
+/* ═════════════════════════════════════════════════════════════════ REVEAL */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity .9s cubic-bezier(.16,.6,.2,1), transform .9s cubic-bezier(.16,.6,.2,1);
+}
+.reveal.in { opacity: 1; transform: none; }
+
+/* ═════════════════════════════════════════════════════════════════ REDUCED MOTION */
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  * { animation: none !important; transition-duration: 0.01ms !important; }
+}

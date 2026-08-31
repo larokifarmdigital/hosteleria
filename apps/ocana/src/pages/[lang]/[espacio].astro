@@ -1,0 +1,180 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import EspacioPage from '../../components/EspacioPage.astro';
+import { fetchGrupoData, fetchEspacioBySlug, fetchLegalPages } from '../../lib/queries';
+import type { EspacioData, Espacio } from '../../lib/queries';
+import { img } from '../../lib/sanity';
+import { t, resolveActiveLocales, localizedPath } from '@hosteleria/i18n-utils';
+import { buildFaqJsonLd } from '@hosteleria/seo';
+
+interface RouteProps {
+  data: EspacioData;
+  espacios: Espacio[];
+  defaultLocale: string;
+}
+
+/**
+ * Cross-product locales × espacios. Con 2 idiomas alternativos (es, en) y 3
+ * espacios (restaurant, apotheke, sala) → 6 páginas prerender.
+ */
+export async function getStaticPaths() {
+  const grupo = await fetchGrupoData();
+  const defaultLocale = grupo.restaurant.idiomaPorDefecto?.codigo ?? 'ca';
+  const activeLocales = grupo.restaurant.idiomasActivos ?? [];
+  const otherLocales = resolveActiveLocales(
+    defaultLocale,
+    activeLocales.map((l) => l.codigo),
+  ).filter((code) => code !== defaultLocale);
+
+  const perEspacio = await Promise.all(
+    grupo.espacios.map(async (esp) => {
+      const slug = esp.slug?.current;
+      if (!slug) return null;
+      const data = await fetchEspacioBySlug(slug);
+      return { slug, data };
+    })
+  );
+
+  const routes: Array<{ params: { lang: string; espacio: string }; props: RouteProps }> = [];
+  for (const lang of otherLocales) {
+    for (const item of perEspacio) {
+      if (!item) continue;
+      routes.push({
+        params: { lang, espacio: item.slug },
+        props: { data: item.data, espacios: grupo.espacios, defaultLocale }
+      });
+    }
+  }
+  return routes;
+}
+
+const { data, espacios, defaultLocale } = Astro.props as RouteProps;
+const { lang } = Astro.params;
+const locale = lang!;
+const { restaurant, espacio } = data;
+
+const legalPages = await fetchLegalPages(restaurant._id);
+const activeLocales = restaurant.idiomasActivos?.length
+  ? restaurant.idiomasActivos
+  : [{ codigo: defaultLocale, nombre: defaultLocale }];
+
+const slug = espacio.slug!.current;
+const siteUrl = restaurant.dominio ?? 'https://ocana.vercel.app';
+const canonical = `${siteUrl}${localizedPath(`/${slug}`, locale, defaultLocale)}`;
+
+const hreflangs = resolveActiveLocales(
+  defaultLocale,
+  activeLocales.map((l) => l.codigo),
+).map((l) => ({
+  locale: l,
+  url: `${siteUrl}${localizedPath(`/${slug}`, l, defaultLocale)}`,
+}));
+
+const nombreEspacio = espacio.nombre;
+const dir = restaurant.direccion ?? {};
+const ciudad = dir.ciudad ?? '';
+const seoTitle = `${nombreEspacio} · ${restaurant.nombre}${ciudad ? ` — ${ciudad}` : ''}`;
+const seoDescription =
+  t(espacio.manifiestoTexto, locale, defaultLocale) ||
+  t(espacio.heroNota, locale, defaultLocale) ||
+  t(restaurant.seoDescripcion, locale, defaultLocale) ||
+  '';
+const ogImage = img.url(espacio.heroImagen) ?? img.url(restaurant.seoImagen);
+const faviconUrl = img.url(restaurant.favicon);
+const appleTouchIconUrl = img.pngSquare(restaurant.iconoApp, 180);
+
+const DIA_SCHEMA: Record<string, string> = {
+  Su: 'Sunday', Mo: 'Monday', Tu: 'Tuesday', We: 'Wednesday',
+  Th: 'Thursday', Fr: 'Friday', Sa: 'Saturday'
+};
+const openingHours = (espacio.horariosSemana ?? []).flatMap((d) => {
+  const dayName = DIA_SCHEMA[d.dia];
+  if (!dayName || !d.turnos?.length) return [];
+  return d.turnos.map((tu) => ({
+    '@type': 'OpeningHoursSpecification',
+    dayOfWeek: dayName,
+    opens: tu.apertura,
+    closes: tu.cierre === '24:00' ? '23:59' : tu.cierre
+  }));
+});
+
+const TYPE_MAP: Record<string, string> = {
+  restaurant: 'Restaurant',
+  coctel: 'BarOrPub',
+  club: 'NightClub',
+  cafe: 'CafeOrCoffeeShop',
+  terraza: 'Restaurant',
+  live_music: 'NightClub',
+  otro: 'LocalBusiness'
+};
+const schemaType = TYPE_MAP[espacio.tipo ?? 'otro'] ?? 'LocalBusiness';
+
+const contacto = restaurant.contacto ?? {};
+const sameAs = restaurant.mostrarRedes
+  ? [restaurant.redes?.instagram, restaurant.redes?.facebook, restaurant.redes?.tiktok].filter(Boolean)
+  : [];
+
+const priceRange = restaurant.precioMedio
+  ? '€'.repeat(Math.max(1, Math.min(4, Math.ceil(restaurant.precioMedio / 20))))
+  : undefined;
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': schemaType,
+    '@id': `${canonical}#place`,
+    name: `${restaurant.nombre} ${nombreEspacio}`,
+    description: seoDescription,
+    url: canonical,
+    ...(ogImage && { image: ogImage }),
+    ...(priceRange && espacio.tipo === 'restaurant' && { priceRange }),
+    ...(espacio.tipo === 'restaurant' && restaurant.aceptaReservas != null && {
+      acceptsReservations: restaurant.aceptaReservas
+    }),
+    ...(espacio.tipo === 'restaurant' && {
+      servesCuisine: ['Mediterránea', 'Catalana', 'Contemporánea']
+    }),
+    address: {
+      '@type': 'PostalAddress',
+      ...(dir.calle && { streetAddress: dir.calle }),
+      ...(dir.ciudad && { addressLocality: dir.ciudad }),
+      ...(dir.provincia && { addressRegion: dir.provincia }),
+      ...(dir.codigoPostal && { postalCode: dir.codigoPostal }),
+      ...(dir.pais && { addressCountry: dir.pais })
+    },
+    ...(contacto.telefono && { telephone: contacto.telefono }),
+    ...(contacto.email && { email: contacto.email }),
+    ...(openingHours.length && { openingHoursSpecification: openingHours }),
+    ...(sameAs.length && { sameAs }),
+    ...(restaurant.mapaUrl && { hasMap: restaurant.mapaUrl }),
+    parentOrganization: {
+      '@type': 'Organization',
+      name: restaurant.nombre,
+      url: `${siteUrl}${localizedPath('/', locale, defaultLocale)}`
+    }
+  },
+  buildFaqJsonLd(restaurant.faq, locale, defaultLocale)
+];
+---
+
+<BaseLayout
+  locale={locale}
+  title={seoTitle}
+  description={seoDescription}
+  canonical={canonical}
+  ogImage={ogImage}
+  hreflangs={hreflangs}
+  jsonLd={jsonLd}
+  faviconUrl={faviconUrl}
+  appleTouchIconUrl={appleTouchIconUrl}
+  cloudflareAnalyticsToken={restaurant.cloudflareAnalyticsToken}
+>
+  <EspacioPage
+    locale={locale}
+    defaultLocale={defaultLocale}
+    activeLocales={activeLocales}
+    legalPages={legalPages}
+    espacios={espacios}
+    {...data}
+  />
+</BaseLayout>

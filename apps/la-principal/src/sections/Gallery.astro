@@ -1,15 +1,16 @@
 ---
 import { t } from '@hosteleria/i18n-utils';
 import { img } from '../lib/sanity';
-import type { Restaurant } from '../lib/queries';
+import type { Restaurant, Espacio } from '../lib/queries';
 
 interface Props {
   restaurant: Restaurant;
+  espacio: Espacio;
   locale: string;
   defaultLocale: string;
 }
 
-const { restaurant, locale, defaultLocale } = Astro.props;
+const { restaurant, espacio, locale, defaultLocale } = Astro.props;
 const sec = restaurant.textosSecciones ?? {};
 
 const galeriaFallback = [
@@ -17,8 +18,8 @@ const galeriaFallback = [
   '/img/gal-martini.jpg', '/img/cellar.jpg', '/img/pass.jpg',
   '/img/glass.jpg', '/img/hire.jpg', '/img/kitchen.jpg'
 ];
-const galeriaImgs = restaurant.galeria?.length
-  ? restaurant.galeria.map(g => img.url(g) ?? '/img/gal-room.jpg')
+const galeriaImgs = espacio.galeria?.length
+  ? espacio.galeria.map(g => img.url(g) ?? '/img/gal-room.jpg')
   : galeriaFallback;
 
 // Rotación pseudo-aleatoria estable por índice (look "polaroid en la pared").

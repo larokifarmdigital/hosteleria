@@ -1,5 +1,6 @@
 import { defineField, defineType } from 'sanity';
 import { validarTodosIdiomasOninguno } from '../lib/validacionI18n';
+import { filtroEspaciosDelMismoRestaurante } from '../lib/referenciaEspacio';
 
 export const categoriaPlato = defineType({
   name: 'categoriaPlato',
@@ -7,10 +8,11 @@ export const categoriaPlato = defineType({
   type: 'document',
   fields: [
     defineField({
-      name: 'restaurante',
-      title: 'Restaurante',
+      name: 'espacio',
+      title: 'Espacio',
       type: 'reference',
-      to: [{ type: 'restaurante' }],
+      to: [{ type: 'espacio' }],
+      options: filtroEspaciosDelMismoRestaurante(),
       validation: (r) => r.required(),
     }),
     defineField({
@@ -32,12 +34,12 @@ export const categoriaPlato = defineType({
   preview: {
     select: {
       title: 'nombre.0.value',
-      restaurante: 'restaurante.nombre',
+      espacio: 'espacio.nombre.0.value',
       orden: 'orden',
     },
-    prepare: ({ title, restaurante, orden }) => ({
+    prepare: ({ title, espacio, orden }) => ({
       title: title ?? 'Sin nombre',
-      subtitle: `${restaurante ?? '—'} · orden ${orden ?? '?'}`,
+      subtitle: `${espacio ?? '—'} · orden ${orden ?? '?'}`,
     }),
   },
 });
