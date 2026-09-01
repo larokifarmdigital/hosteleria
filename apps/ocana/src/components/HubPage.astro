@@ -201,12 +201,47 @@ const heroBgImage =
   img.url(espacios[0]?.galeria?.[0]) ??
   '';
 
-// Layout asimétrico: la primera card ocupa 2 columnas en desktop; el resto
-// caen debajo en una fila de 2. Con 3 espacios este patrón queda editorial.
-const [heroCard, ...restCards] = espacioCards;
-
 // Numeración editorial de las cards
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI'];
+
+// Layout auto-adaptable al número de espacios:
+//   1  → card sola centrada
+//   2  → 2 cards iguales lado a lado
+//   3  → asimétrico: 1 grande (izq, row-span-2) + 2 medianas apiladas (der)
+//   4  → asimétrico: 1 grande (izq, row-span-3) + 3 medianas apiladas (der)
+//   5+ → grid uniforme 3 cols (apiladas se verían mini con más de 4)
+//
+// Con `row-span-N` + `min-h` en el contenedor, el CSS Grid iguala alturas
+// exactamente entre la card grande y la columna de medianas — el diseño
+// asimétrico anterior fallaba porque cada card fijaba su propio aspect y
+// las sumas no cuadraban.
+const n = espacioCards.length;
+const isAsymmetric = n === 3 || n === 4;
+const isUniformGrid = n >= 5;
+const isSingle = n === 1;
+const isDuo = n === 2;
+
+const gridContainerClass = isSingle
+  ? 'grid grid-cols-1 max-w-[720px] mx-auto gap-[clamp(20px,3vw,40px)]'
+  : isDuo
+    ? 'grid grid-cols-2 gap-[clamp(20px,3vw,40px)] max-[900px]:grid-cols-1'
+    : isAsymmetric
+      ? `grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-[clamp(20px,3vw,40px)] min-h-[85vh] max-[960px]:grid-cols-1 max-[960px]:min-h-0 ${n === 3 ? 'grid-rows-2 max-[960px]:grid-rows-none' : 'grid-rows-3 max-[960px]:grid-rows-none'}`
+      : /* isUniformGrid */ 'grid grid-cols-3 gap-[clamp(20px,3vw,40px)] max-[960px]:grid-cols-2 max-[700px]:grid-cols-1';
+
+type CardSize = 'grande' | 'mediana';
+function sizeFor(i: number): CardSize {
+  if (isAsymmetric) return i === 0 ? 'grande' : 'mediana';
+  if (isSingle || isDuo) return 'grande';
+  return 'mediana';
+}
+
+function extraClassFor(i: number): string {
+  if (!isAsymmetric || i !== 0) return '';
+  return n === 3
+    ? 'row-span-2 max-[960px]:row-span-1'
+    : 'row-span-3 max-[960px]:row-span-1';
+}
 
 const bylineFromCms = t(restaurant.textosFooter?.bylineIzq, locale, defaultLocale);
 const byline = bylineFromCms || c.bylineDefault;
@@ -371,83 +406,41 @@ const mapsExternalUrl = buildMapsExternalUrl('', coords, fullAddress, locale);
       </p>
     </div>
 
-    <div class='grid grid-cols-2 gap-[clamp(20px,3vw,40px)] max-[960px]:grid-cols-1 max-[960px]:gap-8'>
-      <!-- Card grande (izquierda): ocupa el alto de las 2 medianas -->
-      {heroCard && (
-        <a
-          href={heroCard.href}
-          class='reveal group relative overflow-hidden bg-bg-2 border border-line hover:border-accent transition-[border-color,transform] duration-500 hover:-translate-y-1 cursor-pointer'
-        >
-          <div class='aspect-[4/5] max-[960px]:aspect-[3/4] overflow-hidden bg-surface relative'>
-            {heroCard.imageUrl ? (
-              <img
-                src={heroCard.imageUrl}
-                alt={heroCard.nombre}
-                loading='lazy'
-                class='w-full h-full object-cover brightness-[0.72] group-hover:brightness-90 group-hover:scale-[1.03] transition-[filter,transform] duration-[900ms] ease-out'
-              />
-            ) : (
-              <div
-                aria-hidden='true'
-                class='w-full h-full'
-                style='background: linear-gradient(135deg, rgb(139 58 38 / 0.28), rgb(14 13 11 / 0.7));'
-              ></div>
-            )}
-            <div
-              aria-hidden='true'
-              class='absolute inset-0'
-              style='background: linear-gradient(180deg, transparent 30%, rgb(14 13 11 / 0.9) 100%);'
-            ></div>
-
-            <span class='absolute top-6 left-6 font-serif italic text-accent/80 text-[42px] leading-none max-[700px]:top-4 max-[700px]:left-4 max-[700px]:text-[32px]' aria-hidden='true'>
-              {ROMAN[0]}
-            </span>
-
-            <div class='absolute bottom-0 left-0 right-0 p-8 max-[700px]:p-5'>
-              <span class='block font-sans uppercase text-[10.5px] tracking-[0.28em] text-accent mb-3'>
-                {heroCard.typeLabel}
-              </span>
-              <h3 class='font-serif italic font-normal text-ink leading-none text-[clamp(40px,5vw,64px)] mb-4'>
-                {heroCard.nombre}
-              </h3>
-              {heroCard.tagline && (
-                <p class='font-serif italic text-ink-soft text-[15.5px] leading-[1.5] max-w-[42ch] mb-5'>
-                  {heroCard.tagline}
-                </p>
-              )}
-              <div class='flex items-center justify-between gap-4 pt-5 border-t border-ink/15'>
-                <span class:list={[
-                  'inline-flex items-center gap-2 font-sans uppercase text-[10.5px] tracking-[0.22em]',
-                  heroCard.status.kind === 'open' ? 'text-accent' : 'text-ink-soft'
-                ]}>
-                  <span
-                    aria-hidden='true'
-                    class:list={[
-                      'w-1.5 h-1.5 rounded-full',
-                      heroCard.status.kind === 'open' ? 'bg-accent animate-pulse' : heroCard.status.kind === 'later' ? 'bg-accent-alt/80' : 'bg-muted/60'
-                    ]}
-                  ></span>
-                  {heroCard.status.label}{heroCard.status.at && (<> · {heroCard.status.at}</>)}
-                </span>
-                <span class='inline-flex items-center gap-2 font-sans uppercase text-[10.5px] tracking-[0.22em] text-accent transition-transform duration-300 group-hover:translate-x-1'>
-                  {c.discover}
-                  <span aria-hidden='true'>→</span>
-                </span>
-              </div>
-            </div>
-          </div>
-        </a>
-      )}
-
-      <!-- Columna derecha: 2 cards medianas apiladas -->
-      <div class='grid grid-rows-2 gap-[clamp(20px,3vw,40px)] max-[960px]:grid-rows-none max-[960px]:grid-cols-1'>
-        {restCards.map((card, i) => (
+    <!-- Grid auto-adaptable: layout cambia según el nº de espacios (ver
+         gridContainerClass / sizeFor / extraClassFor en el frontmatter).
+         El asimétrico usa `row-span` + `min-h` para que la card grande y
+         la columna de medianas queden EXACTAMENTE del mismo alto. -->
+    <div class={gridContainerClass}>
+      {espacioCards.map((card, i) => {
+        const size = sizeFor(i);
+        const extra = extraClassFor(i);
+        const isGrande = size === 'grande';
+        return (
           <a
             href={card.href}
-            class='reveal group relative overflow-hidden bg-bg-2 border border-line hover:border-accent transition-[border-color,transform] duration-500 hover:-translate-y-1 cursor-pointer'
-            style={`--d: ${(i + 1) * 0.08}s`}
+            style={`--d: ${i * 0.08}s`}
+            class:list={[
+              'reveal group relative flex flex-col overflow-hidden bg-bg-2 border border-line hover:border-accent transition-[border-color,transform] duration-500 hover:-translate-y-1 cursor-pointer',
+              // En asymmetric, la card grande necesita min-h propio para que
+              // en mobile (que colapsa a col-1) no quede demasiado plana.
+              isGrande && isAsymmetric ? 'max-[960px]:min-h-[70vh]' : '',
+              // Las medianas del asymmetric NO necesitan min-h porque el
+              // grid las divide iguales.
+              isAsymmetric && !isGrande ? 'min-h-[40vh] max-[960px]:min-h-[50vh]' : '',
+              // Uniform/duo/single: las cards son flex-col con imagen +
+              // panel; usan un aspect natural en la imagen (definido abajo).
+              extra
+            ]}
           >
-            <div class='aspect-[3/2] max-[960px]:aspect-[3/4] overflow-hidden bg-surface relative h-full'>
+            <!-- MEDIA: imagen fill; en asymmetric la imagen usa flex-1 para
+                 llenar el alto restante del grid. En modos uniformes, la
+                 imagen tiene aspect fijo y el panel es debajo. -->
+            <div
+              class:list={[
+                'relative overflow-hidden bg-surface',
+                isAsymmetric ? 'flex-1' : isGrande ? 'aspect-[4/3]' : 'aspect-[3/4]'
+              ]}
+            >
               {card.imageUrl ? (
                 <img
                   src={card.imageUrl}
@@ -458,30 +451,53 @@ const mapsExternalUrl = buildMapsExternalUrl('', coords, fullAddress, locale);
               ) : (
                 <div
                   aria-hidden='true'
-                  class='w-full h-full'
-                  style={`background: linear-gradient(135deg, ${i === 0 ? 'rgb(139 58 38 / 0.22)' : 'rgb(201 169 97 / 0.18)'}, rgb(14 13 11 / 0.7));`}
-                ></div>
+                  class='w-full h-full flex items-center justify-center'
+                  style='background: linear-gradient(135deg, rgb(139 58 38 / 0.28), rgb(14 13 11 / 0.7));'
+                >
+                  <span class='font-serif italic text-accent/30 leading-none' style={`font-size: clamp(${isGrande ? '120px, 16vw, 200px' : '80px, 12vw, 140px'});`}>
+                    {ROMAN[i] ?? String(i + 1)}
+                  </span>
+                </div>
               )}
               <div
                 aria-hidden='true'
                 class='absolute inset-0'
-                style='background: linear-gradient(180deg, transparent 20%, rgb(14 13 11 / 0.92) 100%);'
+                style='background: linear-gradient(180deg, transparent 30%, rgb(14 13 11 / 0.92) 100%);'
               ></div>
 
-              <span class='absolute top-4 left-4 font-serif italic text-accent/70 text-[26px] leading-none' aria-hidden='true'>
-                {ROMAN[i + 1]}
+              <!-- Número romano decorativo esquina superior -->
+              <span
+                aria-hidden='true'
+                class:list={[
+                  'absolute top-5 left-5 font-serif italic text-accent/80 leading-none max-[700px]:top-4 max-[700px]:left-4',
+                  isGrande ? 'text-[42px] max-[700px]:text-[32px]' : 'text-[26px] max-[700px]:text-[22px]'
+                ]}
+              >
+                {ROMAN[i] ?? String(i + 1)}
               </span>
 
-              <div class='absolute bottom-0 left-0 right-0 p-6 max-[700px]:p-5'>
-                <span class='block font-sans uppercase text-[10px] tracking-[0.28em] text-accent mb-2'>
+              <!-- Contenido sobre la imagen (bottom overlay) -->
+              <div class:list={['absolute bottom-0 left-0 right-0', isGrande ? 'p-8 max-[700px]:p-5' : 'p-6 max-[700px]:p-5']}>
+                <span class='block font-sans uppercase text-[10.5px] tracking-[0.28em] text-accent mb-3'>
                   {card.typeLabel}
                 </span>
-                <h3 class='font-serif italic font-normal text-ink leading-none text-[clamp(28px,3.6vw,40px)] mb-3'>
+                <h3
+                  class:list={[
+                    'font-serif italic font-normal text-ink leading-none mb-4',
+                    isGrande ? 'text-[clamp(40px,5vw,64px)]' : 'text-[clamp(28px,3.6vw,40px)]'
+                  ]}
+                >
                   {card.nombre}
                 </h3>
-                <div class='flex items-center justify-between gap-3 pt-3 border-t border-ink/15'>
+                {isGrande && card.tagline && (
+                  <p class='font-serif italic text-ink-soft text-[15.5px] leading-[1.5] max-w-[42ch] mb-5'>
+                    {card.tagline}
+                  </p>
+                )}
+                <div class='flex items-center justify-between gap-4 pt-4 border-t border-ink/15'>
                   <span class:list={[
-                    'inline-flex items-center gap-2 font-sans uppercase text-[10px] tracking-[0.22em]',
+                    'inline-flex items-center gap-2 font-sans uppercase tracking-[0.22em]',
+                    isGrande ? 'text-[10.5px]' : 'text-[10px]',
                     card.status.kind === 'open' ? 'text-accent' : 'text-ink-soft'
                   ]}>
                     <span
@@ -493,15 +509,21 @@ const mapsExternalUrl = buildMapsExternalUrl('', coords, fullAddress, locale);
                     ></span>
                     {card.status.label}{card.status.at && (<> · {card.status.at}</>)}
                   </span>
-                  <span class='inline-flex items-center gap-1.5 font-sans uppercase text-[10px] tracking-[0.22em] text-accent transition-transform duration-300 group-hover:translate-x-1'>
-                    →
+                  <span
+                    class:list={[
+                      'inline-flex items-center gap-2 font-sans uppercase tracking-[0.22em] text-accent transition-transform duration-300 group-hover:translate-x-1',
+                      isGrande ? 'text-[10.5px]' : 'text-[10px]'
+                    ]}
+                  >
+                    {isGrande ? c.discover : ''}
+                    <span aria-hidden='true'>→</span>
                   </span>
                 </div>
               </div>
             </div>
           </a>
-        ))}
-      </div>
+        );
+      })}
     </div>
   </section>
 
