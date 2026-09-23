@@ -24,8 +24,10 @@ const winesByCategory = wineCategories.map((cat) => ({
 }));
 ---
 
-<section id="wines" class="py-[12vh] px-(--gap) max-[900px]:py-[8vh]">
-  <div class="mx-auto max-w-[1080px]">
+<section id="wines" class="relative overflow-hidden py-[14vh] px-(--gap) max-[900px]:py-[9vh]">
+  <div class="blob blob-brass w-[420px] h-[420px] top-32 -left-24 max-[900px]:hidden"></div>
+
+  <div class="relative z-[1] mx-auto max-w-[1080px]">
     <div class="reveal text-center mb-16 max-[900px]:mb-10">
       <Tag class="mb-6 mx-auto">{t(sec.vinosEyebrow, locale, defaultLocale)}</Tag>
       <h2 class="font-serif font-medium leading-none tracking-[-0.01em] text-[clamp(40px,5.5vw,80px)]">
@@ -39,39 +41,49 @@ const winesByCategory = wineCategories.map((cat) => ({
       </h2>
     </div>
 
-    <div class="flex flex-col gap-14">
+    <!-- Carta de vinos con columnas Copa / Botella (brass) -->
+    <div class="grid grid-cols-2 gap-x-[clamp(48px,7vw,110px)] gap-y-14 max-[900px]:grid-cols-1 max-[900px]:gap-y-10">
       {winesByCategory.map(({ category, items }) => (
         items.length > 0 && (
-          <div class="reveal">
-            <div class="flex items-baseline gap-5 mb-6">
-              <h3 class="font-serif font-medium text-accent text-[clamp(20px,2.2vw,26px)] leading-none whitespace-nowrap">
+          <div class="reveal break-inside-avoid">
+            <div class="flex items-baseline gap-5 mb-7 pb-3 border-b border-line">
+              <h3 class="font-serif italic font-medium text-accent text-[clamp(22px,2.4vw,28px)] leading-none whitespace-nowrap tracking-[-0.005em]">
                 {t(category.nombre, locale, defaultLocale)}
               </h3>
-              <span class="flex-1 h-px bg-line"></span>
+              <span class="flex-1"></span>
+              <span class="font-sans text-[10.5px] font-medium uppercase tracking-[0.28em] text-dim">
+                {items.length} refs
+              </span>
             </div>
-            <div class="flex flex-col divide-y divide-line/60">
+            <ul class="flex flex-col gap-6">
               {items.map((wine) => (
-                <div class="grid grid-cols-[1fr_auto] items-baseline gap-6 py-4">
-                  <div>
-                    <div class="font-serif font-medium text-ink text-[18px] leading-tight mb-1">
+                <li>
+                  <div class="grid grid-cols-[1fr_auto_auto] gap-x-8 items-baseline max-[500px]:grid-cols-[1fr_auto]">
+                    <div class="font-serif font-medium text-ink text-[clamp(17px,1.55vw,20px)] leading-tight">
                       {wine.nombre}
                     </div>
-                    <div class="text-muted text-[14px] leading-[1.55] italic">
-                      {t(wine.nota, locale, defaultLocale)}{wine.region && <> · {wine.region}</>}
-                    </div>
+                    <span class="font-sans text-accent text-[13.5px] font-semibold min-w-[52px] text-right whitespace-nowrap tabular-nums">
+                      {wine.precioCopa ?? '—'}
+                    </span>
+                    <span class="font-sans text-[color:var(--color-accent-alt)] text-[13.5px] font-semibold min-w-[64px] text-right whitespace-nowrap tabular-nums max-[500px]:hidden">
+                      {wine.precioBotella ?? '—'}
+                    </span>
                   </div>
-                  <span class="font-serif text-accent text-[17px] font-medium whitespace-nowrap tabular-nums">
-                    {wine.precioCopa ?? '—'} / {wine.precioBotella ?? '—'}
-                  </span>
-                </div>
+                  {(t(wine.nota, locale, defaultLocale) || wine.region) && (
+                    <p class="mt-1.5 text-muted text-[13.5px] leading-[1.55] italic pr-16 max-[500px]:pr-0">
+                      {t(wine.nota, locale, defaultLocale)}
+                      {wine.region && <> · <span class="text-[color:var(--color-accent-alt)]">{wine.region}</span></>}
+                    </p>
+                  )}
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         )
       ))}
     </div>
 
-    <div class="text-center pt-14 text-[11px] tracking-[0.32em] uppercase text-muted">
+    <div class="text-center pt-14 text-[10.5px] tracking-[0.32em] uppercase text-muted italic">
       {t(sec.vinosNotaFinal, locale, defaultLocale)}
     </div>
   </div>

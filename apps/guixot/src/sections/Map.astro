@@ -32,16 +32,16 @@ const fullAddress = [dir.calle, dir.codigoPostal, dir.ciudad, dir.pais]
 const mapsExternalUrl = buildMapsExternalUrl(cid, coords, fullAddress, locale);
 ---
 
-<section id="map" class="py-[12vh] px-(--gap) bg-bg-2 border-y border-line max-[900px]:py-[10vh]">
+<section id="map" class="py-[14vh] px-(--gap) bg-bg-2 border-y border-line max-[900px]:py-[10vh]">
   <div class="reveal max-w-[var(--max)] mx-auto mb-14 text-center max-[900px]:mb-10">
-    <Tag class="mb-6 mx-auto">{locale === 'en' ? 'How to find us' : 'Cómo llegar'}</Tag>
+    <Tag class="mb-6 mx-auto">{locale === 'en' ? 'How to find us' : locale === 'ca' ? 'Com arribar' : 'Cómo llegar'}</Tag>
     <h2 class="font-serif font-medium leading-none tracking-[-0.01em] text-[clamp(36px,4.6vw,60px)]">
       {restaurant.nombre},
       <em class="italic text-accent font-normal">{dir.barrio || dir.ciudad || ''}</em>
     </h2>
   </div>
 
-  <div class="reveal overflow-hidden bg-surface mx-auto max-w-[var(--max)] border border-line-strong shadow-[0_20px_60px_-20px_rgb(30_58_95/0.2)]">
+  <div class="reveal overflow-hidden bg-surface mx-auto max-w-[var(--max)] border border-line-strong rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)]">
     <iframe
       src={mapSrc}
       title={`${restaurant.nombre} — ${locale === 'en' ? 'How to find us' : 'Cómo llegar'}`}
@@ -60,7 +60,7 @@ const mapsExternalUrl = buildMapsExternalUrl(cid, coords, fullAddress, locale);
         rel="noopener"
         class="group inline-flex items-center gap-2.5 font-sans font-medium uppercase text-accent text-[12px] tracking-[0.22em] py-1 border-b border-accent cursor-pointer transition-colors duration-300 hover:text-accent-hover hover:border-accent-hover"
       >
-        {locale === 'en' ? 'Open in Google Maps' : 'Ver en Google Maps'}
+        {locale === 'en' ? 'Open in Google Maps' : locale === 'ca' ? 'Obrir a Google Maps' : 'Ver en Google Maps'}
         <span class="transition-transform duration-300 group-hover:translate-x-1">→</span>
       </a>
     </div>

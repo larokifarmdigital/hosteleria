@@ -44,12 +44,21 @@
   /* Tipografía: Bodoni Moda para display, Manrope para UI */
   --font-serif: 'Bodoni Moda Variable', 'Bodoni Moda', 'Playfair Display', 'Cormorant Garamond', serif;
   --font-sans: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
+
+  /* Blobs decorativos — variantes navy/brass/cream muy sutiles */
+  --color-blob-cream: #e8ddc4;
+  --color-blob-navy:  #dbe0e8;
+  --color-blob-brass: #efe1cb;
 }
 
 /* Tokens no-Tailwind (medidas globales) */
 :root {
   --gap: clamp(20px, 4vw, 72px);
   --max: 1440px;
+  --radius-card: 10px;
+  --radius-btn: 2px;
+  --shadow-card: 0 12px 32px -18px rgb(30 58 95 / 0.22);
+  --shadow-card-lift: 0 22px 54px -22px rgb(30 58 95 / 0.34);
 }
 
 /* ═════════════════════════════════════════════════════════════════ BASE
@@ -97,6 +106,38 @@
 
   /* Cursor pointer explícito en links del footer (fallback cross-browser) */
   footer a { cursor: pointer; }
+}
+
+/* ═════════════════════════════════════════════════════════════════ BLOBS
+   Formas orgánicas decorativas sutiles como fondo de sección. Opacidad baja
+   para que aporten calor sin dominar (paleta ivory/navy/brass discreta).
+*/
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(6px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.30;
+}
+.blob-cream { background: var(--color-blob-cream); }
+.blob-navy  { background: var(--color-blob-navy); }
+.blob-brass { background: var(--color-blob-brass); }
+
+/* ═════════════════════════════════════════════════════════════════ MENU ROW
+   Línea de puntos plato-precio estilo carta impresa (Bodoni brasserie).
+*/
+.menu-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 14px;
+}
+.menu-row > .leader {
+  border-bottom: 1px dotted var(--color-line-strong);
+  transform: translateY(-5px);
+  min-width: 24px;
+  opacity: 0.55;
 }
 
 /* ═════════════════════════════════════════════════════════════════ REVEAL

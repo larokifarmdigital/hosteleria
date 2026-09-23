@@ -28,8 +28,10 @@ const dishesByCategory = dishCategories.map((cat) => ({
   Guixot Dishes: cada categoría con h3 + rule horizontal que llena el espacio,
   después lista de platos con nombre + nota + precio. Look tavern/bodega.
 -->
-<section id="plates" class="py-[12vh] px-(--gap) bg-bg-2 border-y border-line max-[900px]:py-[8vh]">
-  <div class="mx-auto max-w-[1080px]">
+<section id="plates" class="relative overflow-hidden py-[14vh] px-(--gap) bg-bg-2 border-y border-line max-[900px]:py-[9vh]">
+  <div class="blob blob-cream w-[420px] h-[420px] -top-24 -right-24 max-[900px]:hidden"></div>
+
+  <div class="relative z-[1] mx-auto max-w-[1080px]">
     <div class="reveal text-center mb-16 max-[900px]:mb-10">
       <Tag class="mb-6 mx-auto">{t(sec.platosEyebrow, locale, defaultLocale)}</Tag>
       <h2 class="font-serif font-medium leading-none tracking-[-0.01em] text-[clamp(40px,5.5vw,80px)]">
@@ -43,34 +45,40 @@ const dishesByCategory = dishCategories.map((cat) => ({
       </h2>
     </div>
 
-    <div class="flex flex-col gap-14">
+    <!-- Carta clásica en 2 columnas con dotted leader plato → precio -->
+    <div class="grid grid-cols-2 gap-x-[clamp(48px,7vw,110px)] gap-y-16 max-[900px]:grid-cols-1 max-[900px]:gap-y-12">
       {dishesByCategory.map(({ category, items }) => (
         items.length > 0 && (
-          <div class="reveal">
-            {/* Category header with horizontal rule filling remaining space */}
-            <div class="flex items-baseline gap-5 mb-6">
-              <h3 class="font-serif font-medium text-accent text-[clamp(20px,2.2vw,26px)] leading-none whitespace-nowrap">
+          <div class="reveal break-inside-avoid">
+            <div class="flex items-baseline gap-5 mb-7 pb-3 border-b border-line">
+              <h3 class="font-serif italic font-medium text-accent text-[clamp(22px,2.4vw,28px)] leading-none whitespace-nowrap tracking-[-0.005em]">
                 {t(category.nombre, locale, defaultLocale)}
               </h3>
-              <span class="flex-1 h-px bg-line"></span>
+              <span class="flex-1"></span>
+              <span class="font-sans text-[10.5px] font-medium uppercase tracking-[0.28em] text-dim">
+                {items.length} {locale === 'en' ? 'plates' : locale === 'ca' ? 'plats' : 'platos'}
+              </span>
             </div>
-            <div class="flex flex-col divide-y divide-line/60">
+            <ul class="flex flex-col gap-6">
               {items.map((dish) => (
-                <div class="grid grid-cols-[1fr_auto] items-baseline gap-6 py-4">
-                  <div>
-                    <div class="font-serif font-medium text-ink text-[18px] leading-tight mb-1">
+                <li>
+                  <div class="menu-row">
+                    <div class="font-serif font-medium text-ink text-[clamp(17px,1.55vw,20px)] leading-tight tracking-[-0.005em]">
                       {t(dish.nombre, locale, defaultLocale)}
                     </div>
-                    <div class="text-muted text-[14px] leading-[1.55] italic">
-                      {t(dish.nota, locale, defaultLocale)}
-                    </div>
+                    <span class="leader" aria-hidden="true"></span>
+                    <span class="font-sans text-accent text-[14px] font-semibold whitespace-nowrap tabular-nums">
+                      {dish.precio != null ? `${dish.precio} €` : '—'}
+                    </span>
                   </div>
-                  <span class="font-serif text-accent text-[17px] font-medium whitespace-nowrap tabular-nums">
-                    {dish.precio != null ? `${dish.precio} €` : '—'}
-                  </span>
-                </div>
+                  {t(dish.nota, locale, defaultLocale) && (
+                    <p class="mt-1.5 text-muted text-[13.5px] leading-[1.55] italic pr-16">
+                      {t(dish.nota, locale, defaultLocale)}
+                    </p>
+                  )}
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         )
       ))}

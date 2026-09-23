@@ -25,8 +25,12 @@ const bookingAction = resolveBookingAction(restaurant, locale);
   - hero-top: tags decorativas alineadas
   - hero-body: 2 columnas (texto + foto), CTA integrado al final del texto
 -->
-<header id="top" class="relative pt-24 pb-16 px-(--gap) max-[900px]:pt-20">
-  <div class="mx-auto max-w-[var(--max)]">
+<header id="top" class="relative overflow-hidden pt-24 pb-20 px-(--gap) max-[900px]:pt-20 max-[900px]:pb-14">
+  <!-- Blobs decorativos muy sutiles (navy + brass) para dar profundidad -->
+  <div class="blob blob-navy w-[520px] h-[520px] -top-24 -right-40 max-[900px]:w-[360px] max-[900px]:h-[360px] max-[900px]:-right-24"></div>
+  <div class="blob blob-brass w-[300px] h-[300px] bottom-4 -left-24 max-[900px]:hidden"></div>
+
+  <div class="relative z-[1] mx-auto max-w-[var(--max)]">
 
     <!-- ▸ hero-top: rule + tag + tag alineados horizontal -->
     <div class="flex items-center gap-4 mb-12 max-[700px]:flex-wrap max-[700px]:gap-2">
@@ -63,7 +67,7 @@ const bookingAction = resolveBookingAction(restaurant, locale);
           </div>
         )}
       </div>
-      <figure class="aspect-[4/5] overflow-hidden bg-surface shadow-[0_20px_60px_-20px_rgb(30_58_95/0.25)] max-[900px]:aspect-[4/3]">
+      <figure class="relative aspect-[4/5] overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] max-[900px]:aspect-[4/3]">
         <img src={heroImgUrl} alt={heroTitle} fetchpriority="high" decoding="async" class="w-full h-full object-cover" />
       </figure>
     </div>

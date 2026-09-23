@@ -55,9 +55,10 @@ const galeriaImgs = espacio.galeria?.length
         data-gallery-item
         class:list={[
           'group relative overflow-hidden bg-surface cursor-zoom-in',
-          'shadow-[0_12px_30px_-8px_rgb(30_58_95/0.2)]',
-          'transition-[box-shadow,transform] duration-[400ms] ease-out',
-          'hover:shadow-[0_20px_50px_-10px_rgb(30_58_95/0.35)] hover:-translate-y-1',
+          'border border-line rounded-[var(--radius-card)]',
+          'shadow-[var(--shadow-card)]',
+          'transition-[box-shadow,transform,border-color] duration-[400ms] ease-out',
+          'hover:shadow-[var(--shadow-card-lift)] hover:-translate-y-1 hover:border-accent/30',
           i === 0 && 'col-span-2 row-span-2 max-[900px]:col-span-2 max-[900px]:row-span-1 max-[600px]:col-span-1',
           i === 4 && 'row-span-2 max-[900px]:row-span-1',
           'max-[900px]:hover:translate-y-0',

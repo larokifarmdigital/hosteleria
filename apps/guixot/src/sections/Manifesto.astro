@@ -18,8 +18,10 @@ const { restaurant, espacio, locale, defaultLocale } = Astro.props;
   dos rules horizontales que enmarcan el bloque, con firma abajo. Se siente
   más "cita destacada de revista" que un párrafo suelto.
 -->
-<section class="reveal py-[10vh] px-(--gap) max-[900px]:py-[7vh]">
-  <div class="max-w-[880px] mx-auto text-center">
+<section class="relative overflow-hidden py-[12vh] px-(--gap) bg-bg-2 max-[900px]:py-[8vh]">
+  <div class="blob blob-cream w-[540px] h-[540px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-[900px]:w-[380px] max-[900px]:h-[380px]"></div>
+
+  <div class="reveal relative z-[1] max-w-[880px] mx-auto text-center">
     <!-- Rule ornamental corta arriba -->
     <div class="flex items-center justify-center gap-4 mb-8">
       <span class="w-16 h-px bg-accent"></span>

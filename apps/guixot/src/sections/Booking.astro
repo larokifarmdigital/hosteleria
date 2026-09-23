@@ -50,7 +50,11 @@ const pickerBtnCls =
   'w-full bg-transparent border-0 border-b border-line-strong py-3 pb-3.5 px-0 font-serif text-ink text-[17px] font-normal text-left transition-colors duration-300 hover:border-accent focus:outline-none focus:border-accent flex items-center justify-between gap-3 cursor-pointer';
 ---
 
-<section id="book" class="py-[14vh] px-(--gap) max-w-[820px] mx-auto max-[900px]:py-[10vh]">
+<section id="book" class="relative overflow-hidden py-[14vh] px-(--gap) bg-bg-2 border-y border-line max-[900px]:py-[10vh]">
+  <div class="blob blob-brass w-[340px] h-[340px] -top-16 -left-16 max-[900px]:hidden"></div>
+  <div class="blob blob-navy w-[300px] h-[300px] -bottom-16 -right-16 max-[900px]:hidden"></div>
+
+  <div class="relative z-[1] max-w-[820px] mx-auto">
   <div class="reveal text-center mb-14">
     <Tag class="mb-6 mx-auto">{t(nav.linkReservar, locale, defaultLocale) || 'Reserva'}</Tag>
     <h2 class="font-serif font-medium leading-[1.05] tracking-[-0.01em] text-[clamp(38px,5vw,68px)] mb-5">
@@ -70,7 +74,7 @@ const pickerBtnCls =
   <form
     id="reservaForm"
     novalidate
-    class="reveal grid grid-cols-2 gap-y-8 gap-x-8 max-[700px]:grid-cols-1 max-[700px]:gap-6"
+    class="reveal bg-bg border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-10 grid grid-cols-2 gap-y-8 gap-x-8 max-[900px]:p-8 max-[700px]:grid-cols-1 max-[700px]:gap-6 max-[600px]:p-6"
   >
     <!-- Nombre -->
     <label class={labelCls}>
@@ -188,6 +192,7 @@ const pickerBtnCls =
       class="col-span-full text-center min-h-[1.4em] text-[13px] tracking-[0.04em] text-muted italic"
     ></p>
   </form>
+  </div>
 </section>
 
 

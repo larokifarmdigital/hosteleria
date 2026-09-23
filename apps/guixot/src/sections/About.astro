@@ -26,21 +26,24 @@ const title = t(restaurant.sobreTitulo, locale, defaultLocale);
 const { head, tail } = splitAtHalf(title);
 const paragraphs = extractI18nParagraphs(restaurant.sobreCuerpo, locale, defaultLocale);
 
-// Sombra con navy suave para respetar la paleta ivory + navy + brass
-const imgShadow = 'shadow-[0_20px_60px_-20px_rgb(30_58_95/0.25)]';
+// Sombra + border sutil para respetar la paleta ivory + navy + brass
+const imgShadow = 'border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)]';
 ---
 
 <!--
   Guixot About: stack vertical secuencial estilo brasserie parisina.
   Header con Tag + título split-at-half (italic navy en la mitad final),
   texto centrado con drop-cap grande brass, y bloque de imágenes adaptativo
-  (1/2/3) abajo con sombras navy suaves. Sin full-bleed panorámico para
-  respetar la resolución original de las fotos subidas.
+  (1/2/3) abajo con sombras navy suaves + radio. Blob brass discreto detrás.
 -->
 <section
   id='about'
-  class='mx-auto pt-[8vh] pb-[14vh] px-(--gap) max-w-[var(--max)] max-[960px]:pt-[4vh] max-[960px]:pb-[10vh]'
+  class='relative overflow-hidden mx-auto pt-[10vh] pb-[14vh] px-(--gap) max-w-[var(--max)] max-[960px]:pt-[6vh] max-[960px]:pb-[10vh]'
 >
+  <div class='blob blob-brass w-[420px] h-[420px] -top-24 -right-24 max-[900px]:hidden'></div>
+  <div class='blob blob-cream w-[380px] h-[380px] bottom-16 -left-32 max-[900px]:hidden'></div>
+
+  <div class='relative z-[1]'>
   <!-- Header centrado con Tag + título split-at-half -->
   <div class='reveal text-center mb-[9vh] max-[960px]:mb-10'>
     <Tag class='mb-6 mx-auto'>{eyebrow}</Tag>
@@ -102,5 +105,6 @@ const imgShadow = 'shadow-[0_20px_60px_-20px_rgb(30_58_95/0.25)]';
         </figure>
       ))}
     </div>
+  </div>
   </div>
 </section>
