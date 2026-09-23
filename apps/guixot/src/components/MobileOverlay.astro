@@ -33,10 +33,10 @@ const {
 
 const nav = restaurant.textosNav ?? {};
 
-const A11Y: Record<string, { close: string; menu: string }> = {
-  es: { close: 'Cerrar menú', menu: 'Menú' },
-  en: { close: 'Close menu', menu: 'Menu' },
-  ca: { close: 'Tancar menú', menu: 'Menú' }
+const A11Y: Record<string, { close: string; menu: string; language: string }> = {
+  es: { close: 'Cerrar menú', menu: 'Menú', language: 'Idioma' },
+  en: { close: 'Close menu', menu: 'Menu', language: 'Language' },
+  ca: { close: 'Tancar menú', menu: 'Menú', language: 'Idioma' }
 };
 const a11y = A11Y[locale] ?? A11Y.es;
 
@@ -191,7 +191,7 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
     {
       localesUi.length > 1 && (
         <div
-          aria-label='Idioma'
+          aria-label={a11y.language}
           class='flex gap-3 font-sans font-medium uppercase text-[10.5px] tracking-[0.26em] text-dim'
         >
           {localesUi.map((l, i) => (

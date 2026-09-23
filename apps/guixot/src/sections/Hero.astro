@@ -64,7 +64,7 @@ const bookingAction = resolveBookingAction(restaurant, locale);
         )}
       </div>
       <figure class="aspect-[4/5] overflow-hidden bg-surface shadow-[0_20px_60px_-20px_rgb(30_58_95/0.25)] max-[900px]:aspect-[4/3]">
-        <img src={heroImgUrl} alt={heroTitle} class="w-full h-full object-cover" />
+        <img src={heroImgUrl} alt={heroTitle} fetchpriority="high" decoding="async" class="w-full h-full object-cover" />
       </figure>
     </div>
 

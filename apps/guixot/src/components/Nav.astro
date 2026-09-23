@@ -44,12 +44,13 @@ const brandRest = partes?.[2] ?? restaurant.nombre;
 // El script inline usa Tailwind arbitrary + `data-[scrolled='true']:` para reaccionar a un data attribute.
 const scrolledAttr = forceScrolled ? 'true' : 'false';
 
-const A11Y_OPEN_MENU: Record<string, string> = {
-  es: 'Abrir menú',
-  en: 'Open menu',
-  ca: 'Obrir menú'
+const A11Y: Record<string, { openMenu: string; language: string }> = {
+  es: { openMenu: 'Abrir menú', language: 'Idioma' },
+  en: { openMenu: 'Open menu', language: 'Language' },
+  ca: { openMenu: 'Obrir menú', language: 'Idioma' }
 };
-const openMenuLabel = A11Y_OPEN_MENU[locale] ?? A11Y_OPEN_MENU.es;
+const a11y = A11Y[locale] ?? A11Y.es;
+const openMenuLabel = a11y.openMenu;
 ---
 
 <nav
@@ -121,36 +122,41 @@ const openMenuLabel = A11Y_OPEN_MENU[locale] ?? A11Y_OPEN_MENU.es;
       </li>
     </ul>
 
-    {
-      localesUi.length > 1 && (
-        <div
-          class='flex items-center gap-2 pl-[clamp(8px,1.4vw,18px)] border-l border-line font-sans font-medium uppercase text-[10.5px] tracking-[0.22em] text-dim'
-          aria-label='Idioma'
+    {localesUi.length > 1 && (
+      <details class='lang-dropdown group relative' aria-label={a11y.language}>
+        <summary
+          class='list-none [&::-webkit-details-marker]:hidden cursor-pointer
+                 inline-flex items-center gap-2 py-1.5 px-3 rounded-sm border border-line
+                 font-sans font-semibold uppercase text-[11px] tracking-[0.22em] text-ink
+                 hover:border-accent hover:text-accent transition-colors duration-200'
         >
-          {localesUi.map((l, i) => (
-            <>
-              {i > 0 && <span class='text-dim opacity-50 -mx-1 select-none'>·</span>}
-              <a
-                href={
-                  l.codigo === locale
-                    ? '#'
-                    : localizedPath(langSwitcherPath, l.codigo, defaultLocale)
-                }
-                class:list={[
-                  'py-1 px-0.5 transition-colors duration-300',
-                  l.codigo === locale
-                    ? 'text-accent pointer-events-none'
-                    : 'hover:text-ink cursor-pointer'
-                ]}
-                aria-current={l.codigo === locale ? 'true' : undefined}
-              >
-                {l.codigo.toUpperCase()}
-              </a>
-            </>
+          <span>{locale.toUpperCase()}</span>
+          <svg width='10' height='10' viewBox='0 0 12 12' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' class='transition-transform duration-300 group-open:rotate-180 opacity-80'>
+            <path d='M3 4.5L6 7.5L9 4.5' />
+          </svg>
+        </summary>
+        <div class='absolute right-0 top-[calc(100%+6px)] min-w-[110px] bg-bg border border-line rounded-sm overflow-hidden shadow-[0_10px_28px_-14px_rgb(30_58_95/0.28)] py-1'>
+          {localesUi.map((l) => (
+            <a
+              href={
+                l.codigo === locale
+                  ? '#'
+                  : localizedPath(langSwitcherPath, l.codigo, defaultLocale)
+              }
+              class:list={[
+                'block px-4 py-2 font-sans font-semibold uppercase text-[11px] tracking-[0.22em] transition-colors duration-200',
+                l.codigo === locale
+                  ? 'text-accent bg-bg-2 pointer-events-none'
+                  : 'text-muted hover:text-ink hover:bg-bg-2 cursor-pointer'
+              ]}
+              aria-current={l.codigo === locale ? 'true' : undefined}
+            >
+              {l.codigo.toUpperCase()}
+            </a>
           ))}
         </div>
-      )
-    }
+      </details>
+    )}
 
     {bookingAction && (
       <a
@@ -179,9 +185,22 @@ const openMenuLabel = A11Y_OPEN_MENU[locale] ?? A11Y_OPEN_MENU.es;
   (function () {
     const nav = document.getElementById('nav');
     if (!nav) return;
-    if (nav.dataset.forceScrolled === '1') return; // legal pages siempre scrolled
-    const onScroll = () => (nav.dataset.scrolled = window.scrollY > 40 ? 'true' : 'false');
-    onScroll();
-    addEventListener('scroll', onScroll, { passive: true });
+
+    if (nav.dataset.forceScrolled !== '1') {
+      const onScroll = () => (nav.dataset.scrolled = window.scrollY > 40 ? 'true' : 'false');
+      onScroll();
+      addEventListener('scroll', onScroll, { passive: true });
+    }
+
+    // Cierra el dropdown de idiomas al hacer click fuera o presionar Escape.
+    const dropdown = nav.querySelector('.lang-dropdown');
+    if (dropdown) {
+      document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target)) dropdown.removeAttribute('open');
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') dropdown.removeAttribute('open');
+      });
+    }
   })();
 </script>

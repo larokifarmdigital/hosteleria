@@ -58,6 +58,18 @@
 @layer base {
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
+  /* Smooth scroll para clicks en anchors (#plates, #wines, #book, categorías,
+     etc.). Se anula automáticamente con prefers-reduced-motion. */
+  html { scroll-behavior: smooth; }
+
+  /* Margen superior para anchors — evita que las secciones queden tapadas por
+     el nav fijo al hacer scroll-into-view. */
+  section[id],
+  header[id],
+  [data-scroll-anchor] {
+    scroll-margin-top: 96px;
+  }
+
   body {
     background: var(--color-bg);
     color: var(--color-ink);
@@ -101,6 +113,7 @@
 
 /* ═════════════════════════════════════════════════════════════════ REDUCED MOTION */
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   .reveal { opacity: 1; transform: none; transition: none; }
   * { animation: none !important; transition-duration: 0.01ms !important; }
 }

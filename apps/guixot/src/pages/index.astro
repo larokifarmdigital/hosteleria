@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import RestaurantPage from '../components/RestaurantPage.astro';
 import { fetchRestaurantData, fetchLegalPages } from '../lib/queries';
 import { img } from '../lib/sanity';
-import { buildRestaurantJsonLd, buildFaqJsonLd } from '@hosteleria/seo';
+import { buildRestaurantJsonLd, buildFaqJsonLd, buildMenuJsonLd } from '@hosteleria/seo';
 import { t, resolveActiveLocales, localizedPath } from '@hosteleria/i18n-utils';
 
 const data = await fetchRestaurantData();
@@ -29,14 +29,24 @@ const hreflangs = resolveActiveLocales(
 
 const seoTitle = t(restaurant.seoTitulo, locale, defaultLocale) || restaurant.nombre;
 const seoDescription = t(restaurant.seoDescripcion, locale, defaultLocale) || '';
-const ogImage = img.url(restaurant.seoImagen) ?? img.url(restaurant.espacios?.[0]?.heroImagen);
+const heroImageUrl = img.url(restaurant.espacios?.[0]?.heroImagen) ?? '/img/hero.jpg';
+const ogImage = img.url(restaurant.seoImagen) ?? heroImageUrl;
 const logoUrl = img.url(restaurant.logo);
 const faviconUrl = img.url(restaurant.favicon);
 const appleTouchIconUrl = img.pngSquare(restaurant.iconoApp, 180);
 
+const menuId = `${canonical}#menu`;
 const jsonLd = [
-  buildRestaurantJsonLd({ restaurant, locale, defaultLocale, canonical, img, servesCuisine: ['Mediterránea', 'Contemporánea', 'Catalana', 'Italiana'] }),
+  buildRestaurantJsonLd({ restaurant, locale, defaultLocale, canonical, img, servesCuisine: ['Mediterránea', 'Contemporánea', 'Catalana', 'Italiana'], menuId }),
   buildFaqJsonLd(restaurant.faq, locale, defaultLocale),
+  buildMenuJsonLd({
+    dishCategories: data.dishCategories,
+    dishes: data.dishes,
+    restaurantName: restaurant.nombre,
+    canonical,
+    locale,
+    defaultLocale
+  })
 ];
 ---
 
@@ -46,6 +56,7 @@ const jsonLd = [
   description={seoDescription}
   canonical={canonical}
   ogImage={ogImage}
+  preloadImage={heroImageUrl}
   hreflangs={hreflangs}
   jsonLd={jsonLd}
   faviconUrl={faviconUrl}

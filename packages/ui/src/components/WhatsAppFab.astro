@@ -8,13 +8,20 @@ interface Props {
 
 const { href, locale } = Astro.props;
 if (!href) return null;
+
+const A11Y: Record<string, string> = {
+  es: 'Contactar por WhatsApp',
+  ca: 'Contactar per WhatsApp',
+  en: 'Contact via WhatsApp'
+};
+const ariaLabel = A11Y[locale] ?? A11Y.es;
 ---
 
 <a
   href={href}
   target='_blank'
   rel='noopener'
-  aria-label={locale === 'en' ? 'Contact via WhatsApp' : 'Contactar por WhatsApp'}
+  aria-label={ariaLabel}
   title='WhatsApp'
   class='fixed z-40 bottom-[22px] right-[22px] w-14 h-14 rounded-full
          flex items-center justify-center cursor-pointer

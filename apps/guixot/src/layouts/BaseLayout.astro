@@ -13,6 +13,9 @@ interface Props {
   description: string;
   canonical: string;
   ogImage?: string;
+  /** URL de imagen crítica para LCP (hero). Emite `<link rel="preload" as="image">`
+   *  con `fetchpriority="high"` para que el navegador la descargue lo antes posible. */
+  preloadImage?: string;
   hreflangs: Hreflang[];
   jsonLd?: Record<string, unknown> | Array<Record<string, unknown> | null | undefined>;
   faviconUrl?: string;
@@ -26,6 +29,7 @@ const {
   description,
   canonical,
   ogImage,
+  preloadImage,
   hreflangs,
   jsonLd,
   faviconUrl,
@@ -85,6 +89,13 @@ const skipToContent = SKIP_TO_CONTENT[locale] ?? SKIP_TO_CONTENT.es;
 
     {/* Preconnect a Sanity CDN — mejora LCP de las imágenes del hero/galería */}
     <link rel='preconnect' href='https://cdn.sanity.io' crossorigin />
+
+    {/* Preload de la imagen crítica (hero) para mejorar el LCP. Emite un
+        hint temprano al navegador para que descargue esta imagen en paralelo
+        al parseo del HTML, sin esperar a que el CSS/img la descubra. */}
+    {preloadImage && (
+      <link rel='preload' as='image' href={preloadImage} fetchpriority='high' />
+    )}
 
     <meta name='generator' content={Astro.generator} />
 
