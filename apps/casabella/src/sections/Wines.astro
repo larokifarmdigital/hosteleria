@@ -15,46 +15,79 @@ const { restaurant, wineCategories, wines, locale, defaultLocale } = Astro.props
 
 const sec = restaurant.textosSecciones ?? {};
 
-const winesByCategory = wineCategories.map((cat) => ({
-  category: cat,
-  items: wines.filter((w) => w.categoria?._id === cat._id),
-}));
+const winesByCategory = wineCategories
+  .map((cat) => ({ category: cat, items: wines.filter((w) => w.categoria?._id === cat._id) }))
+  .filter(({ items }) => items.length > 0);
+
+const titulo = t(sec.vinosTitulo, locale, defaultLocale);
+const [first, ...restTitle] = titulo.split(' ');
+const restText = restTitle.join(' ');
+const notaFinal = t(sec.vinosNotaFinal, locale, defaultLocale);
 ---
 
-<section id="wines" class="py-[12vh] px-(--gap) bg-surface border-t border-line max-[960px]:py-[8vh]">
-  <div class="reveal text-center mb-[70px] mx-auto max-w-[var(--max)] max-[960px]:mb-12">
-    <Eyebrow class="block mb-5">{t(sec.vinosEyebrow, locale, defaultLocale)}</Eyebrow>
-    <h2 class="font-serif font-light leading-none tracking-[-0.01em] text-[clamp(38px,5vw,72px)]">
-      {t(sec.vinosTitulo, locale, defaultLocale)}
-    </h2>
-  </div>
-  <div class="grid mx-auto max-w-[var(--max)] grid-cols-2 gap-y-0 gap-x-[clamp(40px,6vw,90px)] max-[960px]:grid-cols-1 max-[960px]:gap-0">
-    {winesByCategory.map(({ category, items }) => (
-      items.length > 0 && (
-        <>
-          <div class="col-span-full pt-11 pb-3 mt-3 border-t border-line text-[11px] tracking-[0.32em] uppercase text-accent font-medium first:pt-0 first:mt-0 first:border-t-0">
-            {t(category.nombre, locale, defaultLocale)}
-          </div>
-          {items.map((wine) => (
-            <div class="grid items-baseline grid-cols-[1fr_auto] gap-6 py-[22px] px-[18px] -mx-[18px] border-b border-line rounded transition-[background-color,transform] duration-[350ms] ease-out hover:bg-[rgb(212_166_85/0.05)] hover:translate-x-1 max-[960px]:py-5 max-[960px]:px-[14px] max-[960px]:-mx-[14px] max-[960px]:hover:translate-x-0">
-              <div>
-                <div class="font-serif text-ink font-normal mb-1.5 tracking-[0.005em] text-[clamp(19px,1.6vw,23px)]">
-                  {wine.nombre}
+<section id='wines' class='relative overflow-hidden py-[16vh] px-(--gap) max-[960px]:py-[10vh]'>
+  <div class='blob blob-warm w-[420px] h-[420px] top-24 -left-20 max-[960px]:hidden'></div>
+
+  <div class='relative z-[1] mx-auto max-w-[var(--max)]'>
+    <div class='reveal text-center mb-14 max-[960px]:mb-10'>
+      <Eyebrow class='block mb-5'>{t(sec.vinosEyebrow, locale, defaultLocale)}</Eyebrow>
+      <h2 class='font-serif font-normal leading-[1.05] tracking-[-0.02em] text-[clamp(38px,5vw,68px)] text-ink mb-4'>
+        <em class='italic text-warm font-normal'>{first}</em>{restText && ' ' + restText}
+      </h2>
+      {notaFinal && (
+        <p class='text-muted text-[15px] leading-[1.7] mx-auto max-w-[52ch]'>{notaFinal}</p>
+      )}
+    </div>
+
+    <!-- Header de columnas: nombre / copa / botella (menu clásico) -->
+    <div class='reveal grid grid-cols-2 gap-x-[clamp(48px,7vw,120px)] mb-4 max-[900px]:grid-cols-1'>
+      {[0, 1].map(() => (
+        <div class='hidden md:grid grid-cols-[1fr_auto_auto] gap-x-8 pb-3 border-b border-line font-sans font-medium uppercase text-[10.5px] tracking-[0.28em] text-dim'>
+          <span></span>
+          <span class='min-w-[52px] text-right'>{locale === 'en' ? 'Glass' : locale === 'ca' ? 'Copa' : 'Copa'}</span>
+          <span class='min-w-[64px] text-right'>{locale === 'en' ? 'Bottle' : locale === 'ca' ? 'Ampolla' : 'Botella'}</span>
+        </div>
+      ))}
+    </div>
+
+    <div class='grid grid-cols-2 gap-x-[clamp(48px,7vw,120px)] gap-y-14 max-[900px]:grid-cols-1 max-[900px]:gap-y-10'>
+      {winesByCategory.map(({ category, items }) => (
+        <div class='reveal break-inside-avoid'>
+          <header class='flex items-baseline gap-4 mb-7 pb-3 border-b border-line'>
+            <h3 class='font-serif font-normal italic text-warm text-[clamp(22px,2.2vw,28px)]'>
+              {t(category.nombre, locale, defaultLocale)}
+            </h3>
+            <span class='flex-1'></span>
+            <span class='font-sans text-[10.5px] font-medium uppercase tracking-[0.28em] text-dim'>
+              {items.length} {locale === 'en' ? 'refs' : 'refs'}
+            </span>
+          </header>
+
+          <ul class='flex flex-col gap-6'>
+            {items.map((wine) => (
+              <li>
+                <div class='grid grid-cols-[1fr_auto_auto] gap-x-8 items-baseline max-[500px]:grid-cols-[1fr_auto]'>
+                  <div class='font-serif text-ink font-normal text-[clamp(17px,1.55vw,20px)] leading-tight'>
+                    {wine.nombre}
+                  </div>
+                  <span class='font-sans text-ink text-[13.5px] font-medium min-w-[52px] text-right whitespace-nowrap'>
+                    {wine.precioCopa ?? '—'}
+                  </span>
+                  <span class='font-sans text-ink text-[13.5px] font-medium min-w-[64px] text-right whitespace-nowrap max-[500px]:hidden'>
+                    {wine.precioBotella ?? '—'}
+                  </span>
                 </div>
-                <div class="text-muted text-sm leading-[1.55]">
-                  {t(wine.nota, locale, defaultLocale)}{wine.region && <> · {wine.region}</>}
-                </div>
-              </div>
-              <span class="font-sans text-base font-medium text-accent whitespace-nowrap pt-0.5">
-                {wine.precioCopa ?? '—'} / {wine.precioBotella ?? '—'}
-              </span>
-            </div>
-          ))}
-        </>
-      )
-    ))}
-    <div class="col-span-full text-center pt-10 text-[11px] tracking-[0.32em] uppercase text-muted">
-      {t(sec.vinosNotaFinal, locale, defaultLocale)}
+                {(t(wine.nota, locale, defaultLocale) || wine.region) && (
+                  <p class='mt-1.5 text-muted text-[13.5px] leading-[1.55] italic pr-16 max-[500px]:pr-0'>
+                    {t(wine.nota, locale, defaultLocale)}
+                    {wine.region && <> · {wine.region}</>}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </div>
   </div>
 </section>

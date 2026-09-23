@@ -10,28 +10,42 @@
 @source "../../../../packages/booking-form/src/**/*.ts";
 
 /* ═════════════════════════════════════════════════════════════════ DESIGN TOKENS
-   Colores + tipografía expuestos como utilities (bg-bg, text-accent, font-serif...).
+   Casabella — paleta carbón + crema + ámbar. Registro sofisticado urbano tipo
+   bistró barcelonés contemporáneo. Los NOMBRES de token se conservan para que
+   Footer / Nav / MobileOverlay / Eyebrow del paquete UI hereden la paleta.
 */
 @theme {
-  --color-bg: #131110;
-  --color-surface: #1c1917;
-  --color-surface-2: #24211e;
-  --color-ink: #f4ecdd;
-  --color-ink-soft: #e0d5c2;
-  --color-muted: #a89a83;
-  --color-dim: #7a6f5e;
-  --color-line: #2a2622;
-  --color-accent: #d4a655;
-  --color-accent-hover: #e6b968;
+  --color-bg: #f6f0e6;
+  --color-surface: #fbf6ec;
+  --color-surface-2: #eee6d3;
+  --color-ink: #161412;
+  --color-ink-soft: #2a2520;
+  --color-muted: #6a6055;
+  --color-dim: #9c9284;
+  --color-line: #e0d5be;
+  --color-accent: #966000;
+  --color-accent-hover: #7a4e00;
 
-  /* WhatsApp FAB outline (marca-específico) */
-  --wa-outline: rgb(212 166 85 / 0.4);
-  --wa-outline-hover: rgb(230 185 104 / 0.7);
+  /* Tobacco cálido más claro para acentos serif itálicos y micro-detalles.
+     Ligeramente más luminoso que el accent para que los itálicos se lean como
+     texto (no como botón).  */
+  --color-warm: #b48725;
+  --color-warm-hover: #9a721b;
+  --color-warm-soft: #f4e8ce;
+
+  /* Blobs decorativos (usados como fondo sutil en secciones) */
+  --color-blob-green: #ede2c8;
+  --color-blob-cream: #f4e8ce;
+  --color-blob-warm: #ecdcbc;
+
+  /* WhatsApp FAB outline */
+  --wa-outline: rgb(150 96 0 / 0.35);
+  --wa-outline-hover: rgb(122 78 0 / 0.7);
 
   --font-serif: 'Fraunces Variable', 'Fraunces', 'Cormorant Garamond', serif;
   --font-sans: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
 
-  /* Keyframes registrados en @theme para animate-[name_...] utility */
+  /* Keyframes registrados en @theme */
   --animate-heroScrollFade: heroScrollFade 1s ease 1.4s forwards;
   --animate-heroScrollLine: heroScrollLine 2.2s ease-in-out infinite;
 }
@@ -39,15 +53,30 @@
 /* Tokens no-Tailwind (medidas globales) */
 :root {
   --gap: clamp(24px, 5vw, 80px);
-  --max: 1440px;
+  --max: 1400px;
+  --radius-card: 14px;
+  --radius-pill: 999px;
+  --shadow-card: 0 10px 32px -18px rgb(26 24 21 / 0.20);
+  --shadow-card-lift: 0 20px 50px -22px rgb(26 24 21 / 0.30);
 }
 
-/* ═════════════════════════════════════════════════════════════════ BASE
-   Resets sobre elementos HTML crudos (no clases). Estos NO pueden ser Tailwind
-   utility porque no hay elemento con class donde ponerlos.
-*/
+/* ═════════════════════════════════════════════════════════════════ BASE */
 @layer base {
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* Smooth scroll para clicks en anchors (#plates, #wines, #book, categorías
+     de carta, etc.). Sustituye el salto brusco por un desplazamiento suave.
+     Se anula automáticamente si el usuario activa "reducir movimiento" en el SO. */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Margen superior para anchors — evita que las secciones queden tapadas
+     por el nav fijo (~70px) al hacer scroll-into-view. */
+  section[id],
+  [data-scroll-anchor] {
+    scroll-margin-top: 96px;
+  }
 
   body {
     background: var(--color-bg);
@@ -55,7 +84,7 @@
     font-family: var(--font-sans);
     font-size: 16px;
     font-weight: 400;
-    line-height: 1.6;
+    line-height: 1.65;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
@@ -63,22 +92,19 @@
   }
   body.overlay-open { overflow: hidden; }
 
-  ::selection { background: var(--color-accent); color: var(--color-bg); }
+  ::selection { background: var(--color-warm); color: var(--color-ink); }
 
   img { max-width: 100%; height: auto; display: block; }
   a { color: inherit; text-decoration: none; }
 
   :focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 2px solid var(--color-warm);
     outline-offset: 3px;
     border-radius: 2px;
   }
 }
 
-/* ═════════════════════════════════════════════════════════════════ KEYFRAMES
-   Definiciones de animaciones custom. Los `animate-*` utilities se referencian
-   via CSS variables @theme (--animate-*) o inline con `animate-[keyframe_...]`.
-*/
+/* ═════════════════════════════════════════════════════════════════ KEYFRAMES */
 @keyframes heroScrollFade { to { opacity: 1; } }
 @keyframes heroScrollLine {
   0%   { transform: scaleY(0.4); transform-origin: top; }
@@ -87,20 +113,48 @@
   100% { transform: scaleY(0); transform-origin: bottom; }
 }
 
-/* ═════════════════════════════════════════════════════════════════ REVEAL
-   Reveal-on-scroll: el JS toggle-a `.in` cuando entra en viewport. La clase
-   custom queda porque el estado se aplica desde JS y su selector `.reveal.in`
-   se combina con `.reveal` en el mismo elemento.
+/* ═════════════════════════════════════════════════════════════════ BLOBS
+   Formas orgánicas sutilísimas usadas de fondo en secciones. Opacidad
+   base baja para que no dominen — solo dan calidez.
 */
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(6px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.25;
+}
+.blob-green { background: var(--color-blob-green); }
+.blob-cream { background: var(--color-blob-cream); }
+.blob-warm  { background: var(--color-blob-warm); }
+
+/* ═════════════════════════════════════════════════════════════════ MENU ROW
+   Línea de puntos clásica plato-precio (estilo carta impresa).
+*/
+.menu-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 12px;
+}
+.menu-row > .leader {
+  border-bottom: 1px dotted var(--color-line);
+  transform: translateY(-4px);
+  min-width: 24px;
+}
+
+/* ═════════════════════════════════════════════════════════════════ REVEAL */
 .reveal {
   opacity: 0;
-  transform: translateY(24px);
+  transform: translateY(20px);
   transition: opacity .9s cubic-bezier(.16,.6,.2,1), transform .9s cubic-bezier(.16,.6,.2,1);
 }
 .reveal.in { opacity: 1; transform: none; }
 
 /* ═════════════════════════════════════════════════════════════════ REDUCED MOTION */
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   .reveal { opacity: 1; transform: none; transition: none; }
   * { animation: none !important; transition-duration: 0.01ms !important; }
 }

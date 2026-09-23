@@ -305,6 +305,60 @@ export const restaurante = defineType({
       validation: r => r.max(6)
     }),
     defineField({
+      name: 'gruposFeatures',
+      title: 'Ventajas con icono (grid)',
+      description:
+        'Variante icónica de los puntos destacados. Cada ítem = icono + etiqueta corta uppercase + descripción. Se muestra como grid 2×2 en las apps que usen ese layout (ej. Casabella). Máx 6. Si está vacío, el .astro cae al layout de texto plano (gruposDestacados).',
+      type: 'array',
+      group: 'grupos',
+      of: [
+        {
+          type: 'object',
+          name: 'gruposFeature',
+          title: 'Ventaja',
+          fields: [
+            {
+              name: 'icon',
+              title: 'Icono',
+              type: 'string',
+              options: {
+                list: [
+                  { title: '👥  Personas / aforo', value: 'users' },
+                  { title: '👨‍🍳  Chef / menú', value: 'chef' },
+                  { title: '🍷  Vino / bodega', value: 'wine' },
+                  { title: '🕒  Reloj / horario', value: 'clock' },
+                  { title: '📍  Ubicación / sala', value: 'pin' },
+                  { title: '⭐  Celebración / especial', value: 'star' }
+                ],
+                layout: 'dropdown'
+              },
+              validation: (r: any) => r.required()
+            },
+            {
+              name: 'label',
+              title: 'Etiqueta (uppercase)',
+              type: i18nStr,
+              validation: (r: any) => validarTodosIdiomasOninguno(r)
+            },
+            {
+              name: 'texto',
+              title: 'Descripción corta',
+              type: i18nTxt,
+              validation: (r: any) => validarTodosIdiomasOninguno(r)
+            }
+          ],
+          preview: {
+            select: { icon: 'icon', title: 'label.0.value', subtitle: 'texto.0.value' },
+            prepare: ({ icon, title, subtitle }: { icon?: string; title?: string; subtitle?: string }) => ({
+              title: title || '(Sin etiqueta)',
+              subtitle: icon ? `${icon} · ${subtitle ?? ''}` : subtitle
+            })
+          }
+        }
+      ],
+      validation: r => r.max(6)
+    }),
+    defineField({
       name: 'gruposImagen',
       title: 'Imagen',
       type: 'image',

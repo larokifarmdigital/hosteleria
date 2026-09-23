@@ -15,30 +15,97 @@ interface Props {
 const { restaurant, locale, defaultLocale } = Astro.props;
 const gruposImgUrl = img.url(restaurant.gruposImagen) ?? '/img/hire.jpg';
 const bookingAction = resolveBookingAction(restaurant, locale);
+
+const titulo = t(restaurant.gruposTitulo, locale, defaultLocale);
+const [first, ...restTitle] = titulo.split(' ');
+const restText = restTitle.join(' ');
+
+// Feature bullets: primero Sanity (`gruposFeatures`), luego fallback local por
+// locale si no hay contenido (backward compat con el mock).
+const featuresFallback: Record<string, { icon: string; label: string; text: string }[]> = {
+  es: [
+    { icon: 'users', label: 'Aforo',   text: 'Hasta 40 comensales en salón privado.' },
+    { icon: 'chef',  label: 'Menú',    text: 'Cartas cerradas o personalizadas para el evento.' },
+    { icon: 'wine',  label: 'Bodega',  text: 'Selección de vinos y maridajes a medida.' },
+    { icon: 'clock', label: 'Horario', text: 'Comidas, cenas y sobremesas sin prisa.' }
+  ],
+  ca: [
+    { icon: 'users', label: 'Aforament', text: 'Fins a 40 comensals en sala privada.' },
+    { icon: 'chef',  label: 'Menú',      text: 'Cartes tancades o personalitzades per a l’esdeveniment.' },
+    { icon: 'wine',  label: 'Celler',    text: 'Selecció de vins i maridatges a mida.' },
+    { icon: 'clock', label: 'Horari',    text: 'Dinars, sopars i sobretaules sense pressa.' }
+  ],
+  en: [
+    { icon: 'users', label: 'Capacity', text: 'Up to 40 guests in our private room.' },
+    { icon: 'chef',  label: 'Menu',     text: 'Fixed or bespoke menus for your event.' },
+    { icon: 'wine',  label: 'Cellar',   text: 'Curated wine and pairing selections.' },
+    { icon: 'clock', label: 'Time',     text: 'Lunch, dinner and long, unhurried afternoons.' }
+  ]
+};
+
+const features = restaurant.gruposFeatures?.length
+  ? restaurant.gruposFeatures.map((f) => ({
+      icon: f.icon,
+      label: t(f.label, locale, defaultLocale),
+      text: t(f.texto, locale, defaultLocale)
+    }))
+  : featuresFallback[locale] ?? featuresFallback.es;
+
+// Biblioteca de iconos SVG (paths). Debe cubrir los 6 valores del enum del
+// schema (`users | chef | wine | clock | pin | star`). Si Sanity devuelve un
+// icono no listado, `iconPaths[f.icon]` es undefined y el <path> no se dibuja.
+const iconPaths: Record<string, string> = {
+  users: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75',
+  chef:  'M6 10a6 6 0 0 1 12 0 M6 10v10h12V10 M9 21v-6 M15 21v-6',
+  wine:  'M8 22h8 M12 22v-6 M6 3h12l-1 8a5 5 0 0 1-10 0L6 3z',
+  clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 7v5l3 2',
+  pin:   'M12 22s-8-8-8-14a8 8 0 1 1 16 0c0 6-8 14-8 14z M12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+  star:  'M12 2l2.4 6.4L21 9l-5 4.5L17.5 21 12 17.5 6.5 21 8 13.5 3 9l6.6-.6L12 2z'
+};
 ---
 
-<section id="groups" class="relative overflow-hidden flex items-center justify-center min-h-[70vh] max-[960px]:min-h-[60vh]">
-  <!-- Background con gradient overlay via after:, imagen difuminada -->
-  <div
-    class="absolute inset-0 z-0
-           after:content-[''] after:absolute after:inset-0
-           after:bg-[linear-gradient(180deg,var(--color-bg)_0%,transparent_30%,transparent_70%,var(--color-bg)_100%)]"
-  >
-    <img src={gruposImgUrl} alt="" class="w-full h-full object-cover opacity-35" />
-  </div>
-  <div class="reveal relative z-[1] flex flex-col items-center text-center gap-[26px] px-(--gap) max-w-[700px]">
-    <Eyebrow class="block">{t(restaurant.gruposEyebrow, locale, defaultLocale)}</Eyebrow>
-    <h2 class="font-serif font-light leading-[1.05] tracking-[-0.01em] text-[clamp(40px,5.5vw,80px)]">
-      {t(restaurant.gruposTitulo, locale, defaultLocale)}
-    </h2>
-    {bookingAction && (
-    <CtaButton
-      href={bookingAction.href}
-      target={bookingAction.external ? '_blank' : undefined}
-      rel={bookingAction.external ? 'noopener' : undefined}
-    >
-      {t(restaurant.gruposCta, locale, defaultLocale)}
-    </CtaButton>
-    )}
+<section id='groups' class='relative overflow-hidden py-[16vh] px-(--gap) max-[960px]:py-[10vh]'>
+  <div class='blob blob-cream w-[420px] h-[420px] -top-32 -right-24 max-[960px]:hidden'></div>
+
+  <div class='relative z-[1] mx-auto max-w-[var(--max)] grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-[clamp(40px,6vw,110px)] max-[960px]:grid-cols-1 max-[960px]:gap-12'>
+    <figure class='reveal overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card)] aspect-[4/5]'>
+      <img src={gruposImgUrl} alt='' class='w-full h-full object-cover' loading='lazy' />
+    </figure>
+
+    <div class='reveal flex flex-col'>
+      <Eyebrow class='block mb-6'>{t(restaurant.gruposEyebrow, locale, defaultLocale)}</Eyebrow>
+
+      <h2 class='font-serif font-normal leading-[1.05] tracking-[-0.02em] text-[clamp(36px,4.6vw,60px)] text-ink mb-8'>
+        <em class='italic text-warm font-normal'>{first}</em>{restText && ' ' + restText}
+      </h2>
+
+      <ul class='grid grid-cols-2 gap-4 mb-10 max-[560px]:grid-cols-1'>
+        {features.map((f) => (
+          <li class='flex items-start gap-3.5 p-4 bg-surface border border-line rounded-[var(--radius-card)]'>
+            <span class='shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-warm-soft text-warm'
+                  style='background: var(--color-warm-soft);'>
+              <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+                <path d={iconPaths[f.icon]} />
+              </svg>
+            </span>
+            <div class='min-w-0'>
+              <div class='font-sans font-semibold uppercase text-ink text-[11px] tracking-[0.22em] mb-1'>{f.label}</div>
+              <div class='text-muted text-[13.5px] leading-[1.55]'>{f.text}</div>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {bookingAction && (
+        <CtaButton
+          href={bookingAction.href}
+          target={bookingAction.external ? '_blank' : undefined}
+          rel={bookingAction.external ? 'noopener' : undefined}
+          class='self-start'
+        >
+          {t(restaurant.gruposCta, locale, defaultLocale)}
+        </CtaButton>
+      )}
+    </div>
   </div>
 </section>

@@ -102,6 +102,12 @@ export type Restaurant = {
   gruposCta?: CampoI18nSanity;
   gruposImagen?: SanityImg;
   gruposDestacados?: Array<{ _key?: string; texto?: CampoI18nSanity }>;
+  gruposFeatures?: Array<{
+    _key?: string;
+    icon: 'users' | 'chef' | 'wine' | 'clock' | 'pin' | 'star';
+    label?: CampoI18nSanity;
+    texto?: CampoI18nSanity;
+  }>;
   direccion?: {
     calle?: string;
     codigoPostal?: string;
@@ -327,7 +333,13 @@ export function crearRestaurantQueries(client: SanityClient, slug: string): Rest
       const espacioPrincipal = restaurant.espacios?.[0];
       if (!espacioPrincipal) {
         throw new Error(
-          `Restaurante '${slug}' no tiene ningún espacio asociado. Añade al menos un doc 'espacio' con referencia a este restaurante desde el Studio.`
+          `Restaurante '${slug}' no tiene ningún espacio asociado. ` +
+            `El campo 'espacios[]' del restaurante está vacío o el espacio no existe. ` +
+            `Arréglalo con:\n` +
+            `  1) Desde el Studio: crea/asocia un doc 'espacio' al restaurante, o\n` +
+            `  2) Si tienes un seed específico (p. ej. Casabella), ejecuta ` +
+            `'pnpm --filter studio run seed:<slug>' — restaura la relación bidireccional ` +
+            `restaurante ↔ espacio sin tocar imágenes ni cartas.`
         );
       }
       const menu = await fetchEspacioMenuFor(client, espacioPrincipal._id);

@@ -8,6 +8,7 @@
     "start": "sanity start",
     "deploy": "sanity deploy",
     "seed": "sanity exec scripts/seed.ts --with-user-token",
+    "seed:casabella": "sanity exec scripts/seed-casabella-real.ts --with-user-token",
     "clean": "rm -rf dist .sanity"
   },
   "dependencies": {

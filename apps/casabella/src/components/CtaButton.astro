@@ -4,29 +4,54 @@ interface Props {
   rel?: string;
   href?: string;
   type?: 'submit' | 'button';
+  variant?: 'primary' | 'ghost' | 'link';
   class?: string;
 }
-const { href, type = 'button', target, rel, class: cls = '' } = Astro.props;
+const {
+  href,
+  type = 'button',
+  target,
+  rel,
+  variant = 'primary',
+  class: cls = ''
+} = Astro.props;
 
+// Pill sobrio: carbón por defecto, hover ámbar. Uppercase medio, sin bouncing.
 const base = [
-  'inline-flex items-center gap-3 py-4 px-7',
-  'bg-accent text-bg rounded-full',
-  'font-sans font-medium uppercase text-[13px] tracking-[0.14em]',
-  'cursor-pointer border-none',
-  'transition-[background-color,transform] duration-[350ms] ease-out',
-  'hover:bg-accent-hover hover:-translate-y-0.5',
-  '[&>.arrow]:transition-transform [&>.arrow]:duration-[350ms] hover:[&>.arrow]:translate-x-1',
+  'inline-flex items-center gap-3',
+  'font-sans font-medium uppercase',
+  'text-[11.5px] tracking-[0.2em]',
+  'cursor-pointer',
+  'transition-[background-color,color,border-color] duration-[350ms] ease-out',
+  '[&>.arrow]:transition-transform [&>.arrow]:duration-[350ms] hover:[&>.arrow]:translate-x-1'
 ];
+
+const variants = {
+  primary: [
+    'py-3.5 px-7',
+    'bg-accent text-white border border-accent rounded-full',
+    'hover:bg-accent-hover hover:border-accent-hover'
+  ],
+  ghost: [
+    'py-3.5 px-7',
+    'bg-transparent text-ink border border-ink rounded-full',
+    'hover:bg-ink hover:text-bg'
+  ],
+  link: [
+    'py-1 border-b border-accent text-accent',
+    'hover:text-accent-hover hover:border-accent-hover'
+  ]
+} as const;
 ---
 
 {href ? (
-  <a href={href} target={target} rel={rel} class:list={[...base, cls]}>
+  <a href={href} target={target} rel={rel} class:list={[...base, ...variants[variant], cls]}>
     <slot />
-    <span class="arrow">→</span>
+    <span class="arrow" aria-hidden="true">→</span>
   </a>
 ) : (
-  <button type={type} class:list={[...base, cls]}>
+  <button type={type} class:list={[...base, ...variants[variant], cls]}>
     <slot />
-    <span class="arrow">→</span>
+    <span class="arrow" aria-hidden="true">→</span>
   </button>
 )}

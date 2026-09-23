@@ -6,7 +6,7 @@ import {
   extractCoords,
   extractFTID,
   ftidToCID,
-  buildMapsExternalUrl,
+  buildMapsExternalUrl
 } from '@hosteleria/utils';
 import Eyebrow from '@hosteleria/ui/components/Eyebrow.astro';
 
@@ -30,42 +30,69 @@ const fullAddress = [dir.calle, dir.codigoPostal, dir.ciudad, dir.pais]
   .filter(Boolean)
   .join(', ');
 const mapsExternalUrl = buildMapsExternalUrl(cid, coords, fullAddress, locale);
+
+const eyebrowText = locale === 'en' ? 'How to find us' : locale === 'ca' ? 'Com arribar' : 'Cómo llegar';
+const openLabel = locale === 'en' ? 'Open in Google Maps' : locale === 'ca' ? 'Obrir a Google Maps' : 'Ver en Google Maps';
 ---
 
-<section id="map" class="py-[12vh] px-(--gap) border-t border-b border-line max-[900px]:py-[10vh]">
-  <div class="reveal max-w-[var(--max)] mx-auto mb-[clamp(40px,5vw,60px)] text-center max-[900px]:mb-10">
-    <Eyebrow class="block mb-[18px]">
-      {locale === 'en' ? 'How to find us' : 'Cómo llegar'}
-    </Eyebrow>
-    <h2 class="font-serif font-light leading-none tracking-[-0.01em] text-[clamp(36px,4.6vw,60px)]">
-      {restaurant.nombre},
-      <em class="text-accent italic font-light">{dir.barrio || dir.ciudad || ''}</em>
-    </h2>
-  </div>
-
-  <div class="reveal overflow-hidden bg-surface mx-auto max-w-[var(--max)] border border-line">
-    <iframe
-      src={mapSrc}
-      title={`${restaurant.nombre} — ${locale === 'en' ? 'How to find us' : 'Cómo llegar'}`}
-      loading="lazy"
-      referrerpolicy="no-referrer-when-downgrade"
-      allowfullscreen
-      class="block w-full border-0 h-[clamp(340px,52vh,500px)] max-[900px]:h-[clamp(280px,44vh,380px)] filter [filter:grayscale(0.18)_contrast(0.94)]"
-    ></iframe>
-  </div>
-
-  {mapsExternalUrl && (
-    <div class="reveal max-w-[var(--max)] mx-auto mt-[clamp(24px,3vw,36px)] text-center">
-      <a
-        href={mapsExternalUrl}
-        target="_blank"
-        rel="noopener"
-        class="group inline-flex items-center gap-2.5 font-sans font-medium uppercase text-accent text-[13px] tracking-[0.14em] py-1 border-b border-accent cursor-pointer
-               transition-[color,border-color] duration-300 hover:text-accent-hover hover:border-accent-hover"
-      >
-        {locale === 'en' ? 'Open in Google Maps' : 'Ver en Google Maps'}
-        <span class="transition-transform duration-300 group-hover:translate-x-1">→</span>
-      </a>
+<section id='map' class='py-[16vh] px-(--gap) max-[900px]:py-[10vh]'>
+  <div class='mx-auto max-w-[var(--max)]'>
+    <div class='reveal text-center mb-12 max-[900px]:mb-10'>
+      <Eyebrow class='block mb-5'>{eyebrowText}</Eyebrow>
+      <h2 class='font-serif font-normal leading-[1.05] tracking-[-0.02em] text-[clamp(34px,4.2vw,56px)] text-ink'>
+        {restaurant.nombre},
+        <em class='italic text-warm font-normal'>{dir.barrio || dir.ciudad || ''}</em>
+      </h2>
     </div>
-  )}
+
+    <div class='grid grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)] items-stretch gap-6 max-[960px]:grid-cols-1'>
+      <div class='reveal relative overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card)]'>
+        <iframe
+          src={mapSrc}
+          title={`${restaurant.nombre} — ${eyebrowText}`}
+          loading='lazy'
+          referrerpolicy='no-referrer-when-downgrade'
+          allowfullscreen
+          class='block w-full border-0 h-[clamp(420px,60vh,560px)] max-[900px]:h-[clamp(300px,50vh,420px)] [filter:grayscale(0.15)_contrast(0.97)]'
+        ></iframe>
+      </div>
+
+      <aside class='reveal flex flex-col justify-between p-10 bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card)] max-[960px]:p-8'>
+        <div class='flex flex-col gap-8 text-[15px] leading-[1.65]'>
+          {dir.calle && (
+            <div>
+              <div class='font-sans uppercase text-[10.5px] tracking-[0.28em] text-warm font-medium mb-2'>
+                {locale === 'en' ? 'Address' : locale === 'ca' ? 'Adreça' : 'Dirección'}
+              </div>
+              <div class='text-ink font-serif text-[18px] leading-[1.4]'>{dir.calle}</div>
+              <div class='text-muted mt-1'>{[dir.codigoPostal, dir.ciudad].filter(Boolean).join(' · ')}</div>
+            </div>
+          )}
+
+          {restaurant.contacto?.telefono && (
+            <div>
+              <div class='font-sans uppercase text-[10.5px] tracking-[0.28em] text-warm font-medium mb-2'>
+                {locale === 'en' ? 'Phone' : locale === 'ca' ? 'Telèfon' : 'Teléfono'}
+              </div>
+              <a href={`tel:${restaurant.contacto.telefono}`} class='text-ink font-serif text-[18px] leading-[1.4] hover:text-warm transition-colors'>
+                {restaurant.contacto.telefono}
+              </a>
+            </div>
+          )}
+        </div>
+
+        {mapsExternalUrl && (
+          <a
+            href={mapsExternalUrl}
+            target='_blank'
+            rel='noopener'
+            class='mt-10 inline-flex items-center gap-3 font-sans uppercase text-[11px] tracking-[0.22em] text-ink font-medium border-b border-ink pb-1 self-start hover:text-warm hover:border-warm transition-[color,border-color] duration-300'
+          >
+            {openLabel}
+            <span aria-hidden='true'>→</span>
+          </a>
+        )}
+      </aside>
+    </div>
+  </div>
 </section>

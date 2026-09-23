@@ -1,5 +1,11 @@
 import { t, type CodigoIdioma } from '@hosteleria/i18n-utils';
-import type { ImageBuilder, Restaurant } from '@hosteleria/sanity-client';
+import type { ImageBuilder, Restaurant, DishCategory, Dish } from '@hosteleria/sanity-client';
+
+const HTML_LANG_MENU: Record<string, string> = {
+  es: 'es-ES',
+  en: 'en',
+  ca: 'ca-ES'
+};
 
 function extraerCoordsDeMapaUrl(mapaUrl: string | undefined): { lat: number; lng: number } | null {
   if (!mapaUrl) return null;
@@ -41,13 +47,16 @@ export type BuildRestaurantJsonLdOpts = {
   canonical: string;
   img: ImageBuilder;
   servesCuisine?: string[];
+  /** Si se pasa, añade `hasMenu: { @id: menuId }` al Restaurant, linkeando
+   *  con el JSON-LD Menu que se emite por separado. */
+  menuId?: string;
 };
 
 /**
  * JSON-LD `Restaurant` (schema.org). Solo incluye campos con valor.
  */
 export function buildRestaurantJsonLd(opts: BuildRestaurantJsonLdOpts) {
-  const { restaurant, locale, defaultLocale, canonical, img, servesCuisine } = opts;
+  const { restaurant, locale, defaultLocale, canonical, img, servesCuisine, menuId } = opts;
   const dir = restaurant.direccion ?? {};
   const contacto = restaurant.contacto ?? {};
   const logoUrl = img.url(restaurant.logo);
@@ -127,6 +136,7 @@ export function buildRestaurantJsonLd(opts: BuildRestaurantJsonLdOpts) {
     ...(openingHours.length && { openingHoursSpecification: openingHours }),
     ...(sameAs.length && { sameAs }),
     ...(restaurant.mapaUrl && { hasMap: restaurant.mapaUrl }),
+    ...(menuId && { hasMenu: { '@id': menuId } }),
     ...(restaurant.precioMedio && {
       amenityFeature: (restaurant.serviciosExtras ?? []).map((s) => ({
         '@type': 'LocationFeatureSpecification',
@@ -134,6 +144,86 @@ export function buildRestaurantJsonLd(opts: BuildRestaurantJsonLdOpts) {
         value: true
       }))
     })
+  };
+}
+
+export type BuildMenuJsonLdOpts = {
+  dishCategories: DishCategory[];
+  dishes: Dish[];
+  restaurantName: string;
+  /** URL canónica de la página; se usa para construir `@id` de Menu y linkear con Restaurant. */
+  canonical: string;
+  locale: CodigoIdioma;
+  defaultLocale: CodigoIdioma;
+  /** Código ISO 4217 de moneda. Default EUR. */
+  currency?: string;
+  /** Etiqueta opcional para el nombre del menú ("Carta breve", "Menú temporada", …). */
+  label?: string;
+};
+
+/**
+ * JSON-LD `Menu` (schema.org). Genera secciones y items desde los platos
+ * activos de Sanity. Google puede mostrar la carta expandida como rich
+ * result bajo el resultado orgánico. `null` si no hay platos con nombre.
+ */
+export function buildMenuJsonLd(opts: BuildMenuJsonLdOpts) {
+  const {
+    dishCategories,
+    dishes,
+    restaurantName,
+    canonical,
+    locale,
+    defaultLocale,
+    currency = 'EUR',
+    label
+  } = opts;
+
+  const sections = dishCategories
+    .map((cat) => {
+      const catName = t(cat.nombre, locale, defaultLocale);
+      if (!catName) return null;
+
+      const items = dishes
+        .filter((d) => d.categoria?._id === cat._id)
+        .map((d) => {
+          const name = t(d.nombre, locale, defaultLocale);
+          if (!name) return null;
+          const description = t(d.nota, locale, defaultLocale);
+          const item: Record<string, unknown> = {
+            '@type': 'MenuItem',
+            name
+          };
+          if (description) item.description = description;
+          if (d.precio != null) {
+            item.offers = {
+              '@type': 'Offer',
+              price: d.precio.toFixed(2),
+              priceCurrency: currency
+            };
+          }
+          return item;
+        })
+        .filter((it): it is Record<string, unknown> => Boolean(it));
+
+      if (!items.length) return null;
+
+      return {
+        '@type': 'MenuSection',
+        name: catName,
+        hasMenuItem: items
+      };
+    })
+    .filter((s): s is { '@type': string; name: string; hasMenuItem: unknown[] } => Boolean(s));
+
+  if (!sections.length) return null;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Menu',
+    '@id': `${canonical}#menu`,
+    name: label ?? `Carta — ${restaurantName}`,
+    inLanguage: HTML_LANG_MENU[locale] ?? locale,
+    hasMenuSection: sections
   };
 }
 

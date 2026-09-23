@@ -9,11 +9,8 @@ interface Props {
   locale: string;
   defaultLocale: string;
   activeLocales: LocaleRef[];
-  /** Prefijo para los anchors internos (útil desde páginas legales: `/` → `/#about`). Vacío por defecto. */
   hrefPrefix?: string;
-  /** Path base para el language switcher (útil para mantener la misma URL al cambiar de locale). Default '/'. */
   langSwitcherPath?: string;
-  /** Fuerza la clase `scrolled` en el nav (para páginas no-hero como legal). */
   forceScrolled?: boolean;
 }
 
@@ -28,8 +25,6 @@ const {
 } = Astro.props;
 
 const nav = restaurant.textosNav ?? {};
-
-// Acción del botón "Reservar": form (#book) → whatsapp → tel → null (no mostrar)
 const bookingAction = resolveBookingAction(restaurant, locale, hrefPrefix);
 
 const localesUi = activeLocales.length
@@ -40,8 +35,6 @@ const partes = restaurant.nombre.match(/^(Casa|La|El)?\s?(.*)$/);
 const brandStart = partes?.[1] ?? '';
 const brandRest = partes?.[2] ?? restaurant.nombre;
 
-// Estados basados en JS: `.scrolled` se toggle por scroll (`data-force-scrolled` la fuerza en páginas legales).
-// El script inline usa Tailwind arbitrary + `data-[scrolled='true']:` para reaccionar a un data attribute.
 const scrolledAttr = forceScrolled ? 'true' : 'false';
 
 const A11Y_OPEN_MENU: Record<string, string> = {
@@ -50,8 +43,19 @@ const A11Y_OPEN_MENU: Record<string, string> = {
   ca: 'Obrir menú'
 };
 const openMenuLabel = A11Y_OPEN_MENU[locale] ?? A11Y_OPEN_MENU.es;
+
+const links = [
+  { href: `${hrefPrefix}#about`, label: t(nav.linkLocal, locale, defaultLocale) || 'Historia' },
+  { href: `${hrefPrefix}#plates`, label: t(nav.linkCocina, locale, defaultLocale) || 'Carta' },
+  { href: `${hrefPrefix}#wines`, label: t(nav.linkVinos, locale, defaultLocale) || 'Vinos' },
+  { href: `${hrefPrefix}#gallery`, label: t(nav.linkGaleria, locale, defaultLocale) || 'Galería' }
+];
 ---
 
+<!--
+  Nav: casi transparente sobre el hero (deja ver la imagen), cream opaco al
+  scroll. Texto blanco / warm sobre imagen, ink / muted sobre cream.
+-->
 <nav
   id='nav'
   data-scrolled={scrolledAttr}
@@ -59,21 +63,27 @@ const openMenuLabel = A11Y_OPEN_MENU[locale] ?? A11Y_OPEN_MENU.es;
   class:list={[
     'fixed z-50 inset-x-0 top-0 flex items-center justify-between gap-8',
     'py-4 px-(--gap)',
-    'backdrop-blur-[14px] backdrop-saturate-[140%]',
-    'bg-[rgb(19_17_16/0.55)] border-b border-transparent',
-    'transition-[background-color,padding,border-color] duration-[350ms] ease-out',
-    "data-[scrolled='true']:py-3 data-[scrolled='true']:bg-[rgb(19_17_16/0.88)] data-[scrolled='true']:border-b-line"
+    'backdrop-blur-[20px] backdrop-saturate-[160%]',
+    'bg-[rgb(246_240_230/0.11)] border-b border-white/10',
+    'transition-[background-color,padding,border-color,box-shadow] duration-[350ms] ease-out',
+    "data-[scrolled='true']:py-3 data-[scrolled='true']:bg-[rgb(246_240_230/0.92)] data-[scrolled='true']:border-b-line data-[scrolled='true']:shadow-[0_1px_0_rgb(22_20_18/0.03)]"
   ]}
 >
   <a
     href={hrefPrefix || '#top'}
-    class='font-serif text-ink font-normal leading-none tracking-[-0.005em] shrink-0 text-[clamp(24px,2.4vw,32px)] transition-colors duration-300 group/logo'
+    class="font-serif font-normal leading-none tracking-[-0.005em] shrink-0 text-[clamp(24px,2.4vw,32px)] transition-colors duration-300
+           text-white data-[scrolled='true']:text-ink"
+    data-scrolled={scrolledAttr}
   >
     {
       brandStart ? (
         <>
           {brandStart}
-          <em class='italic text-accent group-hover/logo:text-accent-hover font-normal transition-colors'>
+          <em
+            data-scrolled={scrolledAttr}
+            class="italic font-normal transition-colors duration-300
+                   text-[var(--color-warm-soft)] data-[scrolled='true']:text-warm"
+          >
             {brandRest}
           </em>
         </>
@@ -84,80 +94,74 @@ const openMenuLabel = A11Y_OPEN_MENU[locale] ?? A11Y_OPEN_MENU.es;
   </a>
 
   <div class='hidden items-center gap-[clamp(22px,3vw,40px)] min-[961px]:flex'>
-    <ul
-      class='flex list-none gap-[clamp(20px,2.4vw,32px)] font-sans font-medium uppercase text-[11px] tracking-[0.22em]'
-    >
-      <li>
-        <a
-          href={`${hrefPrefix}#about`}
-          class="text-muted relative py-1 transition-colors duration-300 hover:text-ink after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:right-0 after:h-px after:bg-accent after:origin-left after:scale-x-0 after:transition-transform after:duration-[350ms] after:ease-[cubic-bezier(.77,0,.18,1)] hover:after:scale-x-100"
-        >
-          {t(nav.linkLocal, locale, defaultLocale) || 'Historia'}
-        </a>
-      </li>
-      <li>
-        <a
-          href={`${hrefPrefix}#plates`}
-          class="text-muted relative py-1 transition-colors duration-300 hover:text-ink after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:right-0 after:h-px after:bg-accent after:origin-left after:scale-x-0 after:transition-transform after:duration-[350ms] after:ease-[cubic-bezier(.77,0,.18,1)] hover:after:scale-x-100"
-        >
-          {t(nav.linkCocina, locale, defaultLocale) || 'Carta'}
-        </a>
-      </li>
-      <li>
-        <a
-          href={`${hrefPrefix}#wines`}
-          class="text-muted relative py-1 transition-colors duration-300 hover:text-ink after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:right-0 after:h-px after:bg-accent after:origin-left after:scale-x-0 after:transition-transform after:duration-[350ms] after:ease-[cubic-bezier(.77,0,.18,1)] hover:after:scale-x-100"
-        >
-          {t(nav.linkVinos, locale, defaultLocale) || 'Vinos'}
-        </a>
-      </li>
-      <li>
-        <a
-          href={`${hrefPrefix}#gallery`}
-          class="text-muted relative py-1 transition-colors duration-300 hover:text-ink after:content-[''] after:absolute after:bottom-[-2px] after:left-0 after:right-0 after:h-px after:bg-accent after:origin-left after:scale-x-0 after:transition-transform after:duration-[350ms] after:ease-[cubic-bezier(.77,0,.18,1)] hover:after:scale-x-100"
-        >
-          {t(nav.linkGaleria, locale, defaultLocale) || 'Galería'}
-        </a>
-      </li>
+    <ul class='flex list-none gap-[clamp(20px,2.4vw,34px)] font-sans font-medium uppercase text-[11.5px] tracking-[0.22em]'>
+      {links.map((link) => (
+        <li>
+          <a
+            href={link.href}
+            data-scrolled={scrolledAttr}
+            class="py-1 transition-colors duration-300
+                   text-white/85 hover:text-white
+                   data-[scrolled='true']:text-muted data-[scrolled='true']:hover:text-ink"
+          >
+            {link.label}
+          </a>
+        </li>
+      ))}
     </ul>
 
-    {
-      localesUi.length > 1 && (
-        <div
-          class='flex items-center gap-2 pl-[clamp(8px,1.4vw,18px)] border-l border-line font-sans font-medium uppercase text-[10.5px] tracking-[0.22em] text-dim'
-          aria-label='Idioma'
+    {localesUi.length > 1 && (
+      <details
+        class='lang-dropdown group relative'
+        aria-label='Idioma'
+      >
+        <summary
+          data-scrolled={scrolledAttr}
+          class="list-none [&::-webkit-details-marker]:hidden cursor-pointer
+                 inline-flex items-center gap-2 py-1.5 px-3 rounded-md
+                 font-sans font-semibold uppercase text-[11px] tracking-[0.22em]
+                 border backdrop-blur-md
+                 transition-[background-color,border-color,color] duration-300
+                 border-white/30 text-white bg-black/25 hover:bg-black/35
+                 data-[scrolled='true']:border-line data-[scrolled='true']:text-ink data-[scrolled='true']:bg-surface data-[scrolled='true']:hover:bg-surface-2"
         >
-          {localesUi.map((l, i) => (
-            <>
-              {i > 0 && <span class='text-dim opacity-50 -mx-1 select-none'>·</span>}
-              <a
-                href={
-                  l.codigo === locale
-                    ? '#'
-                    : localizedPath(langSwitcherPath, l.codigo, defaultLocale)
-                }
-                class:list={[
-                  'py-1 px-0.5 transition-colors duration-300',
-                  l.codigo === locale
-                    ? 'text-accent pointer-events-none'
-                    : 'hover:text-ink cursor-pointer'
-                ]}
-                aria-current={l.codigo === locale ? 'true' : undefined}
-              >
-                {l.codigo.toUpperCase()}
-              </a>
-            </>
+          <span>{locale.toUpperCase()}</span>
+          <svg width='10' height='10' viewBox='0 0 12 12' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'
+               class='transition-transform duration-300 group-open:rotate-180 opacity-80'>
+            <path d='M3 4.5L6 7.5L9 4.5'/>
+          </svg>
+        </summary>
+        <div
+          class='absolute right-0 top-[calc(100%+6px)] min-w-[110px] bg-surface border border-line rounded-md overflow-hidden shadow-[var(--shadow-card-lift)] py-1'
+        >
+          {localesUi.map((l) => (
+            <a
+              href={
+                l.codigo === locale
+                  ? '#'
+                  : localizedPath(langSwitcherPath, l.codigo, defaultLocale)
+              }
+              class:list={[
+                'block px-4 py-2 font-sans font-semibold uppercase text-[11px] tracking-[0.22em] transition-colors duration-200',
+                l.codigo === locale
+                  ? 'text-warm bg-surface-2 pointer-events-none'
+                  : 'text-muted hover:text-ink hover:bg-surface-2 cursor-pointer'
+              ]}
+              aria-current={l.codigo === locale ? 'true' : undefined}
+            >
+              {l.codigo.toUpperCase()}
+            </a>
           ))}
         </div>
-      )
-    }
+      </details>
+    )}
 
     {bookingAction && (
       <a
         href={bookingAction.href}
         target={bookingAction.external ? '_blank' : undefined}
         rel={bookingAction.external ? 'noopener' : undefined}
-        class='inline-flex items-center gap-2.5 py-3 px-6 bg-accent text-bg border border-accent rounded-full font-sans font-medium uppercase text-[11px] tracking-[0.2em] whitespace-nowrap cursor-pointer shadow-[0_4px_14px_rgb(212_166_85/0.25)] transition-[background-color,border-color,transform,box-shadow] duration-300 hover:bg-accent-hover hover:border-accent-hover hover:-translate-y-px hover:shadow-[0_8px_22px_rgb(212_166_85/0.38)] focus-visible:outline-offset-[4px]'
+        class='inline-flex items-center gap-2.5 py-2.5 px-5 bg-accent text-white border border-accent rounded-full font-sans font-medium uppercase text-[11px] tracking-[0.2em] whitespace-nowrap cursor-pointer transition-[background-color,border-color] duration-300 hover:bg-accent-hover hover:border-accent-hover'
       >
         {bookingAction.label ?? t(nav.linkReservar, locale, defaultLocale) ?? 'Reservar'}
       </a>
@@ -169,7 +173,10 @@ const openMenuLabel = A11Y_OPEN_MENU[locale] ?? A11Y_OPEN_MENU.es;
     aria-label={openMenuLabel}
     aria-expanded='false'
     aria-controls='mobileOverlay'
-    class='flex items-center justify-center w-11 h-11 -mr-2.5 bg-transparent border-none rounded-full text-ink cursor-pointer transition-colors duration-300 hover:bg-surface-2 min-[961px]:hidden [&>svg]:block'
+    data-scrolled={scrolledAttr}
+    class="flex items-center justify-center w-11 h-11 -mr-2.5 bg-transparent border-none rounded-full cursor-pointer transition-colors duration-300 min-[961px]:hidden [&>svg]:block
+           text-white hover:bg-white/10
+           data-[scrolled='true']:text-ink data-[scrolled='true']:hover:bg-surface-2"
   >
     <IconHamburger />
   </button>
@@ -179,9 +186,32 @@ const openMenuLabel = A11Y_OPEN_MENU[locale] ?? A11Y_OPEN_MENU.es;
   (function () {
     const nav = document.getElementById('nav');
     if (!nav) return;
-    if (nav.dataset.forceScrolled === '1') return; // legal pages siempre scrolled
-    const onScroll = () => (nav.dataset.scrolled = window.scrollY > 40 ? 'true' : 'false');
-    onScroll();
-    addEventListener('scroll', onScroll, { passive: true });
+
+    // Sincronización data-scrolled entre nav y descendientes que lo declaran.
+    if (nav.dataset.forceScrolled !== '1') {
+      const syncChildren = (val) => {
+        nav.querySelectorAll('[data-scrolled]').forEach((el) => {
+          if (el !== nav) el.dataset.scrolled = val;
+        });
+      };
+      const onScroll = () => {
+        const val = window.scrollY > 40 ? 'true' : 'false';
+        nav.dataset.scrolled = val;
+        syncChildren(val);
+      };
+      onScroll();
+      addEventListener('scroll', onScroll, { passive: true });
+    }
+
+    // Cierra el dropdown de idiomas al hacer click fuera o presionar Escape.
+    const dropdown = nav.querySelector('.lang-dropdown');
+    if (dropdown) {
+      document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target)) dropdown.removeAttribute('open');
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') dropdown.removeAttribute('open');
+      });
+    }
   })();
 </script>

@@ -15,67 +15,124 @@ interface Props {
 const { restaurant, espacio, locale, defaultLocale } = Astro.props;
 const heroImgUrl = img.url(espacio.heroImagen) ?? '/img/hero.jpg';
 const bookingAction = resolveBookingAction(restaurant, locale);
+
+const metaIzq = t(espacio.heroMetaIzq, locale, defaultLocale);
+const metaDer = t(espacio.heroMetaDer, locale, defaultLocale);
+
+const titulo = t(espacio.heroTitulo, locale, defaultLocale);
+const emphasis = t(espacio.heroSubtitulo, locale, defaultLocale);
 ---
 
+<!--
+  Hero full-bleed: la imagen ocupa toda la sección. Borde inferior recortado
+  con forma de nubes (varios bumps) via SVG overlay que se rellena del color
+  de la siguiente sección (Manifesto = bg-surface-2).
+-->
 <section
   id='top'
-  class='grid relative pt-20 h-svh overflow-hidden grid-cols-[55%_45%] max-[960px]:grid-cols-1 max-[960px]:h-auto max-[960px]:overflow-visible'
+  class='relative w-full min-h-[92vh] overflow-hidden max-[960px]:min-h-[78vh] max-[600px]:min-h-[70vh]'
 >
-  <!-- Media con gradient overlay via after: -->
-  <div
-    class="relative overflow-hidden bg-surface max-[960px]:aspect-[4/3] max-[960px]:order-2
-           after:content-[''] after:absolute after:inset-0 after:pointer-events-none after:opacity-40
-           after:bg-[linear-gradient(90deg,transparent_0%,var(--color-bg)_100%)]
-           max-[960px]:after:opacity-60 max-[960px]:after:bg-[linear-gradient(180deg,var(--color-bg)_0%,transparent_20%,transparent_80%,var(--color-bg)_100%)]"
-  >
-    <img
-      src={heroImgUrl}
-      alt={t(espacio.heroTitulo, locale, defaultLocale)}
-      class='w-full h-full object-cover'
-    />
-  </div>
+  <!-- Imagen fondo (LCP element — se preloadea desde BaseLayout) -->
+  <img
+    src={heroImgUrl}
+    alt={titulo}
+    fetchpriority='high'
+    decoding='async'
+    class='absolute inset-0 w-full h-full object-cover'
+  />
 
+  <!-- Overlay dark gradient para legibilidad del texto -->
   <div
-    class='flex flex-col justify-center gap-8 py-[6vh] px-(--gap) max-[960px]:pt-24 max-[960px]:pb-12 max-[960px]:gap-6 max-[960px]:order-1'
+    aria-hidden='true'
+    class='absolute inset-0 bg-[linear-gradient(120deg,rgb(0_0_0/0.55)_0%,rgb(0_0_0/0.30)_45%,rgb(0_0_0/0.05)_75%,transparent_100%)]'
+  ></div>
+  <div
+    aria-hidden='true'
+    class='absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(to_top,rgb(0_0_0/0.5),transparent)]'
+  ></div>
+
+  <!-- Contenido overlay -->
+  <div
+    class='relative z-[1] h-full min-h-[92vh] max-[960px]:min-h-[78vh] max-[600px]:min-h-[70vh]
+           flex flex-col justify-center
+           px-(--gap) pt-32 pb-[18vh]
+           mx-auto max-w-[var(--max)]
+           max-[960px]:pt-28 max-[960px]:pb-[14vh]'
   >
-    <div class='flex items-center gap-3.5 text-[11px] tracking-[0.28em] uppercase text-muted'>
-      <span>{t(espacio.heroMetaIzq, locale, defaultLocale)}</span>
-      <span class='w-[3px] h-[3px] rounded-full bg-accent'></span>
-      <span>{t(espacio.heroMetaDer, locale, defaultLocale)}</span>
+    <div class='flex flex-col gap-7 max-w-[720px] max-[960px]:gap-6'>
+      {(metaIzq || metaDer) && (
+        <div class='inline-flex self-start items-center gap-3 py-1.5 px-4 rounded-full bg-white/12 backdrop-blur-md border border-white/30 text-white text-[11px] uppercase tracking-[0.28em] font-medium'>
+          <span class='w-1.5 h-1.5 rounded-full bg-warm inline-block'></span>
+          {metaIzq && <span>{metaIzq}</span>}
+          {metaIzq && metaDer && <span class='opacity-70'>·</span>}
+          {metaDer && <span>{metaDer}</span>}
+        </div>
+      )}
+
+      <h1 class='font-serif font-normal leading-[1.02] tracking-[-0.02em] text-[clamp(50px,6.6vw,92px)] text-white [text-shadow:0_2px_20px_rgb(0_0_0/0.35)]'>
+        {titulo}
+        {emphasis && (
+          <>
+            <br />
+            <em class='italic font-normal text-warm-soft' style='color: var(--color-warm-soft);'>{emphasis}</em>
+          </>
+        )}
+      </h1>
+
+      <p
+        class='text-white/90 text-[17px] leading-[1.7] max-w-[46ch] [text-shadow:0_1px_10px_rgb(0_0_0/0.35)]'
+        set:html={t(espacio.heroNota, locale, defaultLocale).replace(/\n/g, '<br />')}
+      />
+
+      <div class='flex items-center gap-6 flex-wrap mt-2'>
+        {bookingAction && (
+          <CtaButton
+            href={bookingAction.href}
+            target={bookingAction.external ? '_blank' : undefined}
+            rel={bookingAction.external ? 'noopener' : undefined}
+          >
+            {t(espacio.heroCta, locale, defaultLocale)}
+          </CtaButton>
+        )}
+        <a
+          href='#plates'
+          class='inline-flex items-center gap-2.5 py-3 px-6 rounded-full bg-white/10 backdrop-blur-md border border-white/45 text-white font-sans font-medium uppercase text-[11.5px] tracking-[0.2em] transition-[background-color,border-color] duration-300 hover:bg-white/20 hover:border-white/70'
+        >
+          {locale === 'en' ? 'View the menu' : locale === 'ca' ? 'Veure la carta' : 'Ver la carta'}
+          <span aria-hidden='true'>→</span>
+        </a>
+      </div>
     </div>
-    <h1 class='font-serif font-light leading-none tracking-[-0.02em] text-[clamp(48px,6.5vw,96px)]'>
-      {t(espacio.heroTitulo, locale, defaultLocale)}<br />
-      <em class='text-accent italic font-light'>
-        {t(espacio.heroSubtitulo, locale, defaultLocale)}
-      </em>
-    </h1>
-    <p
-      class='text-ink-soft text-[17px] leading-[1.7] max-w-[42ch]'
-      set:html={t(espacio.heroNota, locale, defaultLocale).replace(/\n/g, '<br />')}
-    />
-    {bookingAction && (
-      <CtaButton
-        href={bookingAction.href}
-        target={bookingAction.external ? '_blank' : undefined}
-        rel={bookingAction.external ? 'noopener' : undefined}
-        class='w-fit'
-      >
-        {t(espacio.heroCta, locale, defaultLocale)}
-      </CtaButton>
-    )}
   </div>
 
-  <!-- Scroll indicator: fade in + animated line vertical -->
+  <!-- Scroll indicator -->
   <a
     href='#about'
     aria-hidden='true'
-    class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[2] flex flex-col items-center gap-2.5
-           text-[10px] tracking-[0.28em] uppercase text-muted pointer-events-none
+    class="absolute bottom-[14vh] left-1/2 -translate-x-1/2 z-[2] flex flex-col items-center gap-2.5
+           text-[10px] tracking-[0.28em] uppercase text-white/70 pointer-events-none
            opacity-0 animate-[heroScrollFade_1s_ease_1.4s_forwards]
-           after:content-[''] after:w-px after:h-10 after:bg-[linear-gradient(to_bottom,var(--color-accent),transparent)]
+           after:content-[''] after:w-px after:h-10 after:bg-[linear-gradient(to_bottom,rgba(255,255,255,0.7),transparent)]
            after:animate-[heroScrollLine_2.2s_ease-in-out_infinite]
            max-[960px]:hidden"
   >
     <span>Scroll</span>
   </a>
+
+  <!-- Borde inferior tipo onda seno/coseno (más sutil que la nube). Se rellena
+       con el color de la siguiente sección (Manifesto = bg-surface-2). -->
+  <svg
+    aria-hidden='true'
+    viewBox='0 0 1440 70'
+    preserveAspectRatio='none'
+    class='absolute bottom-[-1px] inset-x-0 w-full h-[60px] max-[960px]:h-[40px] max-[600px]:h-[26px] z-[3] pointer-events-none'
+    style='color: var(--color-surface-2);'
+  >
+    <path
+      d='M 0,32
+         Q 120,4 240,32 T 480,32 T 720,32 T 960,32 T 1200,32 T 1440,32
+         L 1440,70 L 0,70 Z'
+      fill='currentColor'
+    />
+  </svg>
 </section>

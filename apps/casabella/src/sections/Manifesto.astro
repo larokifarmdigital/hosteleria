@@ -1,7 +1,6 @@
 ---
 import { t } from '@hosteleria/i18n-utils';
 import type { Restaurant, Espacio } from '../lib/queries';
-import Eyebrow from '@hosteleria/ui/components/Eyebrow.astro';
 
 interface Props {
   restaurant: Restaurant;
@@ -11,13 +10,28 @@ interface Props {
 }
 
 const { espacio, locale, defaultLocale } = Astro.props;
+
+const eyebrow = t(espacio.manifiestoEyebrow, locale, defaultLocale);
+const texto = t(espacio.manifiestoTexto, locale, defaultLocale);
 ---
 
-<section class="reveal py-[14vh] px-(--gap) max-w-[900px] mx-auto text-center">
-  <Eyebrow class="block mb-7">{t(espacio.manifiestoEyebrow, locale, defaultLocale)}</Eyebrow>
-  <blockquote
-    class="font-serif text-ink font-light italic leading-[1.25] text-[clamp(26px,3.2vw,48px)] before:text-accent before:content-['“'] after:text-accent after:content-['”']"
-  >
-    {t(espacio.manifiestoTexto, locale, defaultLocale)}
-  </blockquote>
+<!--
+  Manifesto rediseñado: strip compacto sobre bg-surface-2 (crema oscura).
+  Eyebrow con dashes warm + quote grande centrado. Sin blob, sin marcas
+  gráficas competing. Ancla visualmente entre Hero y About sin flotar.
+-->
+<section class='py-[14vh] px-(--gap) bg-surface-2 max-[960px]:py-[10vh]'>
+  <div class='reveal mx-auto max-w-[880px] text-center'>
+    {eyebrow && (
+      <div class='inline-flex items-center justify-center gap-4 mb-8 text-[10.5px] uppercase tracking-[0.32em] text-warm font-medium'>
+        <span class='w-8 h-px bg-warm/60'></span>
+        <span>{eyebrow}</span>
+        <span class='w-8 h-px bg-warm/60'></span>
+      </div>
+    )}
+
+    <blockquote class='font-serif text-ink font-normal italic leading-[1.28] text-[clamp(26px,3.4vw,44px)] tracking-[-0.01em] max-w-[24ch] mx-auto'>
+      {texto}
+    </blockquote>
+  </div>
 </section>

@@ -15,44 +15,79 @@ const { restaurant, dishCategories, dishes, locale, defaultLocale } = Astro.prop
 
 const sec = restaurant.textosSecciones ?? {};
 
-const dishesByCategory = dishCategories.map((cat) => ({
-  category: cat,
-  items: dishes.filter((d) => d.categoria?._id === cat._id),
-}));
+const dishesByCategory = dishCategories
+  .map((cat) => ({ category: cat, items: dishes.filter((d) => d.categoria?._id === cat._id) }))
+  .filter(({ items }) => items.length > 0);
+
+const titulo = t(sec.platosTitulo, locale, defaultLocale);
+const [first, ...restTitle] = titulo.split(' ');
+const restText = restTitle.join(' ');
 ---
 
-<section id="plates" class="py-[12vh] px-(--gap) bg-surface border-t border-line max-[960px]:py-[8vh]">
-  <div class="reveal text-center mb-[70px] mx-auto max-w-[var(--max)] max-[960px]:mb-12">
-    <Eyebrow class="block mb-5">{t(sec.platosEyebrow, locale, defaultLocale)}</Eyebrow>
-    <h2 class="font-serif font-light leading-none tracking-[-0.01em] text-[clamp(38px,5vw,72px)]">
-      {t(sec.platosTitulo, locale, defaultLocale)}
-    </h2>
-  </div>
-  <div class="grid mx-auto max-w-[var(--max)] grid-cols-2 gap-y-0 gap-x-[clamp(40px,6vw,90px)] max-[960px]:grid-cols-1 max-[960px]:gap-0">
-    {dishesByCategory.map(({ category, items }) => (
-      items.length > 0 && (
-        <>
-          <!-- Category: primer child no tiene border-top ni padding-top -->
-          <div class="col-span-full pt-11 pb-3 mt-3 border-t border-line text-[11px] tracking-[0.32em] uppercase text-accent font-medium first:pt-0 first:mt-0 first:border-t-0">
+<section
+  id='plates'
+  class='relative overflow-hidden py-[16vh] px-(--gap) bg-surface-2 max-[960px]:py-[10vh]'
+>
+  <div class='blob blob-cream w-[440px] h-[440px] -top-32 -right-24 max-[960px]:hidden'></div>
+
+  <div class='relative z-[1] mx-auto max-w-[var(--max)]'>
+    <div class='reveal text-center mb-16 max-[960px]:mb-12'>
+      <Eyebrow class='block mb-5'>{t(sec.platosEyebrow, locale, defaultLocale)}</Eyebrow>
+      <h2 class='font-serif font-normal leading-[1.05] tracking-[-0.02em] text-[clamp(38px,5vw,68px)] text-ink max-w-[18ch] mx-auto'>
+        <em class='italic text-warm font-normal'>{first}</em>{restText && ' ' + restText}
+      </h2>
+    </div>
+
+    <!-- Nav de categorías tipo tabs editorial (uppercase, underline sutil) -->
+    {dishesByCategory.length > 1 && (
+      <div class='reveal flex flex-wrap justify-center gap-x-10 gap-y-3 mb-16 pb-6 border-b border-line max-[960px]:mb-12 max-[960px]:gap-x-6'>
+        {dishesByCategory.map(({ category }) => (
+          <a
+            href={`#plate-cat-${category._id}`}
+            class='font-sans font-medium uppercase text-[11.5px] tracking-[0.22em] text-muted py-1 border-b border-transparent transition-[color,border-color] duration-300 hover:text-warm hover:border-warm'
+          >
             {t(category.nombre, locale, defaultLocale)}
-          </div>
-          {items.map((dish) => (
-            <div class="grid items-baseline grid-cols-[1fr_auto] gap-6 py-[22px] px-[18px] -mx-[18px] border-b border-line rounded transition-[background-color,transform] duration-[350ms] ease-out hover:bg-[rgb(212_166_85/0.05)] hover:translate-x-1 max-[960px]:py-5 max-[960px]:px-[14px] max-[960px]:-mx-[14px] max-[960px]:hover:translate-x-0">
-              <div>
-                <div class="font-serif text-ink font-normal mb-1.5 tracking-[0.005em] text-[clamp(19px,1.6vw,23px)]">
-                  {t(dish.nombre, locale, defaultLocale)}
+          </a>
+        ))}
+      </div>
+    )}
+
+    <!-- Carta clásica: dos columnas de rows con dotted leader plato–precio -->
+    <div class='grid grid-cols-2 gap-x-[clamp(48px,7vw,120px)] gap-y-16 max-[900px]:grid-cols-1 max-[900px]:gap-y-12'>
+      {dishesByCategory.map(({ category, items }) => (
+        <div id={`plate-cat-${category._id}`} class='reveal scroll-mt-32 break-inside-avoid'>
+          <header class='flex items-baseline gap-4 mb-8 pb-3 border-b border-line'>
+            <h3 class='font-serif font-normal italic text-warm text-[clamp(22px,2.2vw,28px)] tracking-[-0.005em]'>
+              {t(category.nombre, locale, defaultLocale)}
+            </h3>
+            <span class='flex-1'></span>
+            <span class='font-sans text-[10.5px] font-medium uppercase tracking-[0.28em] text-dim'>
+              {items.length} {locale === 'en' ? 'plates' : locale === 'ca' ? 'plats' : 'platos'}
+            </span>
+          </header>
+
+          <ul class='flex flex-col gap-6'>
+            {items.map((dish) => (
+              <li>
+                <div class='menu-row'>
+                  <div class='font-serif text-ink font-normal text-[clamp(17px,1.55vw,20px)] leading-tight tracking-[-0.005em]'>
+                    {t(dish.nombre, locale, defaultLocale)}
+                  </div>
+                  <span class='leader' aria-hidden='true'></span>
+                  <span class='font-sans text-ink text-[14px] font-medium whitespace-nowrap'>
+                    {dish.precio != null ? `${dish.precio} €` : '—'}
+                  </span>
                 </div>
-                <div class="text-muted text-sm leading-[1.55]">
-                  {t(dish.nota, locale, defaultLocale)}
-                </div>
-              </div>
-              <span class="font-sans text-base font-medium text-accent whitespace-nowrap pt-0.5">
-                {dish.precio != null ? `${dish.precio} €` : '—'}
-              </span>
-            </div>
-          ))}
-        </>
-      )
-    ))}
+                {t(dish.nota, locale, defaultLocale) && (
+                  <p class='mt-1.5 text-muted text-[13.5px] leading-[1.55] pr-16 italic'>
+                    {t(dish.nota, locale, defaultLocale)}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
   </div>
 </section>
