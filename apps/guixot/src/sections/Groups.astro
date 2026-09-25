@@ -19,14 +19,36 @@ const title = t(restaurant.gruposTitulo, locale, defaultLocale);
 const { head, tail } = splitLastWord(title);
 const bookingAction = resolveBookingAction(restaurant, locale);
 
-// Ventajas del servicio de grupos con icono. Se muestran solo si el cliente
-// las ha rellenado desde Sanity (gruposFeatures), respetando el minimalismo
-// original de Guixot cuando no hay contenido.
-const features = (restaurant.gruposFeatures ?? []).map((f) => ({
-  icon: f.icon,
-  label: t(f.label, locale, defaultLocale),
-  text: t(f.texto, locale, defaultLocale)
-}));
+// Features: si Sanity trae gruposFeatures, se usan; si no, fallback local por
+// locale (misma vibe de Casabella pero copy adecuado a brasserie catalana).
+const featuresFallback: Record<string, { icon: string; label: string; text: string }[]> = {
+  es: [
+    { icon: 'users', label: 'Aforo',   text: 'Grupos de hasta 40 comensales en la sala.' },
+    { icon: 'chef',  label: 'Menú',    text: 'Menús cerrados a medida con guisos de temporada.' },
+    { icon: 'wine',  label: 'Bodega',  text: 'Selección de vinos catalanes y maridajes.' },
+    { icon: 'clock', label: 'Horario', text: 'Comidas, cenas y sobremesas sin prisa.' }
+  ],
+  ca: [
+    { icon: 'users', label: 'Aforament', text: 'Grups de fins a 40 comensals a la sala.' },
+    { icon: 'chef',  label: 'Menú',      text: "Menús tancats a mida amb guisats de temporada." },
+    { icon: 'wine',  label: 'Celler',    text: 'Selecció de vins catalans i maridatges.' },
+    { icon: 'clock', label: 'Horari',    text: 'Dinars, sopars i sobretaules sense pressa.' }
+  ],
+  en: [
+    { icon: 'users', label: 'Capacity', text: 'Groups up to 40 guests in the dining room.' },
+    { icon: 'chef',  label: 'Menu',     text: 'Bespoke set menus with seasonal stews.' },
+    { icon: 'wine',  label: 'Cellar',   text: 'Catalan wine selection and pairings.' },
+    { icon: 'clock', label: 'Time',     text: 'Lunch, dinner and long, unhurried afternoons.' }
+  ]
+};
+
+const features = restaurant.gruposFeatures?.length
+  ? restaurant.gruposFeatures.map((f) => ({
+      icon: f.icon,
+      label: t(f.label, locale, defaultLocale),
+      text: t(f.texto, locale, defaultLocale)
+    }))
+  : featuresFallback[locale] ?? featuresFallback.es;
 
 const iconPaths: Record<string, string> = {
   users: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75',
@@ -39,53 +61,66 @@ const iconPaths: Record<string, string> = {
 ---
 
 <!--
-  Guixot Groups: split horizontal (foto izq + contenido der en desktop)
-  para look editorial. Distinto al overlay-bg de Casabella.
+  Guixot Groups: split rediseñado. Imagen izq con blob cream detrás + card con
+  radio y sombra, contenido der con Tag + título + feature cards grid 2×2 con
+  iconos brass sobre badges navy-soft + CTA final. Rompe el minimalismo plano
+  anterior con estructura visual rica.
 -->
-<section id="groups" class="grid grid-cols-[45%_55%] items-stretch min-h-[60vh] bg-bg-2 border-y border-line max-[900px]:grid-cols-1">
-  <figure class="relative overflow-hidden max-[900px]:aspect-[16/9]">
-    <img src={gruposImgUrl} alt="" class="w-full h-full object-cover" />
-    <div class="absolute inset-0 bg-[linear-gradient(90deg,transparent_60%,rgb(239_232_217/0.9))] max-[900px]:bg-[linear-gradient(180deg,transparent_60%,rgb(239_232_217/0.95))]"></div>
-  </figure>
-  <div class="reveal flex flex-col justify-center gap-8 px-(--gap) py-16 max-w-[560px] max-[900px]:mx-auto max-[900px]:text-center max-[900px]:items-center max-[900px]:py-12">
-    <Tag class="max-[900px]:mx-auto">{t(restaurant.gruposEyebrow, locale, defaultLocale)}</Tag>
-    <h2 class="font-serif font-medium leading-[1.05] tracking-[-0.01em] text-[clamp(38px,5vw,72px)]">
-      {tail ? (
-        <>
-          {head} <em class="italic text-accent font-normal">{tail}</em>
-        </>
-      ) : (
-        title
-      )}
-    </h2>
+<section
+  id='groups'
+  class='relative overflow-hidden py-[16vh] px-(--gap) max-[900px]:py-[10vh]'
+>
+  <div class='blob blob-navy w-[440px] h-[440px] -top-24 -right-24 max-[900px]:hidden'></div>
+  <div class='blob blob-brass w-[380px] h-[380px] -bottom-32 -left-24 max-[900px]:hidden'></div>
 
-    {features.length > 0 && (
-      <ul class="grid grid-cols-2 gap-3 mt-2 max-[900px]:max-w-[440px] max-[560px]:grid-cols-1">
+  <div class='relative z-[1] mx-auto max-w-[var(--max)] grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-[clamp(40px,6vw,110px)] max-[900px]:grid-cols-1 max-[900px]:gap-12'>
+    <!-- Imagen enmarcada con card y blob detrás -->
+    <div class='reveal relative'>
+      <div class='absolute inset-x-8 top-8 bottom-8 rounded-[calc(var(--radius-card)+8px)] bg-[color:var(--color-blob-cream)] -z-[1]'></div>
+      <figure class='relative aspect-[4/5] overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)]'>
+        <img src={gruposImgUrl} alt='' class='w-full h-full object-cover' loading='lazy' />
+      </figure>
+    </div>
+
+    <div class='reveal flex flex-col'>
+      <Tag class='mb-6'>{t(restaurant.gruposEyebrow, locale, defaultLocale)}</Tag>
+
+      <h2 class='font-serif font-medium leading-[1.05] tracking-[-0.02em] text-[clamp(36px,4.8vw,64px)] text-ink mb-8'>
+        {tail ? (
+          <>
+            {head} <em class='italic text-accent font-normal'>{tail}</em>
+          </>
+        ) : (
+          title
+        )}
+      </h2>
+
+      <ul class='grid grid-cols-2 gap-4 mb-10 max-[560px]:grid-cols-1'>
         {features.map((f) => (
-          <li class="flex items-start gap-3 p-4 bg-bg border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card)]">
-            <span class="shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-[color:var(--color-blob-navy)] text-accent">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <li class='flex items-start gap-3.5 p-4 bg-bg border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card)]'>
+            <span class='shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-[color:var(--color-blob-navy)] text-accent'>
+              <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
                 <path d={iconPaths[f.icon]} />
               </svg>
             </span>
-            <div class="min-w-0 text-left">
-              <div class="font-sans font-semibold uppercase text-ink text-[11px] tracking-[0.22em] mb-1">{f.label}</div>
-              <div class="text-muted text-[13.5px] leading-[1.5]">{f.text}</div>
+            <div class='min-w-0'>
+              <div class='font-sans font-semibold uppercase text-ink text-[11px] tracking-[0.22em] mb-1'>{f.label}</div>
+              <div class='text-muted text-[13.5px] leading-[1.55]'>{f.text}</div>
             </div>
           </li>
         ))}
       </ul>
-    )}
 
-    {bookingAction && (
-      <CtaButton
-        href={bookingAction.href}
-        target={bookingAction.external ? '_blank' : undefined}
-        rel={bookingAction.external ? 'noopener' : undefined}
-        class="self-start max-[900px]:self-center"
-      >
-        {t(restaurant.gruposCta, locale, defaultLocale)}
-      </CtaButton>
-    )}
+      {bookingAction && (
+        <CtaButton
+          href={bookingAction.href}
+          target={bookingAction.external ? '_blank' : undefined}
+          rel={bookingAction.external ? 'noopener' : undefined}
+          class='self-start max-[900px]:self-center'
+        >
+          {t(restaurant.gruposCta, locale, defaultLocale)}
+        </CtaButton>
+      )}
+    </div>
   </div>
 </section>

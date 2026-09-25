@@ -13,11 +13,9 @@ interface Props {
 
 const { restaurant, locale, defaultLocale } = Astro.props;
 
-// Hasta 3 imágenes (schema limita a 3). Placeholders locales si Sanity aún
-// no tiene ninguna subida.
 const imagesInput = (restaurant.sobreImagenes ?? [])
   .slice(0, 3)
-  .map(i => img.url(i))
+  .map((i) => img.url(i))
   .filter((u): u is string => Boolean(u));
 const images = imagesInput.length > 0 ? imagesInput : ['/img/gal-room.jpg'];
 
@@ -25,86 +23,83 @@ const eyebrow = t(restaurant.sobreEyebrow, locale, defaultLocale);
 const title = t(restaurant.sobreTitulo, locale, defaultLocale);
 const { head, tail } = splitAtHalf(title);
 const paragraphs = extractI18nParagraphs(restaurant.sobreCuerpo, locale, defaultLocale);
-
-// Sombra + border sutil para respetar la paleta ivory + navy + brass
-const imgShadow = 'border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)]';
 ---
 
 <!--
-  Guixot About: stack vertical secuencial estilo brasserie parisina.
-  Header con Tag + título split-at-half (italic navy en la mitad final),
-  texto centrado con drop-cap grande brass, y bloque de imágenes adaptativo
-  (1/2/3) abajo con sombras navy suaves + radio. Blob brass discreto detrás.
+  Guixot About: SPLIT editorial (texto izq + mosaic asimétrico der), adaptativo
+  según nº de imágenes (1/2/3+). Rompe el stack vertical rígido anterior con
+  composición asimétrica navy-brasserie. Blobs decorativos + sombra lift.
 -->
 <section
   id='about'
-  class='relative overflow-hidden mx-auto pt-[10vh] pb-[14vh] px-(--gap) max-w-[var(--max)] max-[960px]:pt-[6vh] max-[960px]:pb-[10vh]'
+  class='relative overflow-hidden py-[16vh] px-(--gap) max-[960px]:py-[10vh]'
 >
-  <div class='blob blob-brass w-[420px] h-[420px] -top-24 -right-24 max-[900px]:hidden'></div>
-  <div class='blob blob-cream w-[380px] h-[380px] bottom-16 -left-32 max-[900px]:hidden'></div>
+  <div class='blob blob-brass w-[440px] h-[440px] -top-24 -right-24 max-[900px]:hidden'></div>
+  <div class='blob blob-cream w-[380px] h-[380px] -bottom-32 -left-24 max-[900px]:hidden'></div>
 
-  <div class='relative z-[1]'>
-  <!-- Header centrado con Tag + título split-at-half -->
-  <div class='reveal text-center mb-[9vh] max-[960px]:mb-10'>
-    <Tag class='mb-6 mx-auto'>{eyebrow}</Tag>
-    <h2
-      class='font-serif font-medium leading-[1.05] tracking-[-0.01em] text-[clamp(38px,5.5vw,72px)] max-w-[20ch] mx-auto'
-    >
-      {tail ? (
-        <>
-          {head} <em class='italic text-accent font-normal'>{tail}</em>
-        </>
-      ) : (
-        title
-      )}
-    </h2>
-  </div>
-
-  <!-- Texto centrado — columna de lectura editorial estrecha con drop-cap navy -->
-  {paragraphs.length > 0 && (
-    <div class='reveal mx-auto max-w-[680px]'>
-      {paragraphs.map((p, i) => (
-        <p
-          class:list={[
-            'text-ink-soft text-[17px] leading-[1.8]',
-            i === 0 ? '' : 'mt-6'
-          ]}
-        >
-          {i === 0 && (
-            <span class='float-left font-serif font-medium text-accent leading-[0.85] text-[76px] mr-3 mt-1 max-[700px]:text-[62px]'>
-              {p.charAt(0)}
-            </span>
-          )}
-          {i === 0 ? p.slice(1) : p}
-        </p>
-      ))}
-    </div>
-  )}
-
-  <!-- Bloque de imágenes · fila horizontal centrada. Composición se adapta
-       al conteo (1/2/3) manteniendo el mismo aspect 4/5. -->
   <div
-    class='reveal mx-auto mt-[9vh] max-[960px]:mt-12'
-    class:list={[
-      images.length === 1 && 'max-w-[560px]',
-      images.length === 2 && 'max-w-[900px]',
-      images.length === 3 && 'max-w-[1080px]'
-    ]}
+    class='relative z-[1] mx-auto max-w-[var(--max)] grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] items-center gap-[clamp(40px,6vw,110px)] max-[960px]:grid-cols-1 max-[960px]:gap-12'
   >
-    <div
-      class:list={[
-        'grid gap-[clamp(20px,3vw,32px)] max-[700px]:grid-cols-1 max-[700px]:gap-5',
-        images.length === 1 && 'grid-cols-1',
-        images.length === 2 && 'grid-cols-2',
-        images.length === 3 && 'grid-cols-3'
-      ]}
-    >
-      {images.map(src => (
-        <figure class:list={['aspect-[4/5] overflow-hidden bg-surface', imgShadow]}>
-          <img src={src} alt='' class='w-full h-full object-cover' />
-        </figure>
-      ))}
+    <!-- Izquierda: texto editorial -->
+    <div class='reveal flex flex-col max-[960px]:order-2'>
+      <Tag class='mb-6'>{eyebrow}</Tag>
+
+      <h2 class='font-serif font-medium leading-[1.05] tracking-[-0.02em] text-[clamp(38px,5vw,68px)] text-ink mb-8'>
+        {tail ? (
+          <>
+            {head} <em class='italic text-accent font-normal'>{tail}</em>
+          </>
+        ) : (
+          title
+        )}
+      </h2>
+
+      {paragraphs.length > 0 && (
+        <div class='flex flex-col gap-5'>
+          {paragraphs.map((p, i) => (
+            <p class:list={['text-ink-soft text-[16.5px] leading-[1.8]', i === 0 && 'text-ink-soft']}>
+              {i === 0 && (
+                <span class='float-left font-serif font-medium text-accent leading-[0.85] text-[72px] mr-3 mt-1 max-[700px]:text-[58px]'>
+                  {p.charAt(0)}
+                </span>
+              )}
+              {i === 0 ? p.slice(1) : p}
+            </p>
+          ))}
+        </div>
+      )}
     </div>
-  </div>
+
+    <!-- Derecha: layout adaptativo según nº de imágenes reales (1 / 2 / 3+) -->
+    {images.length === 1 && (
+      <figure class='reveal w-full aspect-[4/5] overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] max-[960px]:order-1'>
+        <img src={images[0]} alt='' class='w-full h-full object-cover' loading='lazy' />
+      </figure>
+    )}
+
+    {images.length === 2 && (
+      <div class='reveal grid grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] grid-rows-2 gap-4 w-full max-[960px]:order-1 max-[600px]:grid-cols-1 max-[600px]:grid-rows-none'>
+        <figure class='row-span-2 aspect-[4/5] overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] max-[600px]:row-span-1'>
+          <img src={images[0]} alt='' class='w-full h-full object-cover' loading='lazy' />
+        </figure>
+        <figure class='row-start-2 aspect-[4/5] overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] max-[600px]:row-start-auto'>
+          <img src={images[1]} alt='' class='w-full h-full object-cover' loading='lazy' />
+        </figure>
+      </div>
+    )}
+
+    {images.length >= 3 && (
+      <div class='reveal relative min-h-[680px] w-full max-[960px]:order-1 max-[960px]:min-h-[520px] max-[600px]:min-h-[420px]'>
+        <figure class='absolute top-0 left-0 w-[70%] aspect-[4/5] overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)]'>
+          <img src={images[0]} alt='' class='w-full h-full object-cover' loading='lazy' />
+        </figure>
+        <figure class='absolute bottom-0 right-0 w-[62%] aspect-square overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)]'>
+          <img src={images[1]} alt='' class='w-full h-full object-cover' loading='lazy' />
+        </figure>
+        <figure class='hidden md:block absolute top-14 right-0 w-[40%] aspect-[3/4] overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card)]'>
+          <img src={images[2]} alt='' class='w-full h-full object-cover' loading='lazy' />
+        </figure>
+      </div>
+    )}
   </div>
 </section>

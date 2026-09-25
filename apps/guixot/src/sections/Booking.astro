@@ -37,20 +37,19 @@ const bookingConfig = {
   restaurantName: restaurant.nombre
 };
 
-// Clases compartidas para inputs — inputs con look serif Bodoni (Guixot brasserie)
+// Inputs con card blanca + radio + focus ring navy (patrón Casabella, adaptado).
 const inputCls =
-  'w-full bg-transparent border-0 border-b border-line-strong py-3 pb-3.5 px-0 font-serif text-ink text-[17px] font-normal transition-colors duration-300 focus:outline-none focus:border-accent placeholder:text-dim placeholder:italic';
+  'w-full bg-white border border-line rounded-[var(--radius-card)] py-3 px-4 font-sans text-ink text-[15.5px] font-normal transition-[border-color,box-shadow,background-color] duration-300 focus:outline-none focus:border-accent focus:shadow-[0_0_0_4px_rgb(30_58_95/0.14)] hover:border-ink/30 placeholder:text-dim';
 const labelCls =
-  'flex flex-col gap-2 font-sans uppercase text-muted font-medium text-[11px] tracking-[0.22em]';
+  'flex flex-col gap-2 font-sans text-ink font-semibold text-[12px] tracking-[0.02em]';
 const errorCls =
-  'text-[11px] tracking-normal normal-case text-accent-alt italic hidden data-[error]:block';
+  'text-[11.5px] font-normal text-[color:var(--color-accent-alt)] italic hidden data-[error]:block';
 
-// Botón "picker" (calendario / hora) — mismo look que inputs pero clickeable
 const pickerBtnCls =
-  'w-full bg-transparent border-0 border-b border-line-strong py-3 pb-3.5 px-0 font-serif text-ink text-[17px] font-normal text-left transition-colors duration-300 hover:border-accent focus:outline-none focus:border-accent flex items-center justify-between gap-3 cursor-pointer';
+  'w-full bg-white border border-line rounded-[var(--radius-card)] py-3 px-4 font-sans text-ink text-[15.5px] font-normal text-left transition-[border-color,box-shadow,background-color] duration-300 hover:border-ink/30 focus:outline-none focus:border-accent focus:shadow-[0_0_0_4px_rgb(30_58_95/0.14)] flex items-center justify-between gap-3 cursor-pointer';
 ---
 
-<section id="book" class="relative overflow-hidden py-[14vh] px-(--gap) bg-bg-2 border-y border-line max-[900px]:py-[10vh]">
+<section id="book" class="relative overflow-hidden py-[16vh] px-(--gap) bg-bg-2 border-y border-line max-[900px]:py-[10vh]">
   <div class="blob blob-brass w-[340px] h-[340px] -top-16 -left-16 max-[900px]:hidden"></div>
   <div class="blob blob-navy w-[300px] h-[300px] -bottom-16 -right-16 max-[900px]:hidden"></div>
 
