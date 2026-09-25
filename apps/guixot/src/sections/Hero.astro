@@ -2,8 +2,6 @@
 import { t } from '@hosteleria/i18n-utils';
 import { img } from '../lib/sanity';
 import type { Restaurant, Espacio } from '../lib/queries';
-import Tag from '../components/Tag.astro';
-import CtaButton from '../components/CtaButton.astro';
 import { resolveBookingAction } from '@hosteleria/utils';
 
 interface Props {
@@ -17,60 +15,109 @@ const { restaurant, espacio, locale, defaultLocale } = Astro.props;
 const heroImgUrl = img.url(espacio.heroImagen) ?? '/img/hero.jpg';
 const heroTitle = t(espacio.heroTitulo, locale, defaultLocale);
 const heroSubtitle = t(espacio.heroSubtitulo, locale, defaultLocale);
+const metaIzq = t(espacio.heroMetaIzq, locale, defaultLocale);
+const metaDer = t(espacio.heroMetaDer, locale, defaultLocale);
 const bookingAction = resolveBookingAction(restaurant, locale);
 ---
 
 <!--
-  Guixot Hero: layout HORIZONTAL editorial.
-  - hero-top: tags decorativas alineadas
-  - hero-body: 2 columnas (texto + foto), CTA integrado al final del texto
+  Guixot Hero: full-bleed brasserie parisina. Imagen ocupa toda la sección,
+  gradient navy sutil para legibilidad, texto ivory sobre foto, meta chip
+  con blur, CTA rectangular navy + link brass secundario. Onda seno abajo
+  rellena con bg-bg-2 del Manifesto (transición fluida sin línea recta).
 -->
-<header id="top" class="relative overflow-hidden pt-24 pb-20 px-(--gap) max-[900px]:pt-20 max-[900px]:pb-14">
-  <!-- Blobs decorativos muy sutiles (navy + brass) para dar profundidad -->
-  <div class="blob blob-navy w-[520px] h-[520px] -top-24 -right-40 max-[900px]:w-[360px] max-[900px]:h-[360px] max-[900px]:-right-24"></div>
-  <div class="blob blob-brass w-[300px] h-[300px] bottom-4 -left-24 max-[900px]:hidden"></div>
+<header
+  id='top'
+  class='relative w-full min-h-[92vh] overflow-hidden max-[960px]:min-h-[78vh] max-[600px]:min-h-[70vh]'
+>
+  <!-- Imagen fondo (LCP element — se preloadea desde BaseLayout) -->
+  <img
+    src={heroImgUrl}
+    alt={heroTitle}
+    fetchpriority='high'
+    decoding='async'
+    class='absolute inset-0 w-full h-full object-cover'
+  />
 
-  <div class="relative z-[1] mx-auto max-w-[var(--max)]">
+  <!-- Overlay navy tenue para legibilidad -->
+  <div
+    aria-hidden='true'
+    class='absolute inset-0 bg-[linear-gradient(120deg,rgb(26_29_36/0.60)_0%,rgb(26_29_36/0.30)_45%,rgb(26_29_36/0.05)_75%,transparent_100%)]'
+  ></div>
+  <div
+    aria-hidden='true'
+    class='absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(to_top,rgb(26_29_36/0.5),transparent)]'
+  ></div>
 
-    <!-- ▸ hero-top: rule + tag + tag alineados horizontal -->
-    <div class="flex items-center gap-4 mb-12 max-[700px]:flex-wrap max-[700px]:gap-2">
-      <span class="w-[60px] h-px bg-line-strong flex-shrink-0"></span>
-      <Tag class="!before:hidden">
-        {t(espacio.heroMetaIzq, locale, defaultLocale)}
-      </Tag>
-      <span class="text-dim opacity-60">·</span>
-      <Tag class="!before:hidden">
-        {t(espacio.heroMetaDer, locale, defaultLocale)}
-      </Tag>
-    </div>
+  <!-- Contenido overlay -->
+  <div
+    class='relative z-[1] h-full min-h-[92vh] max-[960px]:min-h-[78vh] max-[600px]:min-h-[70vh]
+           flex flex-col justify-center
+           px-(--gap) pt-32 pb-[18vh]
+           mx-auto max-w-[var(--max)]
+           max-[960px]:pt-28 max-[960px]:pb-[14vh]'
+  >
+    <div class='flex flex-col gap-8 max-w-[820px] max-[960px]:gap-6'>
+      {(metaIzq || metaDer) && (
+        <div class='inline-flex self-start items-center gap-3 py-1.5 px-4 rounded-full bg-white/12 backdrop-blur-md border border-white/30 text-white text-[11px] uppercase tracking-[0.26em] font-medium'>
+          <span class='w-1.5 h-1.5 rounded-full inline-block' style='background: var(--color-accent-alt);'></span>
+          {metaIzq && <span>{metaIzq}</span>}
+          {metaIzq && metaDer && <span class='opacity-60'>·</span>}
+          {metaDer && <span>{metaDer}</span>}
+        </div>
+      )}
 
-    <!-- ▸ hero-body: título + descripción + CTA a la izquierda, foto a la derecha -->
-    <div class="grid grid-cols-[1.1fr_1fr] gap-[clamp(40px,6vw,96px)] items-center max-[900px]:grid-cols-1 max-[900px]:gap-10">
-      <div class="flex flex-col gap-8">
-        <h1 class="font-serif font-medium leading-[0.95] tracking-[-0.02em] text-[clamp(56px,8vw,124px)]">
-          <span class="block">{heroTitle}</span>
-          <span class="block italic text-accent font-normal">{heroSubtitle}</span>
-        </h1>
-        <p
-          class="text-ink-soft text-[17px] leading-[1.7] max-w-[42ch]"
-          set:html={t(espacio.heroNota, locale, defaultLocale).replace(/\n/g, '<br />')}
-        />
-        {bookingAction && (
-          <div class="max-[900px]:self-start">
-            <CtaButton
-              href={bookingAction.href}
-              target={bookingAction.external ? '_blank' : undefined}
-              rel={bookingAction.external ? 'noopener' : undefined}
-            >
-              {t(espacio.heroCta, locale, defaultLocale)}
-            </CtaButton>
-          </div>
+      <h1 class='font-serif font-medium leading-[0.95] tracking-[-0.02em] text-[clamp(56px,8.4vw,132px)] text-white [text-shadow:0_2px_20px_rgb(0_0_0/0.35)]'>
+        <span class='block'>{heroTitle}</span>
+        {heroSubtitle && (
+          <span class='block italic font-normal' style='color: var(--color-accent-alt);'>
+            {heroSubtitle}
+          </span>
         )}
-      </div>
-      <figure class="relative aspect-[4/5] overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] max-[900px]:aspect-[4/3]">
-        <img src={heroImgUrl} alt={heroTitle} fetchpriority="high" decoding="async" class="w-full h-full object-cover" />
-      </figure>
-    </div>
+      </h1>
 
+      <p
+        class='text-white/90 text-[17px] leading-[1.7] max-w-[46ch] [text-shadow:0_1px_10px_rgb(0_0_0/0.35)]'
+        set:html={t(espacio.heroNota, locale, defaultLocale).replace(/\n/g, '<br />')}
+      />
+
+      <div class='flex items-center gap-6 flex-wrap mt-2'>
+        {bookingAction && (
+          <a
+            href={bookingAction.href}
+            target={bookingAction.external ? '_blank' : undefined}
+            rel={bookingAction.external ? 'noopener' : undefined}
+            class='inline-flex items-center gap-3 py-3.5 px-7 bg-accent text-white border border-accent rounded-sm font-sans font-semibold uppercase text-[12px] tracking-[0.22em] cursor-pointer shadow-[0_10px_28px_-8px_rgb(30_58_95/0.55)] transition-[background-color,border-color,transform] duration-300 hover:bg-accent-hover hover:border-accent-hover hover:-translate-y-px'
+          >
+            {t(espacio.heroCta, locale, defaultLocale)}
+            <span aria-hidden='true'>→</span>
+          </a>
+        )}
+        <a
+          href='#plates'
+          class='inline-flex items-center gap-2.5 py-3 px-6 rounded-sm bg-white/10 backdrop-blur-md border border-white/40 text-white font-sans font-medium uppercase text-[11.5px] tracking-[0.22em] transition-[background-color,border-color] duration-300 hover:bg-white/20 hover:border-white/70'
+        >
+          {locale === 'en' ? 'View the menu' : locale === 'ca' ? 'Veure la carta' : 'Ver la carta'}
+          <span aria-hidden='true'>→</span>
+        </a>
+      </div>
+    </div>
   </div>
+
+  <!-- Borde inferior tipo onda seno/coseno. Se rellena con el color de la
+       siguiente sección (Manifesto = bg-bg-2). -->
+  <svg
+    aria-hidden='true'
+    viewBox='0 0 1440 70'
+    preserveAspectRatio='none'
+    class='absolute bottom-[-1px] inset-x-0 w-full h-[60px] max-[960px]:h-[40px] max-[600px]:h-[26px] z-[3] pointer-events-none'
+    style='color: var(--color-bg-2);'
+  >
+    <path
+      d='M 0,32
+         Q 120,4 240,32 T 480,32 T 720,32 T 960,32 T 1200,32 T 1440,32
+         L 1440,70 L 0,70 Z'
+      fill='currentColor'
+    />
+  </svg>
 </header>
