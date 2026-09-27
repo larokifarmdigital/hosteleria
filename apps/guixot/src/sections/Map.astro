@@ -1,5 +1,6 @@
 ---
-import type { Restaurant } from '../lib/queries';
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant, Espacio } from '../lib/queries';
 import {
   extractMapSrc,
   withMapLocale,
@@ -7,15 +8,19 @@ import {
   extractFTID,
   ftidToCID,
   buildMapsExternalUrl,
+  formatSchedule,
+  buildHoursByDay
 } from '@hosteleria/utils';
 import Tag from '../components/Tag.astro';
 
 interface Props {
   restaurant: Restaurant;
+  espacio: Espacio;
   locale: string;
+  defaultLocale: string;
 }
 
-const { restaurant, locale } = Astro.props;
+const { restaurant, espacio, locale, defaultLocale } = Astro.props;
 
 const rawMapSrc = extractMapSrc(restaurant.mapaUrl);
 if (!rawMapSrc) return null;
@@ -30,39 +35,147 @@ const fullAddress = [dir.calle, dir.codigoPostal, dir.ciudad, dir.pais]
   .filter(Boolean)
   .join(', ');
 const mapsExternalUrl = buildMapsExternalUrl(cid, coords, fullAddress, locale);
+
+// Agrupa filas consecutivas con mismos turnos: "Lun – Vie 07:00–23:30"
+const scheduleRows = formatSchedule(espacio.horariosSemana, locale);
+
+type Row = (typeof scheduleRows)[number];
+type Group = { labels: string[]; shifts: string[]; isToday: boolean; closed: boolean };
+
+const shiftKey = (r: Row) => (r.closed ? 'closed' : r.shifts.join('|'));
+const grouped: Group[] = [];
+for (const row of scheduleRows) {
+  const last = grouped[grouped.length - 1];
+  if (last && shiftKey(last as unknown as Row) === shiftKey(row)) {
+    last.labels.push(row.label);
+    last.isToday = last.isToday || row.isToday;
+  } else {
+    grouped.push({ labels: [row.label], shifts: row.shifts, isToday: row.isToday, closed: row.closed });
+  }
+}
+const openGroups = grouped.filter((g) => !g.closed);
+const closedGroups = grouped.filter((g) => g.closed);
+const closedLabel = closedGroups.flatMap((g) => g.labels).join(', ');
+const formatRange = (labels: string[]) =>
+  labels.length === 1 ? labels[0] : `${labels[0]} – ${labels[labels.length - 1]}`;
+
+const T = {
+  eyebrow:  locale === 'en' ? 'How to find us' : locale === 'ca' ? 'Com arribar' : 'Cómo llegar',
+  address:  locale === 'en' ? 'Address'   : locale === 'ca' ? 'Adreça'   : 'Dirección',
+  phone:    locale === 'en' ? 'Phone'     : locale === 'ca' ? 'Telèfon'  : 'Teléfono',
+  hours:    locale === 'en' ? 'Hours'     : locale === 'ca' ? 'Horari'   : 'Horario',
+  closed:   locale === 'en' ? 'Closed'    : locale === 'ca' ? 'Tancat'   : 'Cerrado',
+  openMaps: locale === 'en' ? 'Open in Google Maps' : locale === 'ca' ? 'Obrir a Google Maps' : 'Ver en Google Maps'
+};
 ---
 
 <section id="map" class="py-[16vh] px-(--gap) bg-bg-2 border-y border-line max-[900px]:py-[10vh]">
-  <div class="reveal max-w-[var(--max)] mx-auto mb-14 text-center max-[900px]:mb-10">
-    <Tag class="mb-6 mx-auto">{locale === 'en' ? 'How to find us' : locale === 'ca' ? 'Com arribar' : 'Cómo llegar'}</Tag>
-    <h2 class="font-serif font-medium leading-none tracking-[-0.01em] text-[clamp(36px,4.6vw,60px)]">
-      {restaurant.nombre},
-      <em class="italic text-accent font-normal">{dir.barrio || dir.ciudad || ''}</em>
-    </h2>
-  </div>
-
-  <div class="reveal overflow-hidden bg-surface mx-auto max-w-[var(--max)] border border-line-strong rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)]">
-    <iframe
-      src={mapSrc}
-      title={`${restaurant.nombre} — ${locale === 'en' ? 'How to find us' : 'Cómo llegar'}`}
-      loading="lazy"
-      referrerpolicy="no-referrer-when-downgrade"
-      allowfullscreen
-      class="block w-full border-0 h-[clamp(340px,52vh,500px)] max-[900px]:h-[clamp(280px,44vh,380px)] filter [filter:grayscale(0.2)_contrast(0.95)_brightness(0.98)]"
-    ></iframe>
-  </div>
-
-  {mapsExternalUrl && (
-    <div class="reveal max-w-[var(--max)] mx-auto mt-8 text-center">
-      <a
-        href={mapsExternalUrl}
-        target="_blank"
-        rel="noopener"
-        class="group inline-flex items-center gap-2.5 font-sans font-medium uppercase text-accent text-[12px] tracking-[0.22em] py-1 border-b border-accent cursor-pointer transition-colors duration-300 hover:text-accent-hover hover:border-accent-hover"
-      >
-        {locale === 'en' ? 'Open in Google Maps' : locale === 'ca' ? 'Obrir a Google Maps' : 'Ver en Google Maps'}
-        <span class="transition-transform duration-300 group-hover:translate-x-1">→</span>
-      </a>
+  <div class="mx-auto max-w-[var(--max)]">
+    <div class="reveal mb-14 text-center max-[900px]:mb-10">
+      <Tag class="mb-6 mx-auto">{T.eyebrow}</Tag>
+      <h2 class="font-serif font-medium leading-none tracking-[-0.01em] text-[clamp(36px,4.6vw,60px)]">
+        {restaurant.nombre},
+        <em class="italic text-accent font-normal">{dir.barrio || dir.ciudad || ''}</em>
+      </h2>
     </div>
-  )}
+
+    <!-- Split: mapa izq + columna limpia der (sin card, integrada).
+         Desktop (>960px): split 1.7fr / 1fr.
+         Tablet (600-960px): mapa full-width arriba + aside en 2 columnas debajo.
+         Móvil (<600px): todo apilado. -->
+    <div class="grid grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] gap-[clamp(32px,5vw,72px)] items-start max-[960px]:grid-cols-1 max-[960px]:gap-10">
+      <!-- Mapa: sí es card (esa card sí tiene sentido, contiene el iframe) -->
+      <div class="reveal overflow-hidden bg-surface border border-line-strong rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)]">
+        <iframe
+          src={mapSrc}
+          title={`${restaurant.nombre} — ${T.eyebrow}`}
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          allowfullscreen
+          class="block w-full border-0 h-[clamp(460px,64vh,600px)] max-[960px]:h-[clamp(340px,48vh,440px)] max-[600px]:h-[clamp(280px,54vh,380px)] filter [filter:grayscale(0.2)_contrast(0.95)_brightness(0.98)]"
+        ></iframe>
+      </div>
+
+      <!-- Columna lateral:
+           Desktop: flex-col con divide-y verticales.
+           Tablet: grid 2×2 (Dirección | Horarios / Teléfono | Google Maps).
+           Móvil: flex-col apilado con divide-y. -->
+      <aside class="reveal
+        flex flex-col divide-y divide-line/60 py-2
+        max-[960px]:grid max-[960px]:grid-cols-2 max-[960px]:gap-x-10 max-[960px]:gap-y-8 max-[960px]:divide-y-0 max-[960px]:py-0
+        max-[600px]:flex max-[600px]:flex-col max-[600px]:divide-y max-[600px]:divide-line/60 max-[600px]:gap-0
+      ">
+        {dir.calle && (
+          <div class="pb-7 max-[960px]:pb-0 max-[600px]:pb-6">
+            <div class="font-sans uppercase text-[10px] tracking-[0.32em] text-accent font-semibold mb-3">
+              {T.address}
+            </div>
+            <div class="font-serif text-ink text-[19px] leading-[1.35]">{dir.calle}</div>
+            <div class="text-muted text-[14.5px] mt-1">{[dir.codigoPostal, dir.ciudad].filter(Boolean).join(' · ')}</div>
+            {dir.barrio && <div class="text-muted italic text-[13.5px] mt-0.5">{dir.barrio}</div>}
+          </div>
+        )}
+
+        {openGroups.length > 0 && (
+          <div class="py-7 max-[960px]:py-0 max-[600px]:py-6">
+            <div class="font-sans uppercase text-[10px] tracking-[0.32em] text-accent font-semibold mb-4">
+              {T.hours}
+            </div>
+            <ul class="flex flex-col gap-3 tabular-nums">
+              {openGroups.map((g) => (
+                <li>
+                  <div class:list={[
+                    'font-serif text-[16px] leading-[1.35]',
+                    g.isToday ? 'text-accent font-medium' : 'text-ink'
+                  ]}>
+                    {formatRange(g.labels)}
+                    {g.isToday && <span class="ml-2 font-sans text-[9.5px] uppercase tracking-[0.24em] opacity-70">· hoy</span>}
+                  </div>
+                  <div class:list={[
+                    'text-[14px] leading-[1.4]',
+                    g.isToday ? 'text-ink font-medium' : 'text-muted'
+                  ]}>
+                    {g.shifts.join(' · ')}
+                  </div>
+                </li>
+              ))}
+              {closedLabel && (
+                <li>
+                  <div class="font-serif italic text-dim text-[14.5px]">
+                    <span class="font-sans uppercase not-italic text-[9.5px] tracking-[0.24em] mr-2 opacity-80">{T.closed}</span>
+                    {closedLabel}
+                  </div>
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
+
+        {restaurant.contacto?.telefono && (
+          <div class="py-7 max-[960px]:py-0 max-[960px]:pt-8 max-[960px]:border-t max-[960px]:border-line/60 max-[600px]:py-6 max-[600px]:border-t-0">
+            <div class="font-sans uppercase text-[10px] tracking-[0.32em] text-accent font-semibold mb-3">
+              {T.phone}
+            </div>
+            <a href={`tel:${restaurant.contacto.telefono}`} class="font-serif text-ink text-[19px] leading-[1.35] hover:text-accent transition-colors">
+              {restaurant.contacto.telefono}
+            </a>
+          </div>
+        )}
+
+        {mapsExternalUrl && (
+          <div class="pt-7 max-[960px]:pt-8 max-[960px]:border-t max-[960px]:border-line/60 max-[960px]:self-center max-[600px]:pt-6 max-[600px]:border-t-0 max-[600px]:self-start">
+            <a
+              href={mapsExternalUrl}
+              target="_blank"
+              rel="noopener"
+              class="group inline-flex items-center gap-2.5 font-sans font-semibold uppercase text-accent text-[11.5px] tracking-[0.22em] py-1 border-b border-accent transition-colors duration-300 hover:text-accent-hover hover:border-accent-hover"
+            >
+              {T.openMaps}
+              <span aria-hidden="true" class="transition-transform duration-300 group-hover:translate-x-1">→</span>
+            </a>
+          </div>
+        )}
+      </aside>
+    </div>
+  </div>
 </section>

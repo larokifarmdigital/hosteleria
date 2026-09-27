@@ -59,16 +59,16 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
 ---
 
 <!--
-  Guixot MobileOverlay v2: brasserie parisina cream + navy. Rediseño más
-  aire, sin adornos "-", animación FADE puro (sin translate, sin stagger)
-  que se ve limpia al abrir y al cerrar sin traba.
+  Guixot MobileOverlay v3: brasserie parisina editorial. Rediseño con más
+  jerarquía visual y aire, manteniendo cream + navy.
 
   Layout:
-    · Header: brand + X, hairline sutil abajo
-    · Nav: links serif Bodoni Moda 5xl con splitLastWord (última palabra
-      italic navy), separadores hairline entre links
-    · CTA rectangular navy filled al ancho completo
-    · Footer: contacto sencillo + idiomas discretos en línea
+    · Header eyebrow + brand + X, hairline sutil
+    · Nav como "carta": cada link con número serif brass a la izq + label
+      serif ink (última palabra italic accent), flecha en hover
+    · CTA outline navy con flecha
+    · Footer: eyebrow "Contacto" + links serif alineados, idiomas
+      con underline sutil en el activo
 -->
 <div
   id='mobileOverlay'
@@ -77,12 +77,12 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
   class="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-bg
          py-6 px-(--gap) pb-10
          opacity-0 pointer-events-none
-         transition-opacity duration-[200ms] ease-out
+         transition-opacity duration-[220ms] ease-out
          data-[open='true']:opacity-100 data-[open='true']:pointer-events-auto
          motion-reduce:transition-none motion-reduce:duration-0"
 >
-  <!-- Header simple -->
-  <div class='flex justify-between items-center pb-6'>
+  <!-- Header: brand centrado + close en corner -->
+  <div class='flex justify-between items-center pb-5'>
     <span class='font-serif text-ink font-medium text-[22px] leading-none tracking-tight'>
       {
         brandStart ? (
@@ -98,15 +98,17 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
     <button
       id='mobileCloseBtn'
       aria-label={a11y.close}
-      class='flex items-center justify-center w-11 h-11 -mr-2.5 bg-transparent border-none text-ink cursor-pointer transition-[color,transform] duration-300 hover:text-accent hover:rotate-90'
+      class='flex items-center justify-center w-11 h-11 -mr-2.5 bg-transparent border border-line-strong/50 rounded-full text-ink cursor-pointer transition-[color,border-color,transform] duration-300 hover:text-accent hover:border-accent hover:rotate-90'
     >
       <IconClose />
     </button>
   </div>
 
-  <!-- Nav: separadores hairline entre cada link, sin numeración ni adornos -->
+  <!-- Nav: links serif centrados con hairline entre secciones. Sin números,
+       sin flechas — más editorial y limpio. Toda la lista respira en el
+       centro del viewport. -->
   <nav aria-label={a11y.menu} class='flex-1 flex flex-col justify-center'>
-    <ul class='flex flex-col divide-y divide-line-strong/30 border-y border-line-strong/30'>
+    <ul class='flex flex-col text-center border-y border-line-strong/25 divide-y divide-line-strong/20'>
       {
         links.map(link => {
           const { head, tail } = splitLastWord(link.label);
@@ -114,9 +116,9 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
             <li>
               <a
                 href={link.href}
-                class='group block py-6 cursor-pointer'
+                class='group block py-5 cursor-pointer'
               >
-                <span class='font-serif text-ink font-medium text-[clamp(38px,9vw,56px)] leading-[1.05] tracking-tight transition-colors duration-300 group-hover:text-accent'>
+                <span class='font-serif text-ink font-medium text-[clamp(32px,7.5vw,44px)] leading-[1.1] tracking-tight transition-colors duration-300 group-hover:text-accent'>
                   {tail ? (
                     <>
                       {head}{' '}
@@ -136,29 +138,29 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
     </ul>
   </nav>
 
-  <!-- CTA rectangular filled navy al ancho completo -->
+  <!-- CTA outline navy, texto+flecha centrados juntos -->
   {bookingAction && (
     <div class='pt-8'>
       <a
         href={bookingAction.href}
         target={bookingAction.external ? '_blank' : undefined}
         rel={bookingAction.external ? 'noopener' : undefined}
-        class='group flex items-center justify-center gap-3 py-4 px-8 bg-accent text-bg border border-accent rounded-sm font-sans font-semibold uppercase text-[13px] tracking-[0.24em] cursor-pointer transition-[background-color,border-color,transform] duration-300 hover:bg-accent-hover hover:border-accent-hover hover:-translate-y-px shadow-[0_6px_18px_-6px_rgb(30_58_95/0.42)]'
+        class='group flex items-center justify-center gap-3 py-4 px-6 bg-transparent text-accent border border-accent rounded-md font-sans font-semibold uppercase text-[12px] tracking-[0.28em] cursor-pointer transition-[background-color,color] duration-300 hover:bg-accent hover:text-bg'
       >
         <span>{bookingAction.label ?? reservarLabel}</span>
-        <span class='transition-transform duration-300 group-hover:translate-x-1'>→</span>
+        <span aria-hidden='true' class='transition-transform duration-300 group-hover:translate-x-1'>→</span>
       </a>
     </div>
   )}
 
-  <!-- Footer: contacto + idiomas en línea -->
-  <div class='flex flex-col gap-6 pt-10 mt-8 border-t border-line-strong/30'>
+  <!-- Footer: contacto centrado + idiomas discretos -->
+  <div class='flex flex-col items-center gap-5 pt-8 mt-6 border-t border-line-strong/25 text-center'>
     <div class='flex flex-col gap-2'>
       {
         bookingPhone && (
           <a
             href={`tel:${bookingPhone}`}
-            class='font-serif text-ink text-[16px] transition-colors duration-300 hover:text-accent cursor-pointer'
+            class='font-serif text-ink text-[16px] leading-[1.4] transition-colors duration-300 hover:text-accent cursor-pointer'
           >
             {bookingPhone}
           </a>
@@ -170,7 +172,7 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
             href={waHref}
             target='_blank'
             rel='noopener'
-            class='font-serif text-ink text-[16px] transition-colors duration-300 hover:text-accent cursor-pointer'
+            class='font-serif text-ink text-[16px] leading-[1.4] transition-colors duration-300 hover:text-accent cursor-pointer'
           >
             WhatsApp <span class='text-dim mx-1'>·</span> {whatsappRaw}
           </a>
@@ -180,7 +182,7 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
         bookingEmail && (
           <a
             href={`mailto:${bookingEmail}`}
-            class='font-serif text-ink text-[16px] transition-colors duration-300 hover:text-accent cursor-pointer'
+            class='font-serif text-ink text-[16px] leading-[1.4] transition-colors duration-300 hover:text-accent cursor-pointer'
           >
             {bookingEmail}
           </a>
@@ -192,11 +194,11 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
       localesUi.length > 1 && (
         <div
           aria-label={a11y.language}
-          class='flex gap-3 font-sans font-medium uppercase text-[10.5px] tracking-[0.26em] text-dim'
+          class='flex items-center gap-3 font-sans font-semibold uppercase text-[10.5px] tracking-[0.3em] pt-2'
         >
           {localesUi.map((l, i) => (
             <>
-              {i > 0 && <span class='text-dim opacity-50 -mx-0.5 select-none'>·</span>}
+              {i > 0 && <span class='text-line-strong opacity-70 select-none'>·</span>}
               <a
                 href={
                   l.codigo === locale
@@ -206,8 +208,8 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
                 class:list={[
                   'py-1 transition-colors duration-300',
                   l.codigo === locale
-                    ? 'text-accent pointer-events-none'
-                    : 'hover:text-ink cursor-pointer'
+                    ? 'text-accent border-b border-accent pointer-events-none'
+                    : 'text-muted hover:text-ink cursor-pointer'
                 ]}
                 aria-current={l.codigo === locale ? 'true' : undefined}
               >

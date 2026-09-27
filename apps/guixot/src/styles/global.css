@@ -55,8 +55,8 @@
 :root {
   --gap: clamp(20px, 4vw, 72px);
   --max: 1440px;
-  --radius-card: 10px;
-  --radius-btn: 2px;
+  --radius-card: 14px;
+  --radius-btn: 6px;
   --shadow-card: 0 12px 32px -18px rgb(30 58 95 / 0.22);
   --shadow-card-lift: 0 22px 54px -22px rgb(30 58 95 / 0.34);
 }
@@ -92,6 +92,12 @@
     min-width: 375px;
   }
   body.overlay-open { overflow: hidden; }
+  /* Cuando el menú móvil está abierto, ocultar el FAB de WhatsApp y otros
+     elementos flotantes: el overlay debe ocupar todo el foco visual. */
+  body.overlay-open a[href^="https://wa.me"],
+  body.overlay-open a[href^="https://api.whatsapp.com"] {
+    visibility: hidden;
+  }
 
   ::selection { background: var(--color-accent); color: var(--color-bg); }
 

@@ -93,11 +93,12 @@ const waHref = buildWhatsAppHref(whatsappRaw, restaurant.nombre, locale);
     defaultLocale={defaultLocale}
     bookingEmail={bookingEmail}
   />
-  <Map restaurant={restaurant} locale={locale} />
+  <Map restaurant={restaurant} espacio={espacio} locale={locale} defaultLocale={defaultLocale} />
 </main>
 
 <Footer
   restaurant={restaurant}
+  espacio={espacio}
   locale={locale}
   defaultLocale={defaultLocale}
   legalPages={legalPages}
