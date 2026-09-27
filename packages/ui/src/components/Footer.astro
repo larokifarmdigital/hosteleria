@@ -1,10 +1,10 @@
 ---
 import { t } from '@hosteleria/i18n-utils';
-import type { Restaurant, LegalPageDoc } from '@hosteleria/sanity-client';
-import { buildHoursByDay, formatSchedule } from '@hosteleria/utils';
+import type { Restaurant, Espacio, LegalPageDoc } from '@hosteleria/sanity-client';
 
 interface Props {
   restaurant: Restaurant;
+  espacio?: Espacio;
   locale: string;
   defaultLocale: string;
   legalPages?: LegalPageDoc[];
@@ -32,27 +32,18 @@ const dir = restaurant.direccion ?? {};
 
 const mostrarRedes = restaurant.mostrarRedes === true;
 const instagram = mostrarRedes ? (restaurant.redes?.instagram ?? '') : '';
-const instagramHandle = instagram ? '@' + instagram.replace(/\/$/, '').split('/').pop() : '';
+const facebook = mostrarRedes ? (restaurant.redes?.facebook ?? '') : '';
+const tiktok = mostrarRedes ? (restaurant.redes?.tiktok ?? '') : '';
 
 const rutaLegal = (slug: string) =>
   locale === defaultLocale ? `/legal/${slug}` : `/${locale}/legal/${slug}`;
 
-const hoursByDay = buildHoursByDay(restaurant.horariosSemana);
-const scheduleRows = formatSchedule(restaurant.horariosSemana, locale);
-const openRows = scheduleRows.filter(r => !r.closed);
-const closedRows = scheduleRows.filter(r => r.closed);
-const closedLabel = closedRows.map(r => r.label).join(', ');
-const scheduleMessages = {
-  abierto: t(restaurant.horariosAbierto, locale, defaultLocale) || 'Abierto hasta las {hora}.',
-  proxima:
-    t(restaurant.horariosProximaApertura, locale, defaultLocale) || 'Hoy abrimos a las {hora}.',
-  cerrado: t(restaurant.horariosCerrado, locale, defaultLocale) || 'Cerrado.'
-};
-
-const T: Record<string, { cta: string; visit: string; contact: string; hours: string }> = {
-  es: { cta: '¿Con ganas de mesa?', visit: 'Visítanos', contact: 'Contacto', hours: 'Horario' },
-  en: { cta: 'Ready for a table?', visit: 'Visit us', contact: 'Contact', hours: 'Hours' },
-  ca: { cta: 'Amb ganes de taula?', visit: 'Visita’ns', contact: 'Contacte', hours: 'Horari' }
+const T: Record<string, {
+  cta: string; visit: string; contact: string; legal: string;
+}> = {
+  es: { cta: '¿Con ganas de mesa?', visit: 'Visítanos', contact: 'Contacto', legal: 'Legal' },
+  en: { cta: 'Ready for a table?', visit: 'Visit us', contact: 'Contact', legal: 'Legal' },
+  ca: { cta: 'Amb ganes de taula?', visit: 'Visita’ns', contact: 'Contacte', legal: 'Legal' }
 };
 const tt = T[locale] ?? T.es;
 const byline = t(footerTexts.bylineIzq, locale, defaultLocale);
@@ -60,22 +51,27 @@ const byline = t(footerTexts.bylineIzq, locale, defaultLocale);
 const h4Cls = 'uppercase text-accent font-medium text-[11px] tracking-[0.32em] mb-5';
 const linkCls =
   'text-ink-soft text-[15px] leading-[1.9] transition-colors duration-300 hover:text-accent cursor-pointer';
+
+const hasRedes = Boolean(instagram || facebook || tiktok);
+const hasLegal = legalPages.length > 0;
+
+// Icono circular más pequeño — encaja mejor bajo la lista de contacto
+const socialBtn =
+  'group inline-flex items-center justify-center w-9 h-9 rounded-full border border-accent/50 text-accent transition-[background-color,border-color,color] duration-300 hover:bg-accent hover:border-accent hover:text-bg';
 ---
 
 <footer
   class='pt-[12vh] pb-[30px] px-(--gap) border-t border-line bg-surface max-[960px]:py-[8vh] max-[960px]:pb-[30px] [&_a]:cursor-pointer'
 >
-  {
-    showCta && (
-      <div class='mx-auto max-w-[var(--max)] mb-16 pb-12 border-b border-line flex flex-wrap items-center justify-between gap-8 max-[700px]:flex-col max-[700px]:items-start max-[700px]:gap-6 max-[960px]:mb-12'>
-        <div class='flex flex-col gap-2'>
-          <p class='font-serif font-light leading-none text-[clamp(28px,3.5vw,44px)]'>{tt.cta}</p>
-          {byline && <p class='text-muted text-sm tracking-[0.02em]'>{byline}</p>}
-        </div>
-        <slot name='cta' />
+  {showCta && (
+    <div class='mx-auto max-w-[var(--max)] mb-16 pb-12 border-b border-line flex flex-wrap items-center justify-between gap-8 max-[700px]:flex-col max-[700px]:items-start max-[700px]:gap-6 max-[960px]:mb-12'>
+      <div class='flex flex-col gap-2'>
+        <p class='font-serif font-light leading-none text-[clamp(28px,3.5vw,44px)]'>{tt.cta}</p>
+        {byline && <p class='text-muted text-sm tracking-[0.02em]'>{byline}</p>}
       </div>
-    )
-  }
+      <slot name='cta' />
+    </div>
+  )}
 
   <div
     class='grid mx-auto max-w-[var(--max)] mb-14 grid-cols-3 gap-[clamp(40px,6vw,80px)] max-[900px]:grid-cols-1 max-[900px]:gap-10 max-[900px]:mb-10'
@@ -84,161 +80,81 @@ const linkCls =
       <h4 class={h4Cls}>{tt.visit}</h4>
       <p class='text-ink-soft text-[15px] leading-[1.9]'>
         {dir.calle}<br />
-        {dir.codigoPostal}
-        {dir.ciudad}<br />
-        {
-          dir.barrio && (
-            <>
-              {dir.barrio}
-              <br />
-            </>
-          )
-        }
+        {dir.codigoPostal} {dir.ciudad}<br />
+        {dir.barrio && (<>{dir.barrio}<br /></>)}
       </p>
     </div>
+
     <div>
       <h4 class={h4Cls}>{tt.contact}</h4>
-      {
-        bookingPhone && (
-          <p>
-            <a href={`tel:${bookingPhone}`} class={linkCls}>
-              {bookingPhone}
+      {bookingPhone && (
+        <p>
+          <a href={`tel:${bookingPhone}`} class={linkCls}>{bookingPhone}</a>
+        </p>
+      )}
+      {waHref && (
+        <p>
+          <a href={waHref} target='_blank' rel='noopener' class={linkCls}>
+            WhatsApp · {whatsappRaw}
+          </a>
+        </p>
+      )}
+      {bookingEmail && (
+        <p>
+          <a href={`mailto:${bookingEmail}`} class={linkCls}>{bookingEmail}</a>
+        </p>
+      )}
+      {hasRedes && (
+        <div class='flex items-center gap-3 mt-5'>
+          {instagram && (
+            <a href={instagram} target='_blank' rel='noopener' aria-label='Instagram' class={socialBtn}>
+              <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+                <rect x='2' y='2' width='20' height='20' rx='5' ry='5'/>
+                <path d='M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z'/>
+                <line x1='17.5' y1='6.5' x2='17.51' y2='6.5'/>
+              </svg>
             </a>
-          </p>
-        )
-      }
-      {
-        waHref && (
-          <p>
-            <a href={waHref} target='_blank' rel='noopener' class={linkCls}>
-              WhatsApp · {whatsappRaw}
+          )}
+          {facebook && (
+            <a href={facebook} target='_blank' rel='noopener' aria-label='Facebook' class={socialBtn}>
+              <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+                <path d='M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z'/>
+              </svg>
             </a>
-          </p>
-        )
-      }
-      {
-        bookingEmail && (
-          <p>
-            <a href={`mailto:${bookingEmail}`} class={linkCls}>
-              {bookingEmail}
+          )}
+          {tiktok && (
+            <a href={tiktok} target='_blank' rel='noopener' aria-label='TikTok' class={socialBtn}>
+              <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' aria-hidden='true'>
+                <path d='M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5.8 20.1a6.34 6.34 0 0 0 10.86-4.43V8.9a8.16 8.16 0 0 0 4.77 1.52V6.98a4.85 4.85 0 0 1-1.84-.29z'/>
+              </svg>
             </a>
-          </p>
-        )
-      }
+          )}
+        </div>
+      )}
     </div>
-    <div>
-      <h4 class={h4Cls}>{tt.hours}</h4>
 
-      <p
-        id='openLine'
-        class='font-sans text-[13.5px] font-medium tracking-[0.02em] text-accent flex items-center gap-2 mb-4'
-      >
-        <span class='inline-block w-2 h-2 rounded-full bg-accent shrink-0'></span>
-        <span>…</span>
-      </p>
-
-      <div class='flex flex-col gap-2 font-sans text-[13px] leading-[1.5] tabular-nums'>
-        {
-          openRows.map(row => (
-            <div>
-              <div
-                class:list={[
-                  'uppercase text-[10px] tracking-[0.2em] font-semibold mb-0.5',
-                  row.isToday ? 'text-accent' : 'text-muted'
-                ]}
-              >
-                {row.label}
-                {row.isToday && <span class='ml-1.5 text-[9px] opacity-70'>· HOY</span>}
-              </div>
-              <div class:list={[row.isToday ? 'text-ink font-medium' : 'text-ink-soft']}>
-                {row.shifts.join(' · ')}
-              </div>
-            </div>
-          ))
-        }
-        {
-          closedLabel && (
-            <div class='pt-2 mt-1 border-t border-line/50 flex items-baseline gap-2'>
-              <span class='uppercase text-[10px] tracking-[0.2em] font-semibold text-dim'>
-                {locale === 'en' ? 'Closed' : locale === 'ca' ? 'Tancat' : 'Cerrado'}
-              </span>
-              <span class='italic text-dim text-[12.5px]'>{closedLabel}</span>
-            </div>
-          )
-        }
+    {hasLegal && (
+      <div>
+        <h4 class={h4Cls}>{tt.legal}</h4>
+        <ul class='flex flex-col gap-1.5'>
+          {legalPages.map(p => (
+            <li>
+              <a href={rutaLegal(p.tipo)} class={linkCls}>
+                {t(p.titulo, locale, defaultLocale)}
+              </a>
+            </li>
+          ))}
+        </ul>
       </div>
-    </div>
+    )}
   </div>
 
   <div
-    class='mx-auto max-w-[var(--max)] border-t border-line pt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 text-dim text-xs tracking-[0.04em] max-[700px]:flex-col max-[700px]:items-start'
+    class='mx-auto max-w-[var(--max)] border-t border-line pt-6 flex items-center justify-between gap-6 text-dim text-xs tracking-[0.04em] max-[700px]:flex-col max-[700px]:items-start max-[700px]:gap-3'
   >
-    {
-      legalPages.length > 0 && (
-        <div class='flex flex-wrap items-center gap-x-3 gap-y-2'>
-          {legalPages.map((p, i) => (
-            <>
-              {i > 0 && <span class='opacity-40'>·</span>}
-              <a
-                href={rutaLegal(p.tipo)}
-                class='hover:text-accent transition-colors duration-300 cursor-pointer'
-              >
-                {t(p.titulo, locale, defaultLocale)}
-              </a>
-            </>
-          ))}
-        </div>
-      )
-    }
-    <div class='flex items-center gap-6 max-[700px]:gap-4'>
-      {
-        instagramHandle && (
-          <a
-            href={instagram}
-            target='_blank'
-            rel='noopener'
-            class='hover:text-accent transition-colors duration-300 cursor-pointer'
-          >
-            {instagramHandle}
-          </a>
-        )
-      }
-      <span>© {new Date().getFullYear()} {restaurant.nombre}</span>
-    </div>
+    <span>© {new Date().getFullYear()} {restaurant.nombre}</span>
+    {byline && !showCta && (
+      <span class='italic max-[700px]:text-left'>{byline}</span>
+    )}
   </div>
 </footer>
-
-<script is:inline define:vars={{ hoursByDay, scheduleMessages }}>
-  (function () {
-    const HOURS = hoursByDay;
-    const msg = scheduleMessages;
-    const fmt = n => {
-      const h = Math.floor(n);
-      const m = Math.round((n - h) * 60);
-      return `${h}:${m.toString().padStart(2, '0')}`;
-    };
-    const now = new Date();
-    const d = now.getDay();
-    const h = now.getHours() + now.getMinutes() / 60;
-    const today = HOURS[d] || [];
-    let open = false,
-      nextOpen = null,
-      closesAt = null;
-    for (const [a, b] of today) {
-      if (h >= a && h < b) {
-        open = true;
-        closesAt = b;
-        break;
-      }
-      if (h < a && nextOpen === null) nextOpen = a;
-    }
-    const line = open
-      ? msg.abierto.replace('{hora}', fmt(closesAt))
-      : nextOpen !== null
-        ? msg.proxima.replace('{hora}', fmt(nextOpen))
-        : msg.cerrado;
-    const el = document.getElementById('openLine');
-    const textEl = el?.querySelector('span:last-child');
-    if (textEl) textEl.textContent = line;
-  })();
-</script>
