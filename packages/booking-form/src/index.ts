@@ -161,8 +161,9 @@ export function initBookingForm(): void {
 
   const formatHumanDate = (iso: string) => {
     const d = parseISO(iso);
-    const weekday = tt.dayShort[(d.getDay() + 6) % 7];
-    return `${weekday} ${d.getDate()} ${tt.monthNames[d.getMonth()].toLowerCase()} ${d.getFullYear()}`;
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    return `${day}/${month}/${d.getFullYear()}`;
   };
 
   const renderCalendar = () => {
