@@ -1,0 +1,157 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════════════
+   Backoffice — Paleta cobre monocromática (aprobada tras 17 iteraciones)
+
+   Un solo color principal (cobre) en escala completa 50-950 + neutros +
+   estados críticos apagados. Sidebar cobre-950 (marrón oscuro, no negro).
+   Sin cursivas en ningún lado (reset abajo). Tipografía única: Manrope.
+   ═══════════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* Escala cobre — el color principal en 11 pasos */
+  --color-copper-50:  #fdf7f4;
+  --color-copper-100: #fbeee6;
+  --color-copper-200: #f4d8c5;
+  --color-copper-300: #e6b294;
+  --color-copper-400: #d18a63;
+  --color-copper-500: #b4593b;
+  --color-copper-600: #9d4a30;
+  --color-copper-700: #813c27;
+  --color-copper-800: #6a2f1e;
+  --color-copper-900: #4a2416;
+  --color-copper-950: #2a1409;
+
+  /* Superficies (neutros) */
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-2: #faf8f5;
+  --color-border: #eee8e0;
+  --color-border-strong: #c8c1b5;
+
+  /* Ink */
+  --color-ink: #0a0a0a;
+  --color-ink-soft: #26221e;
+  --color-muted: #6d6862;
+  --color-dim: #a29d95;
+
+  /* Sidebar — 100% familia cobre, marrón oscuro visible */
+  --color-nav-bg: #2a1409;
+  --color-nav-bg-hover: #4a2416;
+  --color-nav-bg-active: #6a2f1e;
+  --color-nav-fg: #d4c3a8;
+  --color-nav-fg-active: #ffffff;
+  --color-nav-border: #3a1b0f;
+
+  /* Semantic — todo apunta a cobre; solo OK/Danger difieren */
+  --color-accent: #b4593b;
+  --color-accent-hover: #9d4a30;
+  --color-accent-active: #813c27;
+  --color-accent-soft: #fbeee6;
+  --color-accent-fg: #6a2f1e;
+
+  --color-ok: #5a7a4e;
+  --color-ok-soft: #ecefe4;
+  --color-warn: #b4593b;
+  --color-warn-soft: #fbeee6;
+  --color-danger: #a24238;
+  --color-danger-soft: #f2e0dd;
+
+  /* Fuente */
+  --font-sans: 'Manrope', system-ui, sans-serif;
+
+  /* Radios generosos */
+  --radius-sm: 10px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+}
+
+/* Tokens no-Tailwind (medidas globales y gradientes) */
+:root {
+  --sidebar-w: 244px;
+  --accent-ring: rgb(180 89 59 / 0.18);
+
+  --gradient-copper: linear-gradient(135deg, #d18a63 0%, #b4593b 45%, #9d4a30 100%);
+  --gradient-copper-deep: linear-gradient(160deg, #9d4a30 0%, #2a1409 100%);
+  --gradient-copper-soft: linear-gradient(135deg, #fdf7f4 0%, #fbeee6 100%);
+
+  --shadow-sm: 0 1px 2px rgb(74 36 22 / 0.05);
+  --shadow-md: 0 8px 24px -10px rgb(74 36 22 / 0.16);
+  --shadow-lg: 0 18px 40px -18px rgb(74 36 22 / 0.28);
+  --shadow-glow: 0 0 0 4px rgb(180 89 59 / 0.10);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   shadcn/ui token mapping — los primitives Radix + variantes CVA leen
+   estas variables. Aquí las alineamos con la paleta cobre para que
+   Button/Input/Tabs/etc "hereden" el look sin sobreescribir clase por clase.
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 4%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 4%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 4%;
+  --primary: 16 51% 47%;              /* cobre 500 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 39 33% 96%;            /* surface-2 */
+  --secondary-foreground: 0 0% 4%;
+  --muted: 39 33% 96%;
+  --muted-foreground: 30 5% 42%;
+  --accent: 22 71% 94%;               /* cobre 100 */
+  --accent-foreground: 16 56% 26%;    /* cobre 800 */
+  --destructive: 4 51% 43%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 36 24% 90%;
+  --input: 36 24% 90%;
+  --ring: 16 51% 47%;
+  --radius: 0.625rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════ BASE */
+@layer base {
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-width: 320px;
+  }
+  body.overlay-open { overflow: hidden; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; }
+
+  /* Sin cursiva en ningún lado — decisión de diseño aprobada */
+  em, i { font-style: normal; font-weight: 600; color: var(--color-ink); }
+
+  ::selection { background: var(--color-accent); color: #fff; }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  img { max-width: 100%; height: auto; display: block; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════ UTILITIES
+   Utilidades que se repiten mucho en el mockup y no tienen equivalente
+   directo en Tailwind. Prefiero clases semánticas cortas antes que largas
+   listas de utilities pegadas.
+   ═══════════════════════════════════════════════════════════════════ */
+@layer utilities {
+  .slug {
+    font-size: 12px;
+    color: var(--color-muted);
+    font-feature-settings: "tnum";
+  }
+  .tabular { font-variant-numeric: tabular-nums; }
+}
