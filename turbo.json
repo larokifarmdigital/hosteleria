@@ -6,7 +6,21 @@
     "SANITY_PROJECT_ID",
     "SANITY_DATASET",
     "SANITY_TOKEN",
-    "RESTAURANT_SLUG"
+    "RESTAURANT_SLUG",
+    "DATABASE_URL",
+    "SESSION_SECRET",
+    "R2_ACCOUNT_ID",
+    "R2_ACCESS_KEY_ID",
+    "R2_SECRET_ACCESS_KEY",
+    "R2_BUCKET",
+    "R2_PUBLIC_URL",
+    "ADMIN_EMAIL",
+    "ADMIN_PASSWORD",
+    "ADMIN_NAME",
+    "ALLOWED_ORIGIN",
+    "PUBLIC_API_URL",
+    "NEXT_PUBLIC_API_URL",
+    "PORT"
   ],
   "globalDependencies": [".env", "**/.env.local"],
   "tasks": {
@@ -16,7 +30,7 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".astro/**"]
+      "outputs": ["dist/**", ".astro/**", ".next/**", "!.next/cache/**"]
     },
     "preview": {
       "dependsOn": ["build"],

@@ -1,0 +1,1 @@
+ALTER TABLE "restaurants" ADD COLUMN "rebuild_hook_url" text;

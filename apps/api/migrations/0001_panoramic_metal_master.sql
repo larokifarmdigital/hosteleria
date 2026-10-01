@@ -1,0 +1,1 @@
+ALTER TABLE "restaurants" ADD COLUMN "timezone" text DEFAULT 'Europe/Madrid' NOT NULL;
