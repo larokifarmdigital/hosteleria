@@ -30,7 +30,11 @@ import { rateLimit } from './lib/rate-limit.js';
 export function createApp() {
   const env = loadEnv();
   initSentry(env);
-  const app = new Hono<{ Variables: AuthVars }>();
+  // basePath '/api' — todas las rutas quedan bajo /api/* (ej. /api/health,
+  // /api/auth/login). Vercel con api/[[...route]].ts entrega las requests con
+  // /api incluido en el path, así que Hono matchea nativamente. En dev
+  // (@hono/node-server) el user también hits /api/* para mantener consistencia.
+  const app = new Hono<{ Variables: AuthVars }>().basePath('/api');
 
   app.use('*', logger());
   // Sentry debe ir temprano para capturar errores de rutas posteriores,
