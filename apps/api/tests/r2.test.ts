@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeFilename } from '../src/lib/r2';
+import { normalizeFilename } from '../src/lib/r2.js';
 
 describe('normalizeFilename', () => {
   it('lowercase + reemplaza espacios por guiones', () => {

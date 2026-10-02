@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { i18nHasAny, i18nLocalesFilled } from '../src/db/schema/i18n';
+import { i18nHasAny, i18nLocalesFilled } from '../src/db/schema/i18n.js';
 
 describe('i18nHasAny', () => {
   it('null / undefined / vacío → false', () => {

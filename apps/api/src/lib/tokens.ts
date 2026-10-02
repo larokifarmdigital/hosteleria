@@ -1,8 +1,8 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { eq, and, gte, isNull } from 'drizzle-orm';
-import { getDb } from '../db/client';
-import { userTokens } from '../db/schema/auth';
-import type { Env } from '../env';
+import { getDb } from '../db/client.js';
+import { userTokens } from '../db/schema/auth.js';
+import type { Env } from '../env.js';
 
 /**
  * Flow de tokens de un solo uso (welcome + password reset).

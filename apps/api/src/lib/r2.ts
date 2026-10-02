@@ -1,6 +1,6 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import type { Env } from '../env';
+import type { Env } from '../env.js';
 
 /**
  * R2 helpers. Cloudflare R2 es compatible S3, así que usamos el SDK

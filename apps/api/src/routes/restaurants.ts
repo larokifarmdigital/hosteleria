@@ -3,14 +3,14 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { HTTPException } from 'hono/http-exception';
 import { eq, asc, and } from 'drizzle-orm';
-import { getDb } from '../db/client';
-import { restaurants, languages, restaurantLocales } from '../db/schema/content';
-import { userRestaurants } from '../db/schema/auth';
-import { requireAuth, requireAdmin, requireRestaurant, type AuthVars } from '../auth/middleware';
-import { countByRestaurant, getActiveLocaleCodes } from '../lib/derived';
-import { fireRebuildHook } from '../lib/rebuild';
-import { cacheHeaders } from '../lib/cache';
-import { listRestaurantsAggregated } from '../lib/restaurant-list';
+import { getDb } from '../db/client.js';
+import { restaurants, languages, restaurantLocales } from '../db/schema/content.js';
+import { userRestaurants } from '../db/schema/auth.js';
+import { requireAuth, requireAdmin, requireRestaurant, type AuthVars } from '../auth/middleware.js';
+import { countByRestaurant, getActiveLocaleCodes } from '../lib/derived.js';
+import { fireRebuildHook } from '../lib/rebuild.js';
+import { cacheHeaders } from '../lib/cache.js';
+import { listRestaurantsAggregated } from '../lib/restaurant-list.js';
 
 const addressSchema = z.object({
   street: z.string().optional(),

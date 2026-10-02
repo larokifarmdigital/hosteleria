@@ -12,10 +12,10 @@ import {
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
-import { publishStateEnum, spaceTypeEnum, weekDayEnum } from './enums';
-import { i18nString, i18nText, type I18nValue } from './i18n';
-import { userRestaurants } from './auth';
-import { mediaAssets } from './media';
+import { publishStateEnum, spaceTypeEnum, weekDayEnum } from './enums.js';
+import { i18nString, i18nText, type I18nValue } from './i18n.js';
+import { userRestaurants } from './auth.js';
+import { mediaAssets } from './media.js';
 
 // ═════════════════════════════════════════════════════════════════
 // Languages

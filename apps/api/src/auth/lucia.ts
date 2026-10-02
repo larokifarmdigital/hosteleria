@@ -1,7 +1,7 @@
 import { Lucia } from 'lucia';
 import { DrizzlePostgreSQLAdapter } from '@lucia-auth/adapter-drizzle';
-import { getDb } from '../db/client';
-import { users, sessions } from '../db/schema/auth';
+import { getDb } from '../db/client.js';
+import { users, sessions } from '../db/schema/auth.js';
 
 /**
  * Lucia auth — sesiones basadas en cookie HTTP-only.

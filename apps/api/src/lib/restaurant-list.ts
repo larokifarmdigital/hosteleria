@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
-import { getDb } from '../db/client';
-import type { Env } from '../env';
+import { getDb } from '../db/client.js';
+import type { Env } from '../env.js';
 
 /**
  * Lista de restaurantes con todos los campos derivados en UNA sola query.

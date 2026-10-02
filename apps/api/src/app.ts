@@ -2,23 +2,23 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { HTTPException } from 'hono/http-exception';
-import { loadEnv } from './env';
-import { getDb } from './db/client';
+import { loadEnv } from './env.js';
+import { getDb } from './db/client.js';
 import { sql } from 'drizzle-orm';
-import { validateSession, type AuthVars } from './auth/middleware';
-import { createAuthRoutes } from './routes/auth';
-import { createRestaurantsRoutes } from './routes/restaurants';
-import { createSpacesRoutes } from './routes/spaces';
-import { createDishesRoutes } from './routes/dishes';
-import { createWinesRoutes } from './routes/wines';
-import { createLanguagesRoutes } from './routes/languages';
-import { createUsersRoutes } from './routes/users';
-import { createMediaRoutes } from './routes/media';
-import { createCronRoutes } from './routes/cron';
+import { validateSession, type AuthVars } from './auth/middleware.js';
+import { createAuthRoutes } from './routes/auth.js';
+import { createRestaurantsRoutes } from './routes/restaurants.js';
+import { createSpacesRoutes } from './routes/spaces.js';
+import { createDishesRoutes } from './routes/dishes.js';
+import { createWinesRoutes } from './routes/wines.js';
+import { createLanguagesRoutes } from './routes/languages.js';
+import { createUsersRoutes } from './routes/users.js';
+import { createMediaRoutes } from './routes/media.js';
+import { createCronRoutes } from './routes/cron.js';
 import { apiReference } from '@scalar/hono-api-reference';
-import { openApiSpec } from './openapi';
-import { initSentry, sentryMiddleware } from './lib/sentry';
-import { rateLimit } from './lib/rate-limit';
+import { openApiSpec } from './openapi.js';
+import { initSentry, sentryMiddleware } from './lib/sentry.js';
+import { rateLimit } from './lib/rate-limit.js';
 
 /**
  * App Hono principal. Se monta como Vercel Function catch-all

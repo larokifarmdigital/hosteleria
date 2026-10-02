@@ -14,8 +14,8 @@ config({ path: '.env', override: false });
 
 import { hash } from '@node-rs/argon2';
 import { eq } from 'drizzle-orm';
-import { getDb } from './client';
-import * as schema from './schema';
+import { getDb } from './client.js';
+import * as schema from './schema/index.js';
 
 const SEED_LANGUAGES = [
   { code: 'es', name: 'Español' },

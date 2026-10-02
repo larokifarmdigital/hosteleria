@@ -1,10 +1,10 @@
 import { pgTable, text, timestamp, boolean, integer } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
-import { mediaUsageEnum } from './enums';
-import { i18nString } from './i18n';
-import { restaurants } from './content';
-import { users } from './auth';
+import { mediaUsageEnum } from './enums.js';
+import { i18nString } from './i18n.js';
+import { restaurants } from './content.js';
+import { users } from './auth.js';
 
 /**
  * media_assets — Cada fila representa un objeto en el bucket R2.

@@ -5,15 +5,15 @@ import { HTTPException } from 'hono/http-exception';
 import { verify, hash } from '@node-rs/argon2';
 import { createHash } from 'node:crypto';
 import { eq, and, desc } from 'drizzle-orm';
-import { getDb } from '../db/client';
-import { users, sessions } from '../db/schema/auth';
-import { getLucia } from '../auth/lucia';
-import { requireAuth, touchLastAccess, type AuthVars } from '../auth/middleware';
-import { rateLimit } from '../lib/rate-limit';
-import { createToken, consumeToken, invalidateUserTokens } from '../lib/tokens';
-import { getEmailProvider, passwordResetTemplate } from '../lib/email';
-import { checkPasswordStrength } from '../lib/password';
-import { noCache } from '../lib/cache';
+import { getDb } from '../db/client.js';
+import { users, sessions } from '../db/schema/auth.js';
+import { getLucia } from '../auth/lucia.js';
+import { requireAuth, touchLastAccess, type AuthVars } from '../auth/middleware.js';
+import { rateLimit } from '../lib/rate-limit.js';
+import { createToken, consumeToken, invalidateUserTokens } from '../lib/tokens.js';
+import { getEmailProvider, passwordResetTemplate } from '../lib/email.js';
+import { checkPasswordStrength } from '../lib/password.js';
+import { noCache } from '../lib/cache.js';
 
 /**
  * Rutas de autenticación.

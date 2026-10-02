@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { createMiddleware } from 'hono/factory';
-import type { AuthVars } from '../auth/middleware';
+import type { AuthVars } from '../auth/middleware.js';
 
 /**
  * Cache HTTP para GET endpoints.

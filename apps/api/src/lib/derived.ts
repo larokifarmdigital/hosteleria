@@ -3,9 +3,9 @@
  * no se persisten en la BD.
  */
 import { count, eq } from 'drizzle-orm';
-import { getDb } from '../db/client';
-import { spaces, dishes, wines, restaurantLocales, languages } from '../db/schema/content';
-import type { Env } from '../env';
+import { getDb } from '../db/client.js';
+import { spaces, dishes, wines, restaurantLocales, languages } from '../db/schema/content.js';
+import type { Env } from '../env.js';
 
 /**
  * completePercent — % de campos "clave" rellenos en el restaurante.

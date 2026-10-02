@@ -1,11 +1,11 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { lt } from 'drizzle-orm';
-import { getDb } from '../db/client';
-import { sessions } from '../db/schema/auth';
-import { cleanupStaleRateLimits } from '../lib/rate-limit';
-import { runBackup } from '../lib/backup';
-import type { AuthVars } from '../auth/middleware';
+import { getDb } from '../db/client.js';
+import { sessions } from '../db/schema/auth.js';
+import { cleanupStaleRateLimits } from '../lib/rate-limit.js';
+import { runBackup } from '../lib/backup.js';
+import type { AuthVars } from '../auth/middleware.js';
 
 /**
  * Endpoints internos ejecutados por Vercel Cron.

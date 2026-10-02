@@ -1,8 +1,8 @@
 import { pgTable, text, timestamp, primaryKey, index, pgEnum } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
-import { userRoleEnum } from './enums';
-import { restaurants } from './content';
+import { userRoleEnum } from './enums.js';
+import { restaurants } from './content.js';
 
 /**
  * users — Cuentas del backoffice.

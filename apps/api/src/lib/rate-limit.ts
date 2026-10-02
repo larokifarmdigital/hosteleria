@@ -1,9 +1,9 @@
 import { and, eq, lt, sql } from 'drizzle-orm';
 import { createMiddleware } from 'hono/factory';
 import { HTTPException } from 'hono/http-exception';
-import { getDb } from '../db/client';
-import { rateLimits } from '../db/schema/rate_limits';
-import type { AuthVars } from '../auth/middleware';
+import { getDb } from '../db/client.js';
+import { rateLimits } from '../db/schema/rate_limits.js';
+import type { AuthVars } from '../auth/middleware.js';
 
 export interface RateLimitOpts {
   /** Nombre de bucket (ej. 'auth-login', 'global'). */

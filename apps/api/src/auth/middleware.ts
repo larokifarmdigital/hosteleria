@@ -3,11 +3,11 @@ import { HTTPException } from 'hono/http-exception';
 import { getCookie } from 'hono/cookie';
 import { eq, and } from 'drizzle-orm';
 import type { User, Session } from 'lucia';
-import { getLucia } from './lucia';
-import { getDb } from '../db/client';
-import { userRestaurants, users as usersTable } from '../db/schema/auth';
-import { restaurants } from '../db/schema/content';
-import type { Env } from '../env';
+import { getLucia } from './lucia.js';
+import { getDb } from '../db/client.js';
+import { userRestaurants, users as usersTable } from '../db/schema/auth.js';
+import { restaurants } from '../db/schema/content.js';
+import type { Env } from '../env.js';
 
 export type AuthVars = {
   env: Env;

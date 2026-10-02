@@ -1,5 +1,5 @@
 import { handle } from '@hono/vercel';
-import { createApp } from '../src/app';
+import { createApp } from '../src/app.js';
 
 // Vercel Function catch-all. `vercel.json` reescribe todo el tráfico a /api/*,
 // y esta función lo delega a la app Hono. En prod las env vars vienen del

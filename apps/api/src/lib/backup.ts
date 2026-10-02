@@ -1,8 +1,8 @@
 import { PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
-import { getS3 } from './r2';
-import { getDb } from '../db/client';
-import * as schema from '../db/schema';
-import type { Env } from '../env';
+import { getS3 } from './r2.js';
+import { getDb } from '../db/client.js';
+import * as schema from '../db/schema/index.js';
+import type { Env } from '../env.js';
 
 /**
  * Backups off-provider — exporta todas las tablas de Neon a JSON y

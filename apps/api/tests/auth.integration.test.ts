@@ -7,7 +7,7 @@
  * Si DATABASE_URL no está, el test se skip-ea.
  */
 import { describe, it, expect, beforeAll } from 'vitest';
-import { createApp } from '../src/app';
+import { createApp } from '../src/app.js';
 
 const hasDb = !!process.env.DATABASE_URL;
 const describeIntegration = hasDb ? describe : describe.skip;

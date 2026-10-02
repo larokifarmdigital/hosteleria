@@ -5,7 +5,7 @@ config({ path: '.env.local' });
 config({ path: '.env', override: false });
 
 import { serve } from '@hono/node-server';
-import { createApp } from './app';
+import { createApp } from './app.js';
 
 const app = createApp();
 const port = Number(process.env.PORT ?? 8787);

@@ -4,13 +4,13 @@ import { z } from 'zod';
 import { HTTPException } from 'hono/http-exception';
 import { eq, and, asc, count, inArray } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
-import { getDb } from '../db/client';
-import { mediaAssets } from '../db/schema/media';
-import { restaurants, spaces, dishes } from '../db/schema/content';
+import { getDb } from '../db/client.js';
+import { mediaAssets } from '../db/schema/media.js';
+import { restaurants, spaces, dishes } from '../db/schema/content.js';
 import { sql } from 'drizzle-orm';
-import { userRestaurants } from '../db/schema/auth';
-import { requireAuth, type AuthVars } from '../auth/middleware';
-import { createUploadUrl, deleteObject, normalizeFilename, headObject } from '../lib/r2';
+import { userRestaurants } from '../db/schema/auth.js';
+import { requireAuth, type AuthVars } from '../auth/middleware.js';
+import { createUploadUrl, deleteObject, normalizeFilename, headObject } from '../lib/r2.js';
 
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'];
 const MAX_SIZE_KB = 10_000; // 10 MB

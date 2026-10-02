@@ -1,8 +1,8 @@
 import * as Sentry from '@sentry/node';
 import { createMiddleware } from 'hono/factory';
 import { HTTPException } from 'hono/http-exception';
-import type { AuthVars } from '../auth/middleware';
-import type { Env } from '../env';
+import type { AuthVars } from '../auth/middleware.js';
+import type { Env } from '../env.js';
 
 let initialized = false;
 
