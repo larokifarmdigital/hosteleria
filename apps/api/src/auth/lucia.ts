@@ -25,9 +25,15 @@ export function getLucia(databaseUrl: string, opts: { production: boolean }) {
       expires: false, // rolling: renovamos en cada request
       attributes: {
         secure: opts.production,
-        sameSite: 'lax',
-        // En prod se comparte cookie entre subdominios del apex.
-        domain: opts.production ? '.hosteleria.cat' : undefined
+        // 'none' permite cross-origin (ej. backoffice en localhost hablando con
+        // api en vercel.app). Requiere Secure=true, que ya está en prod.
+        // En dev localhost ambos corren en localhost → Lax funciona bien.
+        sameSite: opts.production ? 'none' : 'lax',
+        // Domain lo seteás vía COOKIE_DOMAIN env (ej. '.hosteleria.cat') cuando
+        // deployes backoffice y api bajo el mismo apex y quieras compartir
+        // cookie entre subdominios. Sin esa env, la cookie se scopa al host
+        // exacto que la emite — correcto cuando api vive en vercel.app.
+        domain: process.env.COOKIE_DOMAIN || undefined
       }
     },
     getUserAttributes: (attrs) => ({

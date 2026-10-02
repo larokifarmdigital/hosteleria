@@ -13,6 +13,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/db/seed.ts",
+    "db:inspect": "tsx scripts/db-inspect.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
