@@ -3,6 +3,7 @@ node_modules/
 .turbo/
 dist/
 
+
 # env — NUNCA se commitea
 .env
 .env.local
@@ -11,3 +12,5 @@ dist/
 # Editor / OS
 .DS_Store
 *.log
+.vercel
+.env*

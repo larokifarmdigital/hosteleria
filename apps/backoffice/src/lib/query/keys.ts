@@ -1,11 +1,11 @@
 /**
  * Factory de query keys — una sola fuente de verdad para TanStack Query.
  *
- * Convención: cada recurso expone `all`, `lists()`, `list(filters)`, `details()`,
- * `detail(id)`. Permite invalidar granular:
+ * Convención: cada recurso expone `all`, `lists()`, `list(filters)`,
+ * `details()`, `detail(id)`. Permite invalidar granular:
  *   - `qk.restaurants.all` → invalida TODO lo de restaurantes
- *   - `qk.restaurants.lists()` → solo listados (no detalles abiertos)
- *   - `qk.restaurants.detail('casabella')` → un solo detalle
+ *   - `qk.restaurants.lists()` → solo listados
+ *   - `qk.restaurants.detail('casabella')` → un detalle concreto
  *
  * Patrón: https://tkdodo.eu/blog/effective-react-query-keys
  */
@@ -17,13 +17,14 @@ export const qk = {
   restaurants: {
     all: ['restaurants'] as const,
     lists: () => [...qk.restaurants.all, 'list'] as const,
-    list: (filters?: Record<string, unknown>) => [...qk.restaurants.lists(), filters ?? {}] as const,
+    list: () => qk.restaurants.lists(),
     details: () => [...qk.restaurants.all, 'detail'] as const,
     detail: (slug: string) => [...qk.restaurants.details(), slug] as const
   },
   spaces: {
     all: ['spaces'] as const,
-    byRestaurant: (restaurantSlug: string) => [...qk.spaces.all, 'byRestaurant', restaurantSlug] as const,
+    byRestaurant: (restaurantSlug: string) =>
+      [...qk.spaces.all, 'byRestaurant', restaurantSlug] as const,
     detail: (restaurantSlug: string, spaceId: string) =>
       [...qk.spaces.all, 'detail', restaurantSlug, spaceId] as const
   },
