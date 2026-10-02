@@ -7,5 +7,15 @@ import { createApp } from '../src/app.js';
 export const config = { runtime: 'nodejs' };
 
 const app = createApp();
+const h = handle(app);
 
-export default handle(app);
+// @vercel/node espera named HTTP methods o signature (req, res) => void.
+// Un `export default (req) => Response` lo trata como legacy y descarta
+// la Response devuelta → timeout. Exportando por método, usa fetch-style.
+export const GET = h;
+export const POST = h;
+export const PATCH = h;
+export const PUT = h;
+export const DELETE = h;
+export const OPTIONS = h;
+export const HEAD = h;
