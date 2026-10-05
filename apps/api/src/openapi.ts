@@ -324,7 +324,7 @@ const paths: Record<string, any> = {
   },
 
   // ─── Auth ───────────────────────────────────────────────────────
-  '/auth/login': {
+  '/account/login': {
     post: {
       tags: ['Auth'],
       summary: 'Login con email + password. Setea cookie `hs_session`.',
@@ -343,13 +343,13 @@ const paths: Record<string, any> = {
       }
     }
   },
-  '/auth/logout': {
+  '/account/logout': {
     post: {
       tags: ['Auth'], summary: 'Invalida sesión y limpia cookie',
       responses: { 200: ok({ type: 'object', properties: { ok: { type: 'boolean' } } }), 401: errRef('unauthorized') }
     }
   },
-  '/auth/session': {
+  '/account/session': {
     get: {
       tags: ['Auth'], summary: 'Devuelve el usuario de la sesión actual o null',
       security: [],
@@ -662,7 +662,7 @@ export const openApiSpec = {
         type: 'apiKey',
         in: 'cookie',
         name: 'hs_session',
-        description: 'Cookie HTTP-only seteada por POST /auth/login. Se envía automáticamente en el browser.'
+        description: 'Cookie HTTP-only seteada por POST /account/login. Se envía automáticamente en el browser.'
       }
     }
   },

@@ -7,16 +7,17 @@ import { http } from '../../api/client';
 import { qk } from '../keys';
 
 // ─── Fetch functions ──────────────────────────────────────────────
+// NOTA: montadas bajo /account/* porque Vercel reserva /api/auth/* para SSO.
 const api = {
-  session: () => http.get<{ user: SessionUser | null }>('/auth/session').then(r => r.data.user),
+  session: () => http.get<{ user: SessionUser | null }>('/account/session').then(r => r.data.user),
   login: (vars: { email: string; password: string }) =>
-    http.post<{ user: SessionUser }>('/auth/login', vars).then(r => r.data.user),
-  logout: () => http.post<{ ok: true }>('/auth/logout').then(r => r.data),
-  forgot: (email: string) => http.post<{ ok: true }>('/auth/forgot', { email }).then(r => r.data),
+    http.post<{ user: SessionUser }>('/account/login', vars).then(r => r.data.user),
+  logout: () => http.post<{ ok: true }>('/account/logout').then(r => r.data),
+  forgot: (email: string) => http.post<{ ok: true }>('/account/forgot', { email }).then(r => r.data),
   reset: (vars: { token: string; password: string }) =>
-    http.post<{ ok: true }>('/auth/reset', vars).then(r => r.data),
+    http.post<{ ok: true }>('/account/reset', vars).then(r => r.data),
   setPassword: (vars: { token: string; password: string }) =>
-    http.post<{ ok: true }>('/auth/set-password', vars).then(r => r.data)
+    http.post<{ ok: true }>('/account/set-password', vars).then(r => r.data)
 };
 
 // ─── Hooks ────────────────────────────────────────────────────────

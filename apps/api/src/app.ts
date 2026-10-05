@@ -61,8 +61,8 @@ export function createApp() {
 
   // Rate limit global suave — protege contra scraping/abuso en todos los
   // endpoints de negocio. Login tiene su propio límite más estricto además
-  // de este. Se saltan /health, /docs, /openapi.json, /cron y /auth/* que
-  // tienen sus propios límites.
+  // de este. Se saltan /health, /docs, /openapi.json, /cron y /account/*
+  // que tienen sus propios límites.
   const globalLimiter = rateLimit({ bucket: 'global', limit: 100, windowSeconds: 60 });
   app.use('*', async (c, next) => {
     const path = c.req.path;
@@ -72,7 +72,7 @@ export function createApp() {
       path === '/docs' ||
       path === '/openapi.json' ||
       path.startsWith('/cron/') ||
-      path.startsWith('/auth/')
+      path.startsWith('/account/')
     ) {
       return next();
     }
@@ -117,7 +117,9 @@ export function createApp() {
   }));
 
   // ─── Rutas ─────────────────────────────────────────────────────
-  app.route('/auth', createAuthRoutes());
+  // NO usar '/auth' — Vercel reserva '/api/auth/*' para SSO/Deployment Protection
+  // y nunca llegan requests a la función. Montamos las rutas de sesión bajo '/account'.
+  app.route('/account', createAuthRoutes());
   app.route('/restaurants', createRestaurantsRoutes());
   app.route('/restaurants/:slug/spaces', createSpacesRoutes());
   app.route('/dishes', createDishesRoutes());

@@ -92,8 +92,9 @@ http.interceptors.response.use(
       );
     }
 
-    // 401 → redirect a /login con next, salvo si venía de /auth/*
-    if (status === 401 && typeof window !== 'undefined' && !url.startsWith('/auth/')) {
+    // 401 → redirect a /login con next, salvo si venía de /account/*
+    // (login/forgot/reset deben manejar el 401 en el form, no redirigir).
+    if (status === 401 && typeof window !== 'undefined' && !url.startsWith('/account/')) {
       const next = encodeURIComponent(window.location.pathname + window.location.search);
       window.location.href = `/login?next=${next}`;
     }
