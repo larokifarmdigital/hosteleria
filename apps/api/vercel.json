@@ -1,14 +1,18 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
-  "crons": [
+  "builds": [
     {
-      "path": "/api/cron/cleanup",
-      "schedule": "0 4 * * *"
-    },
-    {
-      "path": "/api/cron/backup",
-      "schedule": "0 3 * * *"
+      "src": "api/handler.ts",
+      "use": "@vercel/node"
     }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/handler" },
+    { "src": "/(.*)", "dest": "/api/handler" }
+  ],
+  "crons": [
+    { "path": "/api/cron/cleanup", "schedule": "0 4 * * *" },
+    { "path": "/api/cron/backup", "schedule": "0 3 * * *" }
   ]
 }
