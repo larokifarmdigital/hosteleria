@@ -3,18 +3,22 @@ import * as zxcvbnCommonPackage from '@zxcvbn-ts/language-common';
 import * as zxcvbnEnPackage from '@zxcvbn-ts/language-en';
 
 /**
- * Validación de fortaleza de password.
+ * Valida la **fortaleza** de un password antes de hashearlo.
  *
- * Usa `@zxcvbn-ts` — mide entropía real (longitud, diccionario, patrones),
- * no reglas de "una mayúscula + un número". Score 0-4:
- *   0: muy débil (ej. "password")
- *   1: débil (ej. "qwerty123")
- *   2: aceptable (ej. "hostel2026")
- *   3: fuerte
- *   4: muy fuerte
+ * ⚠️ No confundir con `src/auth/password.ts` que es el **hashing argon2**.
+ * Este archivo solo valida que el password sea razonable; una vez validado,
+ * se lo pasa al hasher.
  *
- * Exigimos score ≥ 2. Además rechazamos si contiene el email o el nombre
- * del usuario (incluso con score alto — bruteforce con context es trivial).
+ * **Cómo mide la fortaleza**: usa `@zxcvbn-ts` (port de la lib de Dropbox),
+ * que estima entropía real (longitud, diccionario, patrones de teclado,
+ * fechas, etc.) y da un score 0-4. No usamos reglas "una mayúscula + un
+ * número" porque son mentira — "Password1!" las cumple y es débil.
+ *
+ * **Qué rechazamos**:
+ *  - Score < 2 (débiles tipo "qwerty123").
+ *  - Longitud fuera de [8, 200].
+ *  - Password que contiene el email o nombre del user (incluso con score
+ *    alto — "casabella2026" es malo si el user es admin de Casabella).
  */
 
 let initialized = false;
@@ -33,19 +37,23 @@ function initZxcvbn() {
 
 export interface PasswordCheckInput {
   password: string;
-  /** Datos del usuario que NO deben aparecer en el password. */
+  /** Email, nombre, slug del restaurante… — NO deben aparecer en el password. */
   userInputs?: Array<string | undefined | null>;
 }
 
 export interface PasswordCheckResult {
   ok: boolean;
-  score: number;      // 0-4
-  reason?: string;    // mensaje para el user si falla
+  score: number;      // 0-4 (zxcvbn)
+  reason?: string;    // mensaje listo para mostrar al usuario si falla
 }
 
 /**
- * Comprueba una password. Si falla, el `reason` ya está formateado para
- * mostrarle al editor.
+ * Valida un password. Si falla, `reason` ya trae un mensaje en español
+ * listo para mostrar en el form.
+ *
+ * Dónde se usa:
+ *  - `routes/auth.ts` → POST /auth/reset, POST /auth/set-password.
+ *  - `routes/users.ts` → POST /users (si admin crea con password explícita).
  */
 export function checkPasswordStrength(input: PasswordCheckInput): PasswordCheckResult {
   initZxcvbn();
@@ -71,7 +79,7 @@ export function checkPasswordStrength(input: PasswordCheckInput): PasswordCheckR
     };
   }
 
-  // Guard adicional: la password no puede contener el email/nombre (case-insensitive)
+  // Guard adicional: email/nombre no pueden aparecer en el password.
   const lower = password.toLowerCase();
   for (const inp of extraInputs) {
     const chunk = inp.toLowerCase().split(/[@. -]/)[0];

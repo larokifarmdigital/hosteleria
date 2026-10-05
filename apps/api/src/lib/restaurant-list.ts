@@ -3,16 +3,18 @@ import { getDb } from '../db/client.js';
 import type { Env } from '../env.js';
 
 /**
- * Lista de restaurantes con todos los campos derivados en UNA sola query.
+ * Query optimizada para el listado del dashboard: devuelve TODOS los
+ * restaurantes con sus campos derivados (locales activos, counts de
+ * spaces/dishes/wines) en **una sola** llamada SQL.
  *
- * Antes: `toDto()` en bucle llamaba a:
- *   - getActiveLocaleCodes()   → 1 query por restaurante
- *   - countByRestaurant()      → 3 queries (spaces, dishes, wines)
- * Total: 4N queries para N restaurantes (24 queries con los 6 actuales,
- * 240 con 60).
+ * **Por qué existe este archivo**: el enfoque "idiomático" sería iterar
+ * los restaurantes y para cada uno llamar `getActiveLocaleCodes()` +
+ * `countByRestaurant()`. Eso son 4 queries por restaurante (N+1 problem).
+ * Con 60 restaurantes = 240 queries y la pantalla se arrastra.
  *
- * Ahora: 1 query con LEFT JOIN + array_agg para locales + subqueries para
- * counters. Independiente del número de restaurantes.
+ * Esta implementación usa un SQL con `LEFT JOIN` + `array_agg` para
+ * locales + subqueries con `COUNT(*)` para counters. Total: 1 query,
+ * independiente de cuántos restaurantes haya.
  */
 
 export interface RestaurantListRow {
@@ -39,16 +41,24 @@ export interface RestaurantListRow {
   winesCount: number;
 }
 
+/**
+ * Lista restaurantes agregados.
+ *
+ * Dónde se usa:
+ *  - `routes/restaurants.ts` → GET /restaurants (listado del dashboard).
+ *
+ * @param opts.allowedIds - Si se pasa, filtra solo esos IDs (para editors
+ *   que no son admin — solo ven los restaurantes asignados a ellos).
+ *   Array vacío = user sin acceso a ningún restaurante → `[]`.
+ */
 export async function listRestaurantsAggregated(
   env: Env,
   opts: { allowedIds?: string[] } = {}
 ): Promise<RestaurantListRow[]> {
   const db = getDb(env.DATABASE_URL);
 
-  // Si allowedIds es un array vacío, el user editor no tiene acceso a ninguno.
   if (opts.allowedIds?.length === 0) return [];
 
-  // Construimos el WHERE opcional con placeholder-safe parametrization.
   const whereClause = opts.allowedIds && opts.allowedIds.length > 0
     ? sql`WHERE r.id = ANY(${opts.allowedIds})`
     : sql``;
@@ -82,6 +92,5 @@ export async function listRestaurantsAggregated(
     ORDER BY r.name ASC
   `);
 
-  // `pg` devuelve `rows` ya tipados como Record<string, any>[].
   return (result as any).rows as RestaurantListRow[];
 }

@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { HTTPException } from 'hono/http-exception';
-import { verify, hash } from '@node-rs/argon2';
+import { verifyPassword, hashPassword, DUMMY_HASH } from '../auth/password.js';
 import { createHash } from 'node:crypto';
 import { eq, and, desc } from 'drizzle-orm';
 import { getDb } from '../db/client.js';
@@ -58,13 +58,13 @@ export function createAuthRoutes() {
     const user = await db.query.users.findFirst({ where: eq(users.email, email.toLowerCase()) });
 
     // Verificación en tiempo constante — no filtrar si el email existía.
-    const passwordHash = user?.passwordHash ?? '$argon2id$v=19$m=19456,t=2,p=1$dummydummydummydummydummy$dummydummydummydummydummydummydummydummydummy';
-    const ok = await verify(passwordHash, password).catch(() => false);
+    const passwordHash = user?.passwordHash ?? DUMMY_HASH;
+    const ok = await verifyPassword(password, passwordHash).catch(() => false);
     if (!user || !ok) {
       throw new HTTPException(401, { message: 'invalid_credentials' });
     }
 
-    const lucia = getLucia(env.DATABASE_URL, { production: process.env.NODE_ENV === 'production' });
+    const lucia = getLucia(env, { production: env.SENTRY_ENV === 'production' });
     const session = await lucia.createSession(user.id, {});
     const cookie = lucia.createSessionCookie(session.id);
     c.header('Set-Cookie', cookie.serialize(), { append: true });
@@ -87,7 +87,7 @@ export function createAuthRoutes() {
   app.post('/logout', requireAuth, async (c) => {
     const session = c.get('session');
     const env = c.get('env');
-    const lucia = getLucia(env.DATABASE_URL, { production: process.env.NODE_ENV === 'production' });
+    const lucia = getLucia(env, { production: env.SENTRY_ENV === 'production' });
     if (session) await lucia.invalidateSession(session.id);
     const cookie = lucia.createBlankSessionCookie();
     c.header('Set-Cookie', cookie.serialize(), { append: true });
@@ -143,7 +143,7 @@ export function createAuthRoutes() {
     const target = await db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) });
     if (!target || target.userId !== user.id) throw new HTTPException(404, { message: 'not_found' });
 
-    const lucia = getLucia(env.DATABASE_URL, { production: process.env.NODE_ENV === 'production' });
+    const lucia = getLucia(env, { production: env.SENTRY_ENV === 'production' });
     await lucia.invalidateSession(sessionId);
     return c.json({ ok: true });
   });
@@ -157,7 +157,7 @@ export function createAuthRoutes() {
     const db = getDb(env.DATABASE_URL);
 
     const all = await db.query.sessions.findMany({ where: eq(sessions.userId, user.id) });
-    const lucia = getLucia(env.DATABASE_URL, { production: process.env.NODE_ENV === 'production' });
+    const lucia = getLucia(env, { production: env.SENTRY_ENV === 'production' });
     await Promise.all(
       all.filter(s => s.id !== current.id).map(s => lucia.invalidateSession(s.id))
     );
@@ -225,11 +225,11 @@ export function createAuthRoutes() {
       });
       if (!check.ok) throw new HTTPException(400, { message: check.reason ?? 'weak_password' });
 
-      const passwordHash = await hash(newPassword);
+      const passwordHash = await hashPassword(newPassword);
       await db.update(users).set({ passwordHash }).where(eq(users.id, userId));
 
       // Invalidar TODAS las sesiones activas del usuario (seguridad).
-      const lucia = getLucia(env.DATABASE_URL, { production: process.env.NODE_ENV === 'production' });
+      const lucia = getLucia(env, { production: env.SENTRY_ENV === 'production' });
       await lucia.invalidateUserSessions(userId);
 
       return c.json({ ok: true });
@@ -258,7 +258,7 @@ export function createAuthRoutes() {
       });
       if (!check.ok) throw new HTTPException(400, { message: check.reason ?? 'weak_password' });
 
-      const passwordHash = await hash(newPassword);
+      const passwordHash = await hashPassword(newPassword);
       await db.update(users).set({ passwordHash }).where(eq(users.id, userId));
 
       return c.json({ ok: true });

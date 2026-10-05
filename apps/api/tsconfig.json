@@ -17,5 +17,5 @@
     }
   },
   "include": ["src/**/*.ts", "api/**/*.ts", "drizzle.config.ts"],
-  "exclude": ["node_modules", ".vercel"]
+  "exclude": ["node_modules", ".wrangler"]
 }

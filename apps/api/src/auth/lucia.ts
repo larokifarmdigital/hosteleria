@@ -2,21 +2,26 @@ import { Lucia } from 'lucia';
 import { DrizzlePostgreSQLAdapter } from '@lucia-auth/adapter-drizzle';
 import { getDb } from '../db/client.js';
 import { users, sessions } from '../db/schema/auth.js';
+import type { Env } from '../env.js';
 
 /**
  * Lucia auth — sesiones basadas en cookie HTTP-only.
  *
- * En prod la cookie es `Domain=.hosteleria.cat` para compartirse entre
- * `studio.hosteleria.cat` (backoffice) y `api.hosteleria.cat` (esta app).
- * En dev localhost la cookie va sin `Domain` y el fetch usa
- * `credentials: 'include'` desde el backoffice.
+ * En prod producción, `Domain=.hosteleria.cat` (via env.COOKIE_DOMAIN) hace
+ * que la cookie se comparta entre `studio.hosteleria.cat` (backoffice) y
+ * `api.hosteleria.cat`. Sin COOKIE_DOMAIN, la cookie se scopa al host del
+ * api — correcto para dev local o cuando api/backoffice están en dominios
+ * distintos (y usan `SameSite=None`).
+ *
+ * Cacheamos la instancia por isolate — el adapter Drizzle crea su propio
+ * cliente de BD y no vale la pena reconstruir en cada request.
  */
 let _lucia: Lucia | null = null;
 
-export function getLucia(databaseUrl: string, opts: { production: boolean }) {
+export function getLucia(env: Env, opts: { production: boolean }) {
   if (_lucia) return _lucia;
 
-  const db = getDb(databaseUrl) as any; // Drizzle types compatibles con adapter
+  const db = getDb(env.DATABASE_URL) as any;
   const adapter = new DrizzlePostgreSQLAdapter(db, sessions, users);
 
   _lucia = new Lucia(adapter, {
@@ -25,15 +30,9 @@ export function getLucia(databaseUrl: string, opts: { production: boolean }) {
       expires: false, // rolling: renovamos en cada request
       attributes: {
         secure: opts.production,
-        // 'none' permite cross-origin (ej. backoffice en localhost hablando con
-        // api en vercel.app). Requiere Secure=true, que ya está en prod.
-        // En dev localhost ambos corren en localhost → Lax funciona bien.
+        // 'none' permite cross-origin. Requiere Secure=true.
         sameSite: opts.production ? 'none' : 'lax',
-        // Domain lo seteás vía COOKIE_DOMAIN env (ej. '.hosteleria.cat') cuando
-        // deployes backoffice y api bajo el mismo apex y quieras compartir
-        // cookie entre subdominios. Sin esa env, la cookie se scopa al host
-        // exacto que la emite — correcto cuando api vive en vercel.app.
-        domain: process.env.COOKIE_DOMAIN || undefined
+        domain: env.COOKIE_DOMAIN || undefined
       }
     },
     getUserAttributes: (attrs) => ({

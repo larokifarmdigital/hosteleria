@@ -1,51 +1,31 @@
-import * as Sentry from '@sentry/node';
+import * as Sentry from '@sentry/cloudflare';
 import { createMiddleware } from 'hono/factory';
 import { HTTPException } from 'hono/http-exception';
-import type { AuthVars } from '../auth/middleware.js';
 import type { Env } from '../env.js';
-
-let initialized = false;
+import type { AuthVars } from '../auth/middleware.js';
 
 /**
- * Inicializa Sentry si hay DSN configurado. Idempotente.
- * Se llama al construir la Hono app.
+ * Observability — reporta errores no esperados a Sentry.
+ *
+ * **@sentry/cloudflare** se inicializa envolviendo el handler default del
+ * Worker con `Sentry.withSentry(configFn, handler)` — ver `src/index.ts`.
+ * Si `SENTRY_DSN` no está seteado, `withSentry` es un no-op.
+ *
+ * Este middleware solo loggea excepciones con context extra (user, path,
+ * method) y las re-lanza para que Sentry las capture en el wrapper.
  */
-export function initSentry(env: Env) {
-  if (initialized) return;
-  if (!env.SENTRY_DSN) return;
-
-  Sentry.init({
-    dsn: env.SENTRY_DSN,
-    environment: env.SENTRY_ENV,
-    release: '0.0.1',
-    // Capturar 10% de transactions en prod, 100% en dev
-    tracesSampleRate: env.SENTRY_ENV === 'production' ? 0.1 : 1.0,
-    // No enviar bodies de requests ni headers con cookies
-    sendDefaultPii: false,
-    beforeSend(event) {
-      // Scrub cookies / auth headers aunque sendDefaultPii sea false
-      if (event.request?.headers) {
-        delete (event.request.headers as any).cookie;
-        delete (event.request.headers as any).authorization;
-      }
-      return event;
-    }
-  });
-  initialized = true;
-}
 
 /**
- * Middleware que captura errores en Sentry con context del request.
- * Las HTTPException de Hono (401/403/404/429) NO se envían — son
- * esperables, no bugs. Solo 500+ y errores sin status llegan a Sentry.
+ * Dónde se usa:
+ *  - `app.ts` → se monta como middleware global.
  */
 export function sentryMiddleware() {
-  return createMiddleware<{ Variables: AuthVars }>(async (c, next) => {
+  return createMiddleware<{ Bindings: Env; Variables: AuthVars }>(async (c, next) => {
     try {
       await next();
     } catch (err) {
       const isExpectedHttp = err instanceof HTTPException && err.status < 500;
-      if (!isExpectedHttp && initialized) {
+      if (!isExpectedHttp) {
         const user = c.get('user');
         Sentry.withScope((scope) => {
           scope.setTag('path', c.req.path);

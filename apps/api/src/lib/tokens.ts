@@ -5,11 +5,17 @@ import { userTokens } from '../db/schema/auth.js';
 import type { Env } from '../env.js';
 
 /**
- * Flow de tokens de un solo uso (welcome + password reset).
+ * Tokens de un solo uso para flows por email (bienvenida y reset de password).
  *
- * El token REAL (que viaja en el email) se genera random (32 bytes base64url).
- * En BD guardamos SHA-256 del token → si alguien dumpa la tabla, no puede
- * usar tokens activos sin fuerza bruta sobre SHA-256.
+ * **Cómo viaja el token**: el token REAL (32 bytes random en base64url) se
+ * genera en el servidor y se envía por email al usuario. En la BD solo
+ * guardamos el **SHA-256** del token. Si alguien dumpea la tabla no puede
+ * usar tokens activos — tendría que crackearlos.
+ *
+ * **Cuándo se usan**:
+ *  - `password_setup`: cuando admin crea un user sin password → se le manda
+ *    un email con un link para elegir el password inicial.
+ *  - `password_reset`: cuando el user hace "olvidé mi contraseña".
  */
 
 export type TokenKind = 'password_setup' | 'password_reset';
@@ -19,8 +25,15 @@ function hashToken(token: string): string {
 }
 
 /**
- * Genera un token nuevo, lo guarda hasheado y devuelve el token en claro
- * (único momento en que existe sin hashear — hay que ponerlo en el email).
+ * Genera un token nuevo, guarda su hash en BD y devuelve el token en claro.
+ * Este es el ÚNICO momento en que el token existe sin hashear — hay que
+ * ponerlo en el email que recibe el usuario.
+ *
+ * Dónde se usa:
+ *  - `routes/users.ts` → POST /users (admin crea user sin password) → genera
+ *    token `password_setup` con TTL 48h.
+ *  - `routes/auth.ts` → POST /auth/forgot → genera token `password_reset`
+ *    con TTL 1h.
  */
 export async function createToken(env: Env, opts: {
   userId: string;
@@ -43,12 +56,15 @@ export async function createToken(env: Env, opts: {
 }
 
 /**
- * Valida un token: debe existir, no estar usado, no haber expirado y
- * coincidir con la kind esperada. Si todo OK, devuelve el userId y marca
- * el token como usado (atomico).
+ * Valida un token y lo "consume" (marca `usedAt`) de forma atómica.
+ * Devuelve el `userId` si todo OK, o `null` si el token es inválido
+ * (no existe, ya usado, expirado, o kind no coincide).
  *
- * Devuelve `null` si el token es inválido — no revela el motivo exacto
- * (no filtra "expirado" vs "no existe") para dificultar enumeration.
+ * No reveamos el motivo exacto de la invalidez para dificultar enumeración.
+ *
+ * Dónde se usa:
+ *  - `routes/auth.ts` → POST /auth/reset (consume `password_reset`).
+ *  - `routes/auth.ts` → POST /auth/set-password (consume `password_setup`).
  */
 export async function consumeToken(env: Env, token: string, expectedKind: TokenKind): Promise<string | null> {
   const tokenHash = hashToken(token);
@@ -72,8 +88,11 @@ export async function consumeToken(env: Env, token: string, expectedKind: TokenK
 }
 
 /**
- * Invalida todos los tokens activos de un tipo para un usuario.
- * Útil al cambiar password: invalidar todos los password_reset pendientes.
+ * Marca TODOS los tokens activos de un tipo para un usuario como "usados".
+ *
+ * Dónde se usa:
+ *  - `routes/auth.ts` → POST /auth/forgot (antes de generar un nuevo
+ *    token de reset, invalida los previos — así solo el último sirve).
  */
 export async function invalidateUserTokens(env: Env, userId: string, kind: TokenKind) {
   const db = getDb(env.DATABASE_URL);

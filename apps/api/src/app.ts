@@ -2,9 +2,9 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { HTTPException } from 'hono/http-exception';
-import { loadEnv } from './env.js';
-import { getDb } from './db/client.js';
 import { sql } from 'drizzle-orm';
+import { apiReference } from '@scalar/hono-api-reference';
+import { getDb } from './db/client.js';
 import { validateSession, type AuthVars } from './auth/middleware.js';
 import { createAuthRoutes } from './routes/auth.js';
 import { createRestaurantsRoutes } from './routes/restaurants.js';
@@ -14,78 +14,84 @@ import { createWinesRoutes } from './routes/wines.js';
 import { createLanguagesRoutes } from './routes/languages.js';
 import { createUsersRoutes } from './routes/users.js';
 import { createMediaRoutes } from './routes/media.js';
-import { createCronRoutes } from './routes/cron.js';
-import { apiReference } from '@scalar/hono-api-reference';
 import { openApiSpec } from './openapi.js';
-import { initSentry, sentryMiddleware } from './lib/sentry.js';
+import { sentryMiddleware } from './lib/sentry.js';
 import { rateLimit } from './lib/rate-limit.js';
+import type { Env } from './env.js';
 
 /**
- * App Hono principal. Se monta como Vercel Function catch-all
- * (api/[[...route]].ts) en prod y como server Node (@hono/node-server)
- * en dev via src/dev.ts.
+ * Hono app principal — se monta como fetch handler del Worker.
  *
- * Rutas de negocio (restaurants/spaces/…) se añaden en tasks 5+.
+ * **Convenciones**:
+ * - `c.env` → bindings y secrets de Cloudflare (ver `src/env.ts`).
+ * - `c.get('env')` / `c.get('user')` / `c.get('session')` → helpers tipados
+ *   setteados por middleware (ver `AuthVars` en `auth/middleware.ts`).
+ * - Rutas montadas en root (`/auth/login`, `/restaurants`, etc.).
+ *   El Worker recibe el path tal cual lo pide el cliente.
+ *
+ * **Cómo añadir un endpoint**: crear `src/routes/<recurso>.ts` que exporte
+ * `createXxxRoutes()` devolviendo una sub-app Hono, y añadir una línea
+ * `app.route('/xxx', createXxxRoutes())` abajo.
  */
 export function createApp() {
-  const env = loadEnv();
-  initSentry(env);
-  // basePath '/api' — todas las rutas quedan bajo /api/* (ej. /api/health,
-  // /api/auth/login). Vercel con api/[[...route]].ts entrega las requests con
-  // /api incluido en el path, así que Hono matchea nativamente. En dev
-  // (@hono/node-server) el user también hits /api/* para mantener consistencia.
-  const app = new Hono<{ Variables: AuthVars }>().basePath('/api');
+  const app = new Hono<{ Bindings: Env; Variables: AuthVars }>();
 
+  // ─── Middlewares globales ──────────────────────────────────────────
   app.use('*', logger());
-  // Sentry debe ir temprano para capturar errores de rutas posteriores,
-  // pero DESPUÉS de que c.get('env') / c.get('user') estén disponibles.
-  // Como auth lee user, lo ponemos después del middleware de user — ver abajo.
 
+  // Expone `c.env` también via `c.get('env')` para compatibilidad con
+  // helpers legacy que esperan recibir el env como Variable. Nuevo código
+  // puede usar `c.env` directamente.
+  app.use('*', async (c, next) => {
+    c.set('env', c.env);
+    await next();
+  });
+
+  // CORS — origin dinámico porque leemos ALLOWED_ORIGIN de c.env, que
+  // solo existe en el context, no en module scope.
   app.use('*', cors({
-    origin: env.ALLOWED_ORIGIN.split(',').map(s => s.trim()),
+    origin: (origin, c) => {
+      const allowed = (c.env.ALLOWED_ORIGIN ?? '').split(',').map((s: string) => s.trim());
+      return allowed.includes(origin) ? origin : null;
+    },
     credentials: true,
     allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization']
   }));
 
-  // Inyecta env en context para que los handlers no lo relean.
-  app.use('*', async (c, next) => {
-    c.set('env', env);
-    await next();
-  });
-
   // Lee cookie de sesión Lucia y setea user/session en context.
   app.use('*', validateSession);
+
   // Captura excepciones a Sentry con context (user, path, method).
   app.use('*', sentryMiddleware());
 
-  // Rate limit global suave — protege contra scraping/abuso en todos los
-  // endpoints de negocio. Login tiene su propio límite más estricto además
-  // de este. Se saltan /health, /docs, /openapi.json, /cron y /account/*
-  // que tienen sus propios límites.
+  // Rate limit global — se saltan rutas con su propio limiter o públicas.
   const globalLimiter = rateLimit({ bucket: 'global', limit: 100, windowSeconds: 60 });
   app.use('*', async (c, next) => {
     const path = c.req.path;
-    if (
+    const skip =
       path === '/health' ||
       path === '/' ||
       path === '/docs' ||
       path === '/openapi.json' ||
-      path.startsWith('/cron/') ||
-      path.startsWith('/account/')
-    ) {
-      return next();
-    }
-    return globalLimiter(c, next);
+      path.startsWith('/auth/');
+    return skip ? next() : globalLimiter(c, next);
   });
 
-  // ─── Health ────────────────────────────────────────────────────
+  // ─── Rutas públicas ────────────────────────────────────────────────
+  app.get('/', (c) => c.json({
+    name: '@hosteleria/api',
+    version: '0.0.1',
+    docs: '/docs',
+    openapi: '/openapi.json'
+  }));
+
   app.get('/health', async (c) => {
     const start = Date.now();
     let dbOk = false;
     let dbError: string | null = null;
     try {
-      const db = getDb(env.DATABASE_URL);
+      const db = getDb(c.env.DATABASE_URL);
       await db.execute(sql`select 1`);
       dbOk = true;
     } catch (err) {
@@ -100,14 +106,7 @@ export function createApp() {
     }, dbOk ? 200 : 503);
   });
 
-  app.get('/', (c) => c.json({
-    name: '@hosteleria/api',
-    version: '0.0.1',
-    docs: '/docs',
-    openapi: '/openapi.json'
-  }));
-
-  // ─── Documentación ─────────────────────────────────────────────
+  // ─── Documentación ─────────────────────────────────────────────────
   app.get('/openapi.json', (c) => c.json(openApiSpec));
   app.get('/docs', apiReference({
     theme: 'default',
@@ -116,10 +115,8 @@ export function createApp() {
     metaData: { title: '@hosteleria/api — Reference' }
   }));
 
-  // ─── Rutas ─────────────────────────────────────────────────────
-  // NO usar '/auth' — Vercel reserva '/api/auth/*' para SSO/Deployment Protection
-  // y nunca llegan requests a la función. Montamos las rutas de sesión bajo '/account'.
-  app.route('/account', createAuthRoutes());
+  // ─── Rutas de negocio ──────────────────────────────────────────────
+  app.route('/auth', createAuthRoutes());
   app.route('/restaurants', createRestaurantsRoutes());
   app.route('/restaurants/:slug/spaces', createSpacesRoutes());
   app.route('/dishes', createDishesRoutes());
@@ -127,8 +124,8 @@ export function createApp() {
   app.route('/languages', createLanguagesRoutes());
   app.route('/users', createUsersRoutes());
   app.route('/media', createMediaRoutes());
-  app.route('/cron', createCronRoutes());
 
+  // ─── Error handling ────────────────────────────────────────────────
   app.notFound((c) => c.json({ error: 'not_found', path: c.req.path }, 404));
 
   app.onError((err, c) => {

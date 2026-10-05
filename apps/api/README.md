@@ -1,77 +1,108 @@
 # @hosteleria/api
 
-Backend HTTP para el backoffice del grupo. **Hono + Drizzle + Neon + Lucia + R2**.
+Backend HTTP del backoffice del grupo. Corre sobre **Cloudflare Workers**.
 
-## Local
+**Stack**: Hono · Drizzle · Neon Postgres · Lucia (sessions) · Cloudflare R2 (media).
+
+---
+
+## Correr en local
 
 ```bash
-# 1) Rellena apps/api/.env.local con:
-#    DATABASE_URL, SESSION_SECRET, R2_*, ADMIN_EMAIL, ADMIN_PASSWORD, ALLOWED_ORIGIN
+# 1) Rellená apps/api/.env.local con los valores reales
+#    (ver .env.example como plantilla)
+cp .env.example .env.local
 
-# 2) Migra el schema a Neon
+# 2) Migrá el schema a Neon (una sola vez por branch)
 pnpm --filter @hosteleria/api db:migrate
 
-# 3) Seed idiomas + admin + 6 restaurantes shell
+# 3) Seed inicial: idiomas + admin + 6 restaurantes shell
 pnpm --filter @hosteleria/api db:seed
 
-# 4) Arranca
+# 4) Arrancá el Worker en dev
 pnpm --filter @hosteleria/api dev
 # → http://localhost:8787
 ```
 
-Health check:
+**Health check:**
 ```bash
 curl http://localhost:8787/health
 # → {"ok":true,"db":"connected",...}
 ```
 
-## Deploy Vercel
+---
 
-Es una app separada del backoffice — deploy independiente, mismo dashboard.
+## Deploy a producción
 
-### 1) Crear proyecto Vercel
+**Ver [DEPLOY.md](./DEPLOY.md)** — paso a paso completo para desplegar a
+Cloudflare Workers (login, secrets, deploy, verificación).
 
+Resumen de 1 línea:
 ```bash
-cd apps/api
-vercel link
-# selecciona la cuenta y crea un proyecto nuevo llamado "hosteleria-api"
+pnpm --filter @hosteleria/api run deploy
 ```
 
-O desde la web: **New Project** → importa el repo → **Root Directory** = `apps/api` → **Framework Preset** = `Other`.
+---
 
-### 2) Env vars en Vercel
+## Estructura
 
-Añade todas las variables de `.env.example` en **Project Settings → Environment Variables**, tanto en Production como Preview:
-
-- `DATABASE_URL` — connection string Neon (branch `production` para prod)
-- `SESSION_SECRET` — random 32 chars hex
-- `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL`
-- `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`
-- `ALLOWED_ORIGIN=https://studio.hosteleria.cat` (o el dominio que uses)
-
-### 3) Deploy
-
-```bash
-vercel                # preview
-vercel --prod         # production
+```
+src/
+├── index.ts               # Entry Worker (fetch + scheduled handlers)
+├── app.ts                 # Hono app, montaje de rutas y middlewares
+├── env.ts                 # Tipos Env (bindings + secrets)
+├── openapi.ts             # OpenAPI spec servido en /openapi.json
+├── auth/                  # Lucia, middleware de sesión, hashing argon2
+├── routes/                # Un archivo por recurso
+├── lib/                   # Helpers transversales (ver src/lib/README)
+├── db/
+│   ├── client.ts
+│   ├── schema/            # Tablas Drizzle (auth, content, media, …)
+│   └── seed.ts            # Script de seed inicial (tsx)
+└── scripts/
+    └── db-inspect.ts      # Diagnóstico read-only de la BD
 ```
 
-### 4) Dominio custom
+---
 
-En **Project Settings → Domains** añade `api.hosteleria.cat` y sigue las instrucciones de DNS (añadir CNAME en el registrar).
+## Rutas públicas
 
-### 5) Cookie cross-subdomain (importante)
+- `GET /` — info del api
+- `GET /health` — health check
+- `GET /openapi.json` — spec
+- `GET /docs` — UI de Scalar (interactiva)
 
-Al deployar en prod, Lucia setea la cookie con `Domain=.hosteleria.cat` (ver `apps/api/src/auth/lucia.ts`). Así se comparte entre `studio.hosteleria.cat` (backoffice) y `api.hosteleria.cat`. Asegúrate que ambos deploys estén bajo el mismo apex.
+## Rutas de negocio
 
-## Rutas
-
-- `GET /health`
 - `POST /auth/login` · `POST /auth/logout` · `GET /auth/session`
-- `GET/POST/PATCH/DELETE /restaurants` · `/restaurants/:slug`
+- `POST /auth/forgot` · `POST /auth/reset` · `POST /auth/set-password`
+- `GET /auth/sessions` · `DELETE /auth/sessions/:id` · `DELETE /auth/sessions`
+- `GET/POST/PATCH/DELETE /restaurants` · `/:slug` · `/:slug/publish` · `/:slug/discard`
 - `GET/POST/PATCH/DELETE /restaurants/:slug/spaces` · `/:spaceId`
 - `GET/POST/PATCH/DELETE /dishes` · `/dishes/categories`
 - `GET/POST/PATCH/DELETE /wines` · `/wines/categories`
 - `GET/POST/PATCH/DELETE /languages`
 - `GET/POST/PATCH/DELETE /users` (admin only)
 - `POST /media/upload-url` · `POST /media/:id/confirm` · `GET/PATCH/DELETE /media`
+
+## Scheduled (cron)
+
+- **03:00 UTC** → backup diario de la BD a R2 (retención 30 días)
+- **04:00 UTC** → cleanup de sesiones y rate_limits expirados
+
+Ver `src/index.ts#scheduled` y `wrangler.toml#triggers`.
+
+---
+
+## Comandos útiles
+
+| Comando | Para qué |
+|---|---|
+| `pnpm dev` | Levanta el Worker local (`wrangler dev`) en :8787 |
+| `pnpm deploy` | Deploy a prod |
+| `pnpm check` | Typecheck |
+| `pnpm db:migrate` | Aplica migraciones Drizzle a Neon |
+| `pnpm db:seed` | Seed inicial (idiomas + admin + 6 restaurantes) |
+| `pnpm db:inspect` | Diagnóstico read-only del estado de la BD |
+| `pnpm db:studio` | Abre Drizzle Studio (UI web para la BD) |
+| `pnpm test` | Corre vitest |

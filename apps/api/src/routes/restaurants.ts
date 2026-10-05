@@ -291,7 +291,8 @@ export function createRestaurantsRoutes() {
     // Trigger de rebuild: solo cuando pasa a published, o si estaba
     // publicado y el admin modificó datos que afectan a la landing.
     // Para MVP: trigger en cualquier PATCH si está publicado o acaba de
-    // publicarse — Vercel deduplica por idle 1 min automáticamente.
+    // publicarse — los providers de deploy (Vercel/CF Pages/Netlify)
+    // deduplican rebuilds concurrentes automáticamente.
     const shouldRebuild = (willBePublished && !wasPublished) || (wasPublished && !body.state);
     if (shouldRebuild && dto && r.rebuildHookUrl) {
       void fireRebuildHook(r.rebuildHookUrl, { restaurantSlug: r.slug });

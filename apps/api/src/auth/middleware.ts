@@ -23,9 +23,9 @@ export type AuthVars = {
  * Además rota la cookie si Lucia decidió refrescarla (fresh session),
  * y borra la cookie si la sesión ya no es válida.
  */
-export const validateSession = createMiddleware<{ Variables: AuthVars }>(async (c, next) => {
+export const validateSession = createMiddleware<{ Bindings: Env; Variables: AuthVars }>(async (c, next) => {
   const env = c.get('env');
-  const lucia = getLucia(env.DATABASE_URL, { production: process.env.NODE_ENV === 'production' });
+  const lucia = getLucia(env, { production: env.SENTRY_ENV === 'production' });
 
   const sessionId = getCookie(c, lucia.sessionCookieName) ?? null;
   if (!sessionId) {
@@ -51,14 +51,14 @@ export const validateSession = createMiddleware<{ Variables: AuthVars }>(async (
 });
 
 /** Bloquea si no hay sesión válida. */
-export const requireAuth = createMiddleware<{ Variables: AuthVars }>(async (c, next) => {
+export const requireAuth = createMiddleware<{ Bindings: Env; Variables: AuthVars }>(async (c, next) => {
   const user = c.get('user');
   if (!user) throw new HTTPException(401, { message: 'unauthorized' });
   await next();
 });
 
 /** Bloquea si el usuario no es admin. */
-export const requireAdmin = createMiddleware<{ Variables: AuthVars }>(async (c, next) => {
+export const requireAdmin = createMiddleware<{ Bindings: Env; Variables: AuthVars }>(async (c, next) => {
   const user = c.get('user');
   if (!user) throw new HTTPException(401, { message: 'unauthorized' });
   if (user.role !== 'admin') throw new HTTPException(403, { message: 'admin_required' });
@@ -70,7 +70,7 @@ export const requireAdmin = createMiddleware<{ Variables: AuthVars }>(async (c, 
  * Admins pasan siempre.
  */
 export function requireRestaurant(paramName = 'slug') {
-  return createMiddleware<{ Variables: AuthVars }>(async (c, next) => {
+  return createMiddleware<{ Bindings: Env; Variables: AuthVars }>(async (c, next) => {
     const user = c.get('user');
     if (!user) throw new HTTPException(401, { message: 'unauthorized' });
     if (user.role === 'admin') return next();

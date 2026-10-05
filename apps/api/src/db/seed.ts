@@ -12,7 +12,7 @@ import { config } from 'dotenv';
 config({ path: '.env.local' });
 config({ path: '.env', override: false });
 
-import { hash } from '@node-rs/argon2';
+import { hashPassword } from '../auth/password.js';
 import { eq } from 'drizzle-orm';
 import { getDb } from './client.js';
 import * as schema from './schema/index.js';
@@ -68,7 +68,7 @@ async function main() {
   if (existingAdmin) {
     console.log(`   · ${adminEmail} ya existía (${existingAdmin.role})`);
   } else {
-    const passwordHash = await hash(adminPassword);
+    const passwordHash = await hashPassword(adminPassword);
     await db.insert(schema.users).values({
       email: adminEmail,
       passwordHash,

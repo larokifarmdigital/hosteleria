@@ -3,7 +3,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { HTTPException } from 'hono/http-exception';
 import { eq, asc, and, inArray } from 'drizzle-orm';
-import { hash } from '@node-rs/argon2';
+import { hashPassword } from '../auth/password.js';
 import { getDb } from '../db/client.js';
 import { users, userRestaurants } from '../db/schema/auth.js';
 import { restaurants } from '../db/schema/content.js';
@@ -101,8 +101,8 @@ export function createUsersRoutes() {
     // Si no se da password, se genera uno placeholder bloqueado (hash largo
     // imposible de crackear). El usuario setea el real via welcome email.
     const passwordHash = body.password
-      ? await hash(body.password)
-      : await hash(crypto.randomUUID() + crypto.randomUUID());
+      ? await hashPassword(body.password)
+      : await hashPassword(crypto.randomUUID() + crypto.randomUUID());
 
     const u = await db.transaction(async (tx) => {
       const [created] = await tx.insert(users).values({
@@ -158,7 +158,7 @@ export function createUsersRoutes() {
         userInputs: [u.email, body.name ?? u.name]
       });
       if (!check.ok) throw new HTTPException(400, { message: check.reason ?? 'weak_password' });
-      updates.passwordHash = await hash(body.password);
+      updates.passwordHash = await hashPassword(body.password);
     }
 
     if (Object.keys(updates).length > 0) {

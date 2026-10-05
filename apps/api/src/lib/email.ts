@@ -1,12 +1,16 @@
 import type { Env } from '../env.js';
 
 /**
- * Email provider abstracto.
+ * Envío de emails (bienvenida, reset de password).
  *
- * - En dev sin RESEND_API_KEY → ConsoleProvider (loguea el email).
- * - En prod con RESEND_API_KEY → ResendProvider (envía por https://resend.com).
+ * Dos "providers":
+ *  - **Console** (default en dev si no hay `RESEND_API_KEY`) → loguea el email
+ *    en consola en vez de enviarlo. Útil para desarrollar sin consumir quota.
+ *  - **Resend** (prod si hay `RESEND_API_KEY`) → envía de verdad vía
+ *    resend.com (3k emails/mes gratis).
  *
- * Nuevo provider = implementar `send()` + añadir case en `getEmailProvider()`.
+ * Para añadir otro provider (ej. SendGrid, Postmark): implementar la
+ * interface `EmailProvider` y añadir un case en `getEmailProvider()`.
  */
 
 export interface SendEmailInput {
@@ -57,6 +61,14 @@ class ResendEmailProvider implements EmailProvider {
 
 let _provider: EmailProvider | null = null;
 
+/**
+ * Devuelve el provider configurado (singleton por isolate). Elige entre
+ * Console y Resend según si existe `RESEND_API_KEY` en el env.
+ *
+ * Dónde se usa:
+ *  - `routes/auth.ts` → envía email de reset de password.
+ *  - `routes/users.ts` → envía email de bienvenida al crear un user.
+ */
 export function getEmailProvider(env: Env): EmailProvider {
   if (_provider) return _provider;
   _provider = env.RESEND_API_KEY
@@ -65,10 +77,11 @@ export function getEmailProvider(env: Env): EmailProvider {
   return _provider;
 }
 
-// ════════════════════════════════════════════════════════════════
-// Plantillas — HTML inline (sin templating para no añadir dep).
-// Estilos mínimos para que se vean razonables en Gmail/Apple Mail.
-// ════════════════════════════════════════════════════════════════
+// ─── Plantillas de email ──────────────────────────────────────────
+// HTML inline (sin dep de templating). Estilos mínimos para que se vean
+// bien en Gmail / Apple Mail / Outlook.
+//
+// Cada template devuelve `{ subject, html, text }` listo para `provider.send()`.
 
 interface WelcomeTemplateProps {
   name: string;
@@ -76,6 +89,12 @@ interface WelcomeTemplateProps {
   invitedBy: string;
 }
 
+/**
+ * Email de bienvenida. Lo recibe un user recién creado por admin (sin
+ * password), con un link para elegir su password inicial (válido 48h).
+ *
+ * Dónde se usa: `routes/users.ts` → POST /users.
+ */
 export function welcomeTemplate({ name, setupUrl, invitedBy }: WelcomeTemplateProps) {
   const text = `
 Hola ${name},
@@ -136,6 +155,12 @@ interface ResetTemplateProps {
   resetUrl: string;
 }
 
+/**
+ * Email de reset de password. Lo recibe un user que hizo "olvidé mi
+ * contraseña", con un link para elegir una nueva (válido 1h).
+ *
+ * Dónde se usa: `routes/auth.ts` → POST /auth/forgot.
+ */
 export function passwordResetTemplate({ name, resetUrl }: ResetTemplateProps) {
   const text = `
 Hola ${name},

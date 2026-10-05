@@ -1,8 +1,7 @@
 node_modules/
-.vercel/
 .turbo/
 dist/
-
+.wrangler/
 
 # env — NUNCA se commitea
 .env
@@ -12,5 +11,3 @@ dist/
 # Editor / OS
 .DS_Store
 *.log
-.vercel
-.env*

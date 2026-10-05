@@ -1,0 +1,44 @@
+# ═══════════════════════════════════════════════════════════════════
+# Cloudflare Workers config para @hosteleria/api
+#
+# - `name`           → nombre del Worker, URL = <name>.<account>.workers.dev
+# - `main`           → entry point TS
+# - `compat_date`    → fecha del snapshot de APIs Workers que usamos
+# - `vars`           → variables NO secretas (visibles en el dashboard)
+# - `[[r2_buckets]]` → binding del bucket R2 al env.MEDIA del Worker
+# - `[triggers]`     → cron jobs (invocan el handler `scheduled`)
+#
+# Los SECRETS (DATABASE_URL, SESSION_SECRET, R2_*, CRON_SECRET, etc.) se
+# setean con `wrangler secret put NOMBRE` desde la terminal — NO van acá.
+# ═══════════════════════════════════════════════════════════════════
+
+name = "hostelery-api"
+main = "src/index.ts"
+compatibility_date = "2026-10-05"
+compatibility_flags = ["nodejs_compat"]
+
+# Para dev local con `wrangler dev` — expone el Worker en localhost
+[dev]
+port = 8787
+
+# Vars no secretas — safe para commitear
+[vars]
+R2_BUCKET = "hostelery"
+R2_PUBLIC_URL = "https://pub-9d86f2d0333e47b099554fddec4fddfd.r2.dev"
+ALLOWED_ORIGIN = "http://localhost:4400"
+SENTRY_ENV = "production"
+EMAIL_FROM = "Hosteleria Studio <no-reply@hosteleria.cat>"
+APP_URL = "http://localhost:4400"
+
+# Binding del bucket R2 — accesible desde el Worker como env.MEDIA
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "hostelery"
+
+# Cron Triggers — el handler `scheduled` en src/index.ts recibe los
+# events con `event.cron` matching el schedule.
+[triggers]
+crons = [
+  "0 4 * * *",  # Cleanup sesiones expiradas + rate_limits viejos
+  "0 3 * * *"   # Backup diario de BD a R2
+]

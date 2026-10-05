@@ -1,6 +1,5 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
+import { Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from 'ws';
 import * as schema from './schema/index.js';
 
 /**
@@ -11,13 +10,12 @@ import * as schema from './schema/index.js';
  * atomicidad en operaciones multi-write (crear restaurante + locales,
  * patch con reemplazo de locales, delete que promueve default…).
  *
- * En Node runtime (@hono/node-server, Vercel Node Functions, dev local)
- * hay que proveer el constructor WebSocket; en edge runtimes el global
- * `WebSocket` existe por defecto.
+ * **Workers**: el runtime tiene `WebSocket` global nativo. No necesitamos
+ * polyfill con el package `ws` como en Node.
+ *
+ * **Scripts tsx locales**: `tsx` corre bajo Node 20+ que también tiene
+ * `WebSocket` global desde v22, así que tampoco necesita polyfill.
  */
-if (typeof WebSocket === 'undefined') {
-  neonConfig.webSocketConstructor = ws;
-}
 
 let _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
 let _pool: Pool | null = null;

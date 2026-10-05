@@ -1,92 +1,114 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { AwsClient } from 'aws4fetch';
 import type { Env } from '../env.js';
 
 /**
- * R2 helpers. Cloudflare R2 es compatible S3, así que usamos el SDK
- * oficial de AWS con el endpoint apuntando a Cloudflare.
+ * Helpers de R2 para Cloudflare Workers.
  *
- * Convención de keys: {restaurantSlug}/{YYYY}/{filename}
- *  - restaurantSlug agrupa
- *  - año permite listar por temporada / archivar
- *  - filename lleva un cuid para evitar colisiones
+ * **Dos APIs conviven**:
+ *
+ *  1. **R2 binding nativo** (`env.MEDIA`) — para operaciones directas desde el
+ *     Worker: `.head()`, `.delete()`, `.list()`. Rápido y sin firmar.
+ *
+ *  2. **aws4fetch con endpoint S3-compatible** — para generar **presigned PUT
+ *     URLs**: el browser sube el binario directo a R2 (no pasa por el Worker,
+ *     evita el límite de body size y gasto de CPU time). El R2 binding
+ *     nativo NO soporta presigned URLs; hay que firmar manual con S3 API.
+ *
+ * Convención de keys: `{restaurantSlug}/{YYYY}/{filename}`.
  */
-let _s3: S3Client | null = null;
 
-export function getS3(env: Env): S3Client {
-  if (_s3) return _s3;
-  _s3 = new S3Client({
-    region: 'auto', // R2 exige 'auto'
-    endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: env.R2_ACCESS_KEY_ID,
-      secretAccessKey: env.R2_SECRET_ACCESS_KEY
-    },
-    // R2 NO soporta virtual-hosted style con el bucket en el subdomain.
-    // Hay que forzar path-style para que las requests sean
-    // https://ACCOUNT.r2.cloudflarestorage.com/BUCKET/KEY
-    // en vez de https://BUCKET.ACCOUNT.r2.cloudflarestorage.com/KEY (que no resuelve).
-    forcePathStyle: true
+let _s3Client: AwsClient | null = null;
+
+function getS3Client(env: Env): AwsClient {
+  if (_s3Client) return _s3Client;
+  _s3Client = new AwsClient({
+    accessKeyId: env.R2_ACCESS_KEY_ID,
+    secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+    service: 's3',
+    region: 'auto'
   });
-  return _s3;
+  return _s3Client;
 }
 
 export interface UploadUrlOpts {
   env: Env;
   key: string;
   contentType: string;
-  expiresIn?: number; // seconds
-}
-
-/** Genera una PUT URL firmada para subir un objeto directamente al bucket. */
-export async function createUploadUrl({ env, key, contentType, expiresIn = 300 }: UploadUrlOpts) {
-  const s3 = getS3(env);
-  const command = new PutObjectCommand({
-    Bucket: env.R2_BUCKET,
-    Key: key,
-    ContentType: contentType
-  });
-  const uploadUrl = await getSignedUrl(s3, command, { expiresIn });
-  const publicUrl = `${env.R2_PUBLIC_URL.replace(/\/$/, '')}/${key}`;
-  return { uploadUrl, publicUrl, key, expiresIn };
-}
-
-/** Borra un objeto del bucket. Idempotente. */
-export async function deleteObject(env: Env, key: string) {
-  const s3 = getS3(env);
-  await s3.send(new DeleteObjectCommand({ Bucket: env.R2_BUCKET, Key: key }));
+  /** Segundos antes de que la URL firmada caduque. Default 300 (5 min). */
+  expiresIn?: number;
 }
 
 /**
- * Devuelve metadata del objeto si existe en R2, o `null` si no.
- * Usado por /media/:id/confirm para verificar que el browser realmente
- * subió el archivo antes de marcarlo como listo en BD.
+ * Genera una PUT URL firmada que permite al browser subir un archivo
+ * directo al bucket R2 (el Worker nunca toca el binario — solo firma).
+ *
+ * Flujo cliente:
+ *   1. Browser → POST /media/upload-url {filename, mimeType, sizeKb}
+ *   2. Worker responde {uploadUrl, publicUrl, mediaId}
+ *   3. Browser → PUT uploadUrl con el binario
+ *   4. Browser → POST /media/:mediaId/confirm (registra en BD)
+ *
+ * Dónde se usa:
+ *  - `routes/media.ts` → POST /media/upload-url.
  */
-export async function headObject(env: Env, key: string): Promise<{ sizeBytes: number; contentType?: string } | null> {
-  const s3 = getS3(env);
-  try {
-    const res = await s3.send(new HeadObjectCommand({ Bucket: env.R2_BUCKET, Key: key }));
-    return {
-      sizeBytes: res.ContentLength ?? 0,
-      contentType: res.ContentType
-    };
-  } catch (err: any) {
-    // R2/S3 señalan "no existe" con varios shapes posibles — cubrimos todos.
-    const status = err?.$metadata?.httpStatusCode ?? err?.$response?.statusCode;
-    const name = err?.name ?? err?.Code;
-    if (
-      status === 404 ||
-      name === 'NotFound' ||
-      name === 'NoSuchKey'
-    ) return null;
-    throw err;
-  }
+export async function createUploadUrl(opts: UploadUrlOpts) {
+  const { env, key, contentType, expiresIn = 300 } = opts;
+  const client = getS3Client(env);
+
+  const endpoint = `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${env.R2_BUCKET}/${key}`;
+  const url = new URL(endpoint);
+  url.searchParams.set('X-Amz-Expires', String(expiresIn));
+
+  const signed = await client.sign(
+    new Request(url, { method: 'PUT', headers: { 'Content-Type': contentType } }),
+    { aws: { signQuery: true } }
+  );
+
+  return {
+    uploadUrl: signed.url,
+    publicUrl: `${env.R2_PUBLIC_URL.replace(/\/$/, '')}/${key}`,
+    key,
+    expiresIn
+  };
 }
 
 /**
- * Sanitiza un nombre de archivo para usarlo como slug:
- *   "Foto Comedor 01 .JPG" → "foto-comedor-01.jpg"
- * Devuelve la extensión por separado para inferir contentType.
+ * Borra un objeto del bucket. Idempotente — si no existe, no lanza.
+ *
+ * Dónde se usa:
+ *  - `routes/media.ts` → DELETE /media/:id (borra asset + archivo).
+ *  - `routes/media.ts` → cleanup si confirm falla tras subida parcial.
+ */
+export async function deleteObject(env: Env, key: string) {
+  await env.MEDIA.delete(key);
+}
+
+/**
+ * Metadata del objeto si existe en R2, o `null` si no.
+ *
+ * Dónde se usa:
+ *  - `routes/media.ts` → POST /media/:id/confirm. Verifica que el browser
+ *    realmente completó la subida antes de marcar el asset como "listo"
+ *    en BD. Si el browser falló a mitad del PUT, aquí lo detectamos.
+ */
+export async function headObject(
+  env: Env,
+  key: string
+): Promise<{ sizeBytes: number; contentType?: string } | null> {
+  const obj = await env.MEDIA.head(key);
+  if (!obj) return null;
+  return {
+    sizeBytes: obj.size,
+    contentType: obj.httpMetadata?.contentType
+  };
+}
+
+/**
+ * Normaliza un nombre de archivo para usarlo como parte de la key en R2:
+ *   "Foto Comedor 01 .JPG" → { name: "foto-comedor-01", extension: "jpg" }
+ *
+ * Dónde se usa:
+ *  - `routes/media.ts` → POST /media/upload-url (construye la R2 key).
  */
 export function normalizeFilename(input: string): { name: string; extension: string } {
   const dotIdx = input.lastIndexOf('.');

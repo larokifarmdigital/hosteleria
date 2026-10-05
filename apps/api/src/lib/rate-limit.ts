@@ -3,44 +3,62 @@ import { createMiddleware } from 'hono/factory';
 import { HTTPException } from 'hono/http-exception';
 import { getDb } from '../db/client.js';
 import { rateLimits } from '../db/schema/rate_limits.js';
+import type { Env } from '../env.js';
 import type { AuthVars } from '../auth/middleware.js';
 
+/**
+ * Rate limiting sobre Postgres — anti-abuso para endpoints HTTP.
+ *
+ * Usa la tabla `rate_limits` (bucket + key + count + windowStart) con
+ * algoritmo "fixed window". Guardamos un contador por combinación
+ * (bucket, key); si supera `limit` en la ventana → 429.
+ *
+ * Overhead típico: ~15-30ms (1 upsert a Neon por request).
+ */
+
 export interface RateLimitOpts {
-  /** Nombre de bucket (ej. 'auth-login', 'global'). */
+  /** Nombre lógico del bucket (ej. 'auth-login', 'global'). Separa contadores. */
   bucket: string;
-  /** Máximo de requests permitidas en la ventana. */
+  /** Cuántas requests acepta en la ventana antes de responder 429. */
   limit: number;
-  /** Ventana en segundos. */
+  /** Tamaño de la ventana en segundos. */
   windowSeconds: number;
-  /** Función que extrae la key (default: IP del request). Puede ser async. */
+  /** Cómo deriva la "key" por la que se cuenta. Default = IP del request.
+   *  Login lo sobrescribe a `IP:email` para evitar bombing cross-user. */
   keyFn?: (c: any) => string | Promise<string>;
 }
 
 /**
- * Extrae la IP real del request (soporta proxies Vercel/CF).
+ * Extrae la IP real del cliente leyendo los headers que inyecta Cloudflare
+ * (`cf-connecting-ip`) o cualquier proxy delante. Devuelve 'unknown' si no
+ * detecta nada.
  */
 function getClientIp(c: any): string {
-  const h = c.req.header('x-forwarded-for')
+  const h = c.req.header('cf-connecting-ip')
+    ?? c.req.header('x-forwarded-for')
     ?? c.req.header('x-real-ip')
-    ?? c.req.header('cf-connecting-ip')
     ?? 'unknown';
   return h.split(',')[0].trim();
 }
 
 /**
- * Middleware de rate limit sobre Postgres (sin dep externa).
+ * Factory de middleware. Devuelve un middleware que puede montarse en
+ * cualquier ruta Hono.
  *
- * Algoritmo: fixed window. Al llegar un request, buscamos la fila
- * `(bucket, key)`. Si no existe o la ventana expiró, insertamos/reseteamos
- * con count=1. Si existe y el counter está dentro, incrementamos.
- * Si está encima del límite, 429.
+ * Dónde se usa:
+ *  - `app.ts` → limiter global (100/min) salvo rutas públicas y /auth/*.
+ *  - `routes/auth.ts` → login (5/hora por IP+email), forgot (3/hora).
  *
- * Overhead: 1 round-trip Neon (upsert con returning). ~15-30ms.
+ * Comportamiento:
+ *  - Incrementa el contador para `(bucket, key)` en 1.
+ *  - Si pasa `limit` → `429 rate_limit_exceeded` + header `Retry-After`.
+ *  - Siempre añade `X-RateLimit-Limit / Remaining / Reset` para que el
+ *    cliente sepa cuánto le queda.
  */
 export function rateLimit(opts: RateLimitOpts) {
   const { bucket, limit, windowSeconds, keyFn = getClientIp } = opts;
 
-  return createMiddleware<{ Variables: AuthVars }>(async (c, next) => {
+  return createMiddleware<{ Bindings: Env; Variables: AuthVars }>(async (c, next) => {
     const env = c.get('env');
     const key = await keyFn(c);
     const db = getDb(env.DATABASE_URL);
@@ -85,10 +103,21 @@ export function rateLimit(opts: RateLimitOpts) {
 }
 
 /**
- * Limpieza manual de filas antiguas. Llamar desde el cron de cleanup.
+ * Borra filas viejas de `rate_limits` (ventana cerró hace >7 días).
+ *
+ * Dónde se usa:
+ *  - `lib/cleanup.ts` → llamado desde el `scheduled` handler del Worker
+ *    todos los días. Es gratis dejar filas viejas, pero ocupan espacio y
+ *    ralentizan los upserts a la larga.
+ *
+ * Devuelve cuántas filas se borraron (útil para logs).
  */
-export async function cleanupStaleRateLimits(env: { DATABASE_URL: string }) {
+export async function cleanupStaleRateLimits(env: Env): Promise<number> {
   const db = getDb(env.DATABASE_URL);
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  await db.delete(rateLimits).where(lt(rateLimits.windowStart, sevenDaysAgo));
+  const deleted = await db
+    .delete(rateLimits)
+    .where(lt(rateLimits.windowStart, sevenDaysAgo))
+    .returning({ key: rateLimits.key });
+  return deleted.length;
 }

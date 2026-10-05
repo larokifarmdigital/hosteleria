@@ -58,9 +58,10 @@ export const restaurants = pgTable('restaurants', {
   /** IANA timezone (ej. 'Europe/Madrid'). Afecta a "está abierto ahora",
    *  openingHoursSpecification en JSON-LD, llms.txt… */
   timezone: text('timezone').notNull().default('Europe/Madrid'),
-  /** URL del Vercel Deploy Hook de la landing de este restaurante.
-   *  Al publicar (state = 'published'), el api hace POST a esta URL
-   *  (fire-and-forget) → Vercel rebuilda la landing. */
+  /** URL del "deploy hook" de la landing de este restaurante (Vercel,
+   *  Cloudflare Pages, Netlify — cualquier plataforma con webhook de
+   *  rebuild). Al publicar (state = 'published'), el api hace POST
+   *  a esta URL (fire-and-forget) → la landing se rebuildea. */
   rebuildHookUrl: text('rebuild_hook_url'),
   address: jsonb('address').$type<AddressJson>().default({}),
   contact: jsonb('contact').$type<ContactJson>().default({}),
