@@ -1,3 +1,5 @@
+import { DomainError } from './errors.js';
+
 export interface Session {
   readonly id: string;
   readonly userId: string;
@@ -12,6 +14,11 @@ export interface SessionMetadata {
   ipHash: string;
 }
 
-export class SessionNotFoundError extends Error {
-  constructor(id: string) { super(`session_not_found:${id}`); this.name = 'SessionNotFoundError'; }
+export class SessionNotFoundError extends DomainError {
+  readonly code = 'SESSION_NOT_FOUND';
+  readonly status = 404;
+  constructor(_id: string) {
+    super('La sesión no existe o ya fue cerrada.');
+    this.name = 'SessionNotFoundError';
+  }
 }

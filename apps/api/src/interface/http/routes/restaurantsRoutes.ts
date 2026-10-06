@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
+import { validate } from '../validate.js';
 import { z } from 'zod';
 import { requireAuth, requireAdmin, requireRestaurant } from '../middleware/authMiddleware.js';
 import { cacheHeaders } from '../../../middleware/cache.js';
@@ -24,13 +24,13 @@ export function createRestaurantsRoutes() {
   });
 
   // ─── POST /restaurants ────────────────────────────────────────────
-  app.post('/', requireAdmin, zValidator('json', createSchema), async (c) => {
+  app.post('/', requireAdmin, validate('json', createSchema), async (c) => {
     const r = await c.get('container').restaurants.create.execute(c.req.valid('json'));
     return c.json({ restaurant: restaurantToDto(r) }, 201);
   });
 
   // ─── PATCH /restaurants/:slug ─────────────────────────────────────
-  app.patch('/:slug', requireAuth, requireRestaurant('slug'), zValidator('json', patchSchema), async (c) => {
+  app.patch('/:slug', requireAuth, requireRestaurant('slug'), validate('json', patchSchema), async (c) => {
     const user = c.get('user')!;
     const slug = c.req.param('slug');
     await c.get('container').restaurants.patch.execute(slug, c.req.valid('json'), user.id);

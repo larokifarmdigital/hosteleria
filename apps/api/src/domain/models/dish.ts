@@ -1,4 +1,5 @@
 import type { I18nValue } from './i18n.js';
+import { DomainError } from './errors.js';
 
 export interface DishCategory {
   readonly id: string;
@@ -20,12 +21,27 @@ export interface Dish {
   imageGradient: string;
 }
 
-export class DishNotFoundError extends Error {
-  constructor(id: string) { super(`dish_not_found:${id}`); this.name = 'DishNotFoundError'; }
+export class DishNotFoundError extends DomainError {
+  readonly code = 'DISH_NOT_FOUND';
+  readonly status = 404;
+  constructor(_id: string) {
+    super('El plato no existe.');
+    this.name = 'DishNotFoundError';
+  }
 }
-export class DishCategoryNotFoundError extends Error {
-  constructor(id: string) { super(`dish_category_not_found:${id}`); this.name = 'DishCategoryNotFoundError'; }
+export class DishCategoryNotFoundError extends DomainError {
+  readonly code = 'DISH_CATEGORY_NOT_FOUND';
+  readonly status = 404;
+  constructor(_id: string) {
+    super('La categoría de platos no existe o no pertenece a este espacio.');
+    this.name = 'DishCategoryNotFoundError';
+  }
 }
-export class CategoryHasDishesError extends Error {
-  constructor() { super('category_has_dishes'); this.name = 'CategoryHasDishesError'; }
+export class CategoryHasDishesError extends DomainError {
+  readonly code = 'CATEGORY_HAS_DISHES';
+  readonly status = 400;
+  constructor() {
+    super('No puedes borrar esta categoría: tiene platos. Mueve o elimina los platos primero.');
+    this.name = 'CategoryHasDishesError';
+  }
 }

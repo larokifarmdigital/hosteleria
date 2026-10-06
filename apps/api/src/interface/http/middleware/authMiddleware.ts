@@ -30,14 +30,14 @@ export const validateSession = createMiddleware<AppBindings>(async (c, next) => 
 });
 
 export const requireAuth = createMiddleware<AppBindings>(async (c, next) => {
-  if (!c.get('user')) throw new HTTPException(401, { message: 'unauthorized' });
+  if (!c.get('user')) throw new HTTPException(401, { message: 'UNAUTHORIZED' });
   await next();
 });
 
 export const requireAdmin = createMiddleware<AppBindings>(async (c, next) => {
   const user = c.get('user');
-  if (!user) throw new HTTPException(401, { message: 'unauthorized' });
-  if (user.role !== 'admin') throw new HTTPException(403, { message: 'admin_required' });
+  if (!user) throw new HTTPException(401, { message: 'UNAUTHORIZED' });
+  if (user.role !== 'admin') throw new HTTPException(403, { message: 'ADMIN_REQUIRED' });
   await next();
 });
 
@@ -45,11 +45,11 @@ export const requireAdmin = createMiddleware<AppBindings>(async (c, next) => {
 export function requireRestaurant(paramName = 'slug') {
   return createMiddleware<AppBindings>(async (c, next) => {
     const user = c.get('user');
-    if (!user) throw new HTTPException(401, { message: 'unauthorized' });
+    if (!user) throw new HTTPException(401, { message: 'UNAUTHORIZED' });
     if (user.role === 'admin') return next();
 
     const slug = c.req.param(paramName);
-    if (!slug) throw new HTTPException(400, { message: 'missing_slug' });
+    if (!slug) throw new HTTPException(400, { message: 'MISSING_SLUG' });
 
     const { restaurantsRepo, usersRepo } = c.get('container').repos;
     const [r, allowedIds] = await Promise.all([
@@ -57,7 +57,7 @@ export function requireRestaurant(paramName = 'slug') {
       usersRepo.listRestaurantIds(user.id)
     ]);
     if (!r || !allowedIds.includes(r.id)) {
-      throw new HTTPException(403, { message: 'restaurant_forbidden' });
+      throw new HTTPException(403, { message: 'RESTAURANT_FORBIDDEN' });
     }
     await next();
   });

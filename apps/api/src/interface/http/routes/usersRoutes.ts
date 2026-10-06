@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
+import { validate } from '../validate.js';
 import { z } from 'zod';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import { userToDto } from '../dto/userDto.js';
@@ -21,7 +21,7 @@ export function createUsersRoutes() {
   });
 
   // ─── POST / ────────────────────────────────────────────────────
-  app.post('/', zValidator('json', createSchema), async (c) => {
+  app.post('/', validate('json', createSchema), async (c) => {
     const inviter = c.get('user')!;
     const user = await c.get('container').users.create.execute(c.req.valid('json'), inviter.name);
     const slugs = user.role === 'editor'
@@ -31,7 +31,7 @@ export function createUsersRoutes() {
   });
 
   // ─── PATCH /:id ────────────────────────────────────────────────
-  app.patch('/:id', zValidator('json', patchSchema), async (c) => {
+  app.patch('/:id', validate('json', patchSchema), async (c) => {
     const id = c.req.param('id');
     const user = await c.get('container').users.update.execute(id, c.req.valid('json'));
     const slugs = user.role === 'editor'

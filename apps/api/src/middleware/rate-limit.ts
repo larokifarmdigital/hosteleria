@@ -94,7 +94,7 @@ export function rateLimit(opts: RateLimitOpts) {
     if (row.count > limit) {
       const retryAfter = Math.ceil((row.windowStart.getTime() + windowSeconds * 1000 - now.getTime()) / 1000);
       c.header('Retry-After', String(Math.max(1, retryAfter)));
-      throw new HTTPException(429, { message: 'rate_limit_exceeded' });
+      throw new HTTPException(429, { message: 'RATE_LIMITED' });
     }
 
     await next();

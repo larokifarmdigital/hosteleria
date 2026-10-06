@@ -1,3 +1,5 @@
+import { DomainError } from './errors.js';
+
 export type UserRole = 'admin' | 'editor';
 
 export interface User {
@@ -24,15 +26,36 @@ export function toSessionUser(u: User): SessionUser {
   return { id: u.id, email: u.email, name: u.name, role: u.role, avatarColor: u.avatarColor };
 }
 
-export class UserNotFoundError extends Error {
-  constructor(idOrEmail: string) { super(`user_not_found:${idOrEmail}`); this.name = 'UserNotFoundError'; }
+export class UserNotFoundError extends DomainError {
+  readonly code = 'USER_NOT_FOUND';
+  readonly status = 404;
+  constructor(_idOrEmail: string) {
+    super('El usuario no existe.');
+    this.name = 'UserNotFoundError';
+  }
 }
-export class EmailTakenError extends Error {
-  constructor(email: string) { super(`email_taken:${email}`); this.name = 'EmailTakenError'; }
+export class EmailTakenError extends DomainError {
+  readonly code = 'EMAIL_TAKEN';
+  readonly status = 409;
+  constructor(email: string) {
+    super(`El email «${email}» ya está registrado.`);
+    this.name = 'EmailTakenError';
+  }
 }
-export class InvalidCredentialsError extends Error {
-  constructor() { super('invalid_credentials'); this.name = 'InvalidCredentialsError'; }
+export class InvalidCredentialsError extends DomainError {
+  readonly code = 'INVALID_CREDENTIALS';
+  readonly status = 401;
+  constructor() {
+    super('Email o contraseña incorrectos.');
+    this.name = 'InvalidCredentialsError';
+  }
 }
-export class WeakPasswordError extends Error {
-  constructor(reason: string) { super(reason); this.name = 'WeakPasswordError'; }
+/** `message` viene de zxcvbn — ya en español y listo para la UI. */
+export class WeakPasswordError extends DomainError {
+  readonly code = 'WEAK_PASSWORD';
+  readonly status = 400;
+  constructor(reason: string) {
+    super(reason);
+    this.name = 'WeakPasswordError';
+  }
 }

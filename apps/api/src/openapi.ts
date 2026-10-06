@@ -25,21 +25,27 @@ const schemas = {
   Error: {
     type: 'object',
     description: [
-      'Body de cualquier respuesta de error. `error` es un código estable (no una frase traducible).',
+      'Shape común de cualquier respuesta de error del API.',
+      '• `code` — identificador ESTABLE en SCREAMING_SNAKE_CASE para lógica del cliente (branching, logs, i18n futuro).',
+      '• `message` — texto en español ya listo para pintar al usuario. El cliente lo muestra sin traducir.',
       'Códigos conocidos agrupados por status:',
-      '• 400 — `unknown_locale:<code>`, `weak_password:<reason>`, `no_snapshot`, `language_in_use`,',
-      '`cannot_delete_last_space`, `cannot_delete_self`, `must_have_default_space`,',
-      '`category_has_dishes`, `category_has_wines`, `media_in_use:dishes=<N>,spaces=<N>`,',
-      '`upload_not_found_in_r2`, `upload_size_mismatch`, `invalid_or_expired_token`, `missing_slug`.',
-      '• 401 — `invalid_credentials`, `unauthorized`.',
-      '• 403 — `admin_required`, `restaurant_forbidden`, `space_forbidden`.',
-      '• 404 — `<entity>_not_found:<idOrSlug>`, `not_found`.',
-      '• 409 — `slug_taken:<slug>`, `email_taken:<email>`, `language_code_taken:<code>`, `space_slug_taken:<slug>`.',
-      '• 429 — `rate_limited`.',
-      '• 500 — `internal_error`.'
+      '400 — `VALIDATION_ERROR`, `UNKNOWN_LOCALE`, `WEAK_PASSWORD`, `NO_SNAPSHOT`, `LANGUAGE_IN_USE`,',
+      '`CANNOT_DELETE_LAST_SPACE`, `CANNOT_DELETE_SELF`, `MUST_HAVE_DEFAULT_SPACE`,',
+      '`CATEGORY_HAS_DISHES`, `CATEGORY_HAS_WINES`, `MEDIA_IN_USE`,',
+      '`UPLOAD_NOT_FOUND_IN_R2`, `UPLOAD_SIZE_MISMATCH`, `INVALID_OR_EXPIRED_TOKEN`, `MISSING_SLUG`.',
+      '401 — `INVALID_CREDENTIALS`, `UNAUTHORIZED`.',
+      '403 — `ADMIN_REQUIRED`, `RESTAURANT_FORBIDDEN`, `SPACE_FORBIDDEN`.',
+      '404 — `RESTAURANT_NOT_FOUND`, `USER_NOT_FOUND`, `SESSION_NOT_FOUND`, `LANGUAGE_NOT_FOUND`,',
+      '`SPACE_NOT_FOUND`, `DISH_NOT_FOUND`, `DISH_CATEGORY_NOT_FOUND`, `WINE_NOT_FOUND`,',
+      '`WINE_CATEGORY_NOT_FOUND`, `MEDIA_NOT_FOUND`.',
+      '409 — `SLUG_TAKEN`, `EMAIL_TAKEN`, `LANGUAGE_CODE_TAKEN`, `SPACE_SLUG_TAKEN`.',
+      '429 — `RATE_LIMITED`. 500 — `INTERNAL_ERROR`.'
     ].join(' '),
-    properties: { error: { type: 'string', example: 'restaurant_not_found:casabella' } },
-    required: ['error']
+    properties: {
+      code: { type: 'string', example: 'INVALID_CREDENTIALS' },
+      message: { type: 'string', example: 'Email o contraseña incorrectos.' }
+    },
+    required: ['code', 'message']
   },
 
   SessionInfo: {
@@ -343,14 +349,14 @@ const jsonBody = <T>(schema: T) => ({ required: true, content: { 'application/js
 
 // Respuestas de error reutilizables (todos usan el schema `Error`).
 const err400 = errRef('400 Bad Request — validación o invariante de negocio (ver schema Error)');
-const err401 = errRef('401 Unauthorized — `invalid_credentials` o cookie ausente/expirada (`unauthorized`)');
-const err403Admin = errRef('403 Forbidden — `admin_required`');
-const err403Rest = errRef('403 Forbidden — `restaurant_forbidden`');
-const err403Space = errRef('403 Forbidden — `space_forbidden`');
-const err404 = errRef('404 Not Found — `<entity>_not_found:<id>` o `not_found`');
+const err401 = errRef('401 Unauthorized — `INVALID_CREDENTIALS` o cookie ausente/expirada (`UNAUTHORIZED`)');
+const err403Admin = errRef('403 Forbidden — `ADMIN_REQUIRED`');
+const err403Rest = errRef('403 Forbidden — `RESTAURANT_FORBIDDEN`');
+const err403Space = errRef('403 Forbidden — `SPACE_FORBIDDEN`');
+const err404 = errRef('404 Not Found — `<entity>_not_found:<id>` o `NOT_FOUND`');
 const err409 = errRef('409 Conflict — ver schema Error (slug/email/code taken)');
-const err429 = errRef('429 Too Many Requests — `rate_limited`');
-const err500 = errRef('500 Internal Server Error — `internal_error`');
+const err429 = errRef('429 Too Many Requests — `RATE_LIMITED`');
+const err500 = errRef('500 Internal Server Error — `INTERNAL_ERROR`');
 
 const paths: Record<string, any> = {
   // ─── System ─────────────────────────────────────────────────────
@@ -393,7 +399,7 @@ const paths: Record<string, any> = {
       responses: {
         200: ok({ type: 'object', properties: { user: { $ref: '#/components/schemas/SessionUser' } }, required: ['user'] }),
         400: errRef('400 Bad Request — body inválido'),
-        401: errRef('401 Unauthorized — `invalid_credentials`'),
+        401: errRef('401 Unauthorized — `INVALID_CREDENTIALS`'),
         429: err429, 500: err500
       }
     }
@@ -449,7 +455,7 @@ const paths: Record<string, any> = {
       responses: {
         200: ok({ type: 'object', properties: { ok: { type: 'boolean' } }, required: ['ok'] }),
         401: err401,
-        404: errRef('404 Not Found — `session_not_found:<id>` (no existe o no pertenece al user)'),
+        404: errRef('404 Not Found — `SESSION_NOT_FOUND` (no existe o no pertenece al user)'),
         500: err500
       }
     }
@@ -483,7 +489,7 @@ const paths: Record<string, any> = {
       }),
       responses: {
         200: ok({ type: 'object', properties: { ok: { type: 'boolean' } }, required: ['ok'] }),
-        400: errRef('400 Bad Request — `invalid_or_expired_token` o `weak_password:<reason>`'),
+        400: errRef('400 Bad Request — `INVALID_OR_EXPIRED_TOKEN` o `WEAK_PASSWORD`'),
         500: err500
       }
     }
@@ -500,7 +506,7 @@ const paths: Record<string, any> = {
       }),
       responses: {
         200: ok({ type: 'object', properties: { ok: { type: 'boolean' } }, required: ['ok'] }),
-        400: errRef('400 Bad Request — `invalid_or_expired_token` o `weak_password:<reason>`'),
+        400: errRef('400 Bad Request — `INVALID_OR_EXPIRED_TOKEN` o `WEAK_PASSWORD`'),
         500: err500
       }
     }
@@ -522,9 +528,9 @@ const paths: Record<string, any> = {
       requestBody: jsonBody({ $ref: '#/components/schemas/RestaurantCreate' }),
       responses: {
         201: ok({ type: 'object', properties: { restaurant: { $ref: '#/components/schemas/Restaurant' } }, required: ['restaurant'] }),
-        400: errRef('400 Bad Request — validación o `unknown_locale:<code>`'),
+        400: errRef('400 Bad Request — validación o `UNKNOWN_LOCALE`'),
         401: err401, 403: err403Admin,
-        409: errRef('409 Conflict — `slug_taken:<slug>`'),
+        409: errRef('409 Conflict — `SLUG_TAKEN`'),
         500: err500
       }
     }
@@ -537,7 +543,7 @@ const paths: Record<string, any> = {
         200: ok({ type: 'object', properties: { restaurant: { $ref: '#/components/schemas/Restaurant' } }, required: ['restaurant'] }),
         304: { description: '304 Not Modified' },
         401: err401, 403: err403Rest,
-        404: errRef('404 Not Found — `restaurant_not_found:<slug>`'),
+        404: errRef('404 Not Found — `RESTAURANT_NOT_FOUND`'),
         500: err500
       }
     },
@@ -562,9 +568,9 @@ const paths: Record<string, any> = {
       }),
       responses: {
         200: ok({ type: 'object', properties: { restaurant: { $ref: '#/components/schemas/Restaurant' } }, required: ['restaurant'] }),
-        400: errRef('400 Bad Request — `unknown_locale:<code>`'),
+        400: errRef('400 Bad Request — `UNKNOWN_LOCALE`'),
         401: err401, 403: err403Rest,
-        404: errRef('404 Not Found — `restaurant_not_found:<slug>`'),
+        404: errRef('404 Not Found — `RESTAURANT_NOT_FOUND`'),
         500: err500
       }
     },
@@ -574,7 +580,7 @@ const paths: Record<string, any> = {
       responses: {
         200: ok({ type: 'object', properties: { ok: { type: 'boolean' } }, required: ['ok'] }),
         401: err401, 403: err403Admin,
-        404: errRef('404 Not Found — `restaurant_not_found:<slug>`'),
+        404: errRef('404 Not Found — `RESTAURANT_NOT_FOUND`'),
         500: err500
       }
     }
@@ -585,9 +591,9 @@ const paths: Record<string, any> = {
       tags: ['Restaurants'], summary: 'Revierte los campos al último snapshot publicado',
       responses: {
         200: ok({ type: 'object', properties: { restaurant: { $ref: '#/components/schemas/Restaurant' } }, required: ['restaurant'] }),
-        400: errRef('400 Bad Request — `no_snapshot` (nunca se publicó)'),
+        400: errRef('400 Bad Request — `NO_SNAPSHOT` (nunca se publicó)'),
         401: err401, 403: err403Rest,
-        404: errRef('404 Not Found — `restaurant_not_found:<slug>`'),
+        404: errRef('404 Not Found — `RESTAURANT_NOT_FOUND`'),
         500: err500
       }
     }
@@ -619,7 +625,7 @@ const paths: Record<string, any> = {
         201: ok({ type: 'object', properties: { space: { $ref: '#/components/schemas/Space' } }, required: ['space'] }),
         400: errRef('400 Bad Request — body inválido'),
         401: err401, 403: err403Rest,
-        409: errRef('409 Conflict — `space_slug_taken:<slug>` (dentro del restaurant)'),
+        409: errRef('409 Conflict — `SPACE_SLUG_TAKEN` (dentro del restaurant)'),
         500: err500
       }
     }
@@ -634,7 +640,7 @@ const paths: Record<string, any> = {
       responses: {
         200: ok({ type: 'object', properties: { space: { $ref: '#/components/schemas/Space' } }, required: ['space'] }),
         401: err401, 403: err403Rest,
-        404: errRef('404 Not Found — `space_not_found:<id>`'),
+        404: errRef('404 Not Found — `SPACE_NOT_FOUND`'),
         500: err500
       }
     },
@@ -654,9 +660,9 @@ const paths: Record<string, any> = {
       }),
       responses: {
         200: ok({ type: 'object', properties: { space: { $ref: '#/components/schemas/Space' } }, required: ['space'] }),
-        400: errRef('400 Bad Request — `must_have_default_space` (ningún otro con isDefault=true)'),
+        400: errRef('400 Bad Request — `MUST_HAVE_DEFAULT_SPACE` (ningún otro con isDefault=true)'),
         401: err401, 403: err403Rest,
-        404: errRef('404 Not Found — `space_not_found:<id>`'),
+        404: errRef('404 Not Found — `SPACE_NOT_FOUND`'),
         500: err500
       }
     },
@@ -665,9 +671,9 @@ const paths: Record<string, any> = {
       description: 'Si el borrado era el default, se promueve otro automáticamente.',
       responses: {
         200: ok({ type: 'object', properties: { ok: { type: 'boolean' } }, required: ['ok'] }),
-        400: errRef('400 Bad Request — `cannot_delete_last_space` (debe quedar ≥ 1)'),
+        400: errRef('400 Bad Request — `CANNOT_DELETE_LAST_SPACE` (debe quedar ≥ 1)'),
         401: err401, 403: err403Rest,
-        404: errRef('404 Not Found — `space_not_found:<id>`'),
+        404: errRef('404 Not Found — `SPACE_NOT_FOUND`'),
         500: err500
       }
     }
@@ -681,9 +687,9 @@ const paths: Record<string, any> = {
       tags: ['Spaces'], summary: 'Revierte el space al último snapshot publicado',
       responses: {
         200: ok({ type: 'object', properties: { space: { $ref: '#/components/schemas/Space' } }, required: ['space'] }),
-        400: errRef('400 Bad Request — `no_snapshot`'),
+        400: errRef('400 Bad Request — `NO_SNAPSHOT`'),
         401: err401, 403: err403Rest,
-        404: errRef('404 Not Found — `space_not_found:<id>`'),
+        404: errRef('404 Not Found — `SPACE_NOT_FOUND`'),
         500: err500
       }
     }
@@ -723,7 +729,7 @@ const paths: Record<string, any> = {
         201: ok({ type: 'object', properties: { dish: { $ref: '#/components/schemas/Dish' } }, required: ['dish'] }),
         400: errRef('400 Bad Request — body inválido'),
         401: err401, 403: err403Space,
-        404: errRef('404 Not Found — `dish_category_not_found:<id>` (o no pertenece al space)'),
+        404: errRef('404 Not Found — `DISH_CATEGORY_NOT_FOUND` (o no pertenece al space)'),
         500: err500
       }
     }
@@ -735,7 +741,7 @@ const paths: Record<string, any> = {
       responses: {
         200: ok({ type: 'object', properties: { dish: { $ref: '#/components/schemas/Dish' } }, required: ['dish'] }),
         401: err401, 403: err403Space,
-        404: errRef('404 Not Found — `dish_not_found:<id>`'),
+        404: errRef('404 Not Found — `DISH_NOT_FOUND`'),
         500: err500
       }
     },
@@ -755,7 +761,7 @@ const paths: Record<string, any> = {
       responses: {
         200: ok({ type: 'object', properties: { dish: { $ref: '#/components/schemas/Dish' } }, required: ['dish'] }),
         401: err401, 403: err403Space,
-        404: errRef('404 Not Found — `dish_not_found:<id>` o `dish_category_not_found:<id>`'),
+        404: errRef('404 Not Found — `DISH_NOT_FOUND` o `DISH_CATEGORY_NOT_FOUND`'),
         500: err500
       }
     },
@@ -764,7 +770,7 @@ const paths: Record<string, any> = {
       responses: {
         200: ok({ type: 'object', properties: { ok: { type: 'boolean' } }, required: ['ok'] }),
         401: err401, 403: err403Space,
-        404: errRef('404 Not Found — `dish_not_found:<id>`'),
+        404: errRef('404 Not Found — `DISH_NOT_FOUND`'),
         500: err500
       }
     }
@@ -802,7 +808,7 @@ const paths: Record<string, any> = {
       responses: {
         200: ok({ type: 'object', properties: { category: { $ref: '#/components/schemas/DishCategory' } }, required: ['category'] }),
         401: err401, 403: err403Space,
-        404: errRef('404 Not Found — `dish_category_not_found:<id>`'),
+        404: errRef('404 Not Found — `DISH_CATEGORY_NOT_FOUND`'),
         500: err500
       }
     },
@@ -810,9 +816,9 @@ const paths: Record<string, any> = {
       tags: ['Dishes'], summary: 'Elimina categoría de platos (restrict si tiene platos)',
       responses: {
         200: ok({ type: 'object', properties: { ok: { type: 'boolean' } }, required: ['ok'] }),
-        400: errRef('400 Bad Request — `category_has_dishes`'),
+        400: errRef('400 Bad Request — `CATEGORY_HAS_DISHES`'),
         401: err401, 403: err403Space,
-        404: errRef('404 Not Found — `dish_category_not_found:<id>`'),
+        404: errRef('404 Not Found — `DISH_CATEGORY_NOT_FOUND`'),
         500: err500
       }
     }
@@ -849,7 +855,7 @@ const paths: Record<string, any> = {
       responses: {
         201: ok({ type: 'object', properties: { wine: { $ref: '#/components/schemas/Wine' } }, required: ['wine'] }),
         400: err400, 401: err401, 403: err403Space,
-        404: errRef('404 Not Found — `wine_category_not_found:<id>`'),
+        404: errRef('404 Not Found — `WINE_CATEGORY_NOT_FOUND`'),
         500: err500
       }
     }
@@ -861,7 +867,7 @@ const paths: Record<string, any> = {
       responses: {
         200: ok({ type: 'object', properties: { wine: { $ref: '#/components/schemas/Wine' } }, required: ['wine'] }),
         401: err401, 403: err403Space,
-        404: errRef('404 Not Found — `wine_not_found:<id>`'),
+        404: errRef('404 Not Found — `WINE_NOT_FOUND`'),
         500: err500
       }
     },
@@ -882,7 +888,7 @@ const paths: Record<string, any> = {
       responses: {
         200: ok({ type: 'object', properties: { wine: { $ref: '#/components/schemas/Wine' } }, required: ['wine'] }),
         401: err401, 403: err403Space,
-        404: errRef('404 Not Found — `wine_not_found:<id>` o `wine_category_not_found:<id>`'),
+        404: errRef('404 Not Found — `WINE_NOT_FOUND` o `WINE_CATEGORY_NOT_FOUND`'),
         500: err500
       }
     },
@@ -891,7 +897,7 @@ const paths: Record<string, any> = {
       responses: {
         200: ok({ type: 'object', properties: { ok: { type: 'boolean' } }, required: ['ok'] }),
         401: err401, 403: err403Space,
-        404: errRef('404 Not Found — `wine_not_found:<id>`'),
+        404: errRef('404 Not Found — `WINE_NOT_FOUND`'),
         500: err500
       }
     }
@@ -924,9 +930,9 @@ const paths: Record<string, any> = {
       tags: ['Wines'], summary: 'Elimina categoría de vinos (restrict si tiene vinos)',
       responses: {
         200: ok({ type: 'object', properties: { ok: { type: 'boolean' } }, required: ['ok'] }),
-        400: errRef('400 Bad Request — `category_has_wines`'),
+        400: errRef('400 Bad Request — `CATEGORY_HAS_WINES`'),
         401: err401, 403: err403Space,
-        404: errRef('404 Not Found — `wine_category_not_found:<id>`'),
+        404: errRef('404 Not Found — `WINE_CATEGORY_NOT_FOUND`'),
         500: err500
       }
     }
@@ -957,7 +963,7 @@ const paths: Record<string, any> = {
         201: ok({ type: 'object', properties: { language: { $ref: '#/components/schemas/Language' } }, required: ['language'] }),
         400: errRef('400 Bad Request — body inválido'),
         401: err401, 403: err403Admin,
-        409: errRef('409 Conflict — `language_code_taken:<code>`'),
+        409: errRef('409 Conflict — `LANGUAGE_CODE_TAKEN`'),
         500: err500
       }
     }
@@ -970,7 +976,7 @@ const paths: Record<string, any> = {
       responses: {
         200: ok({ type: 'object', properties: { language: { $ref: '#/components/schemas/Language' } }, required: ['language'] }),
         401: err401, 403: err403Admin,
-        404: errRef('404 Not Found — `language_not_found:<id>`'),
+        404: errRef('404 Not Found — `LANGUAGE_NOT_FOUND`'),
         500: err500
       }
     },
@@ -978,7 +984,7 @@ const paths: Record<string, any> = {
       tags: ['Languages'], summary: 'Elimina idioma (admin only, restrict si está en uso)',
       responses: {
         200: ok({ type: 'object', properties: { ok: { type: 'boolean' } }, required: ['ok'] }),
-        400: errRef('400 Bad Request — `language_in_use`'),
+        400: errRef('400 Bad Request — `LANGUAGE_IN_USE`'),
         401: err401, 403: err403Admin, 500: err500
       }
     }
@@ -1010,9 +1016,9 @@ const paths: Record<string, any> = {
       }),
       responses: {
         201: ok({ type: 'object', properties: { user: { $ref: '#/components/schemas/User' } }, required: ['user'] }),
-        400: errRef('400 Bad Request — `weak_password:<reason>`'),
+        400: errRef('400 Bad Request — `WEAK_PASSWORD`'),
         401: err401, 403: err403Admin,
-        409: errRef('409 Conflict — `email_taken:<email>`'),
+        409: errRef('409 Conflict — `EMAIL_TAKEN`'),
         500: err500
       }
     }
@@ -1031,9 +1037,9 @@ const paths: Record<string, any> = {
       }),
       responses: {
         200: ok({ type: 'object', properties: { user: { $ref: '#/components/schemas/User' } }, required: ['user'] }),
-        400: errRef('400 Bad Request — `weak_password:<reason>`'),
+        400: errRef('400 Bad Request — `WEAK_PASSWORD`'),
         401: err401, 403: err403Admin,
-        404: errRef('404 Not Found — `user_not_found:<id>`'),
+        404: errRef('404 Not Found — `USER_NOT_FOUND`'),
         500: err500
       }
     },
@@ -1041,9 +1047,9 @@ const paths: Record<string, any> = {
       tags: ['Users'], summary: 'Hard delete del usuario (no se puede borrar a sí mismo)',
       responses: {
         200: ok({ type: 'object', properties: { ok: { type: 'boolean' } }, required: ['ok'] }),
-        400: errRef('400 Bad Request — `cannot_delete_self`'),
+        400: errRef('400 Bad Request — `CANNOT_DELETE_SELF`'),
         401: err401, 403: err403Admin,
-        404: errRef('404 Not Found — `user_not_found:<id>`'),
+        404: errRef('404 Not Found — `USER_NOT_FOUND`'),
         500: err500
       }
     }
@@ -1088,7 +1094,7 @@ const paths: Record<string, any> = {
         200: ok({ $ref: '#/components/schemas/UploadUrlResponse' }),
         400: errRef('400 Bad Request — mimetype no permitido o tamaño fuera de rango'),
         401: err401, 403: err403Rest,
-        404: errRef('404 Not Found — `restaurant_not_found:<slug>`'),
+        404: errRef('404 Not Found — `RESTAURANT_NOT_FOUND`'),
         500: err500
       }
     }
@@ -1108,9 +1114,9 @@ const paths: Record<string, any> = {
       }),
       responses: {
         200: ok({ type: 'object', properties: { media: { $ref: '#/components/schemas/MediaAsset' } }, required: ['media'] }),
-        400: errRef('400 Bad Request — `upload_not_found_in_r2` o `upload_size_mismatch`'),
+        400: errRef('400 Bad Request — `UPLOAD_NOT_FOUND_IN_R2` o `UPLOAD_SIZE_MISMATCH`'),
         401: err401, 403: err403Rest,
-        404: errRef('404 Not Found — `media_not_found:<id>`'),
+        404: errRef('404 Not Found — `MEDIA_NOT_FOUND`'),
         500: err500
       }
     }
@@ -1130,7 +1136,7 @@ const paths: Record<string, any> = {
       responses: {
         200: ok({ type: 'object', properties: { media: { $ref: '#/components/schemas/MediaAsset' } }, required: ['media'] }),
         401: err401, 403: err403Rest,
-        404: errRef('404 Not Found — `media_not_found:<id>`'),
+        404: errRef('404 Not Found — `MEDIA_NOT_FOUND`'),
         500: err500
       }
     },
@@ -1139,9 +1145,9 @@ const paths: Record<string, any> = {
       description: 'Pre-check: si el asset está en `dishes.imageAssetId` o `spaces.hero.imageAssetId`, lanza error 400 con el detalle de counts.',
       responses: {
         200: ok({ type: 'object', properties: { ok: { type: 'boolean' } }, required: ['ok'] }),
-        400: errRef('400 Bad Request — `media_in_use:dishes=<N>,spaces=<N>`'),
+        400: errRef('400 Bad Request — `MEDIA_IN_USE`'),
         401: err401, 403: err403Rest,
-        404: errRef('404 Not Found — `media_not_found:<id>`'),
+        404: errRef('404 Not Found — `MEDIA_NOT_FOUND`'),
         500: err500
       }
     }
@@ -1154,7 +1160,7 @@ const paths: Record<string, any> = {
       responses: {
         200: ok({ $ref: '#/components/schemas/MediaReferences' }),
         401: err401,
-        404: errRef('404 Not Found — `media_not_found:<id>`'),
+        404: errRef('404 Not Found — `MEDIA_NOT_FOUND`'),
         500: err500
       }
     }

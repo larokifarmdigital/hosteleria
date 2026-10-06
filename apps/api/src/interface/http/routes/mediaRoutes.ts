@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
+import { validate } from '../validate.js';
 import { z } from 'zod';
 import { HTTPException } from 'hono/http-exception';
 import type { Context } from 'hono';
@@ -21,7 +21,7 @@ export function createMediaRoutes() {
   app.use('*', requireAuth);
 
   // ─── POST /media/upload-url ────────────────────────────────────
-  app.post('/upload-url', zValidator('json', uploadUrlSchema), async (c) => {
+  app.post('/upload-url', validate('json', uploadUrlSchema), async (c) => {
     const user = c.get('user')!;
     const body = c.req.valid('json');
     const restaurantId = await assertRestaurantAccess(c, body.restaurantSlug);
@@ -37,7 +37,7 @@ export function createMediaRoutes() {
   });
 
   // ─── POST /media/:id/confirm ───────────────────────────────────
-  app.post('/:id/confirm', zValidator('json', confirmSchema), async (c) => {
+  app.post('/:id/confirm', validate('json', confirmSchema), async (c) => {
     const id = c.req.param('id');
     const existing = await c.get('container').repos.mediaRepo.findById(id);
     if (!existing) throw new MediaNotFoundError(id);
@@ -55,7 +55,7 @@ export function createMediaRoutes() {
 
     if (restaurantSlug && allowed) {
       const r = await c.get('container').repos.restaurantsRepo.findBySlug(restaurantSlug);
-      if (r && !allowed.has(r.id)) throw new HTTPException(403, { message: 'restaurant_forbidden' });
+      if (r && !allowed.has(r.id)) throw new HTTPException(403, { message: 'RESTAURANT_FORBIDDEN' });
     }
 
     const list = await c.get('container').media.list.execute({ restaurantSlug, usage, missingAlt });
@@ -67,7 +67,7 @@ export function createMediaRoutes() {
   });
 
   // ─── PATCH /media/:id ──────────────────────────────────────────
-  app.patch('/:id', zValidator('json', patchSchema), async (c) => {
+  app.patch('/:id', validate('json', patchSchema), async (c) => {
     const id = c.req.param('id');
     const existing = await c.get('container').repos.mediaRepo.findById(id);
     if (!existing) throw new MediaNotFoundError(id);
@@ -121,7 +121,7 @@ async function assertRestaurantAccess(c: Context<AppBindings>, slug: string): Pr
   const r = await c.get('container').repos.restaurantsRepo.findBySlug(slug);
   if (!r) throw new RestaurantNotFoundError(slug);
   const allowed = await allowedRestaurantIds(c);
-  if (allowed && !allowed.has(r.id)) throw new HTTPException(403, { message: 'restaurant_forbidden' });
+  if (allowed && !allowed.has(r.id)) throw new HTTPException(403, { message: 'RESTAURANT_FORBIDDEN' });
   return r.id;
 }
 
@@ -130,7 +130,7 @@ async function assertMediaAccess(c: Context<AppBindings>, m: MediaAsset): Promis
   if (!m.restaurantId) return;
   const allowed = await allowedRestaurantIds(c);
   if (allowed && !allowed.has(m.restaurantId)) {
-    throw new HTTPException(403, { message: 'restaurant_forbidden' });
+    throw new HTTPException(403, { message: 'RESTAURANT_FORBIDDEN' });
   }
 }
 

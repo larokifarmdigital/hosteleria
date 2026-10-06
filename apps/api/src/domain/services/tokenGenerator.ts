@@ -3,11 +3,17 @@
  * SHA-256; el token en claro existe en memoria lo justo para meterlo en
  * el email, luego es irrecuperable.
  */
+import { DomainError } from '../models/errors.js';
 
 export type TokenKind = 'password_setup' | 'password_reset';
 
-export class InvalidTokenError extends Error {
-  constructor() { super('invalid_or_expired_token'); this.name = 'InvalidTokenError'; }
+export class InvalidTokenError extends DomainError {
+  readonly code = 'INVALID_OR_EXPIRED_TOKEN';
+  readonly status = 400;
+  constructor() {
+    super('El enlace no es válido o ha caducado. Pide uno nuevo.');
+    this.name = 'InvalidTokenError';
+  }
 }
 
 export interface TokenGenerator {

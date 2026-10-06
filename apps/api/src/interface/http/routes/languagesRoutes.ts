@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
+import { validate } from '../validate.js';
 import { z } from 'zod';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import { cacheHeaders } from '../../../middleware/cache.js';
@@ -21,12 +21,12 @@ export function createLanguagesRoutes() {
     });
   });
 
-  app.post('/', requireAdmin, zValidator('json', createSchema), async (c) => {
+  app.post('/', requireAdmin, validate('json', createSchema), async (c) => {
     const lang = await c.get('container').languages.create.execute(c.req.valid('json'));
     return c.json({ language: { id: lang.id, code: lang.code, name: lang.name, usedByCount: 0 } }, 201);
   });
 
-  app.patch('/:id', requireAdmin, zValidator('json', patchSchema), async (c) => {
+  app.patch('/:id', requireAdmin, validate('json', patchSchema), async (c) => {
     const id = c.req.param('id');
     await c.get('container').languages.update.execute(id, c.req.valid('json'));
     const updated = await c.get('container').repos.languagesRepo.findById(id);

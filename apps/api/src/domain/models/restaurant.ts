@@ -1,4 +1,5 @@
 import type { I18nValue } from './i18n.js';
+import { DomainError } from './errors.js';
 
 export type PublishState = 'published' | 'draft' | 'warnings' | 'new';
 
@@ -61,15 +62,35 @@ export interface Restaurant {
   winesCount: number;
 }
 
-export class SlugTakenError extends Error {
-  constructor(slug: string) { super(`slug_taken:${slug}`); this.name = 'SlugTakenError'; }
+export class SlugTakenError extends DomainError {
+  readonly code = 'SLUG_TAKEN';
+  readonly status = 409;
+  constructor(slug: string) {
+    super(`El slug «${slug}» ya está en uso. Elige otro.`);
+    this.name = 'SlugTakenError';
+  }
 }
-export class RestaurantNotFoundError extends Error {
-  constructor(slug: string) { super(`restaurant_not_found:${slug}`); this.name = 'RestaurantNotFoundError'; }
+export class RestaurantNotFoundError extends DomainError {
+  readonly code = 'RESTAURANT_NOT_FOUND';
+  readonly status = 404;
+  constructor(slug: string) {
+    super(`El restaurante «${slug}» no existe.`);
+    this.name = 'RestaurantNotFoundError';
+  }
 }
-export class NoSnapshotError extends Error {
-  constructor() { super('no_snapshot'); this.name = 'NoSnapshotError'; }
+export class NoSnapshotError extends DomainError {
+  readonly code = 'NO_SNAPSHOT';
+  readonly status = 400;
+  constructor() {
+    super('No hay una versión publicada a la que volver.');
+    this.name = 'NoSnapshotError';
+  }
 }
-export class UnknownLocaleError extends Error {
-  constructor(code: string) { super(`unknown_locale:${code}`); this.name = 'UnknownLocaleError'; }
+export class UnknownLocaleError extends DomainError {
+  readonly code = 'UNKNOWN_LOCALE';
+  readonly status = 400;
+  constructor(code: string) {
+    super(`El idioma «${code}» no está dado de alta en el sistema.`);
+    this.name = 'UnknownLocaleError';
+  }
 }

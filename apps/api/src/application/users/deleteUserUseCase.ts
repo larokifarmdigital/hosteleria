@@ -1,8 +1,14 @@
 import type { UserRepository } from '../../domain/repositories/userRepository.js';
 import { UserNotFoundError } from '../../domain/models/user.js';
+import { DomainError } from '../../domain/models/errors.js';
 
-export class CannotDeleteSelfError extends Error {
-  constructor() { super('cannot_delete_self'); this.name = 'CannotDeleteSelfError'; }
+export class CannotDeleteSelfError extends DomainError {
+  readonly code = 'CANNOT_DELETE_SELF';
+  readonly status = 400;
+  constructor() {
+    super('No puedes borrar tu propio usuario.');
+    this.name = 'CannotDeleteSelfError';
+  }
 }
 
 export class DeleteUserUseCase {

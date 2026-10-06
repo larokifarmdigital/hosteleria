@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
+import { validate } from '../validate.js';
 import { z } from 'zod';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { rateLimit } from '../../../middleware/rate-limit.js';
@@ -27,7 +27,7 @@ export function createAuthRoutes() {
   // ─── POST /auth/login ─────────────────────────────────────────────
   app.post('/login',
     loginRateLimit,
-    zValidator('json', z.object({ email: z.string().email(), password: z.string().min(1) })),
+    validate('json', z.object({ email: z.string().email(), password: z.string().min(1) })),
     async (c) => {
       const { login } = c.get('container').auth;
       const result = await login.execute(c.req.valid('json'), {
@@ -94,7 +94,7 @@ export function createAuthRoutes() {
   // Siempre 200 — no revelamos si el email está en BD (lo gestiona el UC).
   app.post('/forgot',
     forgotRateLimit,
-    zValidator('json', z.object({ email: z.string().email() })),
+    validate('json', z.object({ email: z.string().email() })),
     async (c) => {
       await c.get('container').auth.requestPasswordReset.execute(c.req.valid('json').email);
       return c.json({ ok: true });
@@ -103,7 +103,7 @@ export function createAuthRoutes() {
 
   // ─── POST /auth/reset ─────────────────────────────────────────────
   app.post('/reset',
-    zValidator('json', z.object({ token: z.string().min(16), newPassword: z.string().min(8).max(200) })),
+    validate('json', z.object({ token: z.string().min(16), newPassword: z.string().min(8).max(200) })),
     async (c) => {
       await c.get('container').auth.applyPasswordChange.execute({
         ...c.req.valid('json'),
@@ -116,7 +116,7 @@ export function createAuthRoutes() {
   // ─── POST /auth/set-password ─────────────────────────────────────
   // Mismo flujo que /reset, pero el token es `password_setup` (welcome email).
   app.post('/set-password',
-    zValidator('json', z.object({ token: z.string().min(16), newPassword: z.string().min(8).max(200) })),
+    validate('json', z.object({ token: z.string().min(16), newPassword: z.string().min(8).max(200) })),
     async (c) => {
       await c.get('container').auth.applyPasswordChange.execute({
         ...c.req.valid('json'),

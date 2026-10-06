@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
+import { validate } from '../validate.js';
 import { z } from 'zod';
 import type { Context } from 'hono';
 import { requireAuth } from '../middleware/authMiddleware.js';
@@ -29,7 +29,7 @@ export function createWinesRoutes() {
     return c.json({ categories: filtered });
   });
 
-  cats.post('/', zValidator('json', categoryCreateSchema), async (c) => {
+  cats.post('/', validate('json', categoryCreateSchema), async (c) => {
     const body = c.req.valid('json');
     await assertSpaceAccess(c, body.spaceId);
     const row = await c.get('container').wines.createCategory.execute(body);
@@ -65,7 +65,7 @@ export function createWinesRoutes() {
     return c.json({ wine: await enrichWine(c, w) });
   });
 
-  app.post('/', zValidator('json', wineCreateSchema), async (c) => {
+  app.post('/', validate('json', wineCreateSchema), async (c) => {
     const body = c.req.valid('json');
     await assertSpaceAccess(c, body.spaceId);
     const w = await c.get('container').wines.create.execute({
@@ -83,7 +83,7 @@ export function createWinesRoutes() {
     return c.json({ wine: await enrichWine(c, w) }, 201);
   });
 
-  app.patch('/:id', zValidator('json', winePatchSchema), async (c) => {
+  app.patch('/:id', validate('json', winePatchSchema), async (c) => {
     const user = c.get('user')!;
     const id = c.req.param('id');
     const existing = await c.get('container').wines.get.execute(id);

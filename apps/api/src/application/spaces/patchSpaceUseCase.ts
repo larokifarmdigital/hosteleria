@@ -9,9 +9,15 @@ import {
   type SpaceType
 } from '../../domain/models/space.js';
 import type { PublishState } from '../../domain/models/restaurant.js';
+import { DomainError } from '../../domain/models/errors.js';
 
-export class MustHaveDefaultSpaceError extends Error {
-  constructor() { super('must_have_default_space'); this.name = 'MustHaveDefaultSpaceError'; }
+export class MustHaveDefaultSpaceError extends DomainError {
+  readonly code = 'MUST_HAVE_DEFAULT_SPACE';
+  readonly status = 400;
+  constructor() {
+    super('El restaurante debe tener al menos un espacio marcado como principal.');
+    this.name = 'MustHaveDefaultSpaceError';
+  }
 }
 
 export interface PatchSpaceInput {

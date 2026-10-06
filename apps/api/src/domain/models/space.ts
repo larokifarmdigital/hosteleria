@@ -1,5 +1,6 @@
 import type { I18nValue } from './i18n.js';
 import type { PublishState } from './restaurant.js';
+import { DomainError } from './errors.js';
 
 export type SpaceType =
   | 'restaurant' | 'cafe' | 'coctel' | 'club' | 'terraza' | 'live_music' | 'otro';
@@ -51,12 +52,27 @@ export interface Space {
   publishedSnapshot: SpaceSnapshot | null;
 }
 
-export class SpaceNotFoundError extends Error {
-  constructor(id: string) { super(`space_not_found:${id}`); this.name = 'SpaceNotFoundError'; }
+export class SpaceNotFoundError extends DomainError {
+  readonly code = 'SPACE_NOT_FOUND';
+  readonly status = 404;
+  constructor(_id: string) {
+    super('El espacio no existe.');
+    this.name = 'SpaceNotFoundError';
+  }
 }
-export class SpaceSlugTakenError extends Error {
-  constructor(slug: string) { super(`space_slug_taken:${slug}`); this.name = 'SpaceSlugTakenError'; }
+export class SpaceSlugTakenError extends DomainError {
+  readonly code = 'SPACE_SLUG_TAKEN';
+  readonly status = 409;
+  constructor(slug: string) {
+    super(`Ya existe un espacio con el slug «${slug}» en este restaurante.`);
+    this.name = 'SpaceSlugTakenError';
+  }
 }
-export class CannotDeleteLastSpaceError extends Error {
-  constructor() { super('cannot_delete_last_space'); this.name = 'CannotDeleteLastSpaceError'; }
+export class CannotDeleteLastSpaceError extends DomainError {
+  readonly code = 'CANNOT_DELETE_LAST_SPACE';
+  readonly status = 400;
+  constructor() {
+    super('Un restaurante no puede quedarse sin ningún espacio.');
+    this.name = 'CannotDeleteLastSpaceError';
+  }
 }

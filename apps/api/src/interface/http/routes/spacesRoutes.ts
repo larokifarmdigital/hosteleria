@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
+import { validate } from '../validate.js';
 import { z } from 'zod';
 import { HTTPException } from 'hono/http-exception';
 import { requireAuth, requireRestaurant } from '../middleware/authMiddleware.js';
@@ -15,7 +15,7 @@ export function createSpacesRoutes() {
   async function resolveRestaurantId(c: any): Promise<string> {
     const slug = c.req.param('slug');
     const r = await c.get('container').repos.restaurantsRepo.findBySlug(slug);
-    if (!r) throw new HTTPException(404, { message: 'restaurant_not_found' });
+    if (!r) throw new HTTPException(404, { message: 'RESTAURANT_NOT_FOUND' });
     return r.id;
   }
 
@@ -34,14 +34,14 @@ export function createSpacesRoutes() {
   });
 
   // ─── POST / ────────────────────────────────────────────────────
-  app.post('/', zValidator('json', createSchema), async (c) => {
+  app.post('/', validate('json', createSchema), async (c) => {
     const restaurantId = await resolveRestaurantId(c);
     const s = await c.get('container').spaces.create.execute(restaurantId, c.req.valid('json'));
     return c.json({ space: spaceToDto(s) }, 201);
   });
 
   // ─── PATCH /:spaceId ───────────────────────────────────────────
-  app.patch('/:spaceId', zValidator('json', patchSchema), async (c) => {
+  app.patch('/:spaceId', validate('json', patchSchema), async (c) => {
     const user = c.get('user')!;
     const restaurantId = await resolveRestaurantId(c);
     const s = await c.get('container').spaces.patch.execute(

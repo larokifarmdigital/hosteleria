@@ -26,5 +26,5 @@ export async function allowedSpaceIds(c: Context<AppBindings>): Promise<Set<stri
 export async function assertSpaceAccess(c: Context<AppBindings>, spaceId: string): Promise<void> {
   const allowed = await allowedSpaceIds(c);
   if (allowed === null) return;
-  if (!allowed.has(spaceId)) throw new HTTPException(403, { message: 'space_forbidden' });
+  if (!allowed.has(spaceId)) throw new HTTPException(403, { message: 'SPACE_FORBIDDEN' });
 }

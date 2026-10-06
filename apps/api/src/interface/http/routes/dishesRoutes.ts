@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
+import { validate } from '../validate.js';
 import { z } from 'zod';
 import type { Context } from 'hono';
 import { requireAuth } from '../middleware/authMiddleware.js';
@@ -29,14 +29,14 @@ export function createDishesRoutes() {
     return c.json({ categories: filtered });
   });
 
-  cats.post('/', zValidator('json', categoryCreateSchema), async (c) => {
+  cats.post('/', validate('json', categoryCreateSchema), async (c) => {
     const body = c.req.valid('json');
     await assertSpaceAccess(c, body.spaceId);
     const row = await c.get('container').dishes.createCategory.execute(body);
     return c.json({ category: row }, 201);
   });
 
-  cats.patch('/:id', zValidator('json', categoryPatchSchema), async (c) => {
+  cats.patch('/:id', validate('json', categoryPatchSchema), async (c) => {
     const id = c.req.param('id');
     const cat = await c.get('container').repos.dishesRepo.findCategoryById(id);
     if (!cat) throw new DishCategoryNotFoundError(id);
@@ -78,7 +78,7 @@ export function createDishesRoutes() {
     return c.json({ dish: await enrichDish(c, d) });
   });
 
-  app.post('/', zValidator('json', dishCreateSchema), async (c) => {
+  app.post('/', validate('json', dishCreateSchema), async (c) => {
     const body = c.req.valid('json');
     await assertSpaceAccess(c, body.spaceId);
     const d = await c.get('container').dishes.create.execute({
@@ -95,7 +95,7 @@ export function createDishesRoutes() {
     return c.json({ dish: await enrichDish(c, d) }, 201);
   });
 
-  app.patch('/:id', zValidator('json', dishPatchSchema), async (c) => {
+  app.patch('/:id', validate('json', dishPatchSchema), async (c) => {
     const user = c.get('user')!;
     const id = c.req.param('id');
     const existing = await c.get('container').dishes.get.execute(id);
