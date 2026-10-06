@@ -1,13 +1,14 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { HTTPException } from 'hono/http-exception';
 import { sql } from 'drizzle-orm';
 import { apiReference } from '@scalar/hono-api-reference';
 import { getDb } from './infrastructure/persistence/drizzle/client.js';
-import { validateSession, type AuthVars } from './auth/middleware.js';
-import { createAuthRoutes } from './auth/route.js';
-import { createRestaurantsRoutes } from './restaurants/route.js';
+import { validateSession } from './auth/middleware.js';
+import { withContainer } from './interface/http/middleware/withContainer.js';
+import { globalErrorHandler } from './interface/http/httpErrors.js';
+import { createAuthRoutes } from './interface/http/routes/authRoutes.js';
+import { createRestaurantsRoutes } from './interface/http/routes/restaurantsRoutes.js';
 import { createSpacesRoutes } from './spaces/route.js';
 import { createDishesRoutes } from './dishes/route.js';
 import { createWinesRoutes } from './wines/route.js';
@@ -17,7 +18,7 @@ import { createMediaRoutes } from './media/route.js';
 import { openApiSpec } from './openapi.js';
 import { sentryMiddleware } from './middleware/sentry.js';
 import { rateLimit } from './middleware/rate-limit.js';
-import type { Env } from './env.js';
+import type { AppBindings } from './interface/http/types.js';
 
 /**
  * Hono app principal — se monta como fetch handler del Worker.
@@ -34,7 +35,7 @@ import type { Env } from './env.js';
  * `app.route('/xxx', createXxxRoutes())` abajo.
  */
 export function createApp() {
-  const app = new Hono<{ Bindings: Env; Variables: AuthVars }>();
+  const app = new Hono<AppBindings>();
 
   // ─── Middlewares globales ──────────────────────────────────────────
   app.use('*', logger());
@@ -59,6 +60,9 @@ export function createApp() {
     allowHeaders: ['Content-Type', 'Authorization']
   }));
 
+  // Cablea el container (DI) una vez por request.
+  app.use('*', withContainer);
+
   // Lee cookie de sesión Lucia y setea user/session en context.
   app.use('*', validateSession);
 
@@ -75,7 +79,7 @@ export function createApp() {
       path === '/docs' ||
       path === '/openapi.json' ||
       path.startsWith('/auth/');
-    return skip ? next() : globalLimiter(c, next);
+    return skip ? next() : globalLimiter(c as any, next);
   });
 
   // ─── Rutas públicas ────────────────────────────────────────────────
@@ -128,13 +132,7 @@ export function createApp() {
   // ─── Error handling ────────────────────────────────────────────────
   app.notFound((c) => c.json({ error: 'not_found', path: c.req.path }, 404));
 
-  app.onError((err, c) => {
-    if (err instanceof HTTPException) {
-      return c.json({ error: err.message }, err.status);
-    }
-    console.error('[api] unhandled:', err);
-    return c.json({ error: 'internal_error' }, 500);
-  });
+  app.onError(globalErrorHandler);
 
   return app;
 }

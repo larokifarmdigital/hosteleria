@@ -4,7 +4,6 @@ import { HTTPException } from 'hono/http-exception';
 import { getDb } from '../infrastructure/persistence/drizzle/client.js';
 import { rateLimits } from '../infrastructure/persistence/drizzle/schema/rate_limits.js';
 import type { Env } from '../env.js';
-import type { AuthVars } from '../auth/middleware.js';
 
 /**
  * Rate limiting sobre Postgres — anti-abuso para endpoints HTTP.
@@ -58,8 +57,8 @@ function getClientIp(c: any): string {
 export function rateLimit(opts: RateLimitOpts) {
   const { bucket, limit, windowSeconds, keyFn = getClientIp } = opts;
 
-  return createMiddleware<{ Bindings: Env; Variables: AuthVars }>(async (c, next) => {
-    const env = c.get('env');
+  return createMiddleware<{ Bindings: Env; Variables: Record<string, unknown> }>(async (c, next) => {
+    const env = c.env;
     const key = await keyFn(c);
     const db = getDb(env.DATABASE_URL);
     const now = new Date();
