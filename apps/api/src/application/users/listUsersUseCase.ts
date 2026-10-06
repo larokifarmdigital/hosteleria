@@ -3,14 +3,10 @@ import type { User } from '../../domain/models/user.js';
 
 export interface UserWithRestaurants {
   user: User;
-  /** Vacío para admins (ven todo). */
+  /** Siempre `[]` para admins ("todos"); los ids explícitos solo aplican a editors. */
   restaurantIds: string[];
 }
 
-/**
- * Lista todos los users del backoffice + los ids de restaurantes asignados
- * a cada editor. Los admins devuelven `restaurantIds: []` (significa "todos").
- */
 export class ListUsersUseCase {
   constructor(private readonly users: UserRepository) {}
 

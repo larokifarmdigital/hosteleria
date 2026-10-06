@@ -1,7 +1,6 @@
-import { eq, inArray, asc } from 'drizzle-orm';
+import { eq, asc } from 'drizzle-orm';
 import { getDb } from './client.js';
 import { users, userRestaurants } from './schema/auth.js';
-import { restaurants } from './schema/content.js';
 import type { User, UserRole } from '../../../domain/models/user.js';
 import type { UserRepository } from '../../../domain/repositories/userRepository.js';
 import type { Env } from '../../../env.js';
@@ -51,9 +50,10 @@ export class DrizzleUserRepository implements UserRepository {
   }
 
   async touchLastAccess(id: string): Promise<void> {
+    // Best-effort: nunca lanzamos — un fallo aquí no debe romper el login.
     try {
       await this.db.update(users).set({ lastAccessAt: new Date() }).where(eq(users.id, id));
-    } catch { /* best-effort */ }
+    } catch { /* swallow */ }
   }
 
   async deleteById(id: string): Promise<void> {

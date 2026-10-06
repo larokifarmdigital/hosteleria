@@ -1,9 +1,6 @@
 import type { EmailSender, SendEmailInput } from '../../domain/services/emailSender.js';
 
-/**
- * Impl del `EmailSender` que loguea en consola — sin consumir quota del
- * provider. Default en dev (y cuando no hay `RESEND_API_KEY`).
- */
+/** Default en dev / cuando falta `RESEND_API_KEY`: imprime en consola. */
 export class ConsoleEmailSender implements EmailSender {
   async send(input: SendEmailInput): Promise<{ id: string }> {
     console.log('\n─── 📧 EMAIL (console sender — RESEND_API_KEY vacío) ───');

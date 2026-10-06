@@ -1,10 +1,9 @@
 import type { Restaurant, RestaurantSnapshot } from '../../../../domain/models/restaurant.js';
 
 /**
- * Shape que esperamos de Drizzle con joins incluidos. Lo tipo manualmente
- * (en vez de `typeof restaurants.$inferSelect`) para que el mapper funcione
- * tanto con `findFirst({ with: ... })` como con el row del repository SQL
- * agregado (que ya trae los locales + counts como columnas directas).
+ * Tipo manual (no `$inferSelect`) para que admita tanto el row del SELECT
+ * crudo con `array_agg` + counts del repo como el shape de un `findFirst`
+ * con joins.
  */
 export interface RestaurantRow {
   id: string;
@@ -31,7 +30,6 @@ export interface RestaurantRow {
   winesCount: number;
 }
 
-/** Fila Drizzle (con joins/aggregates) → entidad Restaurant. */
 export function rowToRestaurant(row: RestaurantRow): Restaurant {
   return {
     id: row.id,

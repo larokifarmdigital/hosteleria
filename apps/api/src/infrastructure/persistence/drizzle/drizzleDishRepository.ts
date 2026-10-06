@@ -22,7 +22,8 @@ export class DrizzleDishRepository implements DishRepository {
     categoryId?: string;
     missingLocale?: string;
   }): Promise<Dish[]> {
-    // Resolver spaceIds si viene restaurantSlug.
+    // El filtro público es por slug, pero `dishes` solo guarda `spaceId` —
+    // resolvemos slug → spaceIds primero (bail-out si el restaurant no existe).
     let spaceIdsFilter: string[] | null = null;
     if (filters?.restaurantSlug) {
       const r = await this.db.query.restaurants.findFirst({
@@ -48,7 +49,8 @@ export class DrizzleDishRepository implements DishRepository {
 
     const result = rows.map(rowToDish);
 
-    // Filtro missingLocale → in-memory (chico, listados típicos ~100 items).
+    // `missingLocale` filtra en memoria: tocar jsonb en SQL es más caro
+    // y los listados típicos (~100 platos) caben sin esfuerzo.
     if (filters?.missingLocale) {
       return result.filter(d => !d.name?.[filters.missingLocale!]);
     }
@@ -115,7 +117,6 @@ export class DrizzleDishRepository implements DishRepository {
   }
 
   async deleteCategory(id: string): Promise<void> {
-    // Pre-check: no dishes referenciando esta categoría.
     const [{ n }] = await this.db
       .select({ n: count() })
       .from(dishes)

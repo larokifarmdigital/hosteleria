@@ -1,11 +1,3 @@
-/**
- * Puerto para envío de emails transaccionales.
- *
- * Impls disponibles (en `infrastructure/email/`):
- *  - `ConsoleEmailSender` → loguea en consola (dev, sin consumir quota)
- *  - `ResendEmailSender`  → envía vía resend.com (prod)
- */
-
 export interface SendEmailInput {
   to: string;
   subject: string;
@@ -14,6 +6,6 @@ export interface SendEmailInput {
 }
 
 export interface EmailSender {
-  /** Envía un email. Devuelve el id del provider (para tracking/logs). */
+  /** El `id` devuelto es el del provider — para logs/tracking. */
   send(input: SendEmailInput): Promise<{ id: string }>;
 }

@@ -9,19 +9,15 @@ import type { Env } from '../../../env.js';
 import { rowToRestaurant, type RestaurantRow } from './mappers/restaurantMapper.js';
 
 /**
- * Impl Drizzle del `RestaurantRepository`.
- *
- * El listado y detalle usan UNA SQL con JOIN + array_agg + subqueries de
- * COUNT para traer locales + spacesCount/dishesCount/winesCount en una sola
- * query (evita N+1). El SELECT devuelve directamente el shape `RestaurantRow`
- * que el mapper usa.
+ * `findBySlug` / `findById` / `listAccessibleBy` comparten una SQL cruda
+ * con `array_agg` para locales y subqueries de COUNT para counts, para
+ * resolver el dashboard entero en 1 query (evita N+1 con 60+ restaurantes).
  */
 export class DrizzleRestaurantRepository implements RestaurantRepository {
   constructor(private env: Env) {}
 
   private get db() { return getDb(this.env.DATABASE_URL); }
 
-  /** SQL compartido por `findBySlug`, `findById` y `listAccessibleBy`. */
   private buildSelectQuery(whereClause: ReturnType<typeof sql> = sql``) {
     return sql`
       SELECT
@@ -80,10 +76,10 @@ export class DrizzleRestaurantRepository implements RestaurantRepository {
     defaultLocaleId: string;
     activeLocaleIds: string[];
   }): Promise<Restaurant> {
-    // Pre-check: slug único.
     const existing = await this.db.query.restaurants.findFirst({ where: eq(restaurants.slug, input.slug) });
     if (existing) throw new SlugTakenError(input.slug);
 
+    // Invariante del dominio: el default siempre está en los activos.
     const activeIds = input.activeLocaleIds.includes(input.defaultLocaleId)
       ? input.activeLocaleIds
       : [...input.activeLocaleIds, input.defaultLocaleId];
@@ -127,7 +123,7 @@ export class DrizzleRestaurantRepository implements RestaurantRepository {
     if (patch.seo !== undefined) updates.seo = patch.seo;
     if (patch.lastPublishedAt !== undefined) updates.lastPublishedAt = patch.lastPublishedAt;
 
-    // Cambio de defaultLocaleCode → resolver id en la tabla languages.
+    // El puerto trabaja con `defaultLocaleCode`; aquí lo traducimos al id FK.
     if (patch.defaultLocaleCode !== undefined) {
       const lang = await this.db.query.languages.findFirst({ where: eq(languages.code, patch.defaultLocaleCode) });
       if (!lang) throw new UnknownLocaleError(patch.defaultLocaleCode);

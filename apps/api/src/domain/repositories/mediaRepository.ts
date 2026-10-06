@@ -2,11 +2,8 @@ import type { MediaAsset, MediaUsage } from '../models/media.js';
 import type { I18nValue } from '../models/i18n.js';
 
 /**
- * Puerto de persistencia para `MediaAsset`.
- *
- * ⚠️ No confundir con `MediaStorage` (en `domain/services/`): este es la
- * capa de BD (metadata de los assets); `MediaStorage` es el bucket R2
- * donde vive el binario.
+ * Metadata del asset. El binario vive en R2 y se maneja aparte vía
+ * `MediaStorage` (en `domain/services/`) — no confundir.
  */
 export interface MediaRepository {
   findById(id: string): Promise<MediaAsset | null>;
@@ -16,10 +13,7 @@ export interface MediaRepository {
     missingAlt?: boolean;
   }): Promise<MediaAsset[]>;
 
-  /**
-   * Crea una fila pre-upload (status = pending). Útil para generar `mediaId`
-   * antes de que el browser suba. Al confirmar, se completan width/height.
-   */
+  /** INSERT previo al PUT a R2 — reserva el `mediaId` que el browser usa. */
   createPending(input: {
     restaurantId: string;
     name: string;
@@ -29,7 +23,6 @@ export interface MediaRepository {
     uploadedBy: string | null;
   }): Promise<MediaAsset>;
 
-  /** Al confirmar el upload: completa dimensiones + alt + usage='unused'. */
   confirmUpload(id: string, patch: {
     width?: number;
     height?: number;
@@ -42,6 +35,6 @@ export interface MediaRepository {
 
   deleteById(id: string): Promise<void>;
 
-  /** Lista referencias (hero/gallery/dish) para pre-check de delete. */
+  /** Pre-check para delete: no borramos un asset referenciado desde ningún lado. */
   findReferences(id: string): Promise<{ kind: 'hero' | 'gallery' | 'dish'; refId: string }[]>;
 }

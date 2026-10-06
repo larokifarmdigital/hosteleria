@@ -6,10 +6,6 @@ export interface LanguageWithUsage {
   usedByCount: number;
 }
 
-/**
- * Lista los idiomas + el nº de restaurantes que los tienen activos. El
- * `usedByCount` lo usa la UI para desactivar el botón de delete.
- */
 export class ListLanguagesUseCase {
   constructor(private readonly languages: LanguageRepository) {}
 

@@ -1,14 +1,6 @@
 import type { I18nValue } from './i18n.js';
 import type { PublishState } from './restaurant.js';
 
-/**
- * Entidad `Space` — sala/espacio de un restaurant.
- *
- * Un restaurant tiene 1..N spaces (ej. "Comedor principal", "Terraza",
- * "Barra de coctelería"). Cada space tiene su propio hero, manifiesto,
- * horarios y cartas (dishes + wines).
- */
-
 export type SpaceType =
   | 'restaurant' | 'cafe' | 'coctel' | 'club' | 'terraza' | 'live_music' | 'otro';
 
@@ -59,7 +51,6 @@ export interface Space {
   publishedSnapshot: SpaceSnapshot | null;
 }
 
-// ─── Domain errors ───────────────────────────────────────────────
 export class SpaceNotFoundError extends Error {
   constructor(id: string) { super(`space_not_found:${id}`); this.name = 'SpaceNotFoundError'; }
 }

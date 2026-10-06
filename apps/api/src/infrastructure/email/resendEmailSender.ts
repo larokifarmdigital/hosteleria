@@ -1,12 +1,5 @@
 import type { EmailSender, SendEmailInput } from '../../domain/services/emailSender.js';
 
-/**
- * Impl del `EmailSender` que envía vía resend.com.
- *
- * Para añadir otro provider (SendGrid/Postmark/…): crear otra clase que
- * implemente `EmailSender`. La selección entre impls vive en el
- * composition root (`interface/http/`).
- */
 export class ResendEmailSender implements EmailSender {
   constructor(private apiKey: string, private from: string) {}
 

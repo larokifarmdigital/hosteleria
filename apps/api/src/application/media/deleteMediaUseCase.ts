@@ -2,12 +2,6 @@ import type { MediaRepository } from '../../domain/repositories/mediaRepository.
 import type { MediaStorage } from '../../domain/services/mediaStorage.js';
 import { MediaNotFoundError, MediaHasReferencesError } from '../../domain/models/media.js';
 
-/**
- * Hard delete del media: pre-check de referencias (restrict), borra el
- * objeto R2 (idempotente) y luego la fila. El orden importa: si el delete
- * de R2 falla, el error lo loguea el adapter y la fila queda — mejor eso
- * que un fantasma huérfano en R2.
- */
 export class DeleteMediaUseCase {
   constructor(
     private readonly media: MediaRepository,
@@ -21,6 +15,9 @@ export class DeleteMediaUseCase {
     const refs = await this.media.findReferences(id);
     if (refs.length > 0) throw new MediaHasReferencesError();
 
+    // Primero el objeto, luego la fila: si el DELETE de R2 falla, la fila
+    // queda y el admin puede reintentar. El orden inverso dejaría un
+    // fantasma huérfano en R2 que ya nadie podría borrar.
     try {
       await this.storage.delete(m.r2Key);
     } catch (err) {

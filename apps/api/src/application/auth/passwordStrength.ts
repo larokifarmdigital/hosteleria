@@ -3,18 +3,10 @@ import * as zxcvbnCommonPackage from '@zxcvbn-ts/language-common';
 import * as zxcvbnEnPackage from '@zxcvbn-ts/language-en';
 
 /**
- * Valida la **fortaleza** de un password antes de hashearlo.
- *
- * Usa `@zxcvbn-ts` (port de la lib de Dropbox): estima entropía real
- * (longitud, diccionario, patrones) y da un score 0-4. No usamos reglas
- * "una mayúscula + un número" — son mentira ("Password1!" las cumple y
- * es débil).
- *
- * Rechazamos:
- *  - Score < 2 (débiles tipo "qwerty123").
- *  - Longitud fuera de [8, 200].
- *  - Password que contiene el email o nombre del user (incluso con score
- *    alto — "casabella2026" es malo si el user es admin de Casabella).
+ * Mide fortaleza con zxcvbn (score real por diccionario y patrones) en
+ * vez de reglas "una mayúscula + un número" — "Password1!" las cumple y
+ * es débil. Rechaza también passwords que incluyan el email/nombre del
+ * user, incluso con score alto ("casabella2026" vale 0 si gestionas Casabella).
  */
 
 let initialized = false;

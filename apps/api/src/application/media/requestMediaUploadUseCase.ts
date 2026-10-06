@@ -2,12 +2,6 @@ import { createId } from '@paralleldrive/cuid2';
 import type { MediaRepository } from '../../domain/repositories/mediaRepository.js';
 import type { MediaStorage } from '../../domain/services/mediaStorage.js';
 
-/**
- * Reserva un `mediaAsset` como "unused" + firma la PUT URL de R2 para que
- * el browser suba el binario directo al bucket.
- *
- * Convención de key: `<restaurantSlug>/<YYYY>/<name>-<shortId>.<ext>`.
- */
 export interface RequestMediaUploadInput {
   restaurantId: string;
   restaurantSlug: string;
@@ -32,6 +26,7 @@ export class RequestMediaUploadUseCase {
   ) {}
 
   async execute(input: RequestMediaUploadInput): Promise<RequestMediaUploadResult> {
+    // Convención del bucket: `<restaurantSlug>/<YYYY>/<name>-<shortId>.<ext>`.
     const { name, extension } = this.storage.normalizeFilename(input.filename);
     const year = new Date().getFullYear();
     const shortId = createId().slice(0, 8);

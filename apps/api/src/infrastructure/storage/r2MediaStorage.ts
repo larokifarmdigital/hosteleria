@@ -2,16 +2,8 @@ import { AwsClient } from 'aws4fetch';
 import type { MediaStorage } from '../../domain/services/mediaStorage.js';
 import type { Env } from '../../env.js';
 
-/**
- * Impl del `MediaStorage` sobre Cloudflare R2.
- *
- * **Dos APIs conviven**:
- *  1. `env.MEDIA` (R2 binding nativo) → `head`/`delete` directo desde el Worker.
- *  2. `aws4fetch` → genera presigned PUT URLs (el binding nativo no las soporta).
- *
- * El `AwsClient` se cachea por isolate — construirlo en cada request
- * desperdicia CPU time.
- */
+// `env.MEDIA` (R2 binding) para head/delete; aws4fetch para firmar PUT URLs
+// (el binding nativo no las soporta). El cliente se cachea por isolate.
 let _s3Client: AwsClient | null = null;
 
 export class R2MediaStorage implements MediaStorage {

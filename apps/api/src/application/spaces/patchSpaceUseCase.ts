@@ -14,14 +14,6 @@ export class MustHaveDefaultSpaceError extends Error {
   constructor() { super('must_have_default_space'); this.name = 'MustHaveDefaultSpaceError'; }
 }
 
-/**
- * Patch de un space.
- *
- *  - Si `state=published`, guarda snapshot combinando campos del body con los existentes.
- *  - Si `isDefault=true`, limpia default de los otros spaces.
- *  - Si `isDefault=false`, requiere que haya otro space con `isDefault=true` (invariante).
- *  - Si `schedule` viene, reemplaza TODO el schedule del space.
- */
 export interface PatchSpaceInput {
   name?: string;
   type?: SpaceType;
@@ -42,7 +34,7 @@ export class PatchSpaceUseCase {
     const s = await this.spaces.findById(spaceId);
     if (!s || s.restaurantId !== restaurantId) throw new SpaceNotFoundError(spaceId);
 
-    // Guard: no permitir dejar al restaurant sin default space.
+    // Invariante: siempre debe quedar exactamente 1 space default por restaurant.
     if (input.isDefault === false) {
       const siblings = await this.spaces.listByRestaurantId(restaurantId);
       const otherDefault = siblings.some(x => x.id !== spaceId && x.isDefault);
@@ -62,10 +54,8 @@ export class PatchSpaceUseCase {
 
     await this.spaces.update(spaceId, patch, actorId);
 
-    // Promover a default único si procede.
     if (input.isDefault === true) await this.spaces.clearDefaultsExcept(restaurantId, spaceId);
 
-    // Snapshot al publicar.
     if (input.state === 'published') {
       const snap: SpaceSnapshot = {
         hero: input.hero ?? s.hero,
@@ -76,7 +66,6 @@ export class PatchSpaceUseCase {
       await this.spaces.saveSnapshot(spaceId, snap);
     }
 
-    // Reemplazo del schedule (atómico en el adapter).
     if (input.schedule !== undefined) await this.spaces.replaceSchedule(spaceId, input.schedule);
 
     return (await this.spaces.findById(spaceId))!;

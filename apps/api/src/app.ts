@@ -23,16 +23,9 @@ import type { AppBindings } from './interface/http/types.js';
 /**
  * Hono app principal — se monta como fetch handler del Worker.
  *
- * **Convenciones**:
- * - `c.env` → bindings y secrets de Cloudflare (ver `src/env.ts`).
- * - `c.get('env')` / `c.get('user')` / `c.get('session')` → helpers tipados
- *   setteados por middleware (ver `AuthVars` en `auth/middleware.ts`).
- * - Rutas montadas en root (`/auth/login`, `/restaurants`, etc.).
- *   El Worker recibe el path tal cual lo pide el cliente.
- *
- * **Cómo añadir un endpoint**: crear `src/<recurso>/route.ts` que exporte
- * `createXxxRoutes()` devolviendo una sub-app Hono, y añadir una línea
- * `app.route('/xxx', createXxxRoutes())` abajo.
+ * Para añadir un endpoint: crear `src/interface/http/routes/<recurso>Routes.ts`
+ * con un `createXxxRoutes()` que devuelva una sub-app Hono, y añadir una
+ * línea `app.route('/xxx', createXxxRoutes())` más abajo.
  */
 export function createApp() {
   const app = new Hono<AppBindings>();
@@ -40,16 +33,13 @@ export function createApp() {
   // ─── Middlewares globales ──────────────────────────────────────────
   app.use('*', logger());
 
-  // Expone `c.env` también via `c.get('env')` para compatibilidad con
-  // helpers legacy que esperan recibir el env como Variable. Nuevo código
-  // puede usar `c.env` directamente.
+  // Compat con helpers que leen `c.get('env')` en vez de `c.env`.
   app.use('*', async (c, next) => {
     c.set('env', c.env);
     await next();
   });
 
-  // CORS — origin dinámico porque leemos ALLOWED_ORIGIN de c.env, que
-  // solo existe en el context, no en module scope.
+  // ALLOWED_ORIGIN vive en `c.env`, por eso la función `origin` dinámica.
   app.use('*', cors({
     origin: (origin, c) => {
       const allowed = (c.env.ALLOWED_ORIGIN ?? '').split(',').map((s: string) => s.trim());
@@ -60,16 +50,11 @@ export function createApp() {
     allowHeaders: ['Content-Type', 'Authorization']
   }));
 
-  // Cablea el container (DI) una vez por request.
   app.use('*', withContainer);
-
-  // Lee cookie de sesión Lucia y setea user/session en context.
   app.use('*', validateSession);
-
-  // Captura excepciones a Sentry con context (user, path, method).
   app.use('*', sentryMiddleware());
 
-  // Rate limit global — se saltan rutas con su propio limiter o públicas.
+  // `auth/*` tiene limiters propios más estrictos; health/docs son públicos.
   const globalLimiter = rateLimit({ bucket: 'global', limit: 100, windowSeconds: 60 });
   app.use('*', async (c, next) => {
     const path = c.req.path;

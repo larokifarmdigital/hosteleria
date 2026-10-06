@@ -2,16 +2,6 @@ import type { RestaurantRepository } from '../../domain/repositories/restaurantR
 import type { LanguageRepository } from '../../domain/repositories/languageRepository.js';
 import type { Restaurant } from '../../domain/models/restaurant.js';
 
-/**
- * Crea un restaurante + sus locales activos en una operación atómica.
- *
- * Flujo:
- *  1. Resuelve códigos ISO (`es`, `ca`, …) a `language_id` via LanguageRepository.
- *     Si alguno no existe, lanza `LanguageNotFoundError`.
- *  2. Asegura que `defaultLocale` esté en `activeLocales` (invariant del dominio).
- *  3. Delega al repo `createWithLocales`, que valida slug único y hace el
- *     INSERT en 1 transacción.
- */
 export interface CreateRestaurantInput {
   slug: string;
   name: string;

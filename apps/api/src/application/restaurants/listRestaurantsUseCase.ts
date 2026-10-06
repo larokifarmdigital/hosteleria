@@ -3,14 +3,6 @@ import type { UserRepository } from '../../domain/repositories/userRepository.js
 import type { Restaurant } from '../../domain/models/restaurant.js';
 import type { SessionUser } from '../../domain/models/user.js';
 
-/**
- * Lista los restaurantes a los que el user autenticado tiene acceso.
- *
- *  - `admin` → ve todos (`listAccessibleBy(null)`).
- *  - `editor` → solo los que están en `user_restaurants` (consulta ids).
- *
- * Si el editor no tiene ningún restaurant asignado, el repo devuelve `[]`.
- */
 export class ListRestaurantsUseCase {
   constructor(
     private readonly restaurants: RestaurantRepository,

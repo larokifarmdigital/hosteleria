@@ -5,10 +5,6 @@ import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import { cacheHeaders } from '../../../middleware/cache.js';
 import type { AppBindings } from '../types.js';
 
-/**
- * Rutas thin de idiomas. GET es pública para cualquier user autenticado;
- * mutaciones son admin only.
- */
 export function createLanguagesRoutes() {
   const app = new Hono<AppBindings>();
   app.use('*', requireAuth);

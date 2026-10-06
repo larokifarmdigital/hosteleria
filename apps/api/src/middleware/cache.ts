@@ -2,28 +2,15 @@ import { createHash } from 'node:crypto';
 import { createMiddleware } from 'hono/factory';
 import type { Env } from '../env.js';
 
-/**
- * Middlewares de caché HTTP.
- *
- * Dos piezas conviven:
- *  - `cacheHeaders({ maxAge, swr })` → cachea GET en el browser.
- *  - `noCache` → impide cachear (para endpoints sensibles de sesión).
- */
-
 export interface CacheOpts {
   maxAge: number;
   swr?: number;
 }
 
 /**
- * Middleware para GET: el browser cachea la respuesta `maxAge` segundos
- * (y hasta `maxAge + swr` segundos la sirve mientras revalida en background).
- * Además emite un `ETag` del hash del body: si el cliente ya tiene esa
- * versión, respondemos **304 Not Modified** sin body.
- *
- * Dónde se usa:
- *  - `routes/languages.ts` → listado de idiomas (cambia poco, cache 60s).
- *  - `routes/restaurants.ts` → listado y detalle (cache 30s).
+ * `Cache-Control: private, max-age=…, stale-while-revalidate=…` + ETag del
+ * body. Si el cliente envía `If-None-Match` coincidente devolvemos 304
+ * sin body.
  */
 export function cacheHeaders(opts: CacheOpts) {
   const { maxAge, swr = 0 } = opts;
@@ -51,13 +38,7 @@ export function cacheHeaders(opts: CacheOpts) {
   });
 }
 
-/**
- * Fuerza "no cachear". Para endpoints que devuelven estado sensible del
- * usuario actual, donde una respuesta vieja = bug.
- *
- * Dónde se usa:
- *  - `routes/auth.ts` → `GET /auth/session` y `GET /auth/sessions`.
- */
+/** Para endpoints de estado del user actual: una respuesta vieja = bug. */
 export const noCache = createMiddleware<{ Bindings: Env; Variables: Record<string, unknown> }>(async (c, next) => {
   await next();
   c.res.headers.set('Cache-Control', 'no-store, must-revalidate');

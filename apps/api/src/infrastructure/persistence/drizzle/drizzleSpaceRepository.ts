@@ -11,7 +11,7 @@ export class DrizzleSpaceRepository implements SpaceRepository {
 
   private get db() { return getDb(this.env.DATABASE_URL); }
 
-  /** Carga el schedule compuesto (una fila por turno → agrupamos por día). */
+  /** `space_schedule` guarda una fila por turno — las agrupamos por día aquí. */
   private async loadSchedule(spaceId: string): Promise<ScheduleDay[]> {
     const rows = await this.db
       .select()

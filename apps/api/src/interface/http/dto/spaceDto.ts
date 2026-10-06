@@ -1,10 +1,8 @@
 import type { Space } from '../../../domain/models/space.js';
 
-/**
- * Serializa `Space` del dominio al shape público. Mantiene el shape que
- * ya consume el backoffice: schedule por día de la semana, counts
- * (dishesCount/winesCount/galleryCount) placeholder en 0 hasta cablear.
- */
+// `schedule` se expande a los 7 días (vacíos si no hay turnos) porque la
+// UI del backoffice itera siempre la semana completa. Counts a 0 hasta
+// que crucemos los repos de dishes/wines/media.
 export function spaceToDto(s: Space) {
   const schedule = (['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const).map(day => ({
     day,

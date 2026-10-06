@@ -1,15 +1,6 @@
 import type { SpaceRepository } from '../../domain/repositories/spaceRepository.js';
 import { SpaceSlugTakenError, type Space, type SpaceType } from '../../domain/models/space.js';
 
-/**
- * Crea un space dentro de un restaurant.
- *
- *  - Slug único por restaurant (lanza `SpaceSlugTakenError` si colisiona).
- *  - Si es el primer space del restaurant, se fuerza `isDefault = true`.
- *  - Si viene `isDefault=true`, se quita el default a los demás (invariante:
- *    siempre debe haber exactamente 1 default por restaurant).
- *  - `order` = nº de spaces existentes (siguiente en la lista).
- */
 export interface CreateSpaceInput {
   slug: string;
   name: string;
@@ -25,6 +16,9 @@ export class CreateSpaceUseCase {
     const existing = await this.spaces.findByRestaurantAndSlug(restaurantId, input.slug);
     if (existing) throw new SpaceSlugTakenError(input.slug);
 
+    // Invariante: cada restaurant tiene exactamente 1 space default. El
+    // primero se marca forzosamente; los siguientes solo si el body lo pide
+    // (y entonces desplazan al anterior).
     const currentCount = await this.spaces.countByRestaurant(restaurantId);
     let isDefault = input.isDefault;
     if (currentCount === 0) isDefault = true;

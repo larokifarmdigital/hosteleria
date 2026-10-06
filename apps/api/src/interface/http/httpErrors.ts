@@ -1,12 +1,6 @@
 /**
- * Mapea errores de dominio → códigos HTTP + mensaje.
- *
- * Esto vive en la capa HTTP (no en el dominio) a propósito: el dominio
- * no sabe que existe HTTP. Si mañana añadimos otra capa (CLI, cron,
- * webhook), reusa los mismos UCs y mapea excepciones a su manera.
- *
- * El Hono `onError` captura cualquier excepción no manejada; aquí
- * centralizamos la traducción.
+ * Mapper único de errores de dominio → HTTP. Vive aquí (no en el dominio)
+ * para que un CLI o cron pueda reusar los UCs sin arrastrar HTTPException.
  */
 import { HTTPException } from 'hono/http-exception';
 import type { Context } from 'hono';
@@ -53,11 +47,7 @@ import {
 import { CannotDeleteSelfError } from '../../application/users/deleteUserUseCase.js';
 import { MustHaveDefaultSpaceError } from '../../application/spaces/patchSpaceUseCase.js';
 
-/**
- * Convierte una excepción de dominio en HTTPException (si procede).
- * Devuelve `null` si no corresponde a ninguna categoría conocida — el
- * caller decide (típicamente dejar que Hono devuelva 500 + loguear).
- */
+/** `null` cuando no reconocemos la excepción — el caller la deja escalar a 500. */
 export function mapDomainError(err: unknown): HTTPException | null {
   // ─── 400 Bad Request ────────────────────────────────────────────
   if (err instanceof UnknownLocaleError) return http400(err);
@@ -101,10 +91,7 @@ const http401 = (e: Error) => new HTTPException(401, { message: e.message });
 const http404 = (e: Error) => new HTTPException(404, { message: e.message });
 const http409 = (e: Error) => new HTTPException(409, { message: e.message });
 
-/**
- * Handler global para `app.onError`. Convierte errores de dominio a HTTP,
- * y re-lanza los que ya son HTTPException para que Hono los maneje.
- */
+/** Handler para `app.onError`: HTTPException pasa directo, dominio se mapea, resto → 500. */
 export function globalErrorHandler(err: Error, c: Context): Response {
   if (err instanceof HTTPException) return err.getResponse();
   const mapped = mapDomainError(err);

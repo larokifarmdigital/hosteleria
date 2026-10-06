@@ -13,11 +13,6 @@ import { SpaceNotFoundError } from '../../../domain/models/space.js';
 import { RestaurantNotFoundError } from '../../../domain/models/restaurant.js';
 import type { AppBindings } from '../types.js';
 
-/**
- * Rutas thin de vinos + categorías. Diferencia vs. dishes:
- *  - `wine.name` NO es i18n (nombres propios) → no hay `localesFilled`.
- *  - Dos precios separados: `priceGlass` + `priceBottle`.
- */
 export function createWinesRoutes() {
   const app = new Hono<AppBindings>();
   app.use('*', requireAuth);
@@ -121,9 +116,6 @@ async function enrichWine(c: Context<AppBindings>, wine: Wine) {
   return wineToDto(wine, cat, space, restaurant);
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Zod schemas
-// ═══════════════════════════════════════════════════════════════════
 const i18nSchema = z.record(z.string());
 
 const categoryCreateSchema = z.object({

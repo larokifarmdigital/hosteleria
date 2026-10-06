@@ -1,7 +1,7 @@
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { getDb } from './client.js';
 import { mediaAssets } from './schema/media.js';
-import { dishes, spaces, restaurants } from './schema/content.js';
+import { dishes, restaurants } from './schema/content.js';
 import type { MediaAsset, MediaUsage } from '../../../domain/models/media.js';
 import type { I18nValue } from '../../../domain/models/i18n.js';
 import type { MediaRepository } from '../../../domain/repositories/mediaRepository.js';
@@ -82,9 +82,9 @@ export class DrizzleMediaRepository implements MediaRepository {
   }
 
   /**
-   * Devuelve referencias actuales al media: dishes (FK real) +
-   * spaces.hero->>'imageAssetId' (jsonb path). Gallery queda reservado para
-   * futuro; de momento no se persiste como fila separada.
+   * `dishes.imageAssetId` es FK normal; `spaces.hero` guarda la referencia
+   * dentro del jsonb — ahí hace falta `->>` para extraerla. `gallery` queda
+   * reservado para cuando añadamos tabla de galerías.
    */
   async findReferences(id: string): Promise<{ kind: 'hero' | 'gallery' | 'dish'; refId: string }[]> {
     const [dishRows, spaceRows] = await Promise.all([

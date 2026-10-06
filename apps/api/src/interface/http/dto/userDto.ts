@@ -5,10 +5,8 @@ function initialsOf(name: string): string {
   return (parts[0]?.[0] ?? '?').toUpperCase() + (parts[1]?.[0] ?? '').toUpperCase();
 }
 
-/**
- * Serializa `User` + sus restaurantSlugs al shape público. Nunca expone
- * `passwordHash`. Para admins el campo `restaurants` es `['*']` (todos).
- */
+// `restaurants: ['*']` para admins es el "wildcard" que la UI entiende
+// como "todos" — nunca es `[]`, que significaría "sin acceso a ninguno".
 export function userToDto(user: User, restaurantSlugs: string[]) {
   return {
     id: user.id,

@@ -1,14 +1,10 @@
 /**
- * Composition root — único lugar donde se cablean las implementaciones
- * concretas (adapters) a los puertos (interfaces del dominio).
+ * Único lugar donde los puertos del dominio se cablean a sus adapters.
+ * Cambiar scrypt por argon2, o Resend por SendGrid, es cambiar una línea
+ * de este archivo — el resto del código no se entera.
  *
- * Si querés cambiar scrypt por argon2, o Resend por SendGrid, cambias UNA
- * sola línea aquí y nada más del código se entera.
- *
- * **Lifecycle**: una instancia por request. Las clases adapter son baratas
- * (solo guardan `env`), así que construir el grafo entero por request no
- * tiene coste medible. La parte cara (cliente Drizzle, cliente aws4fetch,
- * Lucia) ya está cacheada a nivel de isolate dentro de los adapters.
+ * Se construye uno por request. Los adapters solo guardan `env`; lo caro
+ * (cliente Drizzle, cliente aws4fetch, Lucia) ya está cacheado por isolate.
  */
 import type { Env } from '../../env.js';
 
@@ -111,8 +107,8 @@ export function buildContainer(env: Env) {
 
   // ─── Use cases ─────────────────────────────────────────────────
   return {
-    // raw refs — rutas pueden querer leer el repo (p.ej. middleware auth
-    // chequea user_restaurants) sin pasar por un UC
+    // Repos expuestos para rutas/middlewares que leen directo (p.ej.
+    // `requireRestaurant` consulta `user_restaurants` sin usar un UC).
     repos: {
       restaurantsRepo, usersRepo, sessionsRepo,
       spacesRepo, dishesRepo, winesRepo, mediaRepo, languagesRepo

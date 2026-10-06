@@ -1,13 +1,5 @@
 import type { I18nValue } from './i18n.js';
 
-/**
- * Entidades `Dish` + `DishCategory` — plato de la carta y su categoría.
- *
- * Un plato pertenece a UN space (una sala del restaurante) y a UNA
- * categoría dentro de esa sala. El nombre y la nota son i18n (varían
- * por idioma del contenido).
- */
-
 export interface DishCategory {
   readonly id: string;
   readonly spaceId: string;
@@ -28,7 +20,6 @@ export interface Dish {
   imageGradient: string;
 }
 
-// ─── Domain errors ───────────────────────────────────────────────
 export class DishNotFoundError extends Error {
   constructor(id: string) { super(`dish_not_found:${id}`); this.name = 'DishNotFoundError'; }
 }

@@ -9,10 +9,6 @@ import {
 } from '../../domain/models/user.js';
 import { checkPasswordStrength } from '../auth/passwordStrength.js';
 
-/**
- * Admin edita un user. Puede tocar: name, role, avatarColor, password,
- * y la lista de restaurantes asignados (si pasa a admin, se vacía la m2m).
- */
 export interface UpdateUserInput {
   name?: string;
   role?: UserRole;
@@ -49,7 +45,7 @@ export class UpdateUserUseCase {
     }
 
     const finalRole = input.role ?? u.role;
-    // Si cambian restaurantes O pasa a admin → reset m2m.
+    // Al pasar a admin vaciamos la m2m: un admin ve todo, no "tiene" restaurantes.
     if (input.restaurantSlugs !== undefined || input.role === 'admin') {
       if (finalRole === 'editor' && input.restaurantSlugs && input.restaurantSlugs.length > 0) {
         const ids = await this.resolveSlugs(input.restaurantSlugs);

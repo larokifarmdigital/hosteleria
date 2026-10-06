@@ -1,10 +1,6 @@
 import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
 import { RestaurantNotFoundError, NoSnapshotError } from '../../domain/models/restaurant.js';
 
-/**
- * Revierte los campos editables del restaurant al último `publishedSnapshot`.
- * Lanza `NoSnapshotError` si el restaurant nunca se publicó.
- */
 export class DiscardChangesUseCase {
   constructor(private readonly restaurants: RestaurantRepository) {}
 

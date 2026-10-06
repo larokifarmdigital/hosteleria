@@ -2,7 +2,6 @@ import type { SpaceRepository } from '../../domain/repositories/spaceRepository.
 import { SpaceNotFoundError, type Space } from '../../domain/models/space.js';
 import { NoSnapshotError } from '../../domain/models/restaurant.js';
 
-/** Revierte los campos editables del space al último `publishedSnapshot`. */
 export class DiscardSpaceChangesUseCase {
   constructor(private readonly spaces: SpaceRepository) {}
 

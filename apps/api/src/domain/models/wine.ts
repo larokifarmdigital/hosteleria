@@ -1,14 +1,7 @@
 import type { I18nValue } from './i18n.js';
 
-/**
- * Entidades `Wine` + `WineCategory` — vino de la carta y su categoría.
- *
- * **Diferencia clave con dish**: `wine.name` NO es i18n (los vinos son
- * nombres propios: "Vega Sicilia Único" no se traduce). El `note` sí
- * es i18n (descripción/maridaje).
- *
- * Dos precios separados: por copa y por botella (uno o ambos pueden ser null).
- */
+// A diferencia de Dish, `wine.name` NO es i18n: los vinos son nombres propios
+// ("Vega Sicilia Único" no se traduce). `note` sí es i18n (maridaje/descripción).
 
 export interface WineCategory {
   readonly id: string;
@@ -21,7 +14,7 @@ export interface Wine {
   readonly id: string;
   readonly spaceId: string;
   readonly categoryId: string;
-  name: string;              // ← NO i18n
+  name: string;
   region: string | null;
   note?: I18nValue;
   priceGlass: number | null;
@@ -31,7 +24,6 @@ export interface Wine {
   imageGradient: string;
 }
 
-// ─── Domain errors ───────────────────────────────────────────────
 export class WineNotFoundError extends Error {
   constructor(id: string) { super(`wine_not_found:${id}`); this.name = 'WineNotFoundError'; }
 }

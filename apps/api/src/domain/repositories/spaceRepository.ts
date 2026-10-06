@@ -1,11 +1,9 @@
 import type { Space, SpaceSnapshot, ScheduleDay } from '../models/space.js';
 
 /**
- * Puerto de persistencia para `Space`.
- *
- * Los spaces están nested bajo un restaurant. El `schedule` (horarios por
- * día) se persiste en una tabla aparte (`space_schedule`); el repo lo
- * compone al leer y lo reemplaza atómicamente al guardar.
+ * El schedule vive en `space_schedule` (una fila por turno) y lo compone
+ * el adapter al leer; `replaceSchedule` lo sustituye entero en una
+ * transaction para no dejar estados intermedios.
  */
 export interface SpaceRepository {
   findById(id: string): Promise<Space | null>;
@@ -26,13 +24,10 @@ export interface SpaceRepository {
 
   update(id: string, patch: Partial<Space>, actorId: string): Promise<void>;
 
-  /** Pone `isDefault=false` a todos los spaces del restaurant excepto el pasado. */
+  /** Pone `isDefault=false` a todos los spaces del restaurant salvo `keepId`. */
   clearDefaultsExcept(restaurantId: string, keepId: string | null): Promise<void>;
 
-  /** Reemplaza el schedule completo (delete all + insert new) en 1 transaction. */
   replaceSchedule(spaceId: string, schedule: ScheduleDay[]): Promise<void>;
-
   saveSnapshot(id: string, snapshot: SpaceSnapshot): Promise<void>;
-
   deleteById(id: string): Promise<void>;
 }

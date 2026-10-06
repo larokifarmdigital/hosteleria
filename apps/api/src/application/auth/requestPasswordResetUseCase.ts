@@ -4,12 +4,9 @@ import type { EmailSender } from '../../domain/services/emailSender.js';
 import { passwordResetTemplate } from '../../email/templates.js';
 
 /**
- * Pide un reset de password — idempotente, no revela si el email está en BD.
- *
- * Si el user existe:
- *  1. Invalida todos los tokens `password_reset` previos (solo el último sirve).
- *  2. Genera un nuevo token con TTL 1h.
- *  3. Envía email con el link `appUrl/reset-password?token=…`.
+ * Idempotente: siempre resuelve sin lanzar — no filtramos si el email
+ * está en BD. Al emitir un nuevo token se invalidan los previos para
+ * que solo el último sirva (seguridad en caso de reenvío).
  */
 export class RequestPasswordResetUseCase {
   constructor(
@@ -21,7 +18,7 @@ export class RequestPasswordResetUseCase {
 
   async execute(emailAddress: string): Promise<void> {
     const user = await this.users.findByEmail(emailAddress);
-    if (!user) return; // silencio total — no filtramos si el email existe
+    if (!user) return;
 
     await this.tokens.invalidateAll(user.id, 'password_reset');
     const token = await this.tokens.create({
@@ -31,7 +28,6 @@ export class RequestPasswordResetUseCase {
     });
     const resetUrl = `${this.appUrl}/reset-password?token=${token}`;
     const tpl = passwordResetTemplate({ name: user.name, resetUrl });
-    // Fire-and-forget: no bloqueamos la response.
     void this.email
       .send({ to: user.email, ...tpl })
       .catch(err => console.error('[auth] forgot email failed:', err));

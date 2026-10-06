@@ -7,16 +7,6 @@ import { EmailTakenError, WeakPasswordError, type User, type UserRole } from '..
 import { checkPasswordStrength } from '../auth/passwordStrength.js';
 import { welcomeTemplate } from '../../email/templates.js';
 
-/**
- * Admin crea un user del backoffice.
- *
- *  - Si viene `password`: valida fuerza y hashea → user puede loguearse directamente.
- *  - Si no viene: hashea un placeholder random no-crackeable + emite token
- *    `password_setup` (TTL 48h) + envía welcome email con link.
- *
- * Para editors con restaurantes asignados, se resuelven slugs → ids y se
- * popula la m2m `user_restaurants`.
- */
 export interface CreateUserInput {
   email: string;
   password?: string;
@@ -48,7 +38,9 @@ export class CreateUserUseCase {
       if (!check.ok) throw new WeakPasswordError(check.reason ?? 'weak_password');
     }
 
-    // Placeholder random si no vino password — el user lo setea via welcome link.
+    // Sin password viene con welcome email: hasheamos un random impracticable
+    // de crackear para que la cuenta quede bloqueada hasta que el user
+    // consuma el token `password_setup`.
     const rawForHash = input.password ?? (crypto.randomUUID() + crypto.randomUUID());
     const passwordHash = await this.hasher.hash(rawForHash);
 

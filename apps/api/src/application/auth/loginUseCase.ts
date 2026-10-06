@@ -5,17 +5,6 @@ import type { PasswordHasher } from '../../domain/services/passwordHasher.js';
 import { InvalidCredentialsError, toSessionUser } from '../../domain/models/user.js';
 import type { SessionUser } from '../../domain/models/user.js';
 
-/**
- * Valida email+password y crea una sesión Lucia.
- *
- * Comparación timing-constant: incluso si el user no existe, corremos
- * `verify` contra `dummyHash` para no filtrar en el timing si un email
- * está en BD.
- *
- * Side effects post-login (fire-and-forget):
- *  - Enriquece la fila de session con userAgent + hash SHA-256 de la IP.
- *  - `touchLastAccess` del user (lo hace el repo).
- */
 export interface LoginMetadata {
   ip: string;
   userAgent: string | null;
@@ -34,6 +23,8 @@ export class LoginUseCase {
   ) {}
 
   async execute(input: { email: string; password: string }, metadata: LoginMetadata): Promise<LoginResult> {
+    // Timing-constant: aunque el user no exista, verificamos contra el
+    // dummyHash para no filtrar por tiempo si un email está en BD.
     const user = await this.users.findByEmail(input.email);
     const hash = user?.passwordHash ?? this.hasher.dummyHash;
     const ok = await this.hasher.verify(input.password, hash).catch(() => false);
@@ -41,7 +32,7 @@ export class LoginUseCase {
 
     const { session, cookieHeader } = await this.sessionsRepo.create(user.id);
 
-    // Enriquecer la fila con metadata (user agent + hash de IP — GDPR).
+    // IP cruda nunca se persiste (GDPR); solo SHA-256 truncado.
     const ipHash = createHash('sha256').update(metadata.ip).digest('hex').slice(0, 16);
     await this.sessionsRepo.enrichMetadata(session.id, {
       userAgent: metadata.userAgent,

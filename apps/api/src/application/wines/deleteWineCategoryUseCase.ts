@@ -1,7 +1,6 @@
 import type { WineRepository } from '../../domain/repositories/wineRepository.js';
 import { WineCategoryNotFoundError } from '../../domain/models/wine.js';
 
-/** Elimina una categoría de vinos. El repo lanza `CategoryHasWinesError` (restrict). */
 export class DeleteWineCategoryUseCase {
   constructor(private readonly wines: WineRepository) {}
 

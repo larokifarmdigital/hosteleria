@@ -1,10 +1,6 @@
 import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
 import { RestaurantNotFoundError } from '../../domain/models/restaurant.js';
 
-/**
- * Hard delete del restaurant. Las FKs encadenan a spaces, dishes y wines.
- * Lanza `RestaurantNotFoundError` si el slug no existe.
- */
 export class DeleteRestaurantUseCase {
   constructor(private readonly restaurants: RestaurantRepository) {}
 

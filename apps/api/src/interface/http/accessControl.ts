@@ -3,14 +3,8 @@ import type { Context } from 'hono';
 import type { AppBindings } from './types.js';
 
 /**
- * Resuelve qué space ids puede tocar el user actual.
- *
- * - admin → `null` (sin restricción).
- * - editor → `Set<string>` con los space ids de los restaurantes que tiene
- *   asignados en `user_restaurants`.
- *
- * Útil en las rutas de dishes/wines/media que son "flat" (sin :slug en la
- * URL) y necesitan filtrar por scope del user.
+ * Para rutas "flat" (dishes/wines/media sin `:slug` en la URL): devuelve
+ * el set de space ids que el user puede tocar, o `null` si es admin.
  */
 export async function allowedSpaceIds(c: Context<AppBindings>): Promise<Set<string> | null> {
   const user = c.get('user')!;
@@ -29,7 +23,6 @@ export async function allowedSpaceIds(c: Context<AppBindings>): Promise<Set<stri
   return ids;
 }
 
-/** Lanza 403 si el user no puede tocar `spaceId`. */
 export async function assertSpaceAccess(c: Context<AppBindings>, spaceId: string): Promise<void> {
   const allowed = await allowedSpaceIds(c);
   if (allowed === null) return;

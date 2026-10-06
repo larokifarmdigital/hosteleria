@@ -7,10 +7,6 @@ import { restaurantToDto } from '../dto/restaurantDto.js';
 import { RestaurantNotFoundError } from '../../../domain/models/restaurant.js';
 import type { AppBindings } from '../types.js';
 
-/**
- * Rutas thin de restaurantes. Validan body, delegan al use case, serializan.
- * Las excepciones de dominio las captura el `globalErrorHandler` del app.
- */
 export function createRestaurantsRoutes() {
   const app = new Hono<AppBindings>();
 
@@ -60,10 +56,6 @@ export function createRestaurantsRoutes() {
 
   return app;
 }
-
-// ═══════════════════════════════════════════════════════════════════
-// Zod schemas
-// ═══════════════════════════════════════════════════════════════════
 
 const addressSchema = z.object({
   street: z.string().optional(),

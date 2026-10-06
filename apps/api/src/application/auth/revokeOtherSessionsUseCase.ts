@@ -1,9 +1,5 @@
 import type { SessionRepository } from '../../domain/repositories/sessionRepository.js';
 
-/**
- * Cierra TODAS las sesiones del user excepto la actual.
- * Devuelve el nº de sesiones cerradas.
- */
 export class RevokeOtherSessionsUseCase {
   constructor(private readonly sessionsRepo: SessionRepository) {}
 

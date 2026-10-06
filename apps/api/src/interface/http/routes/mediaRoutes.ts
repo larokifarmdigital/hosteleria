@@ -12,12 +12,10 @@ import type { AppBindings } from '../types.js';
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'];
 const MAX_SIZE_KB = 10_000;
 
-/**
- * Rutas thin de media. Flow de subida directa (browser → R2):
- *  1. POST /media/upload-url  → responde {uploadUrl, mediaId, publicUrl}
- *  2. Browser PUT uploadUrl con el binario (presigned, 5 min)
- *  3. POST /media/:id/confirm → verifica HEAD y marca como listo
- */
+// Flujo browser → R2 directo:
+//   1. POST /media/upload-url  → {uploadUrl, mediaId, publicUrl}
+//   2. Browser PUT uploadUrl con el binario (presigned, 5 min)
+//   3. POST /media/:id/confirm → HEAD contra R2, marca listo o rollback
 export function createMediaRoutes() {
   const app = new Hono<AppBindings>();
   app.use('*', requireAuth);
@@ -104,9 +102,6 @@ export function createMediaRoutes() {
   return app;
 }
 
-/**
- * Enriquece un `MediaAsset` con `publicUrl` compuesto + restaurant lookup.
- */
 async function enrichMedia(c: Context<AppBindings>, m: MediaAsset) {
   const restaurant = m.restaurantId
     ? await c.get('container').repos.restaurantsRepo.findById(m.restaurantId)
@@ -114,7 +109,7 @@ async function enrichMedia(c: Context<AppBindings>, m: MediaAsset) {
   return mediaToDto(m, c.env.R2_PUBLIC_URL, restaurant);
 }
 
-/** Ids de restaurantes accesibles; `null` = admin sin restricción. */
+/** `null` = admin sin restricción (análogo a `allowedSpaceIds`, pero por restaurant). */
 async function allowedRestaurantIds(c: Context<AppBindings>): Promise<Set<string> | null> {
   const user = c.get('user')!;
   if (user.role === 'admin') return null;
@@ -122,7 +117,6 @@ async function allowedRestaurantIds(c: Context<AppBindings>): Promise<Set<string
   return new Set(ids);
 }
 
-/** Verifica acceso al restaurant por slug; devuelve su id. */
 async function assertRestaurantAccess(c: Context<AppBindings>, slug: string): Promise<string> {
   const r = await c.get('container').repos.restaurantsRepo.findBySlug(slug);
   if (!r) throw new RestaurantNotFoundError(slug);
@@ -131,7 +125,7 @@ async function assertRestaurantAccess(c: Context<AppBindings>, slug: string): Pr
   return r.id;
 }
 
-/** Para operaciones sobre un media existente: si tiene restaurantId, chequea. */
+/** Para un asset ya persistido: si no tiene restaurant (huérfano por SET NULL), pasa libre. */
 async function assertMediaAccess(c: Context<AppBindings>, m: MediaAsset): Promise<void> {
   if (!m.restaurantId) return;
   const allowed = await allowedRestaurantIds(c);
@@ -139,10 +133,6 @@ async function assertMediaAccess(c: Context<AppBindings>, m: MediaAsset): Promis
     throw new HTTPException(403, { message: 'restaurant_forbidden' });
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════
-// Zod schemas
-// ═══════════════════════════════════════════════════════════════════
 
 const uploadUrlSchema = z.object({
   restaurantSlug: z.string().min(1),

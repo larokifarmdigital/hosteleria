@@ -11,14 +11,6 @@ import type {
 } from '../../domain/models/restaurant.js';
 import { RestaurantNotFoundError } from '../../domain/models/restaurant.js';
 
-/**
- * Patch del restaurant.
- *
- * - Reemplaza TODA la lista de locales si viene `activeLocaleCodes`.
- * - Al pasar a `state=published`, guarda un snapshot (para `discardChanges`).
- * - Dispara el rebuild hook de la landing fire-and-forget si el restaurant
- *   está publicado (al publicar ahora, o si ya estaba publicado y se editó).
- */
 export interface PatchRestaurantInput {
   name?: string;
   domain?: string;
@@ -51,7 +43,6 @@ export class PatchRestaurantUseCase {
     const wasPublished = r.state === 'published';
     const willBePublished = input.state === 'published';
 
-    // Construir patch solo con campos realmente presentes en el input.
     const patch: Record<string, unknown> = {};
     if (input.name !== undefined) patch.name = input.name;
     if (input.domain !== undefined) patch.domain = input.domain;
@@ -70,7 +61,8 @@ export class PatchRestaurantUseCase {
 
     await this.restaurants.update(r.id, patch, actorId);
 
-    // Snapshot al publicar (combina campos actuales con los del body).
+    // Snapshot al publicar: combina los campos actuales con los del body —
+    // es lo que `discardChanges` restaurará si el editor se arrepiente.
     if (willBePublished) {
       const snapshot: RestaurantSnapshot = {
         name: input.name ?? r.name,
@@ -88,16 +80,15 @@ export class PatchRestaurantUseCase {
       await this.restaurants.saveSnapshot(r.id, snapshot, new Date());
     }
 
-    // Reemplazo de locales (delete + insert atómico).
     if (input.activeLocaleCodes) {
       const activeIds = await this.languages.resolveCodes(input.activeLocaleCodes);
       await this.restaurants.replaceLocales(r.id, activeIds);
     }
 
-    // Rebuild: pasó a publicado ahora, o estaba publicado y se tocó algún campo.
+    // Rebuild cuando: pasó a published ahora, o ya estaba published y se
+    // editó algún campo (los providers de deploy deduplican rebuilds).
     const shouldRebuild = (willBePublished && !wasPublished) || (wasPublished && input.state === undefined);
     if (shouldRebuild && r.rebuildHookUrl) {
-      // Fire-and-forget: no bloqueamos la respuesta.
       void this.rebuildHook.call(r.rebuildHookUrl, { restaurantSlug: r.slug });
     }
 

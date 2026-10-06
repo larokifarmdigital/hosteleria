@@ -1,13 +1,5 @@
 import type { I18nValue } from './i18n.js';
 
-/**
- * Entidad de dominio `Restaurant` — ficha del local.
- *
- * Un restaurant tiene 1..N `Space` asociados; cada space tiene sus platos
- * y vinos. Los campos aquí son los compartidos por todos los espacios
- * (nombre, dominio, dirección, SEO, i18n, estado de publicación).
- */
-
 export type PublishState = 'published' | 'draft' | 'warnings' | 'new';
 
 export interface Address {
@@ -37,7 +29,7 @@ export interface Seo {
   description?: I18nValue;
 }
 
-/** Snapshot de los campos editables al momento de publicar — permite discard. */
+/** Snapshot al publicar — permite revertir cambios en borrador vía `discardChanges`. */
 export type RestaurantSnapshot = Partial<Pick<Restaurant,
   'name' | 'domain' | 'logoInitial' | 'coverGradient' | 'timezone' |
   'address' | 'contact' | 'socials' | 'seo' | 'acceptsBookings' | 'showSocials'
@@ -63,13 +55,12 @@ export interface Restaurant {
   seo: Seo;
   lastPublishedAt: Date | null;
   publishedSnapshot: RestaurantSnapshot | null;
-  /** Counts derivados (los calcula la BD/repo, no se persisten). */
+  // Derivados: los calcula el repo con subqueries, no se persisten.
   spacesCount: number;
   dishesCount: number;
   winesCount: number;
 }
 
-// ─── Domain errors ───────────────────────────────────────────────
 export class SlugTakenError extends Error {
   constructor(slug: string) { super(`slug_taken:${slug}`); this.name = 'SlugTakenError'; }
 }

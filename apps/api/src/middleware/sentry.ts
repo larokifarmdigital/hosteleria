@@ -4,19 +4,9 @@ import { HTTPException } from 'hono/http-exception';
 import type { Env } from '../env.js';
 
 /**
- * Observability — reporta errores no esperados a Sentry.
- *
- * **@sentry/cloudflare** se inicializa envolviendo el handler default del
- * Worker con `Sentry.withSentry(configFn, handler)` — ver `src/index.ts`.
- * Si `SENTRY_DSN` no está seteado, `withSentry` es un no-op.
- *
- * Este middleware solo loggea excepciones con context extra (user, path,
- * method) y las re-lanza para que Sentry las capture en el wrapper.
- */
-
-/**
- * Dónde se usa:
- *  - `app.ts` → se monta como middleware global.
+ * El init de Sentry vive en `src/index.ts` (`Sentry.withSentry`). Aquí solo
+ * añadimos contexto (user, path, method) y re-lanzamos. 4xx no se reporta —
+ * son errores del cliente, no del server.
  */
 export function sentryMiddleware() {
   return createMiddleware<{ Bindings: Env; Variables: Record<string, unknown> }>(async (c, next) => {

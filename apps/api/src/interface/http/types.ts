@@ -3,19 +3,12 @@ import type { Container } from './compositionRoot.js';
 import type { SessionUser } from '../../domain/models/user.js';
 import type { Session } from '../../domain/models/session.js';
 
-/**
- * Context variables para las rutas thin.
- *
- *  - `env` — expuesto como Variable por compat con helpers legacy; el nuevo
- *    código puede usar `c.env` directamente.
- *  - `user` / `session` — las puebla `validateSession` leyendo la cookie.
- *  - `container` — cableado por `withContainer`. Las rutas tocan solo
- *    `c.get('container').<module>.<useCase>.execute(...)`.
- */
 export interface AppVars {
   env: Env;
+  /** Pueblan `validateSession` tras leer la cookie. */
   user: SessionUser | null;
   session: Session | null;
+  /** Cablea `withContainer`; las rutas tocan `c.get('container').<module>.<uc>.execute(...)`. */
   container: Container;
 }
 

@@ -1,8 +1,4 @@
-/**
- * Extrae la IP real del cliente leyendo headers de Cloudflare y proxies.
- * Devuelve 'unknown' si no detecta nada. Se usa como entrada al hash GDPR
- * en el login y al rate limiter.
- */
+/** `cf-connecting-ip` > `x-forwarded-for[0]` > `x-real-ip` > `'unknown'`. */
 export function extractIp(headers: Headers): string {
   return (
     headers.get('cf-connecting-ip')

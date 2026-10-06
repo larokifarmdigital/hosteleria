@@ -7,11 +7,6 @@ import {
 } from '../../domain/models/media.js';
 import type { I18nValue } from '../../domain/models/i18n.js';
 
-/**
- * Verifica que el browser realmente completó la subida (HEAD contra R2) y
- * marca el asset como listo. Si R2 no tiene el objeto o el tamaño difiere
- * mucho del declarado, se hace rollback (borra fila + objeto R2).
- */
 export interface ConfirmMediaUploadInput {
   width?: number;
   height?: number;

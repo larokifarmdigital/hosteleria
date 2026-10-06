@@ -6,11 +6,9 @@ import type { Env } from '../../../env.js';
 import type { TokenGenerator, TokenKind } from '../../../domain/services/tokenGenerator.js';
 
 /**
- * Impl Drizzle del `TokenGenerator`.
- *
- * El token REAL (32 bytes random base64url) solo existe en memoria el
- * instante del `create`; en BD se guarda su SHA-256. `consume` es atómico
- * dentro de una transaction para evitar doble-uso en condiciones de carrera.
+ * Token = 32 bytes random en base64url; en BD solo su SHA-256. `consume`
+ * marca `usedAt` dentro de la misma transaction en la que valida, para
+ * cerrar la ventana de doble-uso bajo requests simultáneos.
  */
 export class DrizzleTokenGenerator implements TokenGenerator {
   constructor(private env: Env) {}

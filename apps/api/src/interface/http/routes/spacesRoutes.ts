@@ -6,12 +6,6 @@ import { requireAuth, requireRestaurant } from '../middleware/authMiddleware.js'
 import { spaceToDto } from '../dto/spaceDto.js';
 import type { AppBindings } from '../types.js';
 
-/**
- * Rutas thin de spaces (nested bajo `/restaurants/:slug/spaces/*`).
- *
- * Resuelve :slug → restaurantId usando `restaurantsRepo.findBySlug` del
- * container y delega todas las operaciones a los use cases.
- */
 export function createSpacesRoutes() {
   const app = new Hono<AppBindings>();
 
@@ -75,9 +69,6 @@ export function createSpacesRoutes() {
   return app;
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Zod schemas
-// ═══════════════════════════════════════════════════════════════════
 const i18nSchema = z.record(z.string());
 
 const heroSchema = z.object({

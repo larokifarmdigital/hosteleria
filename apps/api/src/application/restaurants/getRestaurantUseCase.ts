@@ -2,10 +2,6 @@ import type { RestaurantRepository } from '../../domain/repositories/restaurantR
 import type { Restaurant } from '../../domain/models/restaurant.js';
 import { RestaurantNotFoundError } from '../../domain/models/restaurant.js';
 
-/**
- * Devuelve el restaurant por slug. Lanza `RestaurantNotFoundError` si no
- * existe — la capa HTTP la traduce a 404.
- */
 export class GetRestaurantUseCase {
   constructor(private readonly restaurants: RestaurantRepository) {}
 

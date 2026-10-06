@@ -13,13 +13,6 @@ import { SpaceNotFoundError } from '../../../domain/models/space.js';
 import { RestaurantNotFoundError } from '../../../domain/models/restaurant.js';
 import type { AppBindings } from '../types.js';
 
-/**
- * Rutas thin de platos + categorías.
- *
- * Acceso: admin pasa libre; editor filtra por `allowedSpaceIds`.
- * DTOs enriquecidos (restaurantSlug/Name + categoryName) se componen leyendo
- * repos del container.
- */
 export function createDishesRoutes() {
   const app = new Hono<AppBindings>();
   app.use('*', requireAuth);
@@ -136,9 +129,6 @@ async function enrichDish(c: Context<AppBindings>, dish: Dish) {
   return dishToDto(dish, cat, space, restaurant);
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Zod schemas
-// ═══════════════════════════════════════════════════════════════════
 const i18nSchema = z.record(z.string());
 
 const categoryCreateSchema = z.object({

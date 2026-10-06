@@ -1,16 +1,9 @@
-/**
- * Entidad `User` — cuenta del backoffice.
- *
- * `admin` ve todo (gestiona idiomas y usuarios).
- * `editor` solo ve los restaurantes asignados en `user_restaurants` (m2m).
- */
-
 export type UserRole = 'admin' | 'editor';
 
 export interface User {
   readonly id: string;
   readonly email: string;
-  passwordHash: string;      // formato `$scrypt$N=...$salt$hash`
+  passwordHash: string;
   name: string;
   role: UserRole;
   avatarColor: string;
@@ -18,10 +11,7 @@ export interface User {
   lastAccessAt: Date | null;
 }
 
-/**
- * Shape serializable del user en la sesión actual — SIN passwordHash.
- * Lo que devolvemos al cliente en `/auth/login` y `/auth/session`.
- */
+/** User sin `passwordHash` — lo que viaja al cliente. */
 export interface SessionUser {
   readonly id: string;
   readonly email: string;
@@ -30,12 +20,10 @@ export interface SessionUser {
   avatarColor: string;
 }
 
-/** Convierte un User completo al shape público (sin passwordHash). */
 export function toSessionUser(u: User): SessionUser {
   return { id: u.id, email: u.email, name: u.name, role: u.role, avatarColor: u.avatarColor };
 }
 
-// ─── Domain errors ───────────────────────────────────────────────
 export class UserNotFoundError extends Error {
   constructor(idOrEmail: string) { super(`user_not_found:${idOrEmail}`); this.name = 'UserNotFoundError'; }
 }

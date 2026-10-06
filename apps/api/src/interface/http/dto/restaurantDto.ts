@@ -1,12 +1,8 @@
 import type { Restaurant } from '../../../domain/models/restaurant.js';
 
-/**
- * Serializa `Restaurant` del dominio al shape público (snake "activeLocales"
- * y "defaultLocale" en vez de `*Code`, fechas en ISO).
- *
- * `completePercent` queda en 0 hasta que calculemos la métrica de completitud
- * (requiere datos del space default, pendiente).
- */
+// La UI espera `activeLocales` / `defaultLocale` (sin sufijo `Code`) y
+// fechas en ISO. `completePercent` queda en 0: la métrica real necesita
+// datos del space default (pendiente).
 export function restaurantToDto(r: Restaurant) {
   return {
     id: r.id,

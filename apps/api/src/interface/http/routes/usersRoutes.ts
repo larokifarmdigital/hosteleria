@@ -5,13 +5,6 @@ import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import { userToDto } from '../dto/userDto.js';
 import type { AppBindings } from '../types.js';
 
-/**
- * Rutas thin de users (admin only — gestión del team).
- *
- * Para el DTO necesitamos los slugs de los restaurantes asignados al editor;
- * los pedimos vía repos.restaurantsRepo.findById de cada id devuelto por
- * `listRestaurantIds`.
- */
 export function createUsersRoutes() {
   const app = new Hono<AppBindings>();
   app.use('*', requireAuth);
@@ -64,10 +57,6 @@ async function resolveSlugs(c: any, restaurantIds: string[]): Promise<string[]> 
   const found = await Promise.all(restaurantIds.map((id: string) => repo.findById(id)));
   return found.filter((r: any): r is NonNullable<typeof r> => !!r).map((r: any) => r.slug);
 }
-
-// ═══════════════════════════════════════════════════════════════════
-// Zod schemas
-// ═══════════════════════════════════════════════════════════════════
 
 const createSchema = z.object({
   email: z.string().email(),

@@ -5,16 +5,6 @@ import type { PasswordHasher } from '../../domain/services/passwordHasher.js';
 import { WeakPasswordError, InvalidCredentialsError } from '../../domain/models/user.js';
 import { checkPasswordStrength } from './passwordStrength.js';
 
-/**
- * Consume un token (reset o setup) + aplica el nuevo password:
- *  1. Consume el token (atómico — si válido, lo marca como usado).
- *  2. Valida fuerza del password con zxcvbn (reusa helper existente).
- *  3. Hashea con el `PasswordHasher` configurado.
- *  4. Si es `password_reset`, invalida TODAS las sesiones activas del user.
- *
- * Lanza `InvalidCredentialsError` si el token no es válido, o
- * `WeakPasswordError(reason)` si el password es débil.
- */
 export class ApplyPasswordChangeUseCase {
   constructor(
     private readonly users: UserRepository,
@@ -37,6 +27,7 @@ export class ApplyPasswordChangeUseCase {
     const passwordHash = await this.hasher.hash(input.newPassword);
     await this.users.updatePasswordHash(userId, passwordHash);
 
+    // En reset cerramos sesiones activas (seguridad); en setup no hay aún.
     if (input.kind === 'password_reset') {
       await this.sessionsRepo.invalidateUser(userId);
     }

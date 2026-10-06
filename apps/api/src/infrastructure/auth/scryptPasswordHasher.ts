@@ -3,18 +3,12 @@ import { randomBytes } from '@noble/hashes/utils.js';
 import type { PasswordHasher } from '../../domain/services/passwordHasher.js';
 
 /**
- * Impl del `PasswordHasher` basada en **scrypt** vía `@noble/hashes`.
+ * scrypt pure JS. En Workers no vale argon2 (bloquean WASM dinámico) ni
+ * PBKDF2 OWASP (cappean a 100k iteraciones). `asyncTick: 10` cede el
+ * event loop cada 10ms para no reventar el CPU budget del isolate.
  *
- * **Por qué scrypt**:
- *  - Workers no permite `WebAssembly.compile()` dinámico → argon2 (hash-wasm) rompe.
- *  - Workers cappea PBKDF2 a 100k iterations → por debajo de OWASP.
- *  - `@noble/hashes/scrypt` es pure JS, zero deps, OWASP-approved.
- *
- * **Parámetros (OWASP 2023)**: N = 2^14, r = 8, p = 1; salt 16B, dkLen 32B.
- * Costo ~50-150ms en Workers. `asyncTick: 10` cede el event loop cada 10ms
- * para no explotar el CPU budget.
- *
- * **Formato encoded**: `$scrypt$N=16384,r=8,p=1$<salt-b64>$<hash-b64>`.
+ * Formato encoded: `$scrypt$N=16384,r=8,p=1$<salt-b64>$<hash-b64>`.
+ * Parámetros OWASP 2023: N = 2^14, r = 8, p = 1; salt 16B, dkLen 32B.
  */
 
 const N = 16384;
@@ -37,10 +31,7 @@ function b64decode(b64: string): Uint8Array {
 }
 
 export class ScryptPasswordHasher implements PasswordHasher {
-  /**
-   * Hash dummy fijo (del password literal "dummy") — para verify constante
-   * cuando el user no existe. Evita filtrar por timing si un email está en BD.
-   */
+  /** Hash del password literal `"dummy"` — ver `PasswordHasher.dummyHash`. */
   readonly dummyHash =
     '$scrypt$N=16384,r=8,p=1$AAAAAAAAAAAAAAAAAAAAAA$y1dXUPwFP24QT9ADe1JOqzsJTcVRvdqINmzM2Hzgwjg';
 
@@ -54,8 +45,10 @@ export class ScryptPasswordHasher implements PasswordHasher {
 
   async verify(password: string, encoded: string): Promise<boolean> {
     try {
+      // ['', 'scrypt', 'N=16384,r=8,p=1', '<salt>', '<hash>'] — leemos
+      // los parámetros del propio hash en vez de las constantes para
+      // poder validar hashes antiguos si en el futuro cambian los defaults.
       const parts = encoded.split('$');
-      // Esperado: ['', 'scrypt', 'N=16384,r=8,p=1', '<salt>', '<hash>']
       if (parts.length !== 5 || parts[1] !== 'scrypt') return false;
 
       const params: Record<string, number> = {};
@@ -71,7 +64,7 @@ export class ScryptPasswordHasher implements PasswordHasher {
         N: params.N, r: params.r, p: params.p, dkLen: expected.length, asyncTick: 10
       });
 
-      // Comparación en tiempo constante.
+      // XOR en tiempo constante — no cortocircuitar al primer byte distinto.
       if (actual.length !== expected.length) return false;
       let diff = 0;
       for (let i = 0; i < actual.length; i++) diff |= actual[i] ^ expected[i];

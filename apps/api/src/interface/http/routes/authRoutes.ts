@@ -8,12 +8,6 @@ import { parseDeviceHint } from '../deviceHint.js';
 import { extractIp } from '../httpUtils.js';
 import type { AppBindings } from '../types.js';
 
-/**
- * Rutas thin de auth. Toda la lógica vive en los use cases del container.
- *
- * Endpoints: login, logout, GET session, GET/DELETE sessions, forgot, reset,
- * set-password. Rate limiters se componen con `rateLimit` (ya existente).
- */
 export function createAuthRoutes() {
   const app = new Hono<AppBindings>();
 
@@ -55,7 +49,6 @@ export function createAuthRoutes() {
   });
 
   // ─── GET /auth/session ────────────────────────────────────────────
-  // Devuelve el user del request actual (null si no hay sesión).
   app.get('/session', noCache, (c) => {
     const user = c.get('user');
     if (!user) return c.json({ user: null });
@@ -98,7 +91,7 @@ export function createAuthRoutes() {
   });
 
   // ─── POST /auth/forgot ────────────────────────────────────────────
-  // Idempotente — siempre 200 (no revelamos si el email existe).
+  // Siempre 200 — no revelamos si el email está en BD (lo gestiona el UC).
   app.post('/forgot',
     forgotRateLimit,
     zValidator('json', z.object({ email: z.string().email() })),
@@ -121,6 +114,7 @@ export function createAuthRoutes() {
   );
 
   // ─── POST /auth/set-password ─────────────────────────────────────
+  // Mismo flujo que /reset, pero el token es `password_setup` (welcome email).
   app.post('/set-password',
     zValidator('json', z.object({ token: z.string().min(16), newPassword: z.string().min(8).max(200) })),
     async (c) => {
@@ -135,6 +129,10 @@ export function createAuthRoutes() {
   return app;
 }
 
+/**
+ * Clave compuesta IP+email para que un atacante no pueda saturar a un email
+ * ajeno desde su IP ni gastar su propio cupo rápido.
+ */
 async function keyByIpAndBodyEmail(c: any): Promise<string> {
   const ip = extractIp(c.req.raw.headers);
   try {

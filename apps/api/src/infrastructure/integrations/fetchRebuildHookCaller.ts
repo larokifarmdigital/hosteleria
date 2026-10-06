@@ -1,15 +1,10 @@
 import type { RebuildHookCaller } from '../../domain/services/rebuildHookCaller.js';
 
-/**
- * Impl del `RebuildHookCaller` basado en `fetch`.
- *
- * Fire-and-forget: nunca lanza (loguea y sigue). Timeout 3s — si el hook
- * tarda más abandonamos; el provider sigue corriendo el rebuild del lado
- * suyo.
- */
 export class FetchRebuildHookCaller implements RebuildHookCaller {
   async call(url: string, meta?: { restaurantSlug?: string }): Promise<void> {
     const label = meta?.restaurantSlug ? `[rebuild:${meta.restaurantSlug}]` : '[rebuild]';
+    // 3s basta para que el provider acuse recibo; el rebuild real sigue
+    // corriendo de su lado aunque abortemos aquí.
     const ctrl = new AbortController();
     const timeout = setTimeout(() => ctrl.abort(), 3000);
     try {
