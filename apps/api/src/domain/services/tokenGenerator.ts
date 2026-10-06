@@ -6,6 +6,10 @@
 
 export type TokenKind = 'password_setup' | 'password_reset';
 
+export class InvalidTokenError extends Error {
+  constructor() { super('invalid_or_expired_token'); this.name = 'InvalidTokenError'; }
+}
+
 export interface TokenGenerator {
   /** Devuelve el token EN CLARO — único momento sin hashear. */
   create(input: {

@@ -2,7 +2,8 @@ import type { MediaRepository } from '../../domain/repositories/mediaRepository.
 import type { MediaStorage } from '../../domain/services/mediaStorage.js';
 import {
   MediaNotFoundError,
-  MediaUploadNotConfirmedError,
+  MediaUploadMissingError,
+  MediaUploadSizeMismatchError,
   type MediaAsset
 } from '../../domain/models/media.js';
 import type { I18nValue } from '../../domain/models/i18n.js';
@@ -27,7 +28,7 @@ export class ConfirmMediaUploadUseCase {
     if (!head) {
       // Rollback: la fila se creó al pedir upload-url pero el PUT nunca llegó.
       await this.media.deleteById(mediaId);
-      throw new MediaUploadNotConfirmedError();
+      throw new MediaUploadMissingError();
     }
 
     // Tolerancia ±50% por overhead HTTP. Diferencias mayores sugieren truncado.
@@ -36,7 +37,7 @@ export class ConfirmMediaUploadUseCase {
     if (diff > 0.5) {
       await this.media.deleteById(mediaId);
       await this.storage.delete(asset.r2Key).catch(() => void 0);
-      throw new MediaUploadNotConfirmedError();
+      throw new MediaUploadSizeMismatchError();
     }
 
     return this.media.confirmUpload(mediaId, {

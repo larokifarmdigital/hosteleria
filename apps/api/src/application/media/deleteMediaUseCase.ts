@@ -13,7 +13,11 @@ export class DeleteMediaUseCase {
     if (!m) throw new MediaNotFoundError(id);
 
     const refs = await this.media.findReferences(id);
-    if (refs.length > 0) throw new MediaHasReferencesError();
+    if (refs.length > 0) {
+      const dishesCount = refs.filter(r => r.kind === 'dish').length;
+      const spacesCount = refs.filter(r => r.kind === 'hero').length;
+      throw new MediaHasReferencesError(dishesCount, spacesCount);
+    }
 
     // Primero el objeto, luego la fila: si el DELETE de R2 falla, la fila
     // queda y el admin puede reintentar. El orden inverso dejaría un

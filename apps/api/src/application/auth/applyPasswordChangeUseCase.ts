@@ -1,8 +1,8 @@
 import type { UserRepository } from '../../domain/repositories/userRepository.js';
 import type { SessionRepository } from '../../domain/repositories/sessionRepository.js';
-import type { TokenGenerator, TokenKind } from '../../domain/services/tokenGenerator.js';
+import { InvalidTokenError, type TokenGenerator, type TokenKind } from '../../domain/services/tokenGenerator.js';
 import type { PasswordHasher } from '../../domain/services/passwordHasher.js';
-import { WeakPasswordError, InvalidCredentialsError } from '../../domain/models/user.js';
+import { WeakPasswordError } from '../../domain/models/user.js';
 import { checkPasswordStrength } from './passwordStrength.js';
 
 export class ApplyPasswordChangeUseCase {
@@ -15,7 +15,7 @@ export class ApplyPasswordChangeUseCase {
 
   async execute(input: { token: string; newPassword: string; kind: TokenKind }): Promise<void> {
     const userId = await this.tokens.consume(input.token, input.kind);
-    if (!userId) throw new InvalidCredentialsError();
+    if (!userId) throw new InvalidTokenError();
 
     const user = await this.users.findById(userId);
     const check = checkPasswordStrength({

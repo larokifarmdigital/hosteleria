@@ -24,8 +24,20 @@ export class MediaNotFoundError extends Error {
   constructor(id: string) { super(`media_not_found:${id}`); this.name = 'MediaNotFoundError'; }
 }
 export class MediaHasReferencesError extends Error {
-  constructor() { super('media_has_references'); this.name = 'MediaHasReferencesError'; }
+  readonly dishesCount: number;
+  readonly spacesCount: number;
+  constructor(dishesCount: number, spacesCount: number) {
+    super(`media_in_use:dishes=${dishesCount},spaces=${spacesCount}`);
+    this.name = 'MediaHasReferencesError';
+    this.dishesCount = dishesCount;
+    this.spacesCount = spacesCount;
+  }
 }
-export class MediaUploadNotConfirmedError extends Error {
-  constructor() { super('media_upload_not_confirmed'); this.name = 'MediaUploadNotConfirmedError'; }
+/** El PUT firmado nunca completó: R2 no tiene el objeto. */
+export class MediaUploadMissingError extends Error {
+  constructor() { super('upload_not_found_in_r2'); this.name = 'MediaUploadMissingError'; }
+}
+/** El tamaño real en R2 difiere demasiado del declarado (truncado o manipulado). */
+export class MediaUploadSizeMismatchError extends Error {
+  constructor() { super('upload_size_mismatch'); this.name = 'MediaUploadSizeMismatchError'; }
 }

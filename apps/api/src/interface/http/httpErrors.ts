@@ -1,6 +1,25 @@
 /**
- * Mapper único de errores de dominio → HTTP. Vive aquí (no en el dominio)
- * para que un CLI o cron pueda reusar los UCs sin arrastrar HTTPException.
+ * Mapper único de errores de dominio → HTTP + handler global de errores.
+ *
+ * Vive aquí (no en el dominio) para que un CLI o cron pueda reusar los
+ * UCs sin arrastrar HTTPException.
+ *
+ * **Shape del body de error** (contrato público):
+ *   `{ "error": "<code>" }` como JSON, status según la tabla de abajo.
+ *
+ * **Tabla de códigos** (los códigos vienen del `message` de la excepción):
+ *   400 — validación o invariantes:
+ *     unknown_locale:<code>, weak_password..., no_snapshot, language_in_use,
+ *     cannot_delete_last_space, cannot_delete_self, must_have_default_space,
+ *     category_has_dishes, category_has_wines, media_in_use:dishes=X,spaces=Y,
+ *     upload_not_found_in_r2, upload_size_mismatch, invalid_or_expired_token
+ *   401 — invalid_credentials, unauthorized
+ *   403 — admin_required, restaurant_forbidden, space_forbidden
+ *   404 — <entity>_not_found:<idOrSlug>, not_found
+ *   409 — slug_taken:<slug>, email_taken:<email>, language_code_taken:<code>,
+ *         space_slug_taken:<slug>
+ *   429 — rate_limited (lo emite el middleware de rate-limit)
+ *   500 — internal_error (fallback)
  */
 import { HTTPException } from 'hono/http-exception';
 import type { Context } from 'hono';
@@ -41,61 +60,70 @@ import {
 import {
   MediaNotFoundError,
   MediaHasReferencesError,
-  MediaUploadNotConfirmedError
+  MediaUploadMissingError,
+  MediaUploadSizeMismatchError
 } from '../../domain/models/media.js';
+import { InvalidTokenError } from '../../domain/services/tokenGenerator.js';
 
 import { CannotDeleteSelfError } from '../../application/users/deleteUserUseCase.js';
 import { MustHaveDefaultSpaceError } from '../../application/spaces/patchSpaceUseCase.js';
 
-/** `null` cuando no reconocemos la excepción — el caller la deja escalar a 500. */
-export function mapDomainError(err: unknown): HTTPException | null {
+/** Devuelve el status HTTP correspondiente al error, o `null` si no lo reconocemos. */
+export function statusForDomainError(err: unknown): number | null {
   // ─── 400 Bad Request ────────────────────────────────────────────
-  if (err instanceof UnknownLocaleError) return http400(err);
-  if (err instanceof WeakPasswordError) return http400(err);
-  if (err instanceof NoSnapshotError) return http400(err);
-  if (err instanceof LanguageInUseError) return http400(err);
-  if (err instanceof CannotDeleteLastSpaceError) return http400(err);
-  if (err instanceof CannotDeleteSelfError) return http400(err);
-  if (err instanceof MustHaveDefaultSpaceError) return http400(err);
-  if (err instanceof CategoryHasDishesError) return http400(err);
-  if (err instanceof CategoryHasWinesError) return http400(err);
-  if (err instanceof MediaHasReferencesError) return http400(err);
-  if (err instanceof MediaUploadNotConfirmedError) return http400(err);
+  if (err instanceof UnknownLocaleError) return 400;
+  if (err instanceof WeakPasswordError) return 400;
+  if (err instanceof NoSnapshotError) return 400;
+  if (err instanceof LanguageInUseError) return 400;
+  if (err instanceof CannotDeleteLastSpaceError) return 400;
+  if (err instanceof CannotDeleteSelfError) return 400;
+  if (err instanceof MustHaveDefaultSpaceError) return 400;
+  if (err instanceof CategoryHasDishesError) return 400;
+  if (err instanceof CategoryHasWinesError) return 400;
+  if (err instanceof MediaHasReferencesError) return 400;
+  if (err instanceof MediaUploadMissingError) return 400;
+  if (err instanceof MediaUploadSizeMismatchError) return 400;
+  if (err instanceof InvalidTokenError) return 400;
 
   // ─── 401 Unauthorized ───────────────────────────────────────────
-  if (err instanceof InvalidCredentialsError) return http401(err);
+  if (err instanceof InvalidCredentialsError) return 401;
 
   // ─── 404 Not Found ──────────────────────────────────────────────
-  if (err instanceof RestaurantNotFoundError) return http404(err);
-  if (err instanceof UserNotFoundError) return http404(err);
-  if (err instanceof SessionNotFoundError) return http404(err);
-  if (err instanceof LanguageNotFoundError) return http404(err);
-  if (err instanceof SpaceNotFoundError) return http404(err);
-  if (err instanceof DishNotFoundError) return http404(err);
-  if (err instanceof DishCategoryNotFoundError) return http404(err);
-  if (err instanceof WineNotFoundError) return http404(err);
-  if (err instanceof WineCategoryNotFoundError) return http404(err);
-  if (err instanceof MediaNotFoundError) return http404(err);
+  if (err instanceof RestaurantNotFoundError) return 404;
+  if (err instanceof UserNotFoundError) return 404;
+  if (err instanceof SessionNotFoundError) return 404;
+  if (err instanceof LanguageNotFoundError) return 404;
+  if (err instanceof SpaceNotFoundError) return 404;
+  if (err instanceof DishNotFoundError) return 404;
+  if (err instanceof DishCategoryNotFoundError) return 404;
+  if (err instanceof WineNotFoundError) return 404;
+  if (err instanceof WineCategoryNotFoundError) return 404;
+  if (err instanceof MediaNotFoundError) return 404;
 
   // ─── 409 Conflict ───────────────────────────────────────────────
-  if (err instanceof SlugTakenError) return http409(err);
-  if (err instanceof EmailTakenError) return http409(err);
-  if (err instanceof LanguageCodeTakenError) return http409(err);
-  if (err instanceof SpaceSlugTakenError) return http409(err);
+  if (err instanceof SlugTakenError) return 409;
+  if (err instanceof EmailTakenError) return 409;
+  if (err instanceof LanguageCodeTakenError) return 409;
+  if (err instanceof SpaceSlugTakenError) return 409;
 
   return null;
 }
 
-const http400 = (e: Error) => new HTTPException(400, { message: e.message });
-const http401 = (e: Error) => new HTTPException(401, { message: e.message });
-const http404 = (e: Error) => new HTTPException(404, { message: e.message });
-const http409 = (e: Error) => new HTTPException(409, { message: e.message });
-
-/** Handler para `app.onError`: HTTPException pasa directo, dominio se mapea, resto → 500. */
+/**
+ * Handler para `app.onError`. Serializa cualquier error como JSON
+ * `{ "error": "<code>" }`:
+ *   - HTTPException → `{ error: err.message }` + err.status.
+ *   - Error de dominio reconocido → mismo shape, status del mapa.
+ *   - Lo demás → 500 `{ error: "internal_error" }` y log.
+ */
 export function globalErrorHandler(err: Error, c: Context): Response {
-  if (err instanceof HTTPException) return err.getResponse();
-  const mapped = mapDomainError(err);
-  if (mapped) return mapped.getResponse();
+  if (err instanceof HTTPException) {
+    return c.json({ error: err.message }, err.status);
+  }
+  const status = statusForDomainError(err);
+  if (status !== null) {
+    return c.json({ error: err.message }, status as 400 | 401 | 403 | 404 | 409);
+  }
   console.error('[unhandled]', err);
-  return c.json({ error: 'internal_server_error' }, 500);
+  return c.json({ error: 'internal_error' }, 500);
 }
