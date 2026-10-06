@@ -1,8 +1,8 @@
 import * as Sentry from '@sentry/cloudflare';
 import type { ExecutionContext, ScheduledEvent } from '@cloudflare/workers-types';
 import { createApp } from './app.js';
-import { runCleanup } from './lib/cleanup.js';
-import { runBackup } from './lib/backup.js';
+import { runCleanup } from './scheduled/cleanup.js';
+import { runBackup } from './scheduled/backup.js';
 import { assertEnv, type Env } from './env.js';
 
 /**

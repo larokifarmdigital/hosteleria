@@ -6,17 +6,17 @@ import { sql } from 'drizzle-orm';
 import { apiReference } from '@scalar/hono-api-reference';
 import { getDb } from './db/client.js';
 import { validateSession, type AuthVars } from './auth/middleware.js';
-import { createAuthRoutes } from './routes/auth.js';
-import { createRestaurantsRoutes } from './routes/restaurants.js';
-import { createSpacesRoutes } from './routes/spaces.js';
-import { createDishesRoutes } from './routes/dishes.js';
-import { createWinesRoutes } from './routes/wines.js';
-import { createLanguagesRoutes } from './routes/languages.js';
-import { createUsersRoutes } from './routes/users.js';
-import { createMediaRoutes } from './routes/media.js';
+import { createAuthRoutes } from './auth/route.js';
+import { createRestaurantsRoutes } from './restaurants/route.js';
+import { createSpacesRoutes } from './spaces/route.js';
+import { createDishesRoutes } from './dishes/route.js';
+import { createWinesRoutes } from './wines/route.js';
+import { createLanguagesRoutes } from './languages/route.js';
+import { createUsersRoutes } from './users/route.js';
+import { createMediaRoutes } from './media/route.js';
 import { openApiSpec } from './openapi.js';
-import { sentryMiddleware } from './lib/sentry.js';
-import { rateLimit } from './lib/rate-limit.js';
+import { sentryMiddleware } from './middleware/sentry.js';
+import { rateLimit } from './middleware/rate-limit.js';
 import type { Env } from './env.js';
 
 /**
@@ -29,7 +29,7 @@ import type { Env } from './env.js';
  * - Rutas montadas en root (`/auth/login`, `/restaurants`, etc.).
  *   El Worker recibe el path tal cual lo pide el cliente.
  *
- * **Cómo añadir un endpoint**: crear `src/routes/<recurso>.ts` que exporte
+ * **Cómo añadir un endpoint**: crear `src/<recurso>/route.ts` que exporte
  * `createXxxRoutes()` devolviendo una sub-app Hono, y añadir una línea
  * `app.route('/xxx', createXxxRoutes())` abajo.
  */

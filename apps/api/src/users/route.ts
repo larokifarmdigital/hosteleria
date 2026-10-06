@@ -3,14 +3,15 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { HTTPException } from 'hono/http-exception';
 import { eq, asc, and, inArray } from 'drizzle-orm';
-import { hashPassword } from '../auth/password.js';
+import { hashPassword } from '../auth/password-hash.js';
 import { getDb } from '../db/client.js';
 import { users, userRestaurants } from '../db/schema/auth.js';
 import { restaurants } from '../db/schema/content.js';
 import { requireAuth, requireAdmin, type AuthVars } from '../auth/middleware.js';
-import { createToken } from '../lib/tokens.js';
-import { getEmailProvider, welcomeTemplate } from '../lib/email.js';
-import { checkPasswordStrength } from '../lib/password.js';
+import { createToken } from '../auth/session-tokens.js';
+import { getEmailProvider } from '../email/provider.js';
+import { welcomeTemplate } from '../email/templates.js';
+import { checkPasswordStrength } from '../auth/password-strength.js';
 
 const createSchema = z.object({
   email: z.string().email(),

@@ -10,7 +10,7 @@ import { restaurants, spaces, dishes } from '../db/schema/content.js';
 import { sql } from 'drizzle-orm';
 import { userRestaurants } from '../db/schema/auth.js';
 import { requireAuth, type AuthVars } from '../auth/middleware.js';
-import { createUploadUrl, deleteObject, normalizeFilename, headObject } from '../lib/r2.js';
+import { createUploadUrl, deleteObject, normalizeFilename, headObject } from '../storage/r2.js';
 
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'];
 const MAX_SIZE_KB = 10_000; // 10 MB

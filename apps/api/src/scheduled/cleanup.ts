@@ -1,7 +1,7 @@
 import { lt } from 'drizzle-orm';
 import { getDb } from '../db/client.js';
 import { sessions } from '../db/schema/auth.js';
-import { cleanupStaleRateLimits } from './rate-limit.js';
+import { cleanupStaleRateLimits } from '../middleware/rate-limit.js';
 import type { Env } from '../env.js';
 
 /**

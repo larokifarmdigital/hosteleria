@@ -2,18 +2,19 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { HTTPException } from 'hono/http-exception';
-import { verifyPassword, hashPassword, DUMMY_HASH } from '../auth/password.js';
+import { verifyPassword, hashPassword, DUMMY_HASH } from '../auth/password-hash.js';
 import { createHash } from 'node:crypto';
 import { eq, and, desc } from 'drizzle-orm';
 import { getDb } from '../db/client.js';
 import { users, sessions } from '../db/schema/auth.js';
 import { getLucia } from '../auth/lucia.js';
 import { requireAuth, touchLastAccess, type AuthVars } from '../auth/middleware.js';
-import { rateLimit } from '../lib/rate-limit.js';
-import { createToken, consumeToken, invalidateUserTokens } from '../lib/tokens.js';
-import { getEmailProvider, passwordResetTemplate } from '../lib/email.js';
-import { checkPasswordStrength } from '../lib/password.js';
-import { noCache } from '../lib/cache.js';
+import { rateLimit } from '../middleware/rate-limit.js';
+import { createToken, consumeToken, invalidateUserTokens } from '../auth/session-tokens.js';
+import { getEmailProvider } from '../email/provider.js';
+import { passwordResetTemplate } from '../email/templates.js';
+import { checkPasswordStrength } from '../auth/password-strength.js';
+import { noCache } from '../middleware/cache.js';
 
 /**
  * Rutas de autenticación.

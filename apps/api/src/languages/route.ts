@@ -6,7 +6,7 @@ import { eq, count, asc } from 'drizzle-orm';
 import { getDb } from '../db/client.js';
 import { languages, restaurantLocales } from '../db/schema/content.js';
 import { requireAuth, requireAdmin, type AuthVars } from '../auth/middleware.js';
-import { cacheHeaders } from '../lib/cache.js';
+import { cacheHeaders } from '../middleware/cache.js';
 
 const createSchema = z.object({
   code: z.string().min(2).max(5).regex(/^[a-z]{2}(-[a-z]{2})?$/, 'ISO 639-1 minúsculas'),

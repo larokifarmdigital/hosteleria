@@ -7,10 +7,10 @@ import { getDb } from '../db/client.js';
 import { restaurants, languages, restaurantLocales } from '../db/schema/content.js';
 import { userRestaurants } from '../db/schema/auth.js';
 import { requireAuth, requireAdmin, requireRestaurant, type AuthVars } from '../auth/middleware.js';
-import { countByRestaurant, getActiveLocaleCodes } from '../lib/derived.js';
-import { fireRebuildHook } from '../lib/rebuild.js';
-import { cacheHeaders } from '../lib/cache.js';
-import { listRestaurantsAggregated } from '../lib/restaurant-list.js';
+import { countByRestaurant, getActiveLocaleCodes } from '../restaurants/stats.js';
+import { fireRebuildHook } from '../integrations/rebuild-hook.js';
+import { cacheHeaders } from '../middleware/cache.js';
+import { listRestaurantsAggregated } from '../restaurants/repository.js';
 
 const addressSchema = z.object({
   street: z.string().optional(),

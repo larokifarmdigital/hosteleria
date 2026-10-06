@@ -1,87 +1,16 @@
-import type { Env } from '../env.js';
-
 /**
- * Envío de emails (bienvenida, reset de password).
+ * Plantillas HTML + text para los emails transaccionales.
  *
- * Dos "providers":
- *  - **Console** (default en dev si no hay `RESEND_API_KEY`) → loguea el email
- *    en consola en vez de enviarlo. Útil para desarrollar sin consumir quota.
- *  - **Resend** (prod si hay `RESEND_API_KEY`) → envía de verdad vía
- *    resend.com (3k emails/mes gratis).
+ * HTML inline (sin templating engine). Estilos simples para que se vean
+ * bien en Gmail / Apple Mail / Outlook sin romperse.
  *
- * Para añadir otro provider (ej. SendGrid, Postmark): implementar la
- * interface `EmailProvider` y añadir un case en `getEmailProvider()`.
+ * Cada template devuelve `{ subject, html, text }` listo para pasarle
+ * a `provider.send()`.
  */
 
-export interface SendEmailInput {
-  to: string;
-  subject: string;
-  html: string;
-  text: string;
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 }
-
-export interface EmailProvider {
-  send(input: SendEmailInput): Promise<{ id: string }>;
-}
-
-class ConsoleEmailProvider implements EmailProvider {
-  async send(input: SendEmailInput) {
-    console.log('\n─── 📧 EMAIL (console provider — RESEND_API_KEY vacío) ───');
-    console.log(`  To: ${input.to}`);
-    console.log(`  Subject: ${input.subject}`);
-    console.log(`  Text:\n${input.text.split('\n').map(l => '    ' + l).join('\n')}`);
-    console.log('─────────────────────────────────────────────────────────\n');
-    return { id: `console-${Date.now()}` };
-  }
-}
-
-class ResendEmailProvider implements EmailProvider {
-  constructor(private apiKey: string, private from: string) {}
-
-  async send(input: SendEmailInput) {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.apiKey}`
-      },
-      body: JSON.stringify({
-        from: this.from,
-        to: input.to,
-        subject: input.subject,
-        html: input.html,
-        text: input.text
-      })
-    });
-    const body = await res.json().catch(() => ({})) as { id?: string; error?: any };
-    if (!res.ok) throw new Error(`resend_failed: ${JSON.stringify(body.error ?? body)}`);
-    return { id: body.id ?? 'unknown' };
-  }
-}
-
-let _provider: EmailProvider | null = null;
-
-/**
- * Devuelve el provider configurado (singleton por isolate). Elige entre
- * Console y Resend según si existe `RESEND_API_KEY` en el env.
- *
- * Dónde se usa:
- *  - `routes/auth.ts` → envía email de reset de password.
- *  - `routes/users.ts` → envía email de bienvenida al crear un user.
- */
-export function getEmailProvider(env: Env): EmailProvider {
-  if (_provider) return _provider;
-  _provider = env.RESEND_API_KEY
-    ? new ResendEmailProvider(env.RESEND_API_KEY, env.EMAIL_FROM)
-    : new ConsoleEmailProvider();
-  return _provider;
-}
-
-// ─── Plantillas de email ──────────────────────────────────────────
-// HTML inline (sin dep de templating). Estilos mínimos para que se vean
-// bien en Gmail / Apple Mail / Outlook.
-//
-// Cada template devuelve `{ subject, html, text }` listo para `provider.send()`.
 
 interface WelcomeTemplateProps {
   name: string;
@@ -90,10 +19,9 @@ interface WelcomeTemplateProps {
 }
 
 /**
- * Email de bienvenida. Lo recibe un user recién creado por admin (sin
- * password), con un link para elegir su password inicial (válido 48h).
+ * Email de bienvenida — link para elegir password inicial (válido 48h).
  *
- * Dónde se usa: `routes/users.ts` → POST /users.
+ * Dónde se usa: `src/users/route.ts` → POST /users.
  */
 export function welcomeTemplate({ name, setupUrl, invitedBy }: WelcomeTemplateProps) {
   const text = `
@@ -156,10 +84,9 @@ interface ResetTemplateProps {
 }
 
 /**
- * Email de reset de password. Lo recibe un user que hizo "olvidé mi
- * contraseña", con un link para elegir una nueva (válido 1h).
+ * Email de reset de password — link para elegir una nueva (válido 1h).
  *
- * Dónde se usa: `routes/auth.ts` → POST /auth/forgot.
+ * Dónde se usa: `src/auth/route.ts` → POST /auth/forgot.
  */
 export function passwordResetTemplate({ name, resetUrl }: ResetTemplateProps) {
   const text = `
@@ -208,8 +135,4 @@ Si no has sido tú, ignora este email. Tu contraseña actual sigue siendo válid
 `.trim();
 
   return { subject: 'Restablecer contraseña — Hosteleria Studio', html, text };
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 }
