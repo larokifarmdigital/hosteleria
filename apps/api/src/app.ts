@@ -12,9 +12,9 @@ import { createRestaurantsRoutes } from './interface/http/routes/restaurantsRout
 import { createSpacesRoutes } from './interface/http/routes/spacesRoutes.js';
 import { createDishesRoutes } from './interface/http/routes/dishesRoutes.js';
 import { createWinesRoutes } from './interface/http/routes/winesRoutes.js';
-import { createLanguagesRoutes } from './languages/route.js';
-import { createUsersRoutes } from './users/route.js';
-import { createMediaRoutes } from './media/route.js';
+import { createLanguagesRoutes } from './interface/http/routes/languagesRoutes.js';
+import { createUsersRoutes } from './interface/http/routes/usersRoutes.js';
+import { createMediaRoutes } from './interface/http/routes/mediaRoutes.js';
 import { openApiSpec } from './openapi.js';
 import { sentryMiddleware } from './middleware/sentry.js';
 import { rateLimit } from './middleware/rate-limit.js';
