@@ -9,7 +9,9 @@ import type { Space, SpaceSnapshot, ScheduleDay } from '../models/space.js';
  */
 export interface SpaceRepository {
   findById(id: string): Promise<Space | null>;
+  findByRestaurantAndSlug(restaurantId: string, slug: string): Promise<Space | null>;
   listByRestaurantSlug(slug: string): Promise<Space[]>;
+  listByRestaurantId(restaurantId: string): Promise<Space[]>;
   countByRestaurant(restaurantId: string): Promise<number>;
 
   create(input: {
@@ -19,9 +21,13 @@ export interface SpaceRepository {
     type: Space['type'];
     descriptor: string;
     isDefault: boolean;
+    order: number;
   }): Promise<Space>;
 
   update(id: string, patch: Partial<Space>, actorId: string): Promise<void>;
+
+  /** Pone `isDefault=false` a todos los spaces del restaurant excepto el pasado. */
+  clearDefaultsExcept(restaurantId: string, keepId: string | null): Promise<void>;
 
   /** Reemplaza el schedule completo (delete all + insert new) en 1 transaction. */
   replaceSchedule(spaceId: string, schedule: ScheduleDay[]): Promise<void>;

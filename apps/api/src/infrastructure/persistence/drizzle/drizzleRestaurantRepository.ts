@@ -1,7 +1,8 @@
 import { sql, eq } from 'drizzle-orm';
 import { getDb } from './client.js';
-import { restaurants, restaurantLocales } from './schema/content.js';
+import { restaurants, restaurantLocales, languages } from './schema/content.js';
 import type { Restaurant, RestaurantSnapshot } from '../../../domain/models/restaurant.js';
+import { UnknownLocaleError } from '../../../domain/models/restaurant.js';
 import { SlugTakenError } from '../../../domain/models/restaurant.js';
 import type { RestaurantRepository } from '../../../domain/repositories/restaurantRepository.js';
 import type { Env } from '../../../env.js';
@@ -125,6 +126,13 @@ export class DrizzleRestaurantRepository implements RestaurantRepository {
     if (patch.socials !== undefined) updates.socials = patch.socials;
     if (patch.seo !== undefined) updates.seo = patch.seo;
     if (patch.lastPublishedAt !== undefined) updates.lastPublishedAt = patch.lastPublishedAt;
+
+    // Cambio de defaultLocaleCode → resolver id en la tabla languages.
+    if (patch.defaultLocaleCode !== undefined) {
+      const lang = await this.db.query.languages.findFirst({ where: eq(languages.code, patch.defaultLocaleCode) });
+      if (!lang) throw new UnknownLocaleError(patch.defaultLocaleCode);
+      updates.defaultLocaleId = lang.id;
+    }
 
     await this.db.update(restaurants).set(updates).where(eq(restaurants.id, id));
   }

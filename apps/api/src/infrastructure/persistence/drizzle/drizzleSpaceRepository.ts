@@ -1,4 +1,4 @@
-import { eq, asc, count } from 'drizzle-orm';
+import { eq, and, ne, asc, count } from 'drizzle-orm';
 import { getDb } from './client.js';
 import { spaces, spaceSchedule, restaurants } from './schema/content.js';
 import type { Space, SpaceSnapshot, ScheduleDay } from '../../../domain/models/space.js';
@@ -32,11 +32,23 @@ export class DrizzleSpaceRepository implements SpaceRepository {
     return rowToSpace({ ...row, schedule: await this.loadSchedule(id) });
   }
 
+  async findByRestaurantAndSlug(restaurantId: string, slug: string): Promise<Space | null> {
+    const row = await this.db.query.spaces.findFirst({
+      where: and(eq(spaces.restaurantId, restaurantId), eq(spaces.slug, slug))
+    });
+    if (!row) return null;
+    return rowToSpace({ ...row, schedule: await this.loadSchedule(row.id) });
+  }
+
   async listByRestaurantSlug(slug: string): Promise<Space[]> {
     const r = await this.db.query.restaurants.findFirst({ where: eq(restaurants.slug, slug) });
     if (!r) return [];
+    return this.listByRestaurantId(r.id);
+  }
+
+  async listByRestaurantId(restaurantId: string): Promise<Space[]> {
     const rows = await this.db.query.spaces.findMany({
-      where: eq(spaces.restaurantId, r.id),
+      where: eq(spaces.restaurantId, restaurantId),
       orderBy: [asc(spaces.order)]
     });
     return Promise.all(rows.map(async row => rowToSpace({ ...row, schedule: await this.loadSchedule(row.id) })));
@@ -54,12 +66,20 @@ export class DrizzleSpaceRepository implements SpaceRepository {
     type: Space['type'];
     descriptor: string;
     isDefault: boolean;
+    order: number;
   }): Promise<Space> {
     const [row] = await this.db.insert(spaces).values({
       ...input,
       state: 'draft'
     }).returning();
     return rowToSpace({ ...row, schedule: [] });
+  }
+
+  async clearDefaultsExcept(restaurantId: string, keepId: string | null): Promise<void> {
+    const where = keepId
+      ? and(eq(spaces.restaurantId, restaurantId), ne(spaces.id, keepId))
+      : eq(spaces.restaurantId, restaurantId);
+    await this.db.update(spaces).set({ isDefault: false }).where(where);
   }
 
   async update(id: string, patch: Partial<Space>, actorId: string): Promise<void> {
