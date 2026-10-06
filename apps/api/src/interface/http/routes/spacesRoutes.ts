@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { HTTPException } from 'hono/http-exception';
-import { requireAuth, requireRestaurant } from '../../../auth/middleware.js';
+import { requireAuth, requireRestaurant } from '../middleware/authMiddleware.js';
 import { spaceToDto } from '../dto/spaceDto.js';
 import type { AppBindings } from '../types.js';
 

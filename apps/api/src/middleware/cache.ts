@@ -1,7 +1,6 @@
 import { createHash } from 'node:crypto';
 import { createMiddleware } from 'hono/factory';
 import type { Env } from '../env.js';
-import type { AuthVars } from '../auth/middleware.js';
 
 /**
  * Middlewares de caché HTTP.
@@ -32,7 +31,7 @@ export function cacheHeaders(opts: CacheOpts) {
     ? `private, max-age=${maxAge}, stale-while-revalidate=${swr}`
     : `private, max-age=${maxAge}`;
 
-  return createMiddleware<{ Bindings: Env; Variables: AuthVars }>(async (c, next) => {
+  return createMiddleware<{ Bindings: Env; Variables: Record<string, unknown> }>(async (c, next) => {
     await next();
     if (c.req.method !== 'GET' || c.res.status !== 200) return;
 
@@ -59,7 +58,7 @@ export function cacheHeaders(opts: CacheOpts) {
  * Dónde se usa:
  *  - `routes/auth.ts` → `GET /auth/session` y `GET /auth/sessions`.
  */
-export const noCache = createMiddleware<{ Bindings: Env; Variables: AuthVars }>(async (c, next) => {
+export const noCache = createMiddleware<{ Bindings: Env; Variables: Record<string, unknown> }>(async (c, next) => {
   await next();
   c.res.headers.set('Cache-Control', 'no-store, must-revalidate');
   c.res.headers.set('Pragma', 'no-cache');

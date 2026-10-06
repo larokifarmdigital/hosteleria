@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { requireAuth, requireAdmin, requireRestaurant } from '../../../auth/middleware.js';
+import { requireAuth, requireAdmin, requireRestaurant } from '../middleware/authMiddleware.js';
 import { cacheHeaders } from '../../../middleware/cache.js';
 import { restaurantToDto } from '../dto/restaurantDto.js';
 import { RestaurantNotFoundError } from '../../../domain/models/restaurant.js';

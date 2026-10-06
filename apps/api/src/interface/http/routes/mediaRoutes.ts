@@ -3,7 +3,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { HTTPException } from 'hono/http-exception';
 import type { Context } from 'hono';
-import { requireAuth } from '../../../auth/middleware.js';
+import { requireAuth } from '../middleware/authMiddleware.js';
 import { mediaToDto } from '../dto/mediaDto.js';
 import { MediaNotFoundError, type MediaAsset } from '../../../domain/models/media.js';
 import { RestaurantNotFoundError } from '../../../domain/models/restaurant.js';

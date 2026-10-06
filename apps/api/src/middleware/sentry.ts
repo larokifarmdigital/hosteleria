@@ -2,7 +2,6 @@ import * as Sentry from '@sentry/cloudflare';
 import { createMiddleware } from 'hono/factory';
 import { HTTPException } from 'hono/http-exception';
 import type { Env } from '../env.js';
-import type { AuthVars } from '../auth/middleware.js';
 
 /**
  * Observability — reporta errores no esperados a Sentry.
@@ -20,13 +19,13 @@ import type { AuthVars } from '../auth/middleware.js';
  *  - `app.ts` → se monta como middleware global.
  */
 export function sentryMiddleware() {
-  return createMiddleware<{ Bindings: Env; Variables: AuthVars }>(async (c, next) => {
+  return createMiddleware<{ Bindings: Env; Variables: Record<string, unknown> }>(async (c, next) => {
     try {
       await next();
     } catch (err) {
       const isExpectedHttp = err instanceof HTTPException && err.status < 500;
       if (!isExpectedHttp) {
-        const user = c.get('user');
+        const user = c.get('user') as { id: string; email: string } | null | undefined;
         Sentry.withScope((scope) => {
           scope.setTag('path', c.req.path);
           scope.setTag('method', c.req.method);

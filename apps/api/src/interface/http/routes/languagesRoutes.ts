@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { requireAuth, requireAdmin } from '../../../auth/middleware.js';
+import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import { cacheHeaders } from '../../../middleware/cache.js';
 import type { AppBindings } from '../types.js';
 

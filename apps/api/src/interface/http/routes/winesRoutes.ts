@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import type { Context } from 'hono';
-import { requireAuth } from '../../../auth/middleware.js';
+import { requireAuth } from '../middleware/authMiddleware.js';
 import { allowedSpaceIds, assertSpaceAccess } from '../accessControl.js';
 import { wineToDto } from '../dto/wineDto.js';
 import {

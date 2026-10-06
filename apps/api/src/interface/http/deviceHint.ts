@@ -1,11 +1,8 @@
 /**
  * Heurística simple para mostrar al usuario qué dispositivo usó una sesión.
- *
- * No pretende ser preciso — parsea el `User-Agent` y devuelve un texto tipo
- * "macOS · Chrome" o "iPhone · Safari". Para "cerrar sesión en otro dispositivo"
- * en la UI alcanza.
- *
- * Dónde se usa: `src/auth/route.ts` → GET /auth/sessions.
+ * Parsea el `User-Agent` y devuelve un texto tipo "macOS · Chrome".
+ * No pretende ser preciso — alcanza para la UI de "cerrar sesión en otro
+ * dispositivo".
  */
 export function parseDeviceHint(ua: string | null): string {
   if (!ua) return 'Desconocido';

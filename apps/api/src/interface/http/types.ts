@@ -1,16 +1,22 @@
 import type { Env } from '../../env.js';
 import type { Container } from './compositionRoot.js';
-import type { AuthVars } from '../../auth/middleware.js';
+import type { SessionUser } from '../../domain/models/user.js';
+import type { Session } from '../../domain/models/session.js';
 
 /**
- * Context variables para las rutas nuevas (thin).
+ * Context variables para las rutas thin.
  *
- * Extiende las de la auth antigua (`AuthVars`: env + user + session) con el
- * `container` cablado por `withContainer`. Las rutas thin solo tocan
- * `c.get('container').<module>.<useCase>.execute(...)`.
+ *  - `env` — expuesto como Variable por compat con helpers legacy; el nuevo
+ *    código puede usar `c.env` directamente.
+ *  - `user` / `session` — las puebla `validateSession` leyendo la cookie.
+ *  - `container` — cableado por `withContainer`. Las rutas tocan solo
+ *    `c.get('container').<module>.<useCase>.execute(...)`.
  */
-export type AppVars = AuthVars & {
+export interface AppVars {
+  env: Env;
+  user: SessionUser | null;
+  session: Session | null;
   container: Container;
-};
+}
 
 export type AppBindings = { Bindings: Env; Variables: AppVars };

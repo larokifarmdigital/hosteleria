@@ -3,7 +3,7 @@ import type { SessionRepository } from '../../domain/repositories/sessionReposit
 import type { TokenGenerator, TokenKind } from '../../domain/services/tokenGenerator.js';
 import type { PasswordHasher } from '../../domain/services/passwordHasher.js';
 import { WeakPasswordError, InvalidCredentialsError } from '../../domain/models/user.js';
-import { checkPasswordStrength } from '../../auth/password-strength.js';
+import { checkPasswordStrength } from './passwordStrength.js';
 
 /**
  * Consume un token (reset o setup) + aplica el nuevo password:

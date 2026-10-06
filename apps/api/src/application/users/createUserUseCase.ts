@@ -4,7 +4,7 @@ import type { PasswordHasher } from '../../domain/services/passwordHasher.js';
 import type { TokenGenerator } from '../../domain/services/tokenGenerator.js';
 import type { EmailSender } from '../../domain/services/emailSender.js';
 import { EmailTakenError, WeakPasswordError, type User, type UserRole } from '../../domain/models/user.js';
-import { checkPasswordStrength } from '../../auth/password-strength.js';
+import { checkPasswordStrength } from '../auth/passwordStrength.js';
 import { welcomeTemplate } from '../../email/templates.js';
 
 /**

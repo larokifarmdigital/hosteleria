@@ -7,7 +7,7 @@ import {
   type User,
   type UserRole
 } from '../../domain/models/user.js';
-import { checkPasswordStrength } from '../../auth/password-strength.js';
+import { checkPasswordStrength } from '../auth/passwordStrength.js';
 
 /**
  * Admin edita un user. Puede tocar: name, role, avatarColor, password,

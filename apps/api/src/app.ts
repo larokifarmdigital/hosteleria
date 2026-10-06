@@ -4,7 +4,7 @@ import { logger } from 'hono/logger';
 import { sql } from 'drizzle-orm';
 import { apiReference } from '@scalar/hono-api-reference';
 import { getDb } from './infrastructure/persistence/drizzle/client.js';
-import { validateSession } from './auth/middleware.js';
+import { validateSession } from './interface/http/middleware/authMiddleware.js';
 import { withContainer } from './interface/http/middleware/withContainer.js';
 import { globalErrorHandler } from './interface/http/httpErrors.js';
 import { createAuthRoutes } from './interface/http/routes/authRoutes.js';
