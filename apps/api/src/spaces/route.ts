@@ -1,3 +1,16 @@
+/**
+ * Rutas HTTP de espacios (salas/salones de un restaurante).
+ *
+ * Nested bajo `/restaurants/:slug/spaces/*` (ver `app.ts`).
+ *
+ * **Endpoints**:
+ *  - `GET  /restaurants/:slug/spaces`                 — listado
+ *  - `GET  /restaurants/:slug/spaces/:spaceId`        — detalle (con hero/manifesto/schedule)
+ *  - `POST /restaurants/:slug/spaces`                 — crear
+ *  - `PATCH /restaurants/:slug/spaces/:spaceId`       — editar + opcional publish
+ *  - `POST /restaurants/:slug/spaces/:spaceId/discard`— restaurar al último snapshot
+ *  - `DELETE /restaurants/:slug/spaces/:spaceId`      — borrar (debe quedar >=1)
+ */
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';

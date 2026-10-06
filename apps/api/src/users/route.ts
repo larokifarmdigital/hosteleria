@@ -1,3 +1,15 @@
+/**
+ * Rutas HTTP de usuarios del backoffice (admin only — gestión del team).
+ *
+ * **Endpoints**:
+ *  - `GET  /users`      — listado con rol + restaurantes asignados
+ *  - `POST /users`      — crear (si no se pasa password, se manda welcome email con setup link)
+ *  - `PATCH /users/:id` — editar nombre/rol/color/restaurantes/password
+ *  - `DELETE /users/:id`— borrar (cascade a sessions y user_restaurants)
+ *
+ * Todos requieren `requireAdmin`. Para que un editor edite SU propio perfil
+ * (sin tocar rol/restaurantes), ver endpoint separado en `src/auth/route.ts`.
+ */
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';

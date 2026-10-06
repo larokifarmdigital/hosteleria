@@ -1,3 +1,20 @@
+/**
+ * Schema del contenido de los restaurantes.
+ *
+ * Tablas:
+ *  - `languages` + `restaurant_locales` — idiomas globales y qué locales
+ *    tiene activo cada restaurante (m2m)
+ *  - `restaurants` — ficha del local (JSON para address/contact/socials/seo)
+ *  - `spaces` + `space_schedule` — salas del restaurante (hero + horarios)
+ *  - `dish_categories` + `dishes` — carta de comida (name i18n)
+ *  - `wine_categories` + `wines` — carta de vinos (name NO i18n)
+ *
+ * **i18n**: campos multiidioma guardan `{ es?, ca?, en?, ... }` como jsonb
+ * (ver `./i18n.ts`).
+ *
+ * **Snapshots**: `publishedSnapshot` guarda la versión publicada para que
+ * `/discard` pueda restaurar.
+ */
 import {
   pgTable,
   text,

@@ -1,3 +1,13 @@
+/**
+ * Schema de autenticación y permisos.
+ *
+ * Tablas:
+ *  - `users` — cuentas del backoffice (admin/editor)
+ *  - `sessions` — sesiones Lucia activas (cookie `hs_session`)
+ *  - `user_tokens` — tokens de un solo uso para flows por email (welcome, reset)
+ *  - `user_restaurants` — m2m: qué restaurantes puede editar un editor
+ *    (admins no tienen filas acá — pasan por rol)
+ */
 import { pgTable, text, timestamp, primaryKey, index, pgEnum } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';

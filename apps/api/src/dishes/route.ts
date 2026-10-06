@@ -1,3 +1,17 @@
+/**
+ * Rutas HTTP de platos y categorías de platos.
+ *
+ * **Endpoints**:
+ *  - `GET  /dishes`                   — listado filtrable por restaurante/categoría
+ *  - `GET  /dishes/:id`               — detalle
+ *  - `POST /dishes`                   — crear plato
+ *  - `PATCH /dishes/:id`              — editar (nombre i18n, precio, orden, imagen...)
+ *  - `DELETE /dishes/:id`             — borrar
+ *  - `GET  /dishes/categories`        — listado de categorías (filtrable por spaceId)
+ *  - `POST /dishes/categories`        — crear categoría
+ *  - `PATCH /dishes/categories/:id`   — editar categoría
+ *  - `DELETE /dishes/categories/:id`  — borrar categoría (restrict si tiene platos)
+ */
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';

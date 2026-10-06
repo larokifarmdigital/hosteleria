@@ -1,3 +1,15 @@
+/**
+ * Rutas HTTP de idiomas disponibles en el sistema.
+ *
+ * Los idiomas son globales (compartidos entre todos los restaurantes); cada
+ * restaurante elige cuáles son activos vía `restaurantLocales`.
+ *
+ * **Endpoints**:
+ *  - `GET  /languages`      — listado (público — cualquier user autenticado)
+ *  - `POST /languages`      — crear (ADMIN)
+ *  - `PATCH /languages/:id` — editar name (ADMIN)
+ *  - `DELETE /languages/:id`— borrar (ADMIN, restrict si lo usa algún restaurante)
+ */
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';

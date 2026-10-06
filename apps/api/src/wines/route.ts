@@ -1,3 +1,19 @@
+/**
+ * Rutas HTTP de vinos y categorías de vinos.
+ *
+ * **Endpoints**:
+ *  - `GET  /wines`                   — listado filtrable por restaurante/categoría
+ *  - `POST /wines`                   — crear vino
+ *  - `PATCH /wines/:id`              — editar
+ *  - `DELETE /wines/:id`             — borrar
+ *  - `GET  /wines/categories`        — listado de categorías
+ *  - `POST /wines/categories`        — crear categoría
+ *  - `DELETE /wines/categories/:id`  — borrar (restrict si tiene vinos)
+ *
+ * Diferencias vs. dishes:
+ *  - `wine.name` NO es i18n (los vinos son nombres propios).
+ *  - `wine.region` opcional, `priceGlass` + `priceBottle` por separado.
+ */
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';

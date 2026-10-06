@@ -1,3 +1,19 @@
+/**
+ * Rutas HTTP de media assets (imágenes en R2).
+ *
+ * **Flow de subida directa** (browser → R2, el Worker nunca toca el binario):
+ *   1. `POST /media/upload-url` → responde `{ uploadUrl, mediaId, publicUrl }`
+ *   2. Browser hace `PUT uploadUrl` con el binario (presigned, válido 5min)
+ *   3. `POST /media/:id/confirm` → verifica con HEAD y marca el asset como listo
+ *
+ * **Endpoints**:
+ *  - `POST /media/upload-url`      — firma URL de subida directa
+ *  - `POST /media/:id/confirm`     — confirma subida completada (post-PUT)
+ *  - `GET  /media`                 — listado filtrable (restaurante, usage, missingAlt)
+ *  - `PATCH /media/:id`            — editar alt text, usage
+ *  - `GET  /media/:id/references`  — ver qué dishes/hero/gallery usan este asset
+ *  - `DELETE /media/:id`           — borra de BD + de R2 (restrict si tiene referencias)
+ */
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
