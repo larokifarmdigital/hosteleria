@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
-import { getDb } from '../db/client.js';
-import { restaurants } from '../db/schema/content.js';
+import { getDb } from '../infrastructure/persistence/drizzle/client.js';
+import { restaurants } from '../infrastructure/persistence/drizzle/schema/content.js';
 import { countByRestaurant, getActiveLocaleCodes } from './stats.js';
 import type { RestaurantListRow } from './repository.js';
 import type { Env } from '../env.js';

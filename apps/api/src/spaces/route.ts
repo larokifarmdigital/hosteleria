@@ -16,14 +16,14 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { HTTPException } from 'hono/http-exception';
 import { eq, and, asc, count, ne } from 'drizzle-orm';
-import { getDb } from '../db/client.js';
+import { getDb } from '../infrastructure/persistence/drizzle/client.js';
 import {
   restaurants,
   spaces,
   spaceSchedule,
   dishes,
   wines
-} from '../db/schema/content.js';
+} from '../infrastructure/persistence/drizzle/schema/content.js';
 import { requireAuth, requireRestaurant, type AuthVars } from '../auth/middleware.js';
 
 const i18nSchema = z.record(z.string()); // { es: "...", ca: "...", ... }

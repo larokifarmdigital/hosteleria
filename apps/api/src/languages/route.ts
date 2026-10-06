@@ -15,8 +15,8 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { HTTPException } from 'hono/http-exception';
 import { eq, count, asc } from 'drizzle-orm';
-import { getDb } from '../db/client.js';
-import { languages, restaurantLocales } from '../db/schema/content.js';
+import { getDb } from '../infrastructure/persistence/drizzle/client.js';
+import { languages, restaurantLocales } from '../infrastructure/persistence/drizzle/schema/content.js';
 import { requireAuth, requireAdmin, type AuthVars } from '../auth/middleware.js';
 import { cacheHeaders } from '../middleware/cache.js';
 

@@ -1,6 +1,6 @@
 import { lt } from 'drizzle-orm';
-import { getDb } from '../db/client.js';
-import { sessions } from '../db/schema/auth.js';
+import { getDb } from '../infrastructure/persistence/drizzle/client.js';
+import { sessions } from '../infrastructure/persistence/drizzle/schema/auth.js';
 import { cleanupStaleRateLimits } from '../middleware/rate-limit.js';
 import type { Env } from '../env.js';
 

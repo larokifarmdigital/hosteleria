@@ -12,7 +12,8 @@ export type MediaUsage = 'hero' | 'gallery' | 'dish' | 'unused';
 
 export interface MediaAsset {
   readonly id: string;
-  readonly restaurantId: string;
+  /** Puede ser null si el restaurant fue borrado (FK ON DELETE SET NULL). */
+  readonly restaurantId: string | null;
   name: string;              // filename original normalizado
   sizeKb: number;
   width: number | null;

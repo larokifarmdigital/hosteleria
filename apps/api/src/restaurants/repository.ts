@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { getDb } from '../db/client.js';
+import { getDb } from '../infrastructure/persistence/drizzle/client.js';
 import type { Env } from '../env.js';
 
 /**

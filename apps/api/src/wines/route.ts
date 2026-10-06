@@ -19,9 +19,9 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { HTTPException } from 'hono/http-exception';
 import { eq, and, asc, inArray } from 'drizzle-orm';
-import { getDb } from '../db/client.js';
-import { restaurants, spaces, wineCategories, wines } from '../db/schema/content.js';
-import { userRestaurants } from '../db/schema/auth.js';
+import { getDb } from '../infrastructure/persistence/drizzle/client.js';
+import { restaurants, spaces, wineCategories, wines } from '../infrastructure/persistence/drizzle/schema/content.js';
+import { userRestaurants } from '../infrastructure/persistence/drizzle/schema/auth.js';
 import { requireAuth, type AuthVars } from '../auth/middleware.js';
 
 const i18nSchema = z.record(z.string());

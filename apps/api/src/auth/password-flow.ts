@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { HTTPException } from 'hono/http-exception';
-import { getDb } from '../db/client.js';
-import { users } from '../db/schema/auth.js';
+import { getDb } from '../infrastructure/persistence/drizzle/client.js';
+import { users } from '../infrastructure/persistence/drizzle/schema/auth.js';
 import { getLucia } from './lucia.js';
 import { hashPassword } from './password-hash.js';
 import { checkPasswordStrength } from './password-strength.js';

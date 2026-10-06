@@ -1,5 +1,5 @@
-import { getDb } from '../db/client.js';
-import * as schema from '../db/schema/index.js';
+import { getDb } from '../infrastructure/persistence/drizzle/client.js';
+import * as schema from '../infrastructure/persistence/drizzle/schema/index.js';
 import type { Env } from '../env.js';
 
 /**

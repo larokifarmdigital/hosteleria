@@ -4,9 +4,9 @@ import { getCookie } from 'hono/cookie';
 import { eq, and } from 'drizzle-orm';
 import type { User, Session } from 'lucia';
 import { getLucia } from './lucia.js';
-import { getDb } from '../db/client.js';
-import { userRestaurants, users as usersTable } from '../db/schema/auth.js';
-import { restaurants } from '../db/schema/content.js';
+import { getDb } from '../infrastructure/persistence/drizzle/client.js';
+import { userRestaurants, users as usersTable } from '../infrastructure/persistence/drizzle/schema/auth.js';
+import { restaurants } from '../infrastructure/persistence/drizzle/schema/content.js';
 import type { Env } from '../env.js';
 
 export type AuthVars = {

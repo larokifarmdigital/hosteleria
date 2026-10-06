@@ -4,7 +4,7 @@ import { logger } from 'hono/logger';
 import { HTTPException } from 'hono/http-exception';
 import { sql } from 'drizzle-orm';
 import { apiReference } from '@scalar/hono-api-reference';
-import { getDb } from './db/client.js';
+import { getDb } from './infrastructure/persistence/drizzle/client.js';
 import { validateSession, type AuthVars } from './auth/middleware.js';
 import { createAuthRoutes } from './auth/route.js';
 import { createRestaurantsRoutes } from './restaurants/route.js';

@@ -1,6 +1,6 @@
 import { count, eq, inArray } from 'drizzle-orm';
-import { getDb } from '../db/client.js';
-import { spaces, dishes, wines, restaurantLocales, languages } from '../db/schema/content.js';
+import { getDb } from '../infrastructure/persistence/drizzle/client.js';
+import { spaces, dishes, wines, restaurantLocales, languages } from '../infrastructure/persistence/drizzle/schema/content.js';
 import type { Env } from '../env.js';
 
 /**

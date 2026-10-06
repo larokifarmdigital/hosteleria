@@ -1,7 +1,7 @@
 import { Lucia } from 'lucia';
 import { DrizzlePostgreSQLAdapter } from '@lucia-auth/adapter-drizzle';
-import { getDb } from '../db/client.js';
-import { users, sessions } from '../db/schema/auth.js';
+import { getDb } from '../infrastructure/persistence/drizzle/client.js';
+import { users, sessions } from '../infrastructure/persistence/drizzle/schema/auth.js';
 import type { Env } from '../env.js';
 
 /**

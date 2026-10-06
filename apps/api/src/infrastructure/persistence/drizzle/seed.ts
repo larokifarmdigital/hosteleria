@@ -12,7 +12,7 @@ import { config } from 'dotenv';
 config({ path: '.env.local' });
 config({ path: '.env', override: false });
 
-import { hashPassword } from '../auth/password-hash.js';
+import { hashPassword } from '../../../auth/password-hash.js';
 import { eq } from 'drizzle-orm';
 import { getDb } from './client.js';
 import * as schema from './schema/index.js';
