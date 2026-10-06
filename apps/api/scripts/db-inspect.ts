@@ -7,12 +7,10 @@ import 'dotenv/config';
 import { config } from 'dotenv';
 config({ path: '.env.local' });
 
-import { Pool, neonConfig } from '@neondatabase/serverless';
+import { Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { sql } from 'drizzle-orm';
-import ws from 'ws';
-
-if (typeof WebSocket === 'undefined') neonConfig.webSocketConstructor = ws;
+// Node 22+ tiene WebSocket global → Neon serverless lo usa directo, sin polyfill.
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {

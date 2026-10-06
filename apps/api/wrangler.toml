@@ -25,7 +25,11 @@ port = 8787
 [vars]
 R2_BUCKET = "hostelery"
 R2_PUBLIC_URL = "https://pub-9d86f2d0333e47b099554fddec4fddfd.r2.dev"
-ALLOWED_ORIGIN = "http://localhost:4400"
+# Lista coma-separada de origins permitidos:
+#  - localhost:4400 → backoffice en dev
+#  - workers.dev    → Scalar /docs llamando a sí mismo
+#  - studio.*       → futuro backoffice en prod (cuando lo deployes)
+ALLOWED_ORIGIN = "http://localhost:4400,https://hostelery-api.larokifarmdigital.workers.dev,https://studio.hosteleria.cat"
 SENTRY_ENV = "production"
 EMAIL_FROM = "Hosteleria Studio <no-reply@hosteleria.cat>"
 APP_URL = "http://localhost:4400"
