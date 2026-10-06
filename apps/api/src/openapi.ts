@@ -327,7 +327,7 @@ const paths: Record<string, any> = {
   },
 
   // ─── Auth ───────────────────────────────────────────────────────
-  '/account/login': {
+  '/auth/login': {
     post: {
       tags: ['Auth'],
       summary: 'Login con email + password. Setea cookie `hs_session`.',
@@ -346,13 +346,13 @@ const paths: Record<string, any> = {
       }
     }
   },
-  '/account/logout': {
+  '/auth/logout': {
     post: {
       tags: ['Auth'], summary: 'Invalida sesión y limpia cookie',
       responses: { 200: ok({ type: 'object', properties: { ok: { type: 'boolean' } } }), 401: errRef('unauthorized') }
     }
   },
-  '/account/session': {
+  '/auth/session': {
     get: {
       tags: ['Auth'], summary: 'Devuelve el usuario de la sesión actual o null',
       security: [],

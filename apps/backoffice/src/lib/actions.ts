@@ -24,6 +24,7 @@ export async function loginAction(_prev: unknown, formData: FormData): Promise<{
   if (!email || !password) return { error: 'Introduce email y contraseña' };
 
   // Login directo al api (no via getApi porque necesitamos capturar Set-Cookie).
+  console.log('[loginAction] POST', `${API_URL}/auth/login`, { email });
   const res = await fetch(`${API_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -33,8 +34,17 @@ export async function loginAction(_prev: unknown, formData: FormData): Promise<{
 
   if (!res.ok) {
     const body = await res.json().catch(() => null) as { error?: string } | null;
-    return { error: body?.error === 'invalid_credentials' ? 'Email o contraseña incorrectos' : 'Error al iniciar sesión' };
+    console.log('[loginAction] FAILED', { status: res.status, body });
+    const msg =
+      res.status === 401 ? 'Email o contraseña incorrectos' :
+      res.status === 429 ? 'Demasiados intentos. Esperá un minuto.' :
+      res.status === 404 ? 'Endpoint no encontrado — revisá NEXT_PUBLIC_API_URL' :
+      res.status >= 500 ? `Error del servidor (${res.status})` :
+      `Error ${res.status}: ${body?.error ?? 'desconocido'}`;
+    return { error: msg };
   }
+
+  console.log('[loginAction] OK');
 
   // Relay: mover Set-Cookie del api al cookie store de Next.
   const setCookie = res.headers.get('set-cookie');

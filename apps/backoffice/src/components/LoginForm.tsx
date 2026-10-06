@@ -27,7 +27,7 @@ export function LoginForm() {
           name="email"
           type="email"
           required
-          defaultValue="erick@hosteleria.cat"
+          defaultValue="admin@hostelery.com"
           className="w-full rounded-[10px] border border-[color:var(--color-border)] bg-white px-3.5 py-2.5 text-[14px] text-[color:var(--color-ink)] focus:border-[color:var(--color-accent)] focus:outline-none focus:ring-[3px] focus:ring-[color:var(--accent-ring)]"
         />
       </div>
