@@ -113,7 +113,10 @@ export function buildContainer(env: Env) {
   return {
     // raw refs — rutas pueden querer leer el repo (p.ej. middleware auth
     // chequea user_restaurants) sin pasar por un UC
-    repos: { restaurantsRepo, usersRepo, sessionsRepo },
+    repos: {
+      restaurantsRepo, usersRepo, sessionsRepo,
+      spacesRepo, dishesRepo, winesRepo, mediaRepo, languagesRepo
+    },
     services: { hasher, storage },
 
     restaurants: {
