@@ -1,0 +1,20 @@
+import { z } from 'zod';
+
+export const requiredText = (max: number) =>
+  z.string().trim().min(1, 'Este campo no puede quedar vacío.').max(max, `No puede superar los ${max} caracteres.`);
+
+export const optionalText = (max: number) =>
+  z.string().trim().max(max, `No puede superar los ${max} caracteres.`);
+
+export const optionalEmail = z
+  .string()
+  .trim()
+  .refine(v => v === '' || z.string().email().safeParse(v).success, 'Escribe un email completo, por ejemplo hola@turestaurante.com.');
+
+export const optionalUrl = z
+  .string()
+  .trim()
+  .refine(v => v === '' || /^https?:\/\/[^\s.]+\.\S+$/.test(v), 'Pega el enlace completo, empezando por https://');
+
+/** Un texto por idioma, sin validación: la longitud es recomendación, no límite. */
+export const i18nValues = z.record(z.string());

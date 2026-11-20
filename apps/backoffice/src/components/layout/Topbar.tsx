@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useRestaurant, useSpace } from '@/lib/query/hooks';
+import { useRestaurants, useSpace } from '@/lib/query/hooks';
 
 interface Crumb {
   label: string;
@@ -23,8 +23,10 @@ export function Topbar() {
   const slug = match?.[1];
   const spaceId = match?.[2];
 
-  // Mismas query keys que prefetchean las páginas de detalle: no hay petición extra.
-  const { data: restaurant } = useRestaurant(slug ?? '');
+  // El nombre sale del listado, que el layout ya trae hidratado; pedir el
+  // detalle aquí lanzaría una petición extra antes de que la página lo hidrate.
+  const { data: restaurants = [] } = useRestaurants();
+  const restaurant = restaurants.find(r => r.slug === slug);
   const { data: space } = useSpace(slug ?? '', spaceId ?? '');
 
   let crumbs: Crumb[];

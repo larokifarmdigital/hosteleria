@@ -87,7 +87,10 @@ export function useDiscardRestaurant(slug: string) {
   const toastError = useErrorToast();
   return useMutation({
     mutationFn: () => api.restaurants.discard(slug),
-    onSuccess: (restaurant) => qc.setQueryData(qk.restaurants.detail(slug), restaurant),
+    onSuccess: (restaurant) => {
+      qc.setQueryData(qk.restaurants.detail(slug), restaurant);
+      qc.invalidateQueries({ queryKey: qk.restaurants.lists() });
+    },
     onError: toastError
   });
 }

@@ -30,9 +30,12 @@ const primaryStyle: React.CSSProperties = {
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
   VariantProps<typeof buttonVariants>;
 
-export function Button({ variant = 'secondary', size, className, style, ...props }: ButtonProps) {
+// `type="button"` por defecto: el de HTML es `submit`, y un botón cualquiera
+// dentro de un `<form>` (p. ej. Publicar) enviaría el formulario al pulsarlo.
+export function Button({ variant = 'secondary', size, className, style, type = 'button', ...props }: ButtonProps) {
   return (
     <button
+      type={type}
       {...props}
       style={variant === 'primary' ? { ...primaryStyle, ...style } : style}
       className={cn(buttonVariants({ variant, size }), className)}
