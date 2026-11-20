@@ -33,7 +33,7 @@ export interface Manifesto {
   text?: I18nValue;
 }
 
-export type SpaceSnapshot = Partial<Pick<Space, 'hero' | 'manifesto' | 'descriptor' | 'coverGradient'>>;
+export type SpaceSnapshot = Partial<Pick<Space, 'name' | 'hero' | 'manifesto' | 'descriptor' | 'coverGradient' | 'schedule'>>;
 
 export interface Space {
   readonly id: string;

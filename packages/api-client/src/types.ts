@@ -137,7 +137,7 @@ export interface Space {
   manifesto: Manifesto;
   schedule: ScheduleDay[];
   /** Lo último publicado; `null` si nunca se publicó. */
-  publishedSnapshot: Partial<Pick<Space, 'hero' | 'manifesto' | 'descriptor' | 'coverGradient'>> | null;
+  publishedSnapshot: Partial<Pick<Space, 'name' | 'hero' | 'manifesto' | 'descriptor' | 'coverGradient' | 'schedule'>> | null;
   galleryCount: number;
   dishesCount: number;
   winesCount: number;

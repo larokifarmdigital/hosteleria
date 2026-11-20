@@ -64,6 +64,8 @@ export class PatchSpaceUseCase {
 
     if (input.state === 'published') {
       const snap: SpaceSnapshot = {
+        name: input.name ?? s.name,
+        schedule: input.schedule ?? s.schedule,
         hero: input.hero ?? s.hero,
         manifesto: input.manifesto ?? s.manifesto,
         descriptor: input.descriptor ?? s.descriptor,
