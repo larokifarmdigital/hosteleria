@@ -10,16 +10,13 @@ import type { SessionUser } from '../../domain/models/user.js';
 import type { SessionRepository } from '../../domain/repositories/sessionRepository.js';
 import type { Env } from '../../env.js';
 
-// Cacheado por isolate: Lucia abre un pool contra la BD y no vale la pena
-// reconstruirlo por request.
-let _lucia: Lucia | null = null;
-
-function getLucia(env: Env) {
-  if (_lucia) return _lucia;
+// Sin caché por isolate: el adapter guarda la conexión, y en Workers una
+// conexión no puede pasar de una petición a otra (ver `client.ts`).
+function buildLucia(env: Env): Lucia {
   const production = env.SENTRY_ENV === 'production';
   const db = getDb(env.DATABASE_URL) as any;
   const adapter = new DrizzlePostgreSQLAdapter(db, sessions, users);
-  _lucia = new Lucia(adapter, {
+  return new Lucia(adapter, {
     sessionCookie: {
       name: 'hs_session',
       expires: false, // rolling — Lucia refresca cuando faltan < N días
@@ -36,12 +33,12 @@ function getLucia(env: Env) {
       avatarColor: attrs.avatarColor
     })
   });
-  return _lucia;
 }
 
 export class LuciaSessionRepository implements SessionRepository {
   constructor(private env: Env) {}
-  private get lucia() { return getLucia(this.env); }
+  private _lucia: Lucia | null = null;
+  private get lucia() { return (this._lucia ??= buildLucia(this.env)); }
   private get db() { return getDb(this.env.DATABASE_URL); }
 
   async validate(sessionId: string | null): Promise<{

@@ -4,6 +4,7 @@ import { createApp } from './app.js';
 import { runCleanup } from './scheduled/cleanup.js';
 import { runBackup } from './scheduled/backup.js';
 import { assertEnv, type Env } from './env.js';
+import { runWithRequestDb } from './infrastructure/persistence/drizzle/client.js';
 
 // La app se crea una vez por isolate, no por request.
 const app = createApp();
@@ -11,20 +12,20 @@ const app = createApp();
 const handler = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     assertEnv(env);
-    return app.fetch(request, env, ctx);
+    return runWithRequestDb(env.DATABASE_URL, (p) => ctx.waitUntil(p), async () => app.fetch(request, env, ctx));
   },
 
   // Los schedules deben coincidir con wrangler.toml#triggers.
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
     assertEnv(env);
     ctx.waitUntil(
-      (async () => {
+      runWithRequestDb(env.DATABASE_URL, (p) => ctx.waitUntil(p), async () => {
         if (event.cron === '0 4 * * *') {
           await runCleanup(env);
         } else if (event.cron === '0 3 * * *') {
           await runBackup(env);
         }
-      })()
+      })
     );
   }
 };
