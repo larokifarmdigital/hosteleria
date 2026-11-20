@@ -1,44 +1,35 @@
 'use client';
 
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface Props {
   locales: string[];
-  defaultLocale?: string;
-  missing?: string[];
-  onChange?: (code: string) => void;
+  value: string;
+  onChange: (code: string) => void;
+  /** Nombre visible de cada idioma; si falta, se muestra el código. */
+  names?: Record<string, string>;
 }
 
-export function LocaleTabs({ locales, defaultLocale, missing = [], onChange }: Props) {
-  const [active, setActive] = useState(defaultLocale ?? locales[0]);
-
+/** Selector de idioma del contenido. Botones con `aria-pressed`: cambian qué se ve, no son pestañas con panel propio. */
+export function LocaleTabs({ locales, value, onChange, names = {} }: Props) {
   return (
-    <div
-      role="tablist"
-      aria-label="Idiomas"
-      className="mb-7 inline-flex gap-1 rounded-[10px] border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)] p-1"
-    >
+    <div role="group" aria-label="Idioma del contenido" className="mb-6 inline-flex flex-wrap gap-1 rounded-[10px] border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)] p-1">
       {locales.map(code => {
-        const isActive = code === active;
-        const isMissing = missing.includes(code);
+        const isActive = code === value;
         return (
           <button
             key={code}
             type="button"
-            role="tab"
-            aria-selected={isActive}
-            onClick={() => {
-              setActive(code);
-              onChange?.(code);
-            }}
+            aria-pressed={isActive}
+            onClick={() => onChange(code)}
             className={cn(
-              'rounded-md px-4 py-2 text-[12.5px] font-semibold uppercase tracking-[0.02em] leading-none transition-colors',
-              isActive ? 'bg-white text-[color:var(--color-accent)] shadow-[var(--shadow-sm)]' : 'bg-transparent text-[color:var(--color-muted)] hover:text-[color:var(--color-ink)]'
+              'min-h-9 rounded-md px-4 text-[13px] font-semibold leading-none transition-colors',
+              isActive
+                ? 'bg-white text-[color:var(--color-accent)] shadow-[var(--shadow-sm)]'
+                : 'bg-transparent text-[color:var(--color-muted)] hover:text-[color:var(--color-ink)]'
             )}
           >
-            {code}
-            {isMissing && <span className="ml-1 text-[color:var(--color-warn)]">•</span>}
+            {names[code] ?? code.toUpperCase()}
           </button>
         );
       })}

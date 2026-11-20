@@ -3,7 +3,8 @@
 import { createApiClient, ApiError, type ApiClient } from '@hosteleria/api-client';
 import { reportError } from './errorHandling';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8787';
+// Mismo origen: el rewrite de next.config.ts lo reenvía al api con la cookie de sesión.
+const API_URL = '/api';
 const IS_DEV = process.env.NODE_ENV === 'development';
 
 /** Cliente del API para el browser. `X-Trace-Id` y `credentials: 'include'`

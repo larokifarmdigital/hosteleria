@@ -1,172 +1,125 @@
 'use client';
 
-import { Eye, Check } from 'lucide-react';
-import { Button } from '@/components/shared/Button';
-import { Pill } from '@/components/shared/Pill';
-import { Callout } from '@/components/shared/Callout';
-import { FichaTabs } from '@/components/restaurant/FichaTabs';
+import { useState } from 'react';
+import { DataList } from '@/components/shared/DataList';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { ReadOnlyNotice } from '@/components/shared/ReadOnlyNotice';
+import { Section } from '@/components/shared/Section';
+import { StatePill } from '@/components/shared/StatePill';
 import { LangList } from '@/components/restaurant/LangList';
-import { SpaceCard, AddSpaceCard } from '@/components/restaurant/SpaceCard';
+import { SpaceCard } from '@/components/restaurant/SpaceCard';
 import { LocaleTabs } from '@/components/space/LocaleTabs';
 import { formatDate } from '@/lib/utils';
-import { useRestaurant, useSpaces } from '@/lib/query/hooks';
+import { useLanguages, useRestaurant, useSpaces } from '@/lib/query/hooks';
 
 export function RestaurantHubPageClient({ slug }: { slug: string }) {
   const { data: restaurant } = useRestaurant(slug);
   const { data: spaces = [] } = useSpaces(slug);
+  const { data: languages = [] } = useLanguages();
+  const [locale, setLocale] = useState<string | null>(null);
 
+  // Los datos llegan hidratados desde el servidor; esto solo cubre una caché vaciada.
   if (!restaurant) return null;
+
+  const activeLocale = locale ?? restaurant.defaultLocale;
+  const localeNames = Object.fromEntries(languages.map(l => [l.code, l.name]));
+  const { address, contact, socials, seo } = restaurant;
 
   return (
     <>
-      <div className="mb-6 flex flex-wrap items-center gap-4 rounded-[var(--radius)] border border-[color:var(--color-border)] bg-white p-5 shadow-[var(--shadow-sm)]">
-        <div className="flex items-center gap-3.5">
-          <div
-            className="grid h-12 w-12 place-items-center rounded-[14px] text-[17px] font-bold text-white"
-            style={{
-              background: 'var(--gradient-copper)',
-              boxShadow: 'inset 0 1px 0 rgb(255 255 255 / 0.26), 0 2px 6px rgb(74 36 22 / 0.24)'
-            }}
-          >
-            {restaurant.logoInitial}
-          </div>
-          <div className="flex flex-col">
-            <h1 className="m-0 text-[18px] font-bold tracking-[-0.01em]">{restaurant.name}</h1>
-            <span className="slug tabular mt-0.5 text-[12px]">{restaurant.slug} · {restaurant.domain}</span>
-          </div>
-          <Pill variant={restaurant.state === 'published' ? 'ok' : 'warn'} dot className="ml-2">
-            {restaurant.state === 'published' ? 'Publicado' : 'Borrador'}
-          </Pill>
+      <div className="mb-6 flex flex-wrap items-center gap-3.5">
+        <div
+          aria-hidden
+          className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-[14px] text-[17px] font-bold text-white"
+          style={{ background: 'var(--gradient-copper)' }}
+        >
+          {restaurant.logoInitial}
         </div>
-
-        <div className="ml-auto flex gap-2.5">
-          <Button variant="ghost">
-            <Eye className="h-4 w-4" />
-            Ver live
-          </Button>
-          <Button variant="primary">
-            <Check className="h-4 w-4" />
-            Publicar todo
-          </Button>
+        <div className="min-w-0">
+          <h1 className="m-0 text-[22px] font-bold leading-[1.2] tracking-[-0.015em]">{restaurant.name}</h1>
+          <p className="slug m-0 mt-0.5">{restaurant.domain}</p>
         </div>
+        <StatePill state={restaurant.state} />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="flex min-w-0 flex-col gap-2">
-          <section className="overflow-hidden rounded-[var(--radius)] border border-[color:var(--color-border)] bg-white shadow-[var(--shadow-sm)]">
-            <div className="flex items-center justify-between gap-3.5 border-b border-[color:var(--color-border)] px-6 py-5">
-              <div>
-                <h3 className="m-0 flex items-center gap-1.5 text-[14.5px] font-bold tracking-[-0.005em]">
-                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--color-accent)" strokeWidth={1.6} className="-mb-0.5">
-                    <path d="M4 5h12M4 10h12M4 15h8" />
-                  </svg>
-                  Ficha del restaurante
-                </h3>
-                <p className="m-0 mt-1 text-[12.5px] leading-[1.5] text-[color:var(--color-muted)]">
-                  Datos compartidos por todos los espacios · aplica a toda la landing.
-                </p>
-              </div>
-              <Pill>6 secciones</Pill>
-            </div>
-
-            <FichaTabs />
-
-            <div className="p-6 pt-5">
-              <LocaleTabs locales={['es', 'ca', 'en']} defaultLocale={restaurant.defaultLocale} />
-
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <Field label="Nombre" required defaultValue={restaurant.name} />
-                <Field label="Slug (URL)" defaultValue={restaurant.slug} mono />
-              </div>
-              <div className="mt-5">
-                <Field
-                  label="Descriptor corto (meta y nav)"
-                  defaultValue="Cocina de mercado, coctelería de autor · Plaça Reial"
-                />
-              </div>
-              <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-                <Field label="Dirección" defaultValue={restaurant.address.street ?? ''} />
-                <Field label="Ciudad" defaultValue={restaurant.address.city ?? ''} />
-              </div>
-              <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-                <Field label="Código postal" defaultValue={restaurant.address.postalCode ?? ''} />
-                <Field label="Barrio (SEO local)" defaultValue={restaurant.address.district ?? ''} />
-              </div>
-            </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="flex min-w-0 flex-col gap-6">
+          <section aria-labelledby="espacios-titulo">
+            <h2 id="espacios-titulo" className="mb-1 text-[15px] font-bold tracking-[-0.005em]">
+              Espacios
+            </h2>
+            <p className="mb-3.5 mt-0 text-[13px] text-[color:var(--color-muted)]">
+              Cada espacio (sala, terraza, barra…) tiene su propia portada, horarios y carta.
+            </p>
+            {spaces.length === 0 ? (
+              <EmptyState title="Este restaurante aún no tiene espacios" />
+            ) : (
+              <ul className="m-0 grid list-none grid-cols-1 gap-[18px] p-0 sm:grid-cols-2 xl:grid-cols-3">
+                {spaces.map(s => (
+                  <li key={s.id}>
+                    <SpaceCard space={s} restaurantSlug={restaurant.slug} />
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
 
-          <div className="mb-3.5 mt-6 flex items-baseline justify-between px-0.5">
-            <h2 className="m-0 flex items-center gap-1.5 text-[15px] font-bold tracking-[-0.005em]">
-              <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--color-accent)" strokeWidth={1.6} className="-mb-0.5">
-                <path d="M3 8l7-5 7 5v9H3z" strokeLinejoin="round" />
-                <path d="M8 17v-5h4v5" />
-              </svg>
-              Espacios de {restaurant.name}
-              <span className="text-[13px] font-medium text-[color:var(--color-muted)]">({spaces.length})</span>
-            </h2>
-            <span className="text-[12.5px] text-[color:var(--color-muted)]">
-              Cada espacio tiene su propio hero, horarios, galería y cartas.
-            </span>
-          </div>
+          <Section title="Dirección">
+            <DataList
+              items={[
+                { label: 'Calle', value: address.street },
+                { label: 'Código postal', value: address.postalCode },
+                { label: 'Ciudad', value: address.city },
+                { label: 'Barrio', value: address.district },
+                { label: 'Provincia', value: address.province },
+                { label: 'País', value: address.country }
+              ]}
+            />
+          </Section>
 
-          <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 xl:grid-cols-3">
-            {spaces.map(s => (
-              <SpaceCard key={s.id} space={s} restaurantSlug={restaurant.slug} />
-            ))}
-            <AddSpaceCard />
-          </div>
+          <Section title="Contacto y redes">
+            <DataList
+              items={[
+                { label: 'Teléfono', value: contact.phone },
+                { label: 'WhatsApp', value: contact.whatsapp },
+                { label: 'Email', value: contact.email },
+                { label: 'Web', value: contact.web },
+                { label: 'Instagram', value: socials.instagram },
+                { label: 'Facebook', value: socials.facebook },
+                { label: 'TikTok', value: socials.tiktok }
+              ]}
+            />
+          </Section>
+
+          <Section title="Cómo aparece en Google" description="Título y descripción que se ven en los resultados de búsqueda.">
+            <LocaleTabs locales={restaurant.activeLocales} value={activeLocale} onChange={setLocale} names={localeNames} />
+            <DataList
+              items={[
+                { label: 'Título', value: seo.title?.[activeLocale], wide: true },
+                { label: 'Descripción', value: seo.description?.[activeLocale], wide: true }
+              ]}
+            />
+          </Section>
         </div>
 
-        <aside className="sticky top-20 flex flex-col gap-5 self-start">
-          <div className="rounded-[var(--radius)] border border-[color:var(--color-border)] bg-white p-5 shadow-[var(--shadow-sm)]">
-            <h4 className="m-0 mb-3.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-muted)]">
-              Estado
-            </h4>
-            <AsideRow k="Última publicación" v={restaurant.lastPublishedAt ? formatDate(restaurant.lastPublishedAt) : '—'} />
-            <AsideRow k="Ficha completa" v={`${restaurant.completePercent}%`} />
-            <AsideRow k="Dataset" v="production" mono />
-            <AsideRow k="Dominio" v={restaurant.domain} mono />
-          </div>
+        <aside aria-label="Resumen del restaurante" className="flex flex-col gap-5 self-start lg:sticky lg:top-20">
+          <ReadOnlyNotice />
 
-          <div className="rounded-[var(--radius)] border border-[color:var(--color-border)] bg-white p-5 shadow-[var(--shadow-sm)]">
-            <h4 className="m-0 mb-3.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-muted)]">
-              Idiomas del restaurante
-            </h4>
-            <p className="m-0 mb-3 text-[12px] leading-[1.55] text-[color:var(--color-muted)]">
-              Los idiomas activos se heredan en <em>todos</em> los espacios y en la Ficha. Marca uno como <em>por defecto</em>.
-            </p>
+          <Section title="Publicación">
+            <DataList
+              className="md:grid-cols-1"
+              items={[
+                { label: 'Última publicación', value: restaurant.lastPublishedAt ? formatDate(restaurant.lastPublishedAt) : 'Sin publicar' },
+                { label: 'Reservas online', value: restaurant.acceptsBookings ? 'Activadas' : 'Desactivadas' }
+              ]}
+            />
+          </Section>
+
+          <Section title="Idiomas de la web">
             <LangList restaurant={restaurant} />
-          </div>
-
-          <Callout title="¿Qué se edita aquí?">
-            Solo lo que aplica a toda la landing: identidad, contacto, redes, textos UI, SEO e IA. El contenido de cada
-            sala (hero, horarios, fotos, cartas) se edita entrando a su espacio.
-          </Callout>
+          </Section>
         </aside>
       </div>
     </>
-  );
-}
-
-function Field({ label, required, defaultValue, mono }: { label: string; required?: boolean; defaultValue: string; mono?: boolean }) {
-  return (
-    <label className="block">
-      <span className="mb-2 block text-[12px] font-semibold text-[color:var(--color-ink)]">
-        {label} {required && <span className="text-[color:var(--color-danger)]">*</span>}
-      </span>
-      <input
-        defaultValue={defaultValue}
-        className={`w-full rounded-[10px] border border-[color:var(--color-border)] bg-white px-3.5 py-2.5 text-[14px] leading-[1.4] text-[color:var(--color-ink)] transition-colors focus:border-[color:var(--color-accent)] focus:outline-none focus:ring-[3px] focus:ring-[color:var(--accent-ring)] ${mono ? 'font-mono' : ''}`}
-      />
-    </label>
-  );
-}
-
-function AsideRow({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
-  return (
-    <div className="flex items-center justify-between border-t border-[color:var(--color-border)] py-2 text-[13px] text-[color:var(--color-ink-soft)] first:border-t-0">
-      <span className="text-[color:var(--color-muted)]">{k}</span>
-      <span className={`font-semibold text-[color:var(--color-ink)] ${mono ? 'tabular text-[12px]' : ''}`}>{v}</span>
-    </div>
   );
 }

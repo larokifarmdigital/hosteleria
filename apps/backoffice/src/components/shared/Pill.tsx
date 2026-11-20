@@ -10,8 +10,8 @@ interface PillProps {
 }
 
 const VARIANT: Record<PillVariant, string> = {
-  ok:     'bg-[color:var(--color-ok-soft)] text-[color:var(--color-ok)]',
-  warn:   'bg-[color:var(--color-warn-soft)] text-[color:var(--color-warn)]',
+  ok:     'bg-[color:var(--color-ok-soft)] text-[color:var(--color-ok-fg)]',
+  warn:   'bg-[color:var(--color-warn-soft)] text-[color:var(--color-warn-fg)]',
   danger: 'bg-[color:var(--color-danger-soft)] text-[color:var(--color-danger)]',
   accent: 'bg-[color:var(--color-accent-soft)] text-[color:var(--color-accent-fg)]',
   plain:  'bg-[color:var(--color-surface-2)] text-[color:var(--color-muted)] border border-[color:var(--color-border)]',
@@ -27,7 +27,7 @@ export function Pill({ variant = 'plain', dot, className, children }: PillProps)
         className
       )}
     >
-      {dot && <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />}
+      {dot && <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-current" />}
       {children}
     </span>
   );

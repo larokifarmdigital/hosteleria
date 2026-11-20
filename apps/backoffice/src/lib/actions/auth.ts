@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getServerApi } from '../api/server';
+import { SESSION_COOKIE, safeNext } from '../auth/paths';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8787';
 
@@ -14,6 +15,7 @@ export async function loginAction(
 ): Promise<{ error: string | null }> {
   const email = String(formData.get('email') ?? '').trim();
   const password = String(formData.get('password') ?? '');
+  const next = safeNext(String(formData.get('next') ?? ''));
   if (!email || !password) return { error: 'Introduce email y contraseña.' };
 
   const res = await fetch(`${API_URL}/auth/login`, {
@@ -29,10 +31,10 @@ export async function loginAction(
   }
 
   const setCookie = res.headers.get('set-cookie');
-  const match = setCookie?.match(/hs_session=([^;]+)/);
+  const match = setCookie?.match(new RegExp(`${SESSION_COOKIE}=([^;]+)`));
   if (match) {
     const cookieStore = await cookies();
-    cookieStore.set('hs_session', match[1], {
+    cookieStore.set(SESSION_COOKIE, match[1], {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -42,13 +44,13 @@ export async function loginAction(
     });
   }
 
-  redirect('/dashboard');
+  redirect(next);
 }
 
 export async function logoutAction() {
   const api = await getServerApi();
   try { await api.auth.logout(); } catch { /* best-effort */ }
   const cookieStore = await cookies();
-  cookieStore.delete('hs_session');
+  cookieStore.delete(SESSION_COOKIE);
   redirect('/login');
 }

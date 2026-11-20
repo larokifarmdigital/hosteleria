@@ -1,5 +1,6 @@
+import { cache } from 'react';
 import { cookies } from 'next/headers';
-import { createApiClient, ApiError, type ApiClient } from '@hosteleria/api-client';
+import { createApiClient, ApiError, type ApiClient, type SessionUser } from '@hosteleria/api-client';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8787';
 
@@ -11,6 +12,12 @@ export async function getServerApi(): Promise<ApiClient> {
   const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
   return createApiClient({ baseUrl: API_URL, cookieHeader });
 }
+
+/** Una sola llamada por request aunque la pidan layout, guards y página. */
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
+  const api = await getServerApi();
+  return (await api.auth.session()).user;
+});
 
 /** Sin cookies: para llamadas públicas (login, forgot, health). */
 export function getPublicApi(): ApiClient {

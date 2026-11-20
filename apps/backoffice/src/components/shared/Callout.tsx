@@ -15,7 +15,7 @@ export function Callout({ title, children, className }: Props) {
         className
       )}
     >
-      <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-[color:var(--color-accent)]" />
+      <Info aria-hidden className="mt-0.5 h-4 w-4 flex-shrink-0 text-[color:var(--color-accent)]" />
       <div>
         {title && <strong className="mb-1 block text-[13px] font-semibold text-[color:var(--color-ink)]">{title}</strong>}
         {children}

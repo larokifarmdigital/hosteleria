@@ -1,8 +1,15 @@
 import { LoginForm } from '@/components/LoginForm';
+import { safeNext } from '@/lib/auth/paths';
 
-export default function LoginPage() {
+interface Props {
+  searchParams: Promise<{ next?: string }>;
+}
+
+export default async function LoginPage({ searchParams }: Props) {
+  const { next } = await searchParams;
+
   return (
-    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[1.1fr_1fr]">
+    <main className="grid min-h-screen grid-cols-1 lg:grid-cols-[1.1fr_1fr]">
       <div
         className="relative flex flex-col justify-between overflow-hidden p-[60px] text-white max-lg:hidden"
         style={{ background: 'var(--gradient-copper-deep)' }}
@@ -20,6 +27,7 @@ export default function LoginPage() {
 
         <div className="relative flex items-center gap-3">
           <div
+            aria-hidden
             className="grid h-9 w-9 place-items-center rounded-[10px] text-[14px] font-extrabold text-white"
             style={{
               background: 'var(--gradient-copper)',
@@ -32,24 +40,20 @@ export default function LoginPage() {
         </div>
 
         <div className="relative max-w-[460px]">
-          <h1 className="mb-4 text-[40px] font-bold leading-[1.1] tracking-[-0.025em]">
-            El backoffice de tus restaurantes, en un solo sitio.
-          </h1>
-          <p className="text-[14.5px] leading-[1.65] text-[#cfc9bd]">
-            Edita el contenido de las 6 landings de Casabella, Guixot, La Principal, Roure, Pubilla y Ocaña. Tres
-            idiomas, un solo login.
+          <p className="mb-4 text-[40px] font-bold leading-[1.1] tracking-[-0.025em]">
+            El contenido de tus restaurantes, en un solo sitio.
+          </p>
+          <p className="text-[14.5px] leading-[1.65] text-[#e9dccb]">
+            Edita los textos, la carta, los horarios y las fotos de la web de tu restaurante.
           </p>
         </div>
 
-        <div className="relative flex gap-5 text-[12px] text-[#8b8f9c]">
-          <span>© 2026 · Grupo Hosteleria</span>
-          <span>studio.hosteleria.cat</span>
-        </div>
+        <p className="relative m-0 text-[12px] text-[#d4c3a8]">© 2026 · Grupo Hosteleria</p>
       </div>
 
-      <div className="grid place-items-center p-10">
-        <LoginForm />
+      <div className="grid place-items-center p-6 sm:p-10">
+        <LoginForm next={safeNext(next)} />
       </div>
-    </div>
+    </main>
   );
 }

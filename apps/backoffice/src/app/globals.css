@@ -25,7 +25,8 @@
   --color-ink: #0a0a0a;
   --color-ink-soft: #26221e;
   --color-muted: #6d6862;
-  --color-dim: #a29d95;
+  /* 4,5:1 sobre blanco y sobre surface-2. Sobre la sidebar oscura se usa nav-dim. */
+  --color-dim: #76716a;
 
   /* Sidebar — 100% familia cobre, marrón oscuro visible */
   --color-nav-bg: #2a1409;
@@ -34,6 +35,7 @@
   --color-nav-fg: #d4c3a8;
   --color-nav-fg-active: #ffffff;
   --color-nav-border: #3a1b0f;
+  --color-nav-dim: #a29d95;
 
   /* Semantic — todo apunta a cobre; solo OK/Danger difieren */
   --color-accent: #b4593b;
@@ -44,6 +46,9 @@
 
   --color-ok: #5a7a4e;
   --color-ok-soft: #ecefe4;
+  /* Texto sobre los fondos *-soft: ok y warn a secas no llegan a 4,5:1 ahí. */
+  --color-ok-fg: #486540;
+  --color-warn-fg: #9d4a30;
   --color-warn: #b4593b;
   --color-warn-soft: #fbeee6;
   --color-danger: #a24238;
