@@ -1,11 +1,13 @@
 /**
- * Barrel del lado "transporte" del api. Importar el `http` client, los
- * errores normalizados y los toasts desde aquí.
+ * Barrel único de la capa de API.
  *
- *   import { http, ApiError, showSuccessToast } from '@/lib/api';
- *
- * Para los hooks de TanStack Query, importar de '@/lib/query/hooks'.
+ *   import { api }                        from '@/lib/api';   // client (browser)
+ *   import { getServerApi, getPublicApi } from '@/lib/api';   // server (RSC / actions)
+ *   import { ApiError, handleApiError, matchErrorCode, useErrorToast } from '@/lib/api';
+ *   import { Toaster, showErrorToast, showSuccessToast } from '@/lib/api';
  */
-export { http } from './client';
-export { ApiError, reportError } from './error';
+export { api } from './browser';
+export { getServerApi, getPublicApi } from './server';
+export { ApiError, handleApiError, matchErrorCode, useErrorToast, reportError } from './errorHandling';
+export type { ApiClient, ErrorCode, ErrorBody } from '@hosteleria/api-client';
 export * from './toast';

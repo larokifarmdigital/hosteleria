@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { Eye, Check } from 'lucide-react';
-import { getApi } from '@/lib/api';
+import { getServerApi } from '@/lib/api';
 import { ApiError } from '@hosteleria/api-client';
 import { Button } from '@/components/shared/Button';
 import { Pill } from '@/components/shared/Pill';
@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function RestaurantHubPage({ params }: Props) {
   const { slug } = await params;
-  const api = await getApi();
+  const api = await getServerApi();
 
   let restaurant;
   let spaces;

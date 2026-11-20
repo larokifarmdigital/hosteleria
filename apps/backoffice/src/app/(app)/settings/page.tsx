@@ -3,13 +3,13 @@ import { Button } from '@/components/shared/Button';
 import { Pill } from '@/components/shared/Pill';
 import { Callout } from '@/components/shared/Callout';
 import { SubTabs } from '@/components/dishes/SubTabs';
-import { getApi } from '@/lib/api';
+import { getServerApi } from '@/lib/api';
 import type { Language, User, Restaurant } from '@hosteleria/api-client';
 
 export const dynamic = 'force-dynamic';
 
 export default async function SettingsPage() {
-  const api = await getApi();
+  const api = await getServerApi();
   let LANGUAGES: Language[] = [];
   let USERS: User[] = [];
   let RESTAURANTS: Restaurant[] = [];

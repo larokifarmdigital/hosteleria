@@ -1,6 +1,6 @@
 import { Upload, Plus } from 'lucide-react';
 import { Button } from '@/components/shared/Button';
-import { getApi } from '@/lib/api';
+import { getServerApi } from '@/lib/api';
 import type { MediaAsset } from '@hosteleria/api-client';
 
 const FILTER_GROUPS = [
@@ -37,7 +37,7 @@ const FILTER_GROUPS = [
 export const dynamic = 'force-dynamic';
 
 export default async function MediaPage() {
-  const api = await getApi();
+  const api = await getServerApi();
   let MEDIA: MediaAsset[] = [];
   try {
     MEDIA = await api.media.list();

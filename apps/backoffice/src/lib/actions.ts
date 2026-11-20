@@ -3,7 +3,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { getApi, getPublicApi } from './api';
+import { getServerApi, getPublicApi } from './api';
 import { ApiError } from '@hosteleria/api-client';
 import type { I18nString, Hero, Manifesto, ScheduleDay } from '@hosteleria/api-client';
 
@@ -23,7 +23,7 @@ export async function loginAction(_prev: unknown, formData: FormData): Promise<{
   const password = String(formData.get('password') ?? '');
   if (!email || !password) return { error: 'Introduce email y contraseña' };
 
-  // Login directo al api (no via getApi porque necesitamos capturar Set-Cookie).
+  // Login directo al api (no via getServerApi porque necesitamos capturar Set-Cookie).
   console.log('[loginAction] POST', `${API_URL}/auth/login`, { email });
   const res = await fetch(`${API_URL}/auth/login`, {
     method: 'POST',
@@ -66,7 +66,7 @@ export async function loginAction(_prev: unknown, formData: FormData): Promise<{
 }
 
 export async function logoutAction() {
-  const api = await getApi();
+  const api = await getServerApi();
   try { await api.auth.logout(); } catch { /* best-effort */ }
   const cookieStore = await cookies();
   cookieStore.delete('hs_session');
@@ -87,7 +87,7 @@ export async function patchRestaurantAction(slug: string, patch: {
   defaultLocaleCode?: string;
 }): Promise<{ error: string | null }> {
   try {
-    const api = await getApi();
+    const api = await getServerApi();
     await api.restaurants.patch(slug, patch);
     revalidatePath(`/restaurants/${slug}`);
     revalidatePath('/restaurants');
@@ -100,7 +100,7 @@ export async function patchRestaurantAction(slug: string, patch: {
 
 export async function publishRestaurantAction(slug: string): Promise<{ error: string | null }> {
   try {
-    const api = await getApi();
+    const api = await getServerApi();
     await api.restaurants.patch(slug, { state: 'published' });
     revalidatePath(`/restaurants/${slug}`);
     revalidatePath('/restaurants');
@@ -125,7 +125,7 @@ export async function patchSpaceAction(restaurantSlug: string, spaceId: string, 
   state?: 'published' | 'draft';
 }): Promise<{ error: string | null }> {
   try {
-    const api = await getApi();
+    const api = await getServerApi();
     await api.spaces.patch(restaurantSlug, spaceId, patch);
     revalidatePath(`/restaurants/${restaurantSlug}/spaces/${spaceId}`);
     revalidatePath(`/restaurants/${restaurantSlug}`);
@@ -140,7 +140,7 @@ export async function createSpaceAction(restaurantSlug: string, body: {
   descriptor?: string;
 }): Promise<{ error: string | null; id?: string }> {
   try {
-    const api = await getApi();
+    const api = await getServerApi();
     const space = await api.spaces.create(restaurantSlug, body);
     revalidatePath(`/restaurants/${restaurantSlug}`);
     return { error: null, id: space.id };
@@ -155,7 +155,7 @@ export async function createSpaceAction(restaurantSlug: string, body: {
 
 export async function toggleDishActiveAction(id: string, active: boolean): Promise<{ error: string | null }> {
   try {
-    const api = await getApi();
+    const api = await getServerApi();
     await api.dishes.patch(id, { active });
     revalidatePath('/dishes');
     return { error: null };
@@ -173,7 +173,7 @@ export async function createLanguageAction(_prev: unknown, formData: FormData): 
   const name = String(formData.get('name') ?? '').trim();
   if (!code || !name) return { error: 'Código y nombre son obligatorios' };
   try {
-    const api = await getApi();
+    const api = await getServerApi();
     await api.languages.create({ code, name });
     revalidatePath('/settings');
     return { error: null };
@@ -192,7 +192,7 @@ export async function updateRestaurantLocalesAction(slug: string, activeLocaleCo
     return { error: 'El idioma por defecto debe estar entre los activos' };
   }
   try {
-    const api = await getApi();
+    const api = await getServerApi();
     await api.restaurants.patch(slug, { activeLocaleCodes, defaultLocaleCode });
     revalidatePath(`/restaurants/${slug}`);
     revalidatePath('/dashboard');
@@ -209,7 +209,7 @@ export async function updateRestaurantLocalesAction(slug: string, activeLocaleCo
 
 export async function updateHeroFieldAction(restaurantSlug: string, spaceId: string, field: keyof Hero, value: I18nString): Promise<{ error: string | null }> {
   try {
-    const api = await getApi();
+    const api = await getServerApi();
     const space = await api.spaces.get(restaurantSlug, spaceId);
     const newHero: Hero = { ...space.hero, [field]: value };
     await api.spaces.patch(restaurantSlug, spaceId, { hero: newHero });

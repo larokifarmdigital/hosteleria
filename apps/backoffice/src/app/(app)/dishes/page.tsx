@@ -4,7 +4,7 @@ import { Pill } from '@/components/shared/Pill';
 import { LocaleChips } from '@/components/shared/LocaleChip';
 import { SubTabs } from '@/components/dishes/SubTabs';
 import { ToggleActive } from '@/components/dishes/ToggleActive';
-import { getApi } from '@/lib/api';
+import { getServerApi } from '@/lib/api';
 import type { Dish } from '@hosteleria/api-client';
 
 const ALL_LOCALES = ['es', 'ca', 'en'];
@@ -12,7 +12,7 @@ const ALL_LOCALES = ['es', 'ca', 'en'];
 export const dynamic = 'force-dynamic';
 
 export default async function DishesPage() {
-  const api = await getApi();
+  const api = await getServerApi();
   let DISHES: Dish[] = [];
   try {
     DISHES = await api.dishes.list();

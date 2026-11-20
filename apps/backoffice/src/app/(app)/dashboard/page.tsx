@@ -5,14 +5,14 @@ import { RestaurantCard } from '@/components/dashboard/RestaurantCard';
 import { PendingTasks } from '@/components/dashboard/PendingTasks';
 import { SystemStatus } from '@/components/dashboard/SystemStatus';
 import { PENDING_TASKS } from '@/lib/mock-data';
-import { getApi } from '@/lib/api';
+import { getServerApi } from '@/lib/api';
 import type { Restaurant } from '@hosteleria/api-client';
 
 // El dashboard es server-side render — cada visita consulta el api en Neon.
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const api = await getApi();
+  const api = await getServerApi();
 
   let restaurants: Restaurant[] = [];
   try {

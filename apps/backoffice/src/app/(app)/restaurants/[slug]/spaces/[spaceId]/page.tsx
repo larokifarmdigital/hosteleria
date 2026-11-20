@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ChevronRight, Eye, Check } from 'lucide-react';
-import { getApi } from '@/lib/api';
+import { getServerApi } from '@/lib/api';
 import { ApiError } from '@hosteleria/api-client';
 import { Button } from '@/components/shared/Button';
 import { Pill } from '@/components/shared/Pill';
@@ -17,7 +17,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function SpaceEditorPage({ params }: Props) {
   const { slug, spaceId } = await params;
-  const api = await getApi();
+  const api = await getServerApi();
 
   let restaurant, space, allSpaces;
   try {

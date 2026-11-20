@@ -4,7 +4,7 @@ import { Button } from '@/components/shared/Button';
 import { Pill } from '@/components/shared/Pill';
 import { LocaleChips } from '@/components/shared/LocaleChip';
 import { formatDate } from '@/lib/utils';
-import { getApi } from '@/lib/api';
+import { getServerApi } from '@/lib/api';
 import type { Restaurant } from '@hosteleria/api-client';
 
 const ALL_LOCALES = ['es', 'ca', 'en'];
@@ -15,7 +15,7 @@ const STATE_VARIANT = { published: 'ok', draft: 'warn', warnings: 'warn', new: '
 export const dynamic = 'force-dynamic';
 
 export default async function RestaurantsPage() {
-  const api = await getApi();
+  const api = await getServerApi();
   let RESTAURANTS: Restaurant[] = [];
   try {
     RESTAURANTS = await api.restaurants.list();
