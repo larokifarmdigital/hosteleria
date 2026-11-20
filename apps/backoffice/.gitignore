@@ -21,3 +21,6 @@ next-env.d.ts.bak
 
 # system
 .DS_Store
+
+# cuentas y contraseñas locales
+CUENTAS.md
