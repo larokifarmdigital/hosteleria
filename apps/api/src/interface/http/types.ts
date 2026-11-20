@@ -5,10 +5,10 @@ import type { Session } from '../../domain/models/session.js';
 
 export interface AppVars {
   env: Env;
-  /** Pueblan `validateSession` tras leer la cookie. */
+  /** Los puebla `validateSession`. */
   user: SessionUser | null;
   session: Session | null;
-  /** Cablea `withContainer`; las rutas tocan `c.get('container').<module>.<uc>.execute(...)`. */
+  /** Lo cablea `withContainer`. */
   container: Container;
 }
 

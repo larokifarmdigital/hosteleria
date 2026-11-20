@@ -2,7 +2,6 @@ import { DomainError } from './errors.js';
 
 export interface Language {
   readonly id: string;
-  /** ISO 639-1 (`es`, `ca`, `en`, …). */
   readonly code: string;
   name: string;
   readonly createdAt: Date;

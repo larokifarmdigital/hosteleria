@@ -14,7 +14,6 @@ export interface SpaceRow {
   hero: unknown;
   manifesto: unknown;
   publishedSnapshot: unknown;
-  /** Schedule puede venir ya materializado (hecho por el repo o cargado aparte). */
   schedule?: ScheduleDay[];
 }
 

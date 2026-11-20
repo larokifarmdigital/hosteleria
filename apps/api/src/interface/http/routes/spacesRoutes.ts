@@ -19,28 +19,24 @@ export function createSpacesRoutes() {
     return r.id;
   }
 
-  // ─── GET / ─────────────────────────────────────────────────────
   app.get('/', async (c) => {
     const slug = c.req.param('slug')!;
     const list = await c.get('container').spaces.list.execute(slug);
     return c.json({ spaces: list.map(spaceToDto) });
   });
 
-  // ─── GET /:spaceId ─────────────────────────────────────────────
   app.get('/:spaceId', async (c) => {
     const restaurantId = await resolveRestaurantId(c);
     const s = await c.get('container').spaces.get.execute(restaurantId, c.req.param('spaceId'));
     return c.json({ space: spaceToDto(s) });
   });
 
-  // ─── POST / ────────────────────────────────────────────────────
   app.post('/', validate('json', createSchema), async (c) => {
     const restaurantId = await resolveRestaurantId(c);
     const s = await c.get('container').spaces.create.execute(restaurantId, c.req.valid('json'));
     return c.json({ space: spaceToDto(s) }, 201);
   });
 
-  // ─── PATCH /:spaceId ───────────────────────────────────────────
   app.patch('/:spaceId', validate('json', patchSchema), async (c) => {
     const user = c.get('user')!;
     const restaurantId = await resolveRestaurantId(c);
@@ -50,7 +46,6 @@ export function createSpacesRoutes() {
     return c.json({ space: spaceToDto(s) });
   });
 
-  // ─── POST /:spaceId/discard ────────────────────────────────────
   app.post('/:spaceId/discard', async (c) => {
     const user = c.get('user')!;
     const restaurantId = await resolveRestaurantId(c);
@@ -58,7 +53,6 @@ export function createSpacesRoutes() {
     return c.json({ space: spaceToDto(s) });
   });
 
-  // ─── DELETE /:spaceId ──────────────────────────────────────────
   app.delete('/:spaceId', async (c) => {
     const user = c.get('user')!;
     const restaurantId = await resolveRestaurantId(c);

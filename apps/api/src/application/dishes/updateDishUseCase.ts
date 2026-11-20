@@ -8,7 +8,7 @@ export class UpdateDishUseCase {
     const d = await this.dishes.findById(id);
     if (!d) throw new DishNotFoundError(id);
 
-    // Si se cambia la categoría, debe pertenecer al mismo space.
+    // La categoría debe pertenecer al mismo space.
     if (patch.categoryId !== undefined && patch.categoryId !== d.categoryId) {
       const cat = await this.dishes.findCategoryById(patch.categoryId);
       if (!cat || cat.spaceId !== d.spaceId) throw new DishCategoryNotFoundError(patch.categoryId);

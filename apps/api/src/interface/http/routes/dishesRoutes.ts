@@ -17,7 +17,6 @@ export function createDishesRoutes() {
   const app = new Hono<AppBindings>();
   app.use('*', requireAuth);
 
-  // ─── DISH CATEGORIES ─────────────────────────────────────────────
   const cats = new Hono<AppBindings>();
 
   cats.get('/', async (c) => {
@@ -57,7 +56,6 @@ export function createDishesRoutes() {
 
   app.route('/categories', cats);
 
-  // ─── DISHES ──────────────────────────────────────────────────────
   app.get('/', async (c) => {
     const container = c.get('container');
     const allowed = await allowedSpaceIds(c);
@@ -115,7 +113,6 @@ export function createDishesRoutes() {
   return app;
 }
 
-/** Enriquece un `Dish` con category + space + restaurant via repos. */
 async function enrichDish(c: Context<AppBindings>, dish: Dish) {
   const { dishesRepo, spacesRepo, restaurantsRepo } = c.get('container').repos;
   const [cat, space] = await Promise.all([

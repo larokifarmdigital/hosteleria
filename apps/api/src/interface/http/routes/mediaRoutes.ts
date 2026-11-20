@@ -12,15 +12,12 @@ import type { AppBindings } from '../types.js';
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'];
 const MAX_SIZE_KB = 10_000;
 
-// Flujo browser → R2 directo:
-//   1. POST /media/upload-url  → {uploadUrl, mediaId, publicUrl}
-//   2. Browser PUT uploadUrl con el binario (presigned, 5 min)
-//   3. POST /media/:id/confirm → HEAD contra R2, marca listo o rollback
+// El browser sube directo a R2 con la presigned URL (5 min); `confirm` hace
+// HEAD contra R2 y marca listo o hace rollback.
 export function createMediaRoutes() {
   const app = new Hono<AppBindings>();
   app.use('*', requireAuth);
 
-  // ─── POST /media/upload-url ────────────────────────────────────
   app.post('/upload-url', validate('json', uploadUrlSchema), async (c) => {
     const user = c.get('user')!;
     const body = c.req.valid('json');
@@ -36,7 +33,6 @@ export function createMediaRoutes() {
     return c.json(result);
   });
 
-  // ─── POST /media/:id/confirm ───────────────────────────────────
   app.post('/:id/confirm', validate('json', confirmSchema), async (c) => {
     const id = c.req.param('id');
     const existing = await c.get('container').repos.mediaRepo.findById(id);
@@ -46,7 +42,6 @@ export function createMediaRoutes() {
     return c.json({ media: await enrichMedia(c, m) });
   });
 
-  // ─── GET /media ────────────────────────────────────────────────
   app.get('/', async (c) => {
     const allowed = await allowedRestaurantIds(c);
     const restaurantSlug = c.req.query('restaurantSlug') || undefined;
@@ -66,7 +61,6 @@ export function createMediaRoutes() {
     return c.json({ media: dtos });
   });
 
-  // ─── PATCH /media/:id ──────────────────────────────────────────
   app.patch('/:id', validate('json', patchSchema), async (c) => {
     const id = c.req.param('id');
     const existing = await c.get('container').repos.mediaRepo.findById(id);
@@ -81,7 +75,6 @@ export function createMediaRoutes() {
     return c.json({ media: await enrichMedia(c, m) });
   });
 
-  // ─── GET /media/:id/references ─────────────────────────────────
   app.get('/:id/references', async (c) => {
     const refs = await c.get('container').media.references.execute(c.req.param('id'));
     const dishes = refs.filter(r => r.kind === 'dish').map(r => ({ id: r.refId }));
@@ -89,7 +82,6 @@ export function createMediaRoutes() {
     return c.json({ dishes, spaces });
   });
 
-  // ─── DELETE /media/:id ─────────────────────────────────────────
   app.delete('/:id', async (c) => {
     const id = c.req.param('id');
     const existing = await c.get('container').repos.mediaRepo.findById(id);

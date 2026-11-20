@@ -41,7 +41,6 @@ export const requireAdmin = createMiddleware<AppBindings>(async (c, next) => {
   await next();
 });
 
-/** Admin pasa libre; editor solo si tiene el restaurant en `user_restaurants`. */
 export function requireRestaurant(paramName = 'slug') {
   return createMiddleware<AppBindings>(async (c, next) => {
     const user = c.get('user');

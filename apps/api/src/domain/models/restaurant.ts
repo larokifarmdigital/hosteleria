@@ -30,7 +30,6 @@ export interface Seo {
   description?: I18nValue;
 }
 
-/** Snapshot al publicar — permite revertir cambios en borrador vía `discardChanges`. */
 export type RestaurantSnapshot = Partial<Pick<Restaurant,
   'name' | 'domain' | 'logoInitial' | 'coverGradient' | 'timezone' |
   'address' | 'contact' | 'socials' | 'seo' | 'acceptsBookings' | 'showSocials'

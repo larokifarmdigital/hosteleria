@@ -1,21 +1,10 @@
-/**
- * Serialización única de errores → `{ code, message }`.
- *
- *  - `code` — identificador estable para lógica del cliente.
- *  - `message` — texto en español listo para pintar directo al usuario.
- *
- * Fuentes posibles:
- *  1. `DomainError` — llevan `code` + `status` propios; el `message` ya es texto humano.
- *  2. `HTTPException` emitida por middlewares (auth, rate-limit, …) — el `message`
- *     es el code; aquí lo traducimos al texto humano via `HTTP_EXCEPTION_MESSAGES`.
- *  3. Zod validator — con el hook de `validate()` se re-lanza como `DomainError`.
- *  4. Lo demás → 500 `internal_error` genérico y log.
- */
+// Las `HTTPException` de los middlewares llevan el code en `message`; aquí
+// se traduce a texto humano. Lo que no sea `DomainError` ni `HTTPException`
+// sale como 500 genérico.
 import { HTTPException } from 'hono/http-exception';
 import type { Context } from 'hono';
 import { DomainError } from '../../domain/models/errors.js';
 
-/** Textos para los códigos que viajan como `message` dentro de un `HTTPException`. */
 const HTTP_EXCEPTION_MESSAGES: Record<string, string> = {
   UNAUTHORIZED: 'Debes iniciar sesión para hacer esto.',
   ADMIN_REQUIRED: 'Solo los administradores pueden hacer esto.',

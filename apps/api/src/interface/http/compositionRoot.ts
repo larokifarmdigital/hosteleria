@@ -1,14 +1,8 @@
-/**
- * Único lugar donde los puertos del dominio se cablean a sus adapters.
- * Cambiar scrypt por argon2, o Resend por SendGrid, es cambiar una línea
- * de este archivo — el resto del código no se entera.
- *
- * Se construye uno por request. Los adapters solo guardan `env`; lo caro
- * (cliente Drizzle, cliente aws4fetch, Lucia) ya está cacheado por isolate.
- */
+// Único lugar donde los puertos se cablean a sus adapters. Se construye uno
+// por request: los adapters solo guardan `env`; lo caro (Drizzle, aws4fetch,
+// Lucia) está cacheado por isolate.
 import type { Env } from '../../env.js';
 
-// ─── Adapters (infrastructure) ───────────────────────────────────
 import { DrizzleRestaurantRepository } from '../../infrastructure/persistence/drizzle/drizzleRestaurantRepository.js';
 import { DrizzleUserRepository } from '../../infrastructure/persistence/drizzle/drizzleUserRepository.js';
 import { DrizzleLanguageRepository } from '../../infrastructure/persistence/drizzle/drizzleLanguageRepository.js';
@@ -24,7 +18,6 @@ import { ResendEmailSender } from '../../infrastructure/email/resendEmailSender.
 import { R2MediaStorage } from '../../infrastructure/storage/r2MediaStorage.js';
 import { FetchRebuildHookCaller } from '../../infrastructure/integrations/fetchRebuildHookCaller.js';
 
-// ─── Use cases (application) ─────────────────────────────────────
 import { CreateRestaurantUseCase } from '../../application/restaurants/createRestaurantUseCase.js';
 import { ListRestaurantsUseCase } from '../../application/restaurants/listRestaurantsUseCase.js';
 import { GetRestaurantUseCase } from '../../application/restaurants/getRestaurantUseCase.js';
@@ -86,7 +79,6 @@ import { DeleteMediaUseCase } from '../../application/media/deleteMediaUseCase.j
 export type Container = ReturnType<typeof buildContainer>;
 
 export function buildContainer(env: Env) {
-  // ─── Repos (ports → adapters) ──────────────────────────────────
   const restaurantsRepo = new DrizzleRestaurantRepository(env);
   const usersRepo = new DrizzleUserRepository(env);
   const languagesRepo = new DrizzleLanguageRepository(env);
@@ -97,7 +89,6 @@ export function buildContainer(env: Env) {
   const sessionsRepo = new LuciaSessionRepository(env);
   const tokenGen = new DrizzleTokenGenerator(env);
 
-  // ─── Services (ports → adapters) ───────────────────────────────
   const hasher = new ScryptPasswordHasher();
   const email = env.RESEND_API_KEY
     ? new ResendEmailSender(env.RESEND_API_KEY, env.EMAIL_FROM)
@@ -105,10 +96,8 @@ export function buildContainer(env: Env) {
   const storage = new R2MediaStorage(env);
   const rebuildHook = new FetchRebuildHookCaller();
 
-  // ─── Use cases ─────────────────────────────────────────────────
   return {
-    // Repos expuestos para rutas/middlewares que leen directo (p.ej.
-    // `requireRestaurant` consulta `user_restaurants` sin usar un UC).
+    // Expuestos para middlewares que leen directo sin UC (p.ej. `requireRestaurant`).
     repos: {
       restaurantsRepo, usersRepo, sessionsRepo,
       spacesRepo, dishesRepo, winesRepo, mediaRepo, languagesRepo

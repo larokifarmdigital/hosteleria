@@ -1,8 +1,4 @@
-/**
- * Diagnostic 100% read-only: ¿qué hay hoy en la BD?
- *
- * Correr con: `pnpm --filter @hosteleria/api db:inspect`
- */
+// Solo lectura.
 import 'dotenv/config';
 import { config } from 'dotenv';
 config({ path: '.env.local' });
@@ -26,7 +22,6 @@ async function main() {
   console.log(' Inspección de BD — Neon dev branch');
   console.log('═══════════════════════════════════════════\n');
 
-  // 1. Tablas existentes
   const tables = await db.execute<{ table_name: string }>(sql`
     select table_name
     from information_schema.tables
@@ -43,7 +38,6 @@ async function main() {
     return;
   }
 
-  // 2. Conteos clave
   const counts = await Promise.all([
     db.execute(sql`select count(*)::int as n from users`).catch(() => ({ rows: [{ n: '-' }] })),
     db.execute(sql`select count(*)::int as n from restaurants`).catch(() => ({ rows: [{ n: '-' }] })),
@@ -61,7 +55,6 @@ async function main() {
   console.log(`   • dishes ....... ${(counts[4].rows[0] as any).n}`);
   console.log(`   • wines ........ ${(counts[5].rows[0] as any).n}`);
 
-  // 3. Admin + restaurantes
   const admins = await db.execute<{ email: string; name: string; role: string }>(sql`
     select email, name, role from users where role = 'admin' limit 5
   `).catch(() => ({ rows: [] }));

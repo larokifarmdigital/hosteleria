@@ -2,10 +2,7 @@ import { HTTPException } from 'hono/http-exception';
 import type { Context } from 'hono';
 import type { AppBindings } from './types.js';
 
-/**
- * Para rutas "flat" (dishes/wines/media sin `:slug` en la URL): devuelve
- * el set de space ids que el user puede tocar, o `null` si es admin.
- */
+/** Para rutas sin `:slug` en la URL (dishes/wines/media). `null` = admin. */
 export async function allowedSpaceIds(c: Context<AppBindings>): Promise<Set<string> | null> {
   const user = c.get('user')!;
   if (user.role === 'admin') return null;

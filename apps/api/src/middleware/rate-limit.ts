@@ -5,33 +5,16 @@ import { getDb } from '../infrastructure/persistence/drizzle/client.js';
 import { rateLimits } from '../infrastructure/persistence/drizzle/schema/rate_limits.js';
 import type { Env } from '../env.js';
 
-/**
- * Rate limiting sobre Postgres — anti-abuso para endpoints HTTP.
- *
- * Usa la tabla `rate_limits` (bucket + key + count + windowStart) con
- * algoritmo "fixed window". Guardamos un contador por combinación
- * (bucket, key); si supera `limit` en la ventana → 429.
- *
- * Overhead típico: ~15-30ms (1 upsert a Neon por request).
- */
+// Fixed window sobre Postgres: 1 upsert a Neon por request (~15-30ms).
 
 export interface RateLimitOpts {
-  /** Nombre lógico del bucket (ej. 'auth-login', 'global'). Separa contadores. */
   bucket: string;
-  /** Cuántas requests acepta en la ventana antes de responder 429. */
   limit: number;
-  /** Tamaño de la ventana en segundos. */
   windowSeconds: number;
-  /** Cómo deriva la "key" por la que se cuenta. Default = IP del request.
-   *  Login lo sobrescribe a `IP:email` para evitar bombing cross-user. */
+  /** Default: IP. Login usa `IP:email` para evitar bombing cross-user. */
   keyFn?: (c: any) => string | Promise<string>;
 }
 
-/**
- * Extrae la IP real del cliente leyendo los headers que inyecta Cloudflare
- * (`cf-connecting-ip`) o cualquier proxy delante. Devuelve 'unknown' si no
- * detecta nada.
- */
 function getClientIp(c: any): string {
   const h = c.req.header('cf-connecting-ip')
     ?? c.req.header('x-forwarded-for')
@@ -40,20 +23,7 @@ function getClientIp(c: any): string {
   return h.split(',')[0].trim();
 }
 
-/**
- * Factory de middleware. Devuelve un middleware que puede montarse en
- * cualquier ruta Hono.
- *
- * Dónde se usa:
- *  - `app.ts` → limiter global (100/min) salvo rutas públicas y /auth/*.
- *  - `routes/auth.ts` → login (5/hora por IP+email), forgot (3/hora).
- *
- * Comportamiento:
- *  - Incrementa el contador para `(bucket, key)` en 1.
- *  - Si pasa `limit` → `429 rate_limit_exceeded` + header `Retry-After`.
- *  - Siempre añade `X-RateLimit-Limit / Remaining / Reset` para que el
- *    cliente sepa cuánto le queda.
- */
+/** 429 + `Retry-After` al superar el límite; siempre emite `X-RateLimit-*`. */
 export function rateLimit(opts: RateLimitOpts) {
   const { bucket, limit, windowSeconds, keyFn = getClientIp } = opts;
 
@@ -101,16 +71,7 @@ export function rateLimit(opts: RateLimitOpts) {
   });
 }
 
-/**
- * Borra filas viejas de `rate_limits` (ventana cerró hace >7 días).
- *
- * Dónde se usa:
- *  - `lib/cleanup.ts` → llamado desde el `scheduled` handler del Worker
- *    todos los días. Es gratis dejar filas viejas, pero ocupan espacio y
- *    ralentizan los upserts a la larga.
- *
- * Devuelve cuántas filas se borraron (útil para logs).
- */
+/** Borra filas cuya ventana cerró hace >7 días; devuelve cuántas. */
 export async function cleanupStaleRateLimits(env: Env): Promise<number> {
   const db = getDb(env.DATABASE_URL);
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);

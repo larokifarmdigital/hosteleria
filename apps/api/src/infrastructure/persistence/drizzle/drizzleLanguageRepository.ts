@@ -7,9 +7,6 @@ import type { LanguageRepository } from '../../../domain/repositories/languageRe
 import type { Env } from '../../../env.js';
 import { rowToLanguage } from './mappers/languageMapper.js';
 
-/**
- * Impl Drizzle del `LanguageRepository`.
- */
 export class DrizzleLanguageRepository implements LanguageRepository {
   constructor(private env: Env) {}
 

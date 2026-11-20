@@ -1,8 +1,8 @@
 import type { Restaurant } from '../../../domain/models/restaurant.js';
 
 // La UI espera `activeLocales` / `defaultLocale` (sin sufijo `Code`) y
-// fechas en ISO. `completePercent` queda en 0: la métrica real necesita
-// datos del space default (pendiente).
+// fechas en ISO. `completePercent` va fijo en 0: la métrica real necesita
+// datos del space default, que aquí no se cargan.
 export function restaurantToDto(r: Restaurant) {
   return {
     id: r.id,

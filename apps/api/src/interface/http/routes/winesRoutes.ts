@@ -17,7 +17,6 @@ export function createWinesRoutes() {
   const app = new Hono<AppBindings>();
   app.use('*', requireAuth);
 
-  // ─── WINE CATEGORIES ─────────────────────────────────────────────
   const cats = new Hono<AppBindings>();
 
   cats.get('/', async (c) => {
@@ -47,7 +46,6 @@ export function createWinesRoutes() {
 
   app.route('/categories', cats);
 
-  // ─── WINES ───────────────────────────────────────────────────────
   app.get('/', async (c) => {
     const allowed = await allowedSpaceIds(c);
     const restaurantSlug = c.req.query('restaurantSlug') || undefined;

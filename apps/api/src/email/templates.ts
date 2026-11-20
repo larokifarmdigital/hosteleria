@@ -1,12 +1,5 @@
-/**
- * Plantillas HTML + text para los emails transaccionales.
- *
- * HTML inline (sin templating engine). Estilos simples para que se vean
- * bien en Gmail / Apple Mail / Outlook sin romperse.
- *
- * Cada template devuelve `{ subject, html, text }` listo para pasarle
- * a `provider.send()`.
- */
+// Estilos inline y HTML con tablas: es lo que Gmail / Apple Mail / Outlook
+// renderizan sin romperse.
 
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
@@ -18,11 +11,6 @@ interface WelcomeTemplateProps {
   invitedBy: string;
 }
 
-/**
- * Email de bienvenida — link para elegir password inicial (válido 48h).
- *
- * Dónde se usa: `src/users/route.ts` → POST /users.
- */
 export function welcomeTemplate({ name, setupUrl, invitedBy }: WelcomeTemplateProps) {
   const text = `
 Hola ${name},
@@ -83,11 +71,6 @@ interface ResetTemplateProps {
   resetUrl: string;
 }
 
-/**
- * Email de reset de password — link para elegir una nueva (válido 1h).
- *
- * Dónde se usa: `src/auth/route.ts` → POST /auth/forgot.
- */
 export function passwordResetTemplate({ name, resetUrl }: ResetTemplateProps) {
   const text = `
 Hola ${name},

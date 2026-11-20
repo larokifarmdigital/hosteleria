@@ -1,26 +1,10 @@
-/**
- * Schema de autenticación y permisos.
- *
- * Tablas:
- *  - `users` — cuentas del backoffice (admin/editor)
- *  - `sessions` — sesiones Lucia activas (cookie `hs_session`)
- *  - `user_tokens` — tokens de un solo uso para flows por email (welcome, reset)
- *  - `user_restaurants` — m2m: qué restaurantes puede editar un editor
- *    (admins no tienen filas acá — pasan por rol)
- */
 import { pgTable, text, timestamp, primaryKey, index, pgEnum } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { userRoleEnum } from './enums.js';
 import { restaurants } from './content.js';
 
-/**
- * users — Cuentas del backoffice.
- *
- * `role`:
- *  - admin: acceso a todo, gestiona idiomas y usuarios
- *  - editor: solo restaurantes asignados en `user_restaurants`
- */
+/** admin: acceso a todo; editor: solo los restaurantes de `user_restaurants`. */
 export const users = pgTable('users', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   email: text('email').notNull().unique(),
@@ -32,13 +16,7 @@ export const users = pgTable('users', {
   lastAccessAt: timestamp('last_access_at', { withTimezone: true })
 });
 
-/**
- * sessions — Requerido por Lucia. TTL manejado por Lucia (expiresAt).
- *
- * `userAgent` + `ipHash` + `createdAt` son extra para la vista
- * "sesiones activas" del usuario (GET /auth/sessions). No afectan a
- * Lucia (que solo lee id, userId, expiresAt).
- */
+/** Lucia solo lee id/userId/expiresAt; el resto alimenta GET /auth/sessions. */
 export const sessions = pgTable('sessions', {
   id: text('id').primaryKey(),
   userId: text('user_id')
@@ -52,15 +30,8 @@ export const sessions = pgTable('sessions', {
   userIdx: index('sessions_user_idx').on(t.userId)
 }));
 
-/**
- * user_tokens — tokens de un solo uso para flows async por email:
- *  - `password_setup` → email de welcome al crear editor
- *  - `password_reset` → email de recuperación
- *
- * `tokenHash` guarda SHA-256 del token real (que viaja en el email).
- * El token nunca se guarda en claro — si alguien dumpa la BD no puede usar
- * tokens activos sin fuerza bruta sobre SHA-256.
- */
+/** Tokens de un solo uso. `tokenHash` = SHA-256 del token que viaja en el
+ *  email; nunca en claro, para que un dump de la BD no dé tokens usables. */
 export const tokenKindEnum = pgEnum('token_kind', ['password_setup', 'password_reset']);
 
 export const userTokens = pgTable('user_tokens', {
@@ -76,10 +47,7 @@ export const userTokens = pgTable('user_tokens', {
   expiresIdx: index('user_tokens_expires_idx').on(t.expiresAt)
 }));
 
-/**
- * user_restaurants — m2m. Un editor solo ve los restaurantes que
- * tenga aquí. Admins NO tienen filas (se resuelve por rol).
- */
+/** Solo editores; los admins no tienen filas (se resuelve por rol). */
 export const userRestaurants = pgTable(
   'user_restaurants',
   {
@@ -95,7 +63,6 @@ export const userRestaurants = pgTable(
   })
 );
 
-// ─── Relations ──────────────────────────────────────────────────
 export const usersRelations = relations(users, ({ many }) => ({
   sessions: many(sessions),
   restaurants: many(userRestaurants)

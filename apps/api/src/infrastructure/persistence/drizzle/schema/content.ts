@@ -1,20 +1,5 @@
-/**
- * Schema del contenido de los restaurantes.
- *
- * Tablas:
- *  - `languages` + `restaurant_locales` — idiomas globales y qué locales
- *    tiene activo cada restaurante (m2m)
- *  - `restaurants` — ficha del local (JSON para address/contact/socials/seo)
- *  - `spaces` + `space_schedule` — salas del restaurante (hero + horarios)
- *  - `dish_categories` + `dishes` — carta de comida (name i18n)
- *  - `wine_categories` + `wines` — carta de vinos (name NO i18n)
- *
- * **i18n**: campos multiidioma guardan `{ es?, ca?, en?, ... }` como jsonb
- * (ver `./i18n.ts`).
- *
- * **Snapshots**: `publishedSnapshot` guarda la versión publicada para que
- * `/discard` pueda restaurar.
- */
+// `publishedSnapshot` guarda la versión publicada para que `/discard` pueda
+// restaurarla.
 import {
   pgTable,
   text,
@@ -34,19 +19,13 @@ import { i18nString, i18nText, type I18nValue } from './i18n.js';
 import { userRestaurants } from './auth.js';
 import { mediaAssets } from './media.js';
 
-// ═════════════════════════════════════════════════════════════════
-// Languages
-// ═════════════════════════════════════════════════════════════════
 export const languages = pgTable('languages', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
-  code: text('code').notNull().unique(), // ISO 639-1 ('es', 'ca', 'en'...)
+  code: text('code').notNull().unique(),
   name: text('name').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 });
 
-// ═════════════════════════════════════════════════════════════════
-// Restaurants + i18n activo
-// ═════════════════════════════════════════════════════════════════
 type AddressJson = {
   street?: string;
   postalCode?: string;
@@ -72,29 +51,22 @@ export const restaurants = pgTable('restaurants', {
     .references(() => languages.id, { onDelete: 'restrict' }),
   acceptsBookings: boolean('accepts_bookings').notNull().default(true),
   showSocials: boolean('show_socials').notNull().default(true),
-  /** IANA timezone (ej. 'Europe/Madrid'). Afecta a "está abierto ahora",
-   *  openingHoursSpecification en JSON-LD, llms.txt… */
+  /** IANA timezone (ej. 'Europe/Madrid'). */
   timezone: text('timezone').notNull().default('Europe/Madrid'),
-  /** URL del "deploy hook" de la landing de este restaurante (Vercel,
-   *  Cloudflare Pages, Netlify — cualquier plataforma con webhook de
-   *  rebuild). Al publicar (state = 'published'), el api hace POST
-   *  a esta URL (fire-and-forget) → la landing se rebuildea. */
+  /** Deploy hook de la landing: al publicar, el api le hace POST
+   *  (fire-and-forget) para que se rebuildee. */
   rebuildHookUrl: text('rebuild_hook_url'),
   address: jsonb('address').$type<AddressJson>().default({}),
   contact: jsonb('contact').$type<ContactJson>().default({}),
   socials: jsonb('socials').$type<SocialsJson>().default({}),
   seo: jsonb('seo').$type<SeoJson>().default({}),
   lastPublishedAt: timestamp('last_published_at', { withTimezone: true }),
-  /** Snapshot del contenido en el momento de publicar — permite 'descartar
-   *  cambios' volviendo al último publicado. */
   publishedSnapshot: jsonb('published_snapshot'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-  /** Último usuario que modificó el restaurante — audit ligero. */
   updatedBy: text('updated_by')
 });
 
-/** m2m — idiomas activos por restaurante */
 export const restaurantLocales = pgTable(
   'restaurant_locales',
   {
@@ -110,9 +82,6 @@ export const restaurantLocales = pgTable(
   })
 );
 
-// ═════════════════════════════════════════════════════════════════
-// Spaces
-// ═════════════════════════════════════════════════════════════════
 type HeroJson = {
   title?: I18nValue;
   subtitle?: I18nValue;
@@ -142,21 +111,19 @@ export const spaces = pgTable(
     descriptor: text('descriptor').notNull().default(''),
     hero: jsonb('hero').$type<HeroJson>().default({}),
     manifesto: jsonb('manifesto').$type<ManifestoJson>().default({}),
-    /** Snapshot del hero + manifesto al publicar. Permite discard. */
     publishedSnapshot: jsonb('published_snapshot'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     updatedBy: text('updated_by')
   },
   (t) => ({
-    // slug único DENTRO de un restaurante — dos restaurantes pueden tener
-    // ambos un espacio "comedor-principal".
+    // Slug único por restaurante, no global.
     slugPerRestaurant: unique('spaces_slug_per_restaurant').on(t.restaurantId, t.slug),
     restaurantIdx: index('spaces_restaurant_idx').on(t.restaurantId)
   })
 );
 
-/** Turnos por día — un espacio puede tener varios turnos por día. */
+/** Un espacio puede tener varios turnos por día. */
 export const spaceSchedule = pgTable('space_schedule', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   spaceId: text('space_id')
@@ -170,9 +137,6 @@ export const spaceSchedule = pgTable('space_schedule', {
   spaceDayIdx: index('space_schedule_space_day_idx').on(t.spaceId, t.day)
 }));
 
-// ═════════════════════════════════════════════════════════════════
-// Menu — categorías + items (dishes/wines)
-// ═════════════════════════════════════════════════════════════════
 export const dishCategories = pgTable('dish_categories', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   spaceId: text('space_id')
@@ -195,8 +159,7 @@ export const dishes = pgTable('dishes', {
   price: numeric('price', { precision: 10, scale: 2 }),
   order: integer('order').notNull().default(0),
   active: boolean('active').notNull().default(true),
-  // FK a media_assets con ON DELETE SET NULL — si borras el asset, el
-  // plato queda sin foto (en vez de con FK rota apuntando a nada).
+  // ON DELETE SET NULL: al borrar el asset el plato queda sin foto.
   imageAssetId: text('image_asset_id').references(() => mediaAssets.id, { onDelete: 'set null' }),
   imageGradient: text('image_gradient').notNull().default('var(--gradient-copper)'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -220,7 +183,7 @@ export const wines = pgTable('wines', {
   categoryId: text('category_id')
     .notNull()
     .references(() => wineCategories.id, { onDelete: 'restrict' }),
-  name: text('name').notNull(), // NO i18n — igual que en Sanity
+  name: text('name').notNull(), // No i18n: nombre propio.
   region: text('region'),
   note: i18nText('note'),
   priceGlass: numeric('price_glass', { precision: 10, scale: 2 }),
@@ -232,9 +195,6 @@ export const wines = pgTable('wines', {
   updatedBy: text('updated_by')
 });
 
-// ═════════════════════════════════════════════════════════════════
-// Relations
-// ═════════════════════════════════════════════════════════════════
 export const languagesRelations = relations(languages, ({ many }) => ({
   restaurantLocales: many(restaurantLocales)
 }));

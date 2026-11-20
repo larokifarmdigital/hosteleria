@@ -92,7 +92,6 @@ export class DrizzleDishRepository implements DishRepository {
     await this.db.delete(dishes).where(eq(dishes.id, id));
   }
 
-  // ─── Categories ────────────────────────────────────────────────
   async listCategories(spaceId?: string): Promise<DishCategory[]> {
     const rows = await this.db.query.dishCategories.findMany({
       where: spaceId ? eq(dishCategories.spaceId, spaceId) : undefined,

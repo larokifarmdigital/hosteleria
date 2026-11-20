@@ -20,17 +20,9 @@ import { sentryMiddleware } from './middleware/sentry.js';
 import { rateLimit } from './middleware/rate-limit.js';
 import type { AppBindings } from './interface/http/types.js';
 
-/**
- * Hono app principal — se monta como fetch handler del Worker.
- *
- * Para añadir un endpoint: crear `src/interface/http/routes/<recurso>Routes.ts`
- * con un `createXxxRoutes()` que devuelva una sub-app Hono, y añadir una
- * línea `app.route('/xxx', createXxxRoutes())` más abajo.
- */
 export function createApp() {
   const app = new Hono<AppBindings>();
 
-  // ─── Middlewares globales ──────────────────────────────────────────
   app.use('*', logger());
 
   // Compat con helpers que leen `c.get('env')` en vez de `c.env`.
@@ -67,7 +59,6 @@ export function createApp() {
     return skip ? next() : globalLimiter(c as any, next);
   });
 
-  // ─── Rutas públicas ────────────────────────────────────────────────
   app.get('/', (c) => c.json({
     name: '@hosteleria/api',
     version: '0.0.1',
@@ -95,7 +86,6 @@ export function createApp() {
     }, dbOk ? 200 : 503);
   });
 
-  // ─── Documentación ─────────────────────────────────────────────────
   app.get('/openapi.json', (c) => c.json(openApiSpec));
   app.get('/docs', apiReference({
     theme: 'default',
@@ -104,7 +94,6 @@ export function createApp() {
     metaData: { title: '@hosteleria/api — Reference' }
   }));
 
-  // ─── Rutas de negocio ──────────────────────────────────────────────
   app.route('/auth', createAuthRoutes());
   app.route('/restaurants', createRestaurantsRoutes());
   app.route('/restaurants/:slug/spaces', createSpacesRoutes());
@@ -114,7 +103,6 @@ export function createApp() {
   app.route('/users', createUsersRoutes());
   app.route('/media', createMediaRoutes());
 
-  // ─── Error handling ────────────────────────────────────────────────
   app.notFound((c) => c.json({ error: 'not_found', path: c.req.path }, 404));
 
   app.onError(globalErrorHandler);

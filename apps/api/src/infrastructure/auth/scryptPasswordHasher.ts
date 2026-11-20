@@ -8,7 +8,6 @@ import type { PasswordHasher } from '../../domain/services/passwordHasher.js';
  * event loop cada 10ms para no reventar el CPU budget del isolate.
  *
  * Formato encoded: `$scrypt$N=16384,r=8,p=1$<salt-b64>$<hash-b64>`.
- * Parámetros OWASP 2023: N = 2^14, r = 8, p = 1; salt 16B, dkLen 32B.
  */
 
 const N = 16384;
@@ -45,9 +44,8 @@ export class ScryptPasswordHasher implements PasswordHasher {
 
   async verify(password: string, encoded: string): Promise<boolean> {
     try {
-      // ['', 'scrypt', 'N=16384,r=8,p=1', '<salt>', '<hash>'] — leemos
-      // los parámetros del propio hash en vez de las constantes para
-      // poder validar hashes antiguos si en el futuro cambian los defaults.
+      // Parámetros leídos del propio hash, no de las constantes: así siguen
+      // validando los hashes antiguos si cambian los defaults.
       const parts = encoded.split('$');
       if (parts.length !== 5 || parts[1] !== 'scrypt') return false;
 

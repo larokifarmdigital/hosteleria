@@ -10,7 +10,6 @@ export function createUsersRoutes() {
   app.use('*', requireAuth);
   app.use('*', requireAdmin);
 
-  // ─── GET / ─────────────────────────────────────────────────────
   app.get('/', async (c) => {
     const list = await c.get('container').users.list.execute();
     const dtos = await Promise.all(list.map(async ({ user, restaurantIds }) => {
@@ -20,7 +19,6 @@ export function createUsersRoutes() {
     return c.json({ users: dtos });
   });
 
-  // ─── POST / ────────────────────────────────────────────────────
   app.post('/', validate('json', createSchema), async (c) => {
     const inviter = c.get('user')!;
     const user = await c.get('container').users.create.execute(c.req.valid('json'), inviter.name);
@@ -30,7 +28,6 @@ export function createUsersRoutes() {
     return c.json({ user: userToDto(user, slugs) }, 201);
   });
 
-  // ─── PATCH /:id ────────────────────────────────────────────────
   app.patch('/:id', validate('json', patchSchema), async (c) => {
     const id = c.req.param('id');
     const user = await c.get('container').users.update.execute(id, c.req.valid('json'));
@@ -40,7 +37,6 @@ export function createUsersRoutes() {
     return c.json({ user: userToDto(user, slugs) });
   });
 
-  // ─── DELETE /:id ───────────────────────────────────────────────
   app.delete('/:id', async (c) => {
     const actor = c.get('user')!;
     const id = c.req.param('id');

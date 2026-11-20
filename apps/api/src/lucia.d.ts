@@ -1,5 +1,4 @@
-// Module augmentation global para Lucia — se carga automáticamente por
-// tsconfig. Autocontenido (sin imports) para evitar ciclos de resolución.
+// Sin imports a propósito: evita ciclos de resolución.
 import 'lucia';
 
 declare module 'lucia' {

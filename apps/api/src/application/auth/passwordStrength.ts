@@ -3,10 +3,9 @@ import * as zxcvbnCommonPackage from '@zxcvbn-ts/language-common';
 import * as zxcvbnEnPackage from '@zxcvbn-ts/language-en';
 
 /**
- * Mide fortaleza con zxcvbn (score real por diccionario y patrones) en
- * vez de reglas "una mayúscula + un número" — "Password1!" las cumple y
- * es débil. Rechaza también passwords que incluyan el email/nombre del
- * user, incluso con score alto ("casabella2026" vale 0 si gestionas Casabella).
+ * zxcvbn en vez de reglas "una mayúscula + un número": "Password1!" las
+ * cumple y es débil. Rechaza también passwords que incluyan el email/nombre
+ * del user ("casabella2026" vale 0 si gestionas Casabella).
  */
 
 let initialized = false;

@@ -1,4 +1,3 @@
-// Barrel — expone todo el schema para drizzle-kit y para el client.
 export * from './enums.js';
 export * from './i18n.js';
 export * from './auth.js';

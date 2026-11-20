@@ -58,8 +58,7 @@ export class LuciaSessionRepository implements SessionRepository {
       cookieHeader = this.lucia.createSessionCookie(session.id).serialize();
     }
 
-    // Lucia solo nos da id/userId/expiresAt; completamos la entidad del
-    // dominio releyendo la fila (createdAt + userAgent + ipHash).
+    // Lucia solo da id/userId/expiresAt: releemos la fila para el resto.
     const row = await this.db.query.sessions.findFirst({ where: eq(sessions.id, session.id) });
     const domainSession: Session = row ? rowToSession(row) : {
       id: session.id,

@@ -24,7 +24,6 @@ export function createAuthRoutes() {
     keyFn: async (c: any) => keyByIpAndBodyEmail(c)
   });
 
-  // ─── POST /auth/login ─────────────────────────────────────────────
   app.post('/login',
     loginRateLimit,
     validate('json', z.object({ email: z.string().email(), password: z.string().min(1) })),
@@ -39,7 +38,6 @@ export function createAuthRoutes() {
     }
   );
 
-  // ─── POST /auth/logout ────────────────────────────────────────────
   app.post('/logout', requireAuth, async (c) => {
     const session = c.get('session');
     const { logout } = c.get('container').auth;
@@ -48,7 +46,6 @@ export function createAuthRoutes() {
     return c.json({ ok: true });
   });
 
-  // ─── GET /auth/session ────────────────────────────────────────────
   app.get('/session', noCache, (c) => {
     const user = c.get('user');
     if (!user) return c.json({ user: null });
@@ -57,7 +54,6 @@ export function createAuthRoutes() {
     });
   });
 
-  // ─── GET /auth/sessions ───────────────────────────────────────────
   app.get('/sessions', requireAuth, noCache, async (c) => {
     const user = c.get('user')!;
     const current = c.get('session')!;
@@ -74,7 +70,6 @@ export function createAuthRoutes() {
     });
   });
 
-  // ─── DELETE /auth/sessions/:id ────────────────────────────────────
   app.delete('/sessions/:id', requireAuth, async (c) => {
     const user = c.get('user')!;
     const sessionId = c.req.param('id');
@@ -82,7 +77,6 @@ export function createAuthRoutes() {
     return c.json({ ok: true });
   });
 
-  // ─── DELETE /auth/sessions ────────────────────────────────────────
   app.delete('/sessions', requireAuth, async (c) => {
     const user = c.get('user')!;
     const current = c.get('session')!;
@@ -90,7 +84,6 @@ export function createAuthRoutes() {
     return c.json({ ok: true, closed });
   });
 
-  // ─── POST /auth/forgot ────────────────────────────────────────────
   // Siempre 200 — no revelamos si el email está en BD (lo gestiona el UC).
   app.post('/forgot',
     forgotRateLimit,
@@ -101,7 +94,6 @@ export function createAuthRoutes() {
     }
   );
 
-  // ─── POST /auth/reset ─────────────────────────────────────────────
   app.post('/reset',
     validate('json', z.object({ token: z.string().min(16), newPassword: z.string().min(8).max(200) })),
     async (c) => {
@@ -113,7 +105,6 @@ export function createAuthRoutes() {
     }
   );
 
-  // ─── POST /auth/set-password ─────────────────────────────────────
   // Mismo flujo que /reset, pero el token es `password_setup` (welcome email).
   app.post('/set-password',
     validate('json', z.object({ token: z.string().min(16), newPassword: z.string().min(8).max(200) })),

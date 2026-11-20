@@ -10,26 +10,22 @@ import type { AppBindings } from '../types.js';
 export function createRestaurantsRoutes() {
   const app = new Hono<AppBindings>();
 
-  // ─── GET /restaurants ─────────────────────────────────────────────
   app.get('/', requireAuth, cacheHeaders({ maxAge: 30, swr: 120 }), async (c) => {
     const user = c.get('user')!;
     const list = await c.get('container').restaurants.list.execute(user);
     return c.json({ restaurants: list.map(restaurantToDto) });
   });
 
-  // ─── GET /restaurants/:slug ───────────────────────────────────────
   app.get('/:slug', requireAuth, requireRestaurant('slug'), cacheHeaders({ maxAge: 30, swr: 120 }), async (c) => {
     const r = await c.get('container').restaurants.get.execute(c.req.param('slug'));
     return c.json({ restaurant: restaurantToDto(r) });
   });
 
-  // ─── POST /restaurants ────────────────────────────────────────────
   app.post('/', requireAdmin, validate('json', createSchema), async (c) => {
     const r = await c.get('container').restaurants.create.execute(c.req.valid('json'));
     return c.json({ restaurant: restaurantToDto(r) }, 201);
   });
 
-  // ─── PATCH /restaurants/:slug ─────────────────────────────────────
   app.patch('/:slug', requireAuth, requireRestaurant('slug'), validate('json', patchSchema), async (c) => {
     const user = c.get('user')!;
     const slug = c.req.param('slug');
@@ -38,7 +34,6 @@ export function createRestaurantsRoutes() {
     return c.json({ restaurant: restaurantToDto(r) });
   });
 
-  // ─── POST /restaurants/:slug/discard ──────────────────────────────
   app.post('/:slug/discard', requireAuth, requireRestaurant('slug'), async (c) => {
     const user = c.get('user')!;
     const slug = c.req.param('slug');
@@ -48,7 +43,6 @@ export function createRestaurantsRoutes() {
     return c.json({ restaurant: restaurantToDto(r) });
   });
 
-  // ─── DELETE /restaurants/:slug ────────────────────────────────────
   app.delete('/:slug', requireAdmin, async (c) => {
     await c.get('container').restaurants.delete.execute(c.req.param('slug'));
     return c.json({ ok: true });

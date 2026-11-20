@@ -5,18 +5,7 @@ import { runCleanup } from './scheduled/cleanup.js';
 import { runBackup } from './scheduled/backup.js';
 import { assertEnv, type Env } from './env.js';
 
-/**
- * Entry point del Worker. Cloudflare invoca este archivo con:
- *  - `fetch(request, env, ctx)` → cada request HTTP
- *  - `scheduled(event, env, ctx)` → cada cron trigger
- *
- * El Hono app se crea UNA vez por isolate V8 (no por request), así que
- * siguientes requests son prácticamente gratis.
- *
- * **Sentry**: envolvemos el handler con `Sentry.withSentry(configFn, handler)`.
- * Si `SENTRY_DSN` no está seteado, el wrapper es un no-op.
- */
-
+// La app se crea una vez por isolate, no por request.
 const app = createApp();
 
 const handler = {
@@ -25,9 +14,7 @@ const handler = {
     return app.fetch(request, env, ctx);
   },
 
-  // Cron Triggers — ver wrangler.toml#triggers. `event.cron` indica el
-  // schedule exacto así podemos branchear a la tarea correcta.
-  // `ctx.waitUntil` extiende el lifetime del Worker hasta que la promesa resuelve.
+  // Los schedules deben coincidir con wrangler.toml#triggers.
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
     assertEnv(env);
     ctx.waitUntil(
@@ -42,15 +29,14 @@ const handler = {
   }
 };
 
+// Sin `SENTRY_DSN` el wrapper es un no-op.
 export default Sentry.withSentry(
   (env: Env) => ({
     dsn: env.SENTRY_DSN,
     environment: env.SENTRY_ENV,
     release: '0.0.1',
     tracesSampleRate: env.SENTRY_ENV === 'production' ? 0.1 : 1.0
-    // Nota: @sentry/cloudflare NO acepta sendDefaultPii aquí (es default
-    // false). Para scrubbing fino, usar beforeSend en el client config
-    // via `Sentry.init(…, { beforeSend })` dentro de un middleware extra.
+    // @sentry/cloudflare no acepta `sendDefaultPii` aquí (default false).
   }),
   handler
 );

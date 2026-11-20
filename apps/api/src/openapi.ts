@@ -1,10 +1,4 @@
-/**
- * OpenAPI 3.1 spec del @hosteleria/api.
- *
- * Se sirve en /openapi.json y se renderiza como UI en /docs (Scalar).
- * Mantener sincronizado a mano cuando cambien las rutas — o migrar a
- * @hono/zod-openapi para generación automática desde los schemas Zod.
- */
+// Se mantiene a mano: hay que sincronizarlo cuando cambien las rutas.
 
 const BASE_INFO = {
   title: '@hosteleria/api',
@@ -12,15 +6,13 @@ const BASE_INFO = {
   description: 'Backend HTTP del backoffice del grupo hosteleria. Autenticación por cookie de sesión (Lucia). Multi-idioma en jsonb, R2 para media.'
 };
 
-// El primero es el que Scalar elige por default en /docs cuando pulsás "Try it".
-// Dejamos prod primero para que la UI funcione en producción.
+// Prod primero: Scalar usa el primer servidor en "Try it".
 const SERVERS = [
   { url: 'https://hostelery-api.larokifarmdigital.workers.dev', description: 'Producción (Cloudflare Workers)' },
   { url: 'https://api.hosteleria.cat', description: 'Producción con dominio custom (si lo configurás)' },
   { url: 'http://localhost:8787', description: 'Local dev (wrangler dev)' }
 ];
 
-// ─── Schemas ───────────────────────────────────────────────────────
 const schemas = {
   Error: {
     type: 'object',
@@ -342,12 +334,10 @@ const schemas = {
   }
 };
 
-// ─── Helpers de respuesta ──────────────────────────────────────────
 const ok = <T>(schema: T) => ({ description: 'OK', content: { 'application/json': { schema } } });
 const errRef = (desc: string) => ({ description: desc, content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } });
 const jsonBody = <T>(schema: T) => ({ required: true, content: { 'application/json': { schema } } });
 
-// Respuestas de error reutilizables (todos usan el schema `Error`).
 const err400 = errRef('400 Bad Request — validación o invariante de negocio (ver schema Error)');
 const err401 = errRef('401 Unauthorized — `INVALID_CREDENTIALS` o cookie ausente/expirada (`UNAUTHORIZED`)');
 const err403Admin = errRef('403 Forbidden — `ADMIN_REQUIRED`');
@@ -359,7 +349,6 @@ const err429 = errRef('429 Too Many Requests — `RATE_LIMITED`');
 const err500 = errRef('500 Internal Server Error — `INTERNAL_ERROR`');
 
 const paths: Record<string, any> = {
-  // ─── System ─────────────────────────────────────────────────────
   '/': {
     get: {
       tags: ['System'], summary: 'Metadatos del servicio', security: [],
@@ -385,7 +374,6 @@ const paths: Record<string, any> = {
     }
   },
 
-  // ─── Auth ───────────────────────────────────────────────────────
   '/auth/login': {
     post: {
       tags: ['Auth'], security: [],
@@ -512,7 +500,6 @@ const paths: Record<string, any> = {
     }
   },
 
-  // ─── Restaurants ────────────────────────────────────────────────
   '/restaurants': {
     get: {
       tags: ['Restaurants'], summary: 'Lista restaurantes accesibles por el user',
@@ -599,7 +586,6 @@ const paths: Record<string, any> = {
     }
   },
 
-  // ─── Spaces ─────────────────────────────────────────────────────
   '/restaurants/{slug}/spaces': {
     parameters: [{ name: 'slug', in: 'path', required: true, schema: { type: 'string' } }],
     get: {
@@ -695,7 +681,6 @@ const paths: Record<string, any> = {
     }
   },
 
-  // ─── Dishes ─────────────────────────────────────────────────────
   '/dishes': {
     get: {
       tags: ['Dishes'], summary: 'Lista platos con filtros',
@@ -824,7 +809,6 @@ const paths: Record<string, any> = {
     }
   },
 
-  // ─── Wines ──────────────────────────────────────────────────────
   '/wines': {
     get: {
       tags: ['Wines'], summary: 'Lista vinos con filtros',
@@ -938,7 +922,6 @@ const paths: Record<string, any> = {
     }
   },
 
-  // ─── Languages ──────────────────────────────────────────────────
   '/languages': {
     get: {
       tags: ['Languages'], summary: 'Lista idiomas disponibles + `usedByCount`',
@@ -990,7 +973,6 @@ const paths: Record<string, any> = {
     }
   },
 
-  // ─── Users ──────────────────────────────────────────────────────
   '/users': {
     get: {
       tags: ['Users'], summary: 'Lista usuarios del backoffice (admin only)',
@@ -1055,7 +1037,6 @@ const paths: Record<string, any> = {
     }
   },
 
-  // ─── Media ──────────────────────────────────────────────────────
   '/media': {
     get: {
       tags: ['Media'], summary: 'Lista assets con filtros',

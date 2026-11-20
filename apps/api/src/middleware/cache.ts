@@ -7,11 +7,6 @@ export interface CacheOpts {
   swr?: number;
 }
 
-/**
- * `Cache-Control: private, max-age=…, stale-while-revalidate=…` + ETag del
- * body. Si el cliente envía `If-None-Match` coincidente devolvemos 304
- * sin body.
- */
 export function cacheHeaders(opts: CacheOpts) {
   const { maxAge, swr = 0 } = opts;
   const cacheControl = swr > 0

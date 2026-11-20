@@ -6,6 +6,5 @@ export interface SendEmailInput {
 }
 
 export interface EmailSender {
-  /** El `id` devuelto es el del provider — para logs/tracking. */
   send(input: SendEmailInput): Promise<{ id: string }>;
 }

@@ -1,12 +1,6 @@
-/**
- * El binario vive en un bucket externo; la metadata vive en
- * `MediaRepository`. Esta es la cara "objeto" (R2/S3).
- */
 export interface MediaStorage {
-  /**
-   * URL firmada para PUT directo browser→bucket (el Worker no proxea el
-   * binario, evita CPU time y límites de body size).
-   */
+  /** PUT directo browser→bucket: el Worker no proxea el binario (CPU time y
+   *  límites de body size). */
   createUploadUrl(input: {
     key: string;
     contentType: string;

@@ -80,7 +80,6 @@ export class DrizzleWineRepository implements WineRepository {
     await this.db.delete(wines).where(eq(wines.id, id));
   }
 
-  // ─── Categories ────────────────────────────────────────────────
   async listCategories(spaceId?: string): Promise<WineCategory[]> {
     const rows = await this.db.query.wineCategories.findMany({
       where: spaceId ? eq(wineCategories.spaceId, spaceId) : undefined,

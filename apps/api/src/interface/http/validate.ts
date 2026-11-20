@@ -1,8 +1,5 @@
-/**
- * Wrapper sobre `@hono/zod-validator` que lanza `ValidationError` (DomainError)
- * cuando el input no cumple el schema. Así todas las respuestas de error del
- * API siguen el mismo shape `{ code, message }` servido por `globalErrorHandler`.
- */
+// Lanza `ValidationError` en vez de responder directo, para que los errores de
+// validación salgan con el mismo shape `{ code, message }` que el resto.
 import { zValidator } from '@hono/zod-validator';
 import type { ZodSchema, ZodIssue } from 'zod';
 import { ValidationError } from '../../domain/models/errors.js';
@@ -21,7 +18,6 @@ export function validate<T extends ZodSchema>(target: Target, schema: T) {
   });
 }
 
-/** Traducción rápida de los códigos zod más comunes a español. */
 function translateZodIssue(issue: ZodIssue): string {
   switch (issue.code) {
     case 'invalid_type':

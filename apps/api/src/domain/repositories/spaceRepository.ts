@@ -1,10 +1,7 @@
 import type { Space, SpaceSnapshot, ScheduleDay } from '../models/space.js';
 
-/**
- * El schedule vive en `space_schedule` (una fila por turno) y lo compone
- * el adapter al leer; `replaceSchedule` lo sustituye entero en una
- * transaction para no dejar estados intermedios.
- */
+/** `replaceSchedule` sustituye el schedule entero en una transaction para no
+ *  dejar estados intermedios. */
 export interface SpaceRepository {
   findById(id: string): Promise<Space | null>;
   findByRestaurantAndSlug(restaurantId: string, slug: string): Promise<Space | null>;

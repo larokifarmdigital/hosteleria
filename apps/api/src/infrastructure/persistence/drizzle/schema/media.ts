@@ -1,10 +1,3 @@
-/**
- * Schema de assets de media (imágenes en R2).
- *
- * 1 fila = 1 objeto en el bucket R2. El binario vive en R2 (`r2Key` es la
- * key completa, ej. `casabella/2026/hero-01.webp`); la fila mantiene
- * metadata, usage, alt text i18n y auditoría.
- */
 import { pgTable, text, timestamp, boolean, integer } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
@@ -13,16 +6,12 @@ import { i18nString } from './i18n.js';
 import { restaurants } from './content.js';
 import { users } from './auth.js';
 
-/**
- * Cada fila es un objeto en el bucket R2.
- *
- * `usage` arranca en `unused` al confirmar la subida y pasa a
- * `hero`/`gallery`/`dish` cuando se asigna a algún campo.
- */
+/** 1 fila = 1 objeto en R2. `usage` arranca en `unused` y cambia al asignarse
+ *  el asset a un campo. */
 export const mediaAssets = pgTable('media_assets', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
-  name: text('name').notNull(),                    // "casabella-hero-01"
-  r2Key: text('r2_key').notNull().unique(),        // path dentro del bucket
+  name: text('name').notNull(),
+  r2Key: text('r2_key').notNull().unique(),
   mimeType: text('mime_type').notNull(),
   sizeKb: integer('size_kb').notNull(),
   width: integer('width'),

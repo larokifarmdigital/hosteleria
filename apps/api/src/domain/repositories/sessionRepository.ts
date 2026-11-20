@@ -1,11 +1,8 @@
 import type { Session, SessionMetadata } from '../models/session.js';
 import type { SessionUser } from '../models/user.js';
 
-/**
- * El puerto devuelve `cookieHeader` como string listo para `Set-Cookie`:
- * así ni el use case ni la ruta importan tipos de Lucia (p.ej. su
- * `createSessionCookie().serialize()` queda encapsulado en el adapter).
- */
+/** `cookieHeader` va ya serializado para `Set-Cookie`: así nada fuera del
+ *  adapter importa tipos de Lucia. */
 export interface SessionRepository {
   /**
    * `cookieHeader` viene no-null solo cuando Lucia refrescó la cookie
@@ -22,7 +19,6 @@ export interface SessionRepository {
     cookieHeader: string;
   }>;
 
-  /** Rellena `userAgent` + `ipHash` tras un login OK. */
   enrichMetadata(sessionId: string, metadata: SessionMetadata): Promise<void>;
 
   invalidate(sessionId: string): Promise<void>;

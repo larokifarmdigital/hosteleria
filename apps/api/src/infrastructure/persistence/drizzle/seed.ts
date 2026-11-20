@@ -1,13 +1,4 @@
-/**
- * Seed inicial — bootstrap del backoffice.
- *
- * Idempotente: se puede correr varias veces sin duplicar.
- *  - Idiomas: es, ca, en, fr (fr disponible pero no activo por defecto)
- *  - Admin user: leyendo ADMIN_EMAIL / ADMIN_PASSWORD del env
- *  - 6 restaurantes shell vacíos con slugs canónicos
- *
- * Uso: `pnpm --filter @hosteleria/api db:seed`
- */
+// Idempotente. El admin sale de ADMIN_EMAIL / ADMIN_PASSWORD del env.
 import { config } from 'dotenv';
 config({ path: '.env.local' });
 config({ path: '.env', override: false });
@@ -50,9 +41,8 @@ async function main() {
 
   const db = getDb(databaseUrl);
 
-  // ─── Languages ─────────────────────────────────────────────────
   console.log('▸ Idiomas…');
-  const langByCode = new Map<string, string>(); // code → id
+  const langByCode = new Map<string, string>();
   for (const lang of SEED_LANGUAGES) {
     const existing = await db.query.languages.findFirst({ where: eq(schema.languages.code, lang.code) });
     if (existing) {
@@ -65,7 +55,6 @@ async function main() {
     }
   }
 
-  // ─── Admin user ────────────────────────────────────────────────
   console.log('▸ Admin user…');
   const existingAdmin = await db.query.users.findFirst({ where: eq(schema.users.email, adminEmail) });
   if (existingAdmin) {
@@ -81,7 +70,6 @@ async function main() {
     console.log(`   ✓ ${adminEmail} creado como admin`);
   }
 
-  // ─── Restaurantes shell + idiomas activos ──────────────────────
   console.log('▸ Restaurantes shell…');
   for (const r of SEED_RESTAURANTS) {
     const defaultLocaleId = langByCode.get(r.defaultLocale);
@@ -110,7 +98,6 @@ async function main() {
       console.log(`   ✓ ${r.slug} creado`);
     }
 
-    // Idiomas activos m2m — insertar los que faltan
     const currentLocales = await db.query.restaurantLocales.findMany({
       where: eq(schema.restaurantLocales.restaurantId, restaurantId)
     });

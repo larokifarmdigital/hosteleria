@@ -7,7 +7,7 @@ export function rowToWine(row: typeof wines.$inferSelect): Wine {
     id: row.id,
     spaceId: row.spaceId,
     categoryId: row.categoryId,
-    name: row.name,                                              // NO i18n
+    name: row.name,
     region: row.region,
     note: row.note ? (row.note as I18nValue) : undefined,
     priceGlass: row.priceGlass !== null ? Number(row.priceGlass) : null,
