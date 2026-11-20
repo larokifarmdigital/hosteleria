@@ -100,7 +100,9 @@ async function request<T>(opts: ApiClientOpts, path: string, init: RequestInit =
 
   let res: Response;
   try {
-    res = await doFetch(url, { ...init, headers, credentials: 'include' });
+    // `no-store`: el api marca los GET como cacheables 30 s y el navegador
+    // devolvería datos viejos justo después de guardar. La caché es TanStack Query.
+    res = await doFetch(url, { cache: 'no-store', ...init, headers, credentials: 'include' });
   } catch (netErr) {
     // Fetch rechazó antes de recibir response (offline, DNS, CORS…).
     const err = new ApiError(0, 'NETWORK_ERROR', 'No hay conexión con el servidor.', netErr, traceId);
