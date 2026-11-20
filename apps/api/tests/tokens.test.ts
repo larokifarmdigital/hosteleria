@@ -1,12 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createHash } from 'node:crypto';
 
-/**
- * Test del hashing de tokens — verifica que el helper es determinístico
- * y que tokens distintos producen hashes distintos.
- *
- * No testea createToken() porque toca BD; eso va en tests de integración.
- */
+// createToken() toca BD: se cubre en los tests de integración, no aquí.
 
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');

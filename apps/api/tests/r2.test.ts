@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeFilename } from '../src/lib/r2.js';
+import { R2MediaStorage } from '../src/infrastructure/storage/r2MediaStorage.js';
+import type { Env } from '../src/env.js';
+
+// normalizeFilename no lee el env.
+const { normalizeFilename } = new R2MediaStorage({} as Env);
 
 describe('normalizeFilename', () => {
   it('lowercase + reemplaza espacios por guiones', () => {
