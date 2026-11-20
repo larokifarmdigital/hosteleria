@@ -12,21 +12,47 @@ import type {
   UploadUrlResponse,
   I18nString
 } from './types';
+import { ApiError, type ErrorBody, type ErrorCode } from './errors';
 
-export interface ApiClientOpts {
-  /** URL base sin barra final: "https://api.hosteleria.cat" o "http://localhost:8787" */
-  baseUrl: string;
-  /** Cookies opcionales para enviar (server-side). En el browser, `credentials: 'include'` las envía. */
-  cookieHeader?: string;
-  /** Hook para hacer fetch — permite polyfill en tests o server actions. */
-  fetch?: typeof globalThis.fetch;
+/**
+ * Context que `onRequest`/`onError` reciben. Es mutable: el hook puede
+ * modificar headers, loguear timings, o leer `traceId` para asociar logs.
+ */
+export interface RequestContext {
+  method: string;
+  path: string;
+  url: string;
+  headers: Headers;
+  /** Añadido por el client antes de llamar al hook. */
+  traceId: string;
+  /** Timestamp antes de `fetch()`. Útil en `onError` para medir duración. */
+  startedAt: number;
 }
 
-export class ApiError extends Error {
-  constructor(public status: number, public body: unknown, message?: string) {
-    super(message ?? `api_error_${status}`);
-    this.name = 'ApiError';
-  }
+export interface ApiClientOpts {
+  /** URL base sin barra final: "https://api.hosteleria.cat" o "http://localhost:8787". */
+  baseUrl: string;
+  /** Cookies opcionales (server-side). En el browser basta con `credentials: 'include'`. */
+  cookieHeader?: string;
+  /** Override de `fetch` — para tests, workers, o server actions con instrumentación. */
+  fetch?: typeof globalThis.fetch;
+  /** Se ejecuta antes de cada request. Modificar `ctx.headers` muta el request real. */
+  onRequest?: (ctx: RequestContext) => void | Promise<void>;
+  /** Se ejecuta cuando `request()` rechaza con `ApiError`. Puede re-lanzar para abortar flujo. */
+  onError?: (err: ApiError, ctx: RequestContext) => void | Promise<void>;
+  /**
+   * Generador de trace-id. Por defecto `crypto.randomUUID()` cuando existe,
+   * fallback a `Date.now()` + random. Útil overridear en tests para IDs estables.
+   */
+  traceId?: () => string;
+}
+
+export { ApiError };
+export type { ErrorBody, ErrorCode };
+
+function defaultTraceId(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function buildQuery(params?: Record<string, string | number | boolean | undefined>): string {
@@ -39,21 +65,61 @@ function buildQuery(params?: Record<string, string | number | boolean | undefine
   return s ? `?${s}` : '';
 }
 
+/** Parsea el body de error del backend: `{ code, message }`. Fallbacks defensivos. */
+function parseErrorBody(body: unknown, status: number): { code: string; message: string } {
+  if (body && typeof body === 'object') {
+    const b = body as Partial<ErrorBody>;
+    if (typeof b.code === 'string' && typeof b.message === 'string') {
+      return { code: b.code, message: b.message };
+    }
+  }
+  // El body no cumple el contrato (edge, p.ej. Workers devolviendo text/plain
+  // de un panic antes de llegar a `globalErrorHandler`).
+  return {
+    code: status >= 500 ? 'INTERNAL_ERROR' : 'HTTP_ERROR',
+    message: typeof body === 'string' && body.length < 300
+      ? body
+      : 'Error inesperado. Inténtalo de nuevo.'
+  };
+}
+
 async function request<T>(opts: ApiClientOpts, path: string, init: RequestInit = {}): Promise<T> {
   const doFetch = opts.fetch ?? globalThis.fetch;
+  const method = (init.method ?? 'GET').toUpperCase();
   const headers = new Headers(init.headers);
   if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   if (opts.cookieHeader) headers.set('Cookie', opts.cookieHeader);
 
-  const res = await doFetch(`${opts.baseUrl}${path}`, {
-    ...init,
-    headers,
-    credentials: 'include'
-  });
+  const traceId = (opts.traceId ?? defaultTraceId)();
+  headers.set('X-Trace-Id', traceId);
+
+  const url = `${opts.baseUrl}${path}`;
+  const ctx: RequestContext = { method, path, url, headers, traceId, startedAt: Date.now() };
+
+  if (opts.onRequest) await opts.onRequest(ctx);
+
+  let res: Response;
+  try {
+    res = await doFetch(url, { ...init, headers, credentials: 'include' });
+  } catch (netErr) {
+    // Fetch rechazó antes de recibir response (offline, DNS, CORS…).
+    const err = new ApiError(0, 'NETWORK_ERROR', 'No hay conexión con el servidor.', netErr, traceId);
+    if (opts.onError) await opts.onError(err, ctx);
+    throw err;
+  }
 
   const isJson = res.headers.get('content-type')?.includes('application/json');
-  const body: any = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null);
-  if (!res.ok) throw new ApiError(res.status, body, body?.error);
+  const body: unknown = isJson
+    ? await res.json().catch(() => null)
+    : await res.text().catch(() => null);
+
+  if (!res.ok) {
+    const { code, message } = parseErrorBody(body, res.status);
+    const err = new ApiError(res.status, code, message, body, traceId);
+    if (opts.onError) await opts.onError(err, ctx);
+    throw err;
+  }
+
   return body as T;
 }
 
@@ -70,7 +136,13 @@ export function createApiClient(opts: ApiClientOpts) {
       login: (email: string, password: string) =>
         req<{ user: SessionUser }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
       logout: () => req<{ ok: true }>('/auth/logout', { method: 'POST' }),
-      session: () => req<{ user: SessionUser | null }>('/auth/session')
+      session: () => req<{ user: SessionUser | null }>('/auth/session'),
+      forgot: (email: string) =>
+        req<{ ok: true }>('/auth/forgot', { method: 'POST', body: JSON.stringify({ email }) }),
+      reset: (token: string, newPassword: string) =>
+        req<{ ok: true }>('/auth/reset', { method: 'POST', body: JSON.stringify({ token, newPassword }) }),
+      setPassword: (token: string, newPassword: string) =>
+        req<{ ok: true }>('/auth/set-password', { method: 'POST', body: JSON.stringify({ token, newPassword }) })
     },
 
     // ─── Restaurants ────────────────────────────────────────────
@@ -85,7 +157,9 @@ export function createApiClient(opts: ApiClientOpts) {
         req<{ restaurant: Restaurant }>('/restaurants', { method: 'POST', body: JSON.stringify(body) }).then(r => r.restaurant),
       patch: (slug: string, body: Partial<Omit<Restaurant, 'id' | 'slug' | 'completePercent' | 'spacesCount' | 'dishesCount' | 'winesCount' | 'activeLocales' | 'defaultLocale' | 'lastPublishedAt'>> & { defaultLocaleCode?: string; activeLocaleCodes?: string[] }) =>
         req<{ restaurant: Restaurant }>(`/restaurants/${slug}`, { method: 'PATCH', body: JSON.stringify(body) }).then(r => r.restaurant),
-      delete: (slug: string) => req<{ ok: true }>(`/restaurants/${slug}`, { method: 'DELETE' })
+      delete: (slug: string) => req<{ ok: true }>(`/restaurants/${slug}`, { method: 'DELETE' }),
+      discard: (slug: string) =>
+        req<{ restaurant: Restaurant }>(`/restaurants/${slug}/discard`, { method: 'POST' }).then(r => r.restaurant)
     },
 
     // ─── Spaces ─────────────────────────────────────────────────
@@ -101,7 +175,9 @@ export function createApiClient(opts: ApiClientOpts) {
       patch: (restaurantSlug: string, spaceId: string, body: Partial<Pick<Space, 'name' | 'type' | 'descriptor' | 'isDefault' | 'order' | 'coverGradient' | 'state' | 'hero' | 'manifesto' | 'schedule'>>) =>
         req<{ space: Space }>(`/restaurants/${restaurantSlug}/spaces/${spaceId}`, { method: 'PATCH', body: JSON.stringify(body) }).then(r => r.space),
       delete: (restaurantSlug: string, spaceId: string) =>
-        req<{ ok: true }>(`/restaurants/${restaurantSlug}/spaces/${spaceId}`, { method: 'DELETE' })
+        req<{ ok: true }>(`/restaurants/${restaurantSlug}/spaces/${spaceId}`, { method: 'DELETE' }),
+      discard: (restaurantSlug: string, spaceId: string) =>
+        req<{ space: Space }>(`/restaurants/${restaurantSlug}/spaces/${spaceId}/discard`, { method: 'POST' }).then(r => r.space)
     },
 
     // ─── Dishes ─────────────────────────────────────────────────
@@ -161,7 +237,7 @@ export function createApiClient(opts: ApiClientOpts) {
     users: {
       list: () => req<{ users: User[] }>('/users').then(r => r.users),
       create: (body: {
-        email: string; password: string; name: string; role?: 'admin' | 'editor';
+        email: string; password?: string; name: string; role?: 'admin' | 'editor';
         avatarColor?: string; restaurantSlugs?: string[];
       }) => req<{ user: User }>('/users', { method: 'POST', body: JSON.stringify(body) }).then(r => r.user),
       patch: (id: string, body: {
@@ -181,7 +257,9 @@ export function createApiClient(opts: ApiClientOpts) {
         req<{ media: MediaAsset }>(`/media/${mediaId}/confirm`, { method: 'POST', body: JSON.stringify(body) }).then(r => r.media),
       patch: (id: string, body: { usage?: MediaAsset['usage']; hasAltText?: boolean; altText?: I18nString }) =>
         req<{ media: MediaAsset }>(`/media/${id}`, { method: 'PATCH', body: JSON.stringify(body) }).then(r => r.media),
-      delete: (id: string) => req<{ ok: true }>(`/media/${id}`, { method: 'DELETE' })
+      delete: (id: string) => req<{ ok: true }>(`/media/${id}`, { method: 'DELETE' }),
+      references: (id: string) =>
+        req<{ dishes: Array<{ id: string }>; spaces: Array<{ id: string }> }>(`/media/${id}/references`)
     }
   };
 }
