@@ -23,7 +23,8 @@ export interface RestaurantRow {
   contact: unknown;
   socials: unknown;
   seo: unknown;
-  lastPublishedAt: Date | null;
+  // La SQL cruda del repo devuelve el timestamp como string; `findFirst` lo da como Date.
+  lastPublishedAt: Date | string | null;
   publishedSnapshot: unknown;
   spacesCount: number;
   dishesCount: number;
@@ -49,7 +50,7 @@ export function rowToRestaurant(row: RestaurantRow): Restaurant {
     contact: (row.contact as any) ?? {},
     socials: (row.socials as any) ?? {},
     seo: (row.seo as any) ?? {},
-    lastPublishedAt: row.lastPublishedAt,
+    lastPublishedAt: row.lastPublishedAt ? new Date(row.lastPublishedAt) : null,
     publishedSnapshot: (row.publishedSnapshot as RestaurantSnapshot | null) ?? null,
     spacesCount: row.spacesCount,
     dishesCount: row.dishesCount,
