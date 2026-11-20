@@ -1,60 +1,48 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { User } from '@hosteleria/api-client';
-import { http } from '../../api/client';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import type { ApiClient } from '@hosteleria/api-client';
+import { api } from '../../api/browser';
+import { useErrorToast } from '../../api/errorHandling';
 import { qk } from '../keys';
 
-type CreateInput = {
-  email: string;
-  password?: string;
-  name: string;
-  role?: 'admin' | 'editor';
-  avatarColor?: string;
-  restaurantSlugs?: string[];
-};
-
-type PatchInput = {
-  name?: string;
-  role?: 'admin' | 'editor';
-  avatarColor?: string;
-  restaurantSlugs?: string[];
-  password?: string;
-};
-
-const api = {
-  list: () => http.get<{ users: User[] }>('/users').then(r => r.data.users),
-  create: (body: CreateInput) =>
-    http.post<{ user: User }>('/users', body).then(r => r.data.user),
-  patch: (id: string, body: PatchInput) =>
-    http.patch<{ user: User }>(`/users/${id}`, body).then(r => r.data.user),
-  delete: (id: string) => http.delete<{ ok: true }>(`/users/${id}`).then(r => r.data)
-};
+type CreateInput = Parameters<ApiClient['users']['create']>[0];
+type PatchInput = Parameters<ApiClient['users']['patch']>[1];
 
 export function useUsers() {
-  return useQuery({ queryKey: qk.users.list(), queryFn: api.list });
+  return useQuery({ queryKey: qk.users.list(), queryFn: api.users.list });
 }
 
 export function useCreateUser() {
   const qc = useQueryClient();
+  const toastError = useErrorToast();
   return useMutation({
-    mutationFn: api.create,
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.users.all })
+    mutationFn: (body: CreateInput) => api.users.create(body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.users.all }),
+    onError: toastError
   });
 }
 
 export function usePatchUser(id: string) {
   const qc = useQueryClient();
+  const toastError = useErrorToast();
   return useMutation({
-    mutationFn: (body: PatchInput) => api.patch(id, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.users.all })
+    mutationFn: (body: PatchInput) => api.users.patch(id, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.users.all }),
+    onError: toastError
   });
 }
 
 export function useDeleteUser() {
   const qc = useQueryClient();
+  const toastError = useErrorToast();
   return useMutation({
-    mutationFn: (id: string) => api.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.users.all })
+    mutationFn: (id: string) => api.users.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.users.all }),
+    onError: toastError
   });
+}
+
+export async function prefetchUsers(qc: QueryClient, serverApi: ApiClient) {
+  await qc.prefetchQuery({ queryKey: qk.users.list(), queryFn: serverApi.users.list });
 }

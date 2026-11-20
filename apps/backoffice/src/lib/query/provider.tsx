@@ -3,19 +3,19 @@
 import { useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { ApiError } from '../api/error';
+import { ApiError } from '../api';
 
 /**
  * QueryClientProvider montado una sola vez en RootLayout.
  *
  * Defaults pensados para un CMS:
- * - `staleTime: 30s` — evita refetches en navegación rápida entre tabs.
- * - `refetchOnWindowFocus: false` — en un CMS, el refetch automático al volver
- *   al tab es más molesto que útil (confunde al editor en medio de un form).
- * - `retry` solo en 5xx/network, no en 4xx (no sirve).
+ *  - `staleTime: 30s` — evita refetches en navegación rápida entre tabs.
+ *  - `refetchOnWindowFocus: false` — en un CMS confunde al editor en medio
+ *    de un form; mejor dejar los refetches explícitos por mutation.
+ *  - `retry` solo en 5xx/network, no en 4xx (no sirve).
  *
- * Los interceptors de axios (en `lib/api/client.ts`) ya se encargan de los
- * side-effects cross-cutting: 401 → redirect, 5xx → toast + Sentry.
+ * Los side-effects cross-cutting (401 → /login, 5xx → reportError) viven
+ * en `onError` del `api` del browser (`lib/api/browser.ts`).
  */
 export function QueryProvider({ children }: { children: ReactNode }) {
   const [client] = useState(

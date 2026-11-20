@@ -1,30 +1,16 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import type { SessionUser } from '@hosteleria/api-client';
-import { http } from '../../api/client';
+import { api } from '../../api/browser';
+import { useErrorToast } from '../../api/errorHandling';
 import { qk } from '../keys';
 
-// ─── Fetch functions ──────────────────────────────────────────────
-// NOTA: montadas bajo /account/* porque Vercel reserva /api/auth/* para SSO.
-const api = {
-  session: () => http.get<{ user: SessionUser | null }>('/account/session').then(r => r.data.user),
-  login: (vars: { email: string; password: string }) =>
-    http.post<{ user: SessionUser }>('/account/login', vars).then(r => r.data.user),
-  logout: () => http.post<{ ok: true }>('/account/logout').then(r => r.data),
-  forgot: (email: string) => http.post<{ ok: true }>('/account/forgot', { email }).then(r => r.data),
-  reset: (vars: { token: string; password: string }) =>
-    http.post<{ ok: true }>('/account/reset', vars).then(r => r.data),
-  setPassword: (vars: { token: string; password: string }) =>
-    http.post<{ ok: true }>('/account/set-password', vars).then(r => r.data)
-};
-
-// ─── Hooks ────────────────────────────────────────────────────────
 export function useSession() {
   return useQuery({
     queryKey: qk.auth.session(),
-    queryFn: api.session,
+    queryFn: () => api.auth.session().then(r => r.user),
     staleTime: Infinity
   });
 }
@@ -34,10 +20,10 @@ export function useLogin() {
   const router = useRouter();
   return useMutation({
     mutationFn: (vars: { email: string; password: string; next?: string }) =>
-      api.login({ email: vars.email, password: vars.password }),
-    onSuccess: (user, vars) => {
-      qc.setQueryData(qk.auth.session(), user);
-      router.replace(vars.next ?? '/dashboard');
+      api.auth.login(vars.email, vars.password).then(r => ({ user: r.user, next: vars.next })),
+    onSuccess: ({ user, next }) => {
+      qc.setQueryData<SessionUser>(qk.auth.session(), user);
+      router.replace(next ?? '/dashboard');
     }
   });
 }
@@ -45,23 +31,36 @@ export function useLogin() {
 export function useLogout() {
   const qc = useQueryClient();
   const router = useRouter();
+  const toastError = useErrorToast();
   return useMutation({
-    mutationFn: api.logout,
-    onSuccess: () => {
-      qc.clear();
-      router.replace('/login');
-    }
+    mutationFn: api.auth.logout,
+    onSuccess: () => { qc.clear(); router.replace('/login'); },
+    onError: toastError
   });
 }
 
 export function useForgotPassword() {
-  return useMutation({ mutationFn: api.forgot });
+  return useMutation({ mutationFn: (email: string) => api.auth.forgot(email) });
 }
 
 export function useResetPassword() {
-  return useMutation({ mutationFn: api.reset });
+  return useMutation({
+    mutationFn: (vars: { token: string; newPassword: string }) =>
+      api.auth.reset(vars.token, vars.newPassword)
+  });
 }
 
 export function useSetPassword() {
-  return useMutation({ mutationFn: api.setPassword });
+  return useMutation({
+    mutationFn: (vars: { token: string; newPassword: string }) =>
+      api.auth.setPassword(vars.token, vars.newPassword)
+  });
+}
+
+/** Prefetch para RSC. Pasa el `api` del server (con cookies) y el `qc` creado en server. */
+export async function prefetchSession(qc: QueryClient, serverApi: typeof api) {
+  await qc.prefetchQuery({
+    queryKey: qk.auth.session(),
+    queryFn: () => serverApi.auth.session().then(r => r.user)
+  });
 }

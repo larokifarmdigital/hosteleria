@@ -1,95 +1,78 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Wine, WineCategory, I18nString } from '@hosteleria/api-client';
-import { http } from '../../api/client';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import type { ApiClient, I18nString } from '@hosteleria/api-client';
+import { api } from '../../api/browser';
+import { useErrorToast } from '../../api/errorHandling';
 import { qk } from '../keys';
 
 type ListFilters = { restaurantSlug?: string; categoryId?: string };
-
-type CreateInput = {
-  spaceId: string;
-  categoryId: string;
-  name: string;
-  region?: string;
-  note?: I18nString;
-  priceGlass?: number;
-  priceBottle?: number;
-  order?: number;
-  active?: boolean;
-  imageGradient?: string;
-};
-
-type PatchInput = Partial<Omit<CreateInput, 'spaceId'>>;
-
-const api = {
-  list: (filters?: ListFilters) =>
-    http.get<{ wines: Wine[] }>('/wines', { params: filters }).then(r => r.data.wines),
-  create: (body: CreateInput) =>
-    http.post<{ wine: Wine }>('/wines', body).then(r => r.data.wine),
-  patch: (id: string, body: PatchInput) =>
-    http.patch<{ wine: Wine }>(`/wines/${id}`, body).then(r => r.data.wine),
-  delete: (id: string) => http.delete<{ ok: true }>(`/wines/${id}`).then(r => r.data),
-  categories: {
-    list: (spaceId?: string) =>
-      http
-        .get<{ categories: WineCategory[] }>('/wines/categories', { params: { spaceId } })
-        .then(r => r.data.categories),
-    create: (body: { spaceId: string; name: I18nString; order?: number }) =>
-      http.post<{ category: WineCategory }>('/wines/categories', body).then(r => r.data.category),
-    delete: (id: string) =>
-      http.delete<{ ok: true }>(`/wines/categories/${id}`).then(r => r.data)
-  }
-};
+type CreateInput = Parameters<ApiClient['wines']['create']>[0];
+type PatchInput = Parameters<ApiClient['wines']['patch']>[1];
 
 export function useWines(filters?: ListFilters) {
-  return useQuery({ queryKey: qk.wines.list(filters), queryFn: () => api.list(filters) });
+  return useQuery({ queryKey: qk.wines.list(filters), queryFn: () => api.wines.list(filters) });
 }
 
 export function useCreateWine() {
   const qc = useQueryClient();
+  const toastError = useErrorToast();
   return useMutation({
-    mutationFn: api.create,
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.wines.all })
+    mutationFn: (body: CreateInput) => api.wines.create(body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.wines.all }),
+    onError: toastError
   });
 }
 
 export function usePatchWine(id: string) {
   const qc = useQueryClient();
+  const toastError = useErrorToast();
   return useMutation({
-    mutationFn: (body: PatchInput) => api.patch(id, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.wines.all })
+    mutationFn: (body: PatchInput) => api.wines.patch(id, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.wines.all }),
+    onError: toastError
   });
 }
 
 export function useDeleteWine() {
   const qc = useQueryClient();
+  const toastError = useErrorToast();
   return useMutation({
-    mutationFn: (id: string) => api.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.wines.all })
+    mutationFn: (id: string) => api.wines.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.wines.all }),
+    onError: toastError
   });
 }
 
 // ─── Categories ──────────────────────────────────────────────────
 export function useWineCategories(spaceId?: string) {
-  return useQuery({
-    queryKey: qk.wines.categories(spaceId),
-    queryFn: () => api.categories.list(spaceId)
-  });
+  return useQuery({ queryKey: qk.wines.categories(spaceId), queryFn: () => api.wines.categories.list(spaceId) });
 }
 
 export function useCreateWineCategory() {
   const qc = useQueryClient();
+  const toastError = useErrorToast();
   return useMutation({
-    mutationFn: api.categories.create,
-    onSuccess: (_c, vars) => qc.invalidateQueries({ queryKey: qk.wines.categories(vars.spaceId) })
+    mutationFn: (body: { spaceId: string; name: I18nString; order?: number }) =>
+      api.wines.categories.create(body),
+    onSuccess: (_c, vars) => qc.invalidateQueries({ queryKey: qk.wines.categories(vars.spaceId) }),
+    onError: toastError
   });
 }
 
 export function useDeleteWineCategory() {
   const qc = useQueryClient();
+  const toastError = useErrorToast();
   return useMutation({
-    mutationFn: (id: string) => api.categories.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.wines.all })
+    mutationFn: (id: string) => api.wines.categories.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.wines.all }),
+    onError: toastError
+  });
+}
+
+export async function prefetchWines(qc: QueryClient, serverApi: ApiClient, filters?: ListFilters) {
+  await qc.prefetchQuery({
+    queryKey: qk.wines.list(filters),
+    queryFn: () => serverApi.wines.list(filters)
   });
 }
