@@ -63,7 +63,11 @@ export class DrizzleRestaurantRepository implements RestaurantRepository {
 
   async listAccessibleBy(allowedIds: string[] | null): Promise<Restaurant[]> {
     if (allowedIds?.length === 0) return [];
-    const where = allowedIds ? sql`WHERE r.id = ANY(${allowedIds})` : sql``;
+    // No `= ANY(${allowedIds})`: drizzle expande un array JS a `($1, $2)`, que
+    // no es un array de Postgres y la consulta falla.
+    const where = allowedIds
+      ? sql`WHERE r.id IN (${sql.join(allowedIds.map(id => sql`${id}`), sql`, `)})`
+      : sql``;
     const result = await this.db.execute(this.buildSelectQuery(where));
     return ((result as any).rows as RestaurantRow[]).map(rowToRestaurant);
   }
