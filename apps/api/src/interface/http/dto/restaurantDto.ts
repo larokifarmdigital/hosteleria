@@ -23,6 +23,9 @@ export function restaurantToDto(r: Restaurant) {
     socials: r.socials,
     seo: r.seo,
     lastPublishedAt: r.lastPublishedAt?.toISOString() ?? null,
+    // Lo último publicado: el backoffice lo compara con lo actual para
+    // resumir qué cambia antes de publicar.
+    publishedSnapshot: r.publishedSnapshot,
     completePercent: 0,
     spacesCount: r.spacesCount,
     dishesCount: r.dishesCount,

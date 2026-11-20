@@ -22,6 +22,7 @@ export function spaceToDto(s: Space) {
     hero: s.hero,
     manifesto: s.manifesto,
     schedule,
+    publishedSnapshot: s.publishedSnapshot,
     galleryCount: 0,
     dishesCount: 0,
     winesCount: 0,

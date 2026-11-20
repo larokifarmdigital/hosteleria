@@ -90,6 +90,8 @@ export interface Restaurant {
   socials: Socials;
   seo: Seo;
   lastPublishedAt: string | null;
+  /** Lo último publicado; `null` si nunca se publicó. */
+  publishedSnapshot: Partial<Pick<Restaurant, 'name' | 'domain' | 'logoInitial' | 'coverGradient' | 'timezone' | 'address' | 'contact' | 'socials' | 'seo' | 'acceptsBookings' | 'showSocials'>> | null;
   completePercent: number;
   spacesCount: number;
   dishesCount: number;
@@ -134,6 +136,8 @@ export interface Space {
   hero: Hero;
   manifesto: Manifesto;
   schedule: ScheduleDay[];
+  /** Lo último publicado; `null` si nunca se publicó. */
+  publishedSnapshot: Partial<Pick<Space, 'hero' | 'manifesto' | 'descriptor' | 'coverGradient'>> | null;
   galleryCount: number;
   dishesCount: number;
   winesCount: number;
