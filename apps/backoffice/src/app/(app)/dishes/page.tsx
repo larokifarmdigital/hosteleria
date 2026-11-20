@@ -1,7 +1,7 @@
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { getQueryClient } from '@/lib/query/server';
-import { getServerApi } from '@/lib/api';
-import { prefetchDishes } from '@/lib/query/hooks/dishes';
+import { getServerApi } from '@/lib/api/server';
+import { prefetchDishes } from '@/lib/query/prefetch';
 import { DishesPageClient } from './DishesPageClient';
 
 export const dynamic = 'force-dynamic';

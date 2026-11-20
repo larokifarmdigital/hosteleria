@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Space, ApiClient } from '@hosteleria/api-client';
 import { api } from '../../api/browser';
 import { useErrorToast } from '../../api/errorHandling';
@@ -82,19 +82,5 @@ export function useDeleteSpace(restaurantSlug: string) {
       qc.invalidateQueries({ queryKey: qk.restaurants.detail(restaurantSlug) });
     },
     onError: toastError
-  });
-}
-
-export async function prefetchSpaces(qc: QueryClient, serverApi: ApiClient, restaurantSlug: string) {
-  await qc.prefetchQuery({
-    queryKey: qk.spaces.byRestaurant(restaurantSlug),
-    queryFn: () => serverApi.spaces.list(restaurantSlug)
-  });
-}
-
-export async function prefetchSpace(qc: QueryClient, serverApi: ApiClient, restaurantSlug: string, spaceId: string) {
-  await qc.prefetchQuery({
-    queryKey: qk.spaces.detail(restaurantSlug, spaceId),
-    queryFn: () => serverApi.spaces.get(restaurantSlug, spaceId)
   });
 }

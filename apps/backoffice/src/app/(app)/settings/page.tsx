@@ -1,9 +1,9 @@
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { getQueryClient } from '@/lib/query/server';
-import { getServerApi } from '@/lib/api';
-import { prefetchLanguages } from '@/lib/query/hooks/languages';
-import { prefetchUsers } from '@/lib/query/hooks/users';
-import { prefetchRestaurants } from '@/lib/query/hooks/restaurants';
+import { getServerApi } from '@/lib/api/server';
+import { prefetchLanguages } from '@/lib/query/prefetch';
+import { prefetchUsers } from '@/lib/query/prefetch';
+import { prefetchRestaurants } from '@/lib/query/prefetch';
 import { SettingsPageClient } from './SettingsPageClient';
 
 export const dynamic = 'force-dynamic';

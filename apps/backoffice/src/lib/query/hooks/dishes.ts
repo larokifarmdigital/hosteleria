@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Dish, ApiClient, I18nString } from '@hosteleria/api-client';
 import { api } from '../../api/browser';
 import { useErrorToast } from '../../api/errorHandling';
@@ -99,12 +99,5 @@ export function useDeleteDishCategory() {
     mutationFn: (id: string) => api.dishes.categories.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.dishes.all }),
     onError: toastError
-  });
-}
-
-export async function prefetchDishes(qc: QueryClient, serverApi: ApiClient, filters?: ListFilters) {
-  await qc.prefetchQuery({
-    queryKey: qk.dishes.list(filters),
-    queryFn: () => serverApi.dishes.list(filters)
   });
 }

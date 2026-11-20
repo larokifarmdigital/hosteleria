@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ApiClient } from '@hosteleria/api-client';
 import { api } from '../../api/browser';
 import { useErrorToast } from '../../api/errorHandling';
@@ -39,8 +39,4 @@ export function useDeleteLanguage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.languages.all }),
     onError: toastError
   });
-}
-
-export async function prefetchLanguages(qc: QueryClient, serverApi: ApiClient) {
-  await qc.prefetchQuery({ queryKey: qk.languages.list(), queryFn: serverApi.languages.list });
 }

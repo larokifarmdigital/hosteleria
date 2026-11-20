@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { ApiError } from '@hosteleria/api-client';
 import { getQueryClient } from '@/lib/query/server';
-import { getServerApi } from '@/lib/api';
+import { getServerApi } from '@/lib/api/server';
 import { qk } from '@/lib/query/keys';
 import { SpaceEditorPageClient } from './SpaceEditorPageClient';
 

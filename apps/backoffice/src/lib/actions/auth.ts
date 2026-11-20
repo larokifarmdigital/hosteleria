@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { getServerApi } from '../api';
+import { getServerApi } from '../api/server';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8787';
 

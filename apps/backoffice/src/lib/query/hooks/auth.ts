@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import type { SessionUser } from '@hosteleria/api-client';
 import { api } from '../../api/browser';
@@ -54,12 +54,5 @@ export function useSetPassword() {
   return useMutation({
     mutationFn: (vars: { token: string; newPassword: string }) =>
       api.auth.setPassword(vars.token, vars.newPassword)
-  });
-}
-
-export async function prefetchSession(qc: QueryClient, serverApi: typeof api) {
-  await qc.prefetchQuery({
-    queryKey: qk.auth.session(),
-    queryFn: () => serverApi.auth.session().then(r => r.user)
   });
 }

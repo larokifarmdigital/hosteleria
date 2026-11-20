@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Restaurant, ApiClient } from '@hosteleria/api-client';
 import { api } from '../../api/browser';
 import { useErrorToast } from '../../api/errorHandling';
@@ -89,16 +89,5 @@ export function useDiscardRestaurant(slug: string) {
     mutationFn: () => api.restaurants.discard(slug),
     onSuccess: (restaurant) => qc.setQueryData(qk.restaurants.detail(slug), restaurant),
     onError: toastError
-  });
-}
-
-export async function prefetchRestaurants(qc: QueryClient, serverApi: ApiClient) {
-  await qc.prefetchQuery({ queryKey: qk.restaurants.list(), queryFn: serverApi.restaurants.list });
-}
-
-export async function prefetchRestaurant(qc: QueryClient, serverApi: ApiClient, slug: string) {
-  await qc.prefetchQuery({
-    queryKey: qk.restaurants.detail(slug),
-    queryFn: () => serverApi.restaurants.get(slug)
   });
 }

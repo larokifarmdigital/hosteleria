@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ApiClient } from '@hosteleria/api-client';
 import { api } from '../../api/browser';
 import { useErrorToast } from '../../api/errorHandling';
@@ -41,8 +41,4 @@ export function useDeleteUser() {
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.users.all }),
     onError: toastError
   });
-}
-
-export async function prefetchUsers(qc: QueryClient, serverApi: ApiClient) {
-  await qc.prefetchQuery({ queryKey: qk.users.list(), queryFn: serverApi.users.list });
 }

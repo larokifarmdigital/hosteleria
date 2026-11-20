@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { MediaUsage, I18nString, ApiClient } from '@hosteleria/api-client';
 import { api } from '../../api/browser';
 import { useErrorToast } from '../../api/errorHandling';
@@ -69,13 +69,6 @@ export function useMediaReferences(id: string, opts?: { enabled?: boolean }) {
     queryKey: [...qk.media.detail(id), 'references'] as const,
     queryFn: () => api.media.references(id),
     enabled: opts?.enabled ?? Boolean(id)
-  });
-}
-
-export async function prefetchMedia(qc: QueryClient, serverApi: ApiClient, filters?: ListFilters) {
-  await qc.prefetchQuery({
-    queryKey: qk.media.list(filters),
-    queryFn: () => serverApi.media.list(filters)
   });
 }
 
