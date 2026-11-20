@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { Restaurant, ScheduleDay, Space } from '@hosteleria/api-client';
+import type { Restaurant, Space } from '@hosteleria/api-client';
 import { I18nField } from '@/components/editor/I18nField';
 import { PublishPanel } from '@/components/editor/PublishPanel';
 import { SaveBar } from '@/components/editor/SaveBar';
+import { ScheduleEditor } from '@/components/editor/ScheduleEditor';
 import { Section } from '@/components/shared/Section';
 import { LocaleTabs } from '@/components/space/LocaleTabs';
 import { Field } from '@/components/ui/Field';
@@ -16,6 +17,7 @@ import { showSuccessToast } from '@/lib/api';
 import { countErrors } from '@/lib/forms/errors';
 import { i18nFromForm, i18nToForm, sameContent } from '@/lib/forms/i18n';
 import { i18nValues, optionalText, requiredText } from '@/lib/forms/rules';
+import { scheduleForCompare, scheduleSchema } from '@/lib/forms/schedule';
 import { useUnsavedChangesWarning } from '@/lib/forms/useUnsavedChangesWarning';
 import { useDiscardSpace, usePatchSpace, usePublishSpace } from '@/lib/query/hooks';
 
@@ -34,7 +36,8 @@ const schema = z.object({
     cta: i18nValues,
     imageAlt: i18nValues
   }),
-  manifesto: z.object({ eyebrow: i18nValues, text: i18nValues })
+  manifesto: z.object({ eyebrow: i18nValues, text: i18nValues }),
+  schedule: scheduleSchema
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -44,7 +47,8 @@ function toForm(space: Space, locales: string[]): FormValues {
     name: space.name,
     descriptor: space.descriptor ?? '',
     hero: Object.fromEntries(HERO_FIELDS.map(f => [f, i18nToForm(space.hero[f], locales)])) as FormValues['hero'],
-    manifesto: Object.fromEntries(MANIFESTO_FIELDS.map(f => [f, i18nToForm(space.manifesto[f], locales)])) as FormValues['manifesto']
+    manifesto: Object.fromEntries(MANIFESTO_FIELDS.map(f => [f, i18nToForm(space.manifesto[f], locales)])) as FormValues['manifesto'],
+    schedule: space.schedule.map(d => ({ day: d.day, shifts: d.shifts.map(s => ({ open: s.open, close: s.close })) }))
   };
 }
 
@@ -56,18 +60,12 @@ function changedBlocks(space: Space): string[] {
     ['Portada', space.hero, snap.hero],
     ['Texto de presentación', space.manifesto, snap.manifesto]
   ];
+  // Las versiones publicadas antes de que el api guardara nombre y horarios no
+  // los traen: sin referencia no se puede decir que hayan cambiado.
+  if (snap.name !== undefined) blocks.unshift(['Nombre', space.name, snap.name]);
+  if (snap.schedule !== undefined) blocks.push(['Horarios', scheduleForCompare(space.schedule), scheduleForCompare(snap.schedule)]);
   return blocks.filter(([, now, before]) => !sameContent(now, before)).map(([label]) => label);
 }
-
-const DAY_LABEL: Record<ScheduleDay['day'], string> = {
-  Mo: 'Lunes',
-  Tu: 'Martes',
-  We: 'Miércoles',
-  Th: 'Jueves',
-  Fr: 'Viernes',
-  Sa: 'Sábado',
-  Su: 'Domingo'
-};
 
 interface Props {
   restaurant: Restaurant;
@@ -104,6 +102,7 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
           ...space.manifesto,
           ...Object.fromEntries(MANIFESTO_FIELDS.map(f => [f, i18nFromForm(space.manifesto[f], values.manifesto[f])]))
         },
+        schedule: values.schedule,
         // Guardar nunca publica: deja el contenido como borrador hasta que se pulse Publicar.
         state: 'draft'
       });
@@ -157,21 +156,8 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
               </div>
             </div>
 
-            <Section title="Horarios" description="De momento solo se pueden consultar; la edición llegará más adelante.">
-              {space.schedule.every(d => d.shifts.length === 0) ? (
-                <p className="m-0 text-[14px] text-[color:var(--color-muted)]">Este espacio aún no tiene horarios.</p>
-              ) : (
-                <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-[14.5px]">
-                  {space.schedule.map(day => (
-                    <div key={day.day} className="contents">
-                      <dt className="font-semibold text-[color:var(--color-ink)]">{DAY_LABEL[day.day]}</dt>
-                      <dd className={day.shifts.length ? 'tabular m-0 text-[color:var(--color-ink)]' : 'm-0 text-[color:var(--color-muted)]'}>
-                        {day.shifts.length ? day.shifts.map(s => `${s.open} – ${s.close}`).join(' · ') : 'Cerrado'}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              )}
+            <Section title="Horarios" description="Un día sin turnos se muestra en la web como cerrado.">
+              <ScheduleEditor />
             </Section>
           </div>
 

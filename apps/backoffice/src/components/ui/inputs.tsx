@@ -2,8 +2,10 @@ import { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
 // 16px de fuente: por debajo, iOS hace zoom al enfocar el campo.
+// `focus-within` además de `focus`: en un `type="time"` el botón del reloj es
+// un control interno, y al enfocarlo el input deja de cumplir `:focus`.
 const BASE =
-  'w-full rounded-[10px] border border-[color:var(--color-border-strong)] bg-white px-3.5 text-[16px] leading-[1.4] text-[color:var(--color-ink)] transition-colors placeholder:text-[color:var(--color-muted)] focus:border-[color:var(--color-accent)] focus:outline-none focus:ring-[3px] focus:ring-[color:var(--accent-ring)] aria-[invalid=true]:border-[color:var(--color-danger)]';
+  'w-full rounded-[10px] border border-[color:var(--color-border-strong)] bg-white px-3.5 text-[16px] leading-[1.4] text-[color:var(--color-ink)] transition-colors placeholder:text-[color:var(--color-muted)] focus:border-[color:var(--color-accent)] focus:outline-none focus:ring-[3px] focus:ring-[color:var(--accent-ring)] focus-within:border-[color:var(--color-accent)] focus-within:ring-[3px] focus-within:ring-[color:var(--accent-ring)] aria-[invalid=true]:border-[color:var(--color-danger)]';
 
 export const TextInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
   function TextInput({ className, type = 'text', ...props }, ref) {

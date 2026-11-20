@@ -1,3 +1,4 @@
+import { forwardRef } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
@@ -32,16 +33,20 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
 
 // `type="button"` por defecto: el de HTML es `submit`, y un botón cualquiera
 // dentro de un `<form>` (p. ej. Publicar) enviaría el formulario al pulsarlo.
-export function Button({ variant = 'secondary', size, className, style, type = 'button', ...props }: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  { variant = 'secondary', size, className, style, type = 'button', ...props },
+  ref
+) {
   return (
     <button
+      ref={ref}
       type={type}
       {...props}
       style={variant === 'primary' ? { ...primaryStyle, ...style } : style}
       className={cn(buttonVariants({ variant, size }), className)}
     />
   );
-}
+});
 
 type LinkButtonProps = React.ComponentProps<typeof Link> &
   VariantProps<typeof buttonVariants>;
