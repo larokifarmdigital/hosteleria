@@ -9,7 +9,7 @@ interface NavItemProps {
   icon: React.ReactNode;
   label: string;
   count?: number;
-  matchPrefix?: boolean; // marca activo también para subrutas
+  matchPrefix?: boolean;
 }
 
 export function NavItem({ href, icon, label, count, matchPrefix = true }: NavItemProps) {

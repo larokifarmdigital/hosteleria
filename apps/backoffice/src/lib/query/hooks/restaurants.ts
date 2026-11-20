@@ -31,7 +31,6 @@ export function useCreateRestaurant() {
   });
 }
 
-/** Patch con optimistic update + revert en error. Toast automático en error. */
 export function usePatchRestaurant(slug: string) {
   const qc = useQueryClient();
   const toastError = useErrorToast();
@@ -69,7 +68,7 @@ export function useDeleteRestaurant() {
   });
 }
 
-/** Publicar = patch con `state: 'published'`. El backend crea el snapshot y dispara el rebuild hook. */
+/** Al pasar a `published`, el backend crea el snapshot y dispara el rebuild. */
 export function usePublishRestaurant(slug: string) {
   const qc = useQueryClient();
   const toastError = useErrorToast();
@@ -93,7 +92,6 @@ export function useDiscardRestaurant(slug: string) {
   });
 }
 
-// ─── Prefetch para RSC ────────────────────────────────────────────
 export async function prefetchRestaurants(qc: QueryClient, serverApi: ApiClient) {
   await qc.prefetchQuery({ queryKey: qk.restaurants.list(), queryFn: serverApi.restaurants.list });
 }

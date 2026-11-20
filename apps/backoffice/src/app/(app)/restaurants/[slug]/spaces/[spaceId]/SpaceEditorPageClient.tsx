@@ -25,7 +25,6 @@ export function SpaceEditorPageClient({ slug, spaceId }: Props) {
 
   return (
     <>
-      {/* Editor header */}
       <div className="mb-6 flex flex-wrap items-center gap-4 rounded-[var(--radius)] border border-[color:var(--color-border)] bg-white p-5 shadow-[var(--shadow-sm)]">
         <div className="flex items-center gap-3.5">
           <Link
@@ -80,7 +79,6 @@ export function SpaceEditorPageClient({ slug, spaceId }: Props) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[230px_minmax(0,1fr)_300px]">
         <SectionNav />
 
-        {/* Form Hero */}
         <div className="rounded-[var(--radius)] border border-[color:var(--color-border)] bg-white p-7 shadow-[var(--shadow-sm)] md:p-8">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
@@ -163,7 +161,6 @@ export function SpaceEditorPageClient({ slug, spaceId }: Props) {
           </div>
         </div>
 
-        {/* Aside */}
         <aside className="sticky top-20 flex flex-col gap-5 self-start">
           <div className="rounded-[var(--radius)] border border-[color:var(--color-border)] bg-white p-5 shadow-[var(--shadow-sm)]">
             <h4 className="m-0 mb-3.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-muted)]">

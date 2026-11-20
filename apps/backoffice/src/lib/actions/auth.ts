@@ -6,14 +6,8 @@ import { getServerApi } from '../api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8787';
 
-/**
- * Login: fetch directo (no via `getServerApi`) para capturar el `Set-Cookie`
- * del API y promoverlo al cookie store de Next. Devuelve `{ error }` si falla.
- *
- * Sin hardcoding de mensajes: el backend ya devuelve `{ code, message }` con
- * texto en español ("Email o contraseña incorrectos.", "Demasiadas peticiones…")
- * listo para pintar en el form.
- */
+/** fetch directo (no `getServerApi`) para capturar el `Set-Cookie` del API y
+ *  promoverlo al cookie store de Next. */
 export async function loginAction(
   _prev: unknown,
   formData: FormData
@@ -34,7 +28,6 @@ export async function loginAction(
     return { error: body?.message ?? 'Error inesperado. Inténtalo de nuevo.' };
   }
 
-  // Relay del Set-Cookie del API al cookie store de Next.
   const setCookie = res.headers.get('set-cookie');
   const match = setCookie?.match(/hs_session=([^;]+)/);
   if (match) {
@@ -52,7 +45,6 @@ export async function loginAction(
   redirect('/dashboard');
 }
 
-/** Logout: invalida la sesión en el API (best-effort) + limpia la cookie + redirect. */
 export async function logoutAction() {
   const api = await getServerApi();
   try { await api.auth.logout(); } catch { /* best-effort */ }

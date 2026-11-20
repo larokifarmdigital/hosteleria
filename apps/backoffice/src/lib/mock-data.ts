@@ -1,13 +1,5 @@
-/**
- * Mock data para la fase UI del backoffice.
- *
- * Contenido idéntico al mockup HTML v17 aprobado — 6 restaurantes reales
- * del grupo, sus espacios, cartas mínimas, media, idiomas, usuarios,
- * tareas pendientes y estado del sistema.
- *
- * Cuando arranque apps/api, cambiar los imports de este fichero por
- * fetch/server actions; los shapes ya coinciden con los types.
- */
+// Restos del mockup. Aún se usan PENDING_TASKS, LANGUAGES, SYSTEM_SERVICES,
+// REBUILDS, getRestaurantBySlug y getSpaceById; el resto ya viene del api.
 
 import type {
   Restaurant,
@@ -24,9 +16,6 @@ import type {
   RebuildRow
 } from './types';
 
-// ─────────────────────────────────────────────────────────────────
-// Restaurants
-// ─────────────────────────────────────────────────────────────────
 export const RESTAURANTS: Restaurant[] = [
   {
     id: 'r-casabella',
@@ -165,9 +154,6 @@ export const RESTAURANTS: Restaurant[] = [
   }
 ];
 
-// ─────────────────────────────────────────────────────────────────
-// Spaces
-// ─────────────────────────────────────────────────────────────────
 const EMPTY_SCHEDULE: Space['schedule'] = [
   { day: 'Mo', shifts: [] },
   { day: 'Tu', shifts: [] },
@@ -230,9 +216,6 @@ export const SPACES: Space[] = [
   { id: 's-pubilla-main', restaurantId: 'r-pubilla', slug: 'comedor', name: 'Comedor', type: 'restaurant', isDefault: true, order: 0, state: 'published', completePercent: 88, coverGradient: 'var(--gradient-copper)', descriptor: "interior · L'H · L–D", galleryCount: 16, dishesCount: 24, winesCount: 0, hero: { title: {}, subtitle: {}, metaLeft: {}, metaRight: {}, note: {}, cta: {}, imageAlt: {} }, manifesto: { eyebrow: {}, text: {} }, schedule: EMPTY_SCHEDULE, lastEditedAt: '2026-09-21T12:00:00Z' }
 ];
 
-// ─────────────────────────────────────────────────────────────────
-// Menu — solo unos platos por restaurante, suficiente para tabla
-// ─────────────────────────────────────────────────────────────────
 export const DISH_CATEGORIES: DishCategory[] = [
   { id: 'dc-1', spaceId: 's-casabella-main', name: { es: 'Entrantes' }, order: 1 },
   { id: 'dc-2', spaceId: 's-casabella-main', name: { es: 'Arroces' }, order: 2 },
@@ -254,9 +237,6 @@ export const DISHES: Dish[] = [
 export const WINE_CATEGORIES: WineCategory[] = [];
 export const WINES: Wine[] = [];
 
-// ─────────────────────────────────────────────────────────────────
-// Languages
-// ─────────────────────────────────────────────────────────────────
 export const LANGUAGES: Language[] = [
   { id: 'lang-es', code: 'es', name: 'Español', usedByCount: 6 },
   { id: 'lang-ca', code: 'ca', name: 'Català', usedByCount: 6 },
@@ -264,17 +244,11 @@ export const LANGUAGES: Language[] = [
   { id: 'lang-fr', code: 'fr', name: 'Français', usedByCount: 0 }
 ];
 
-// ─────────────────────────────────────────────────────────────────
-// Users
-// ─────────────────────────────────────────────────────────────────
 export const USERS: User[] = [
   { id: 'u-erick', name: 'Erick Pineda', email: 'erick@hosteleria.cat', initials: 'EP', avatarColor: 'var(--color-copper-500)', role: 'admin', restaurants: ['*'], lastAccessRelative: 'ahora' },
   { id: 'u-marta', name: 'Marta Coll', email: 'marta@casabella.cat', initials: 'MC', avatarColor: 'var(--color-copper-700)', role: 'editor', restaurants: ['casabella', 'guixot'], lastAccessRelative: 'hace 4 h' }
 ];
 
-// ─────────────────────────────────────────────────────────────────
-// Media (14 placeholders con distintos gradients)
-// ─────────────────────────────────────────────────────────────────
 export const MEDIA: MediaAsset[] = [
   { id: 'm-1', name: 'hero-01', sizeKb: 420, restaurantSlug: 'casabella', usage: 'hero', hasAltText: true, gradient: 'linear-gradient(135deg,#b8935a,#7a3a2a)' },
   { id: 'm-2', name: 'sala-comedor', sizeKb: 380, restaurantSlug: 'casabella', usage: 'gallery', hasAltText: true, gradient: 'linear-gradient(135deg,#cfc4ae,#6a6a6a)' },
@@ -292,9 +266,7 @@ export const MEDIA: MediaAsset[] = [
   { id: 'm-14', name: 'evento-boda', sizeKb: 560, restaurantSlug: 'pubilla', usage: 'gallery', hasAltText: true, gradient: 'linear-gradient(135deg,#b8935a,#4a2416)' }
 ];
 
-// ─────────────────────────────────────────────────────────────────
-// Pending tasks (derivadas del contenido, no de audit log)
-// ─────────────────────────────────────────────────────────────────
+// Derivadas del contenido, no de un audit log.
 export const PENDING_TASKS: PendingTask[] = [
   { id: 't-1', severity: 'critical', title: 'La Principal — 12 platos sin precio', body: 'Los platos sin precio se omiten del schema Menu de Google. Impacta al SEO de carta.', actionLabel: 'Ir a Carta', actionHref: '/dishes' },
   { id: 't-2', severity: 'critical', title: 'Ocaña — falta espacio principal', body: 'El schema requiere al menos un espacio con horarios para servir openingHoursSpecification.', actionLabel: 'Añadir espacio', actionHref: '/restaurants/ocana' },
@@ -304,9 +276,6 @@ export const PENDING_TASKS: PendingTask[] = [
   { id: 't-6', severity: 'warn', title: 'Pubilla — sin vinos', body: 'La sección de vinos aparece vacía en la landing. Añade categorías + vinos o oculta la sección.', actionLabel: 'Ir a Vinos', actionHref: '/dishes' }
 ];
 
-// ─────────────────────────────────────────────────────────────────
-// System status
-// ─────────────────────────────────────────────────────────────────
 export const SYSTEM_SERVICES: SystemService[] = [
   { id: 'svc-db', label: 'Base de datos · Neon', status: 'ok', meta: '42% · Free', detail: 'eu-central-1 · última consulta hace 3 s · 218 MB / 500 MB' },
   { id: 'svc-r2', label: 'Media · Cloudflare R2', status: 'ok', meta: '1.2 GB', detail: '312 archivos · CDN activo · zero egress' },
@@ -320,9 +289,6 @@ export const REBUILDS: RebuildRow[] = [
   { id: 'rb-4', restaurant: 'Roure', status: 'ok', relative: 'hace 3 d' }
 ];
 
-// ─────────────────────────────────────────────────────────────────
-// Helpers de acceso (mock — sustituir por fetch/server actions luego)
-// ─────────────────────────────────────────────────────────────────
 export function getRestaurantBySlug(slug: string): Restaurant | undefined {
   return RESTAURANTS.find(r => r.slug === slug);
 }

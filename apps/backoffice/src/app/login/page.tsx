@@ -3,7 +3,6 @@ import { LoginForm } from '@/components/LoginForm';
 export default function LoginPage() {
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[1.1fr_1fr]">
-      {/* Panel izq: gradient cobre-deep con blobs radiales */}
       <div
         className="relative flex flex-col justify-between overflow-hidden p-[60px] text-white max-lg:hidden"
         style={{ background: 'var(--gradient-copper-deep)' }}
@@ -48,7 +47,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Form derecha */}
       <div className="grid place-items-center p-10">
         <LoginForm />
       </div>

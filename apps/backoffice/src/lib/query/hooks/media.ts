@@ -12,16 +12,8 @@ export function useMediaList(filters?: ListFilters) {
   return useQuery({ queryKey: qk.media.list(filters), queryFn: () => api.media.list(filters) });
 }
 
-/**
- * Upload directo browser → R2 en 3 pasos:
- *  1. POST /media/upload-url → firma signed URL + reserva mediaId.
- *  2. PUT directo a R2 con el binario (no pasa por el API).
- *  3. POST /media/:id/confirm → verifica HEAD y marca el asset como listo.
- *
- * El PUT a R2 usa `fetch` crudo porque R2 no acepta la cookie de sesión ni
- * el `X-Trace-Id` del API y no debe pasar por `onError` del client (no es
- * una respuesta "nuestra").
- */
+/** El PUT a R2 usa `fetch` crudo: R2 no acepta la cookie de sesión ni el
+ *  `X-Trace-Id`, y su respuesta no debe pasar por el `onError` del client. */
 export function useMediaUpload(restaurantSlug: string) {
   const qc = useQueryClient();
   const toastError = useErrorToast();
@@ -87,7 +79,6 @@ export async function prefetchMedia(qc: QueryClient, serverApi: ApiClient, filte
   });
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────
 function extractImageDimensions(file: File): Promise<{ width: number; height: number } | undefined> {
   if (!file.type.startsWith('image/')) return Promise.resolve(undefined);
   return new Promise((resolve) => {

@@ -57,7 +57,6 @@ export function useSetPassword() {
   });
 }
 
-/** Prefetch para RSC. Pasa el `api` del server (con cookies) y el `qc` creado en server. */
 export async function prefetchSession(qc: QueryClient, serverApi: typeof api) {
   await qc.prefetchQuery({
     queryKey: qk.auth.session(),

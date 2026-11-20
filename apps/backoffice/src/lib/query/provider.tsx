@@ -6,16 +6,12 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ApiError } from '../api';
 
 /**
- * QueryClientProvider montado una sola vez en RootLayout.
- *
  * Defaults pensados para un CMS:
- *  - `staleTime: 30s` — evita refetches en navegación rápida entre tabs.
- *  - `refetchOnWindowFocus: false` — en un CMS confunde al editor en medio
- *    de un form; mejor dejar los refetches explícitos por mutation.
- *  - `retry` solo en 5xx/network, no en 4xx (no sirve).
+ *  - `staleTime: 30s`: evita refetches en navegación rápida entre tabs.
+ *  - `refetchOnWindowFocus: false`: un refetch confunde al editor en medio
+ *    de un form; los refetches van explícitos por mutation.
  *
- * Los side-effects cross-cutting (401 → /login, 5xx → reportError) viven
- * en `onError` del `api` del browser (`lib/api/browser.ts`).
+ * El 401 → /login y el reporte de 5xx viven en `onError` de `lib/api/browser.ts`.
  */
 export function QueryProvider({ children }: { children: ReactNode }) {
   const [client] = useState(
@@ -27,7 +23,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
             gcTime: 5 * 60_000,
             refetchOnWindowFocus: false,
             retry: (failureCount, error) => {
-              // 4xx: no retry (es error de usuario/validación).
+              // Un 4xx no cambia por reintentar.
               if (ApiError.is(error) && error.status >= 400 && error.status < 500) {
                 return false;
               }

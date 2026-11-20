@@ -10,7 +10,6 @@ type ListFilters = { restaurantSlug?: string; categoryId?: string; missingLocale
 type CreateInput = Parameters<ApiClient['dishes']['create']>[0];
 type PatchInput = Parameters<ApiClient['dishes']['patch']>[1];
 
-// ─── Dishes ──────────────────────────────────────────────────────
 export function useDishes(filters?: ListFilters) {
   return useQuery({ queryKey: qk.dishes.list(filters), queryFn: () => api.dishes.list(filters) });
 }
@@ -67,7 +66,6 @@ export function useDeleteDish() {
   });
 }
 
-// ─── Categories ──────────────────────────────────────────────────
 export function useDishCategories(spaceId?: string) {
   return useQuery({ queryKey: qk.dishes.categories(spaceId), queryFn: () => api.dishes.categories.list(spaceId) });
 }
@@ -104,7 +102,6 @@ export function useDeleteDishCategory() {
   });
 }
 
-// ─── Prefetch ────────────────────────────────────────────────────
 export async function prefetchDishes(qc: QueryClient, serverApi: ApiClient, filters?: ListFilters) {
   await qc.prefetchQuery({
     queryKey: qk.dishes.list(filters),

@@ -19,7 +19,6 @@ export function RestaurantHubPageClient({ slug }: { slug: string }) {
 
   return (
     <>
-      {/* Editor header */}
       <div className="mb-6 flex flex-wrap items-center gap-4 rounded-[var(--radius)] border border-[color:var(--color-border)] bg-white p-5 shadow-[var(--shadow-sm)]">
         <div className="flex items-center gap-3.5">
           <div
@@ -52,10 +51,8 @@ export function RestaurantHubPageClient({ slug }: { slug: string }) {
         </div>
       </div>
 
-      {/* Grid principal: contenido + aside */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex min-w-0 flex-col gap-2">
-          {/* Bloque Ficha */}
           <section className="overflow-hidden rounded-[var(--radius)] border border-[color:var(--color-border)] bg-white shadow-[var(--shadow-sm)]">
             <div className="flex items-center justify-between gap-3.5 border-b border-[color:var(--color-border)] px-6 py-5">
               <div>
@@ -98,7 +95,6 @@ export function RestaurantHubPageClient({ slug }: { slug: string }) {
             </div>
           </section>
 
-          {/* Espacios */}
           <div className="mb-3.5 mt-6 flex items-baseline justify-between px-0.5">
             <h2 className="m-0 flex items-center gap-1.5 text-[15px] font-bold tracking-[-0.005em]">
               <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--color-accent)" strokeWidth={1.6} className="-mb-0.5">
@@ -121,7 +117,6 @@ export function RestaurantHubPageClient({ slug }: { slug: string }) {
           </div>
         </div>
 
-        {/* Aside */}
         <aside className="sticky top-20 flex flex-col gap-5 self-start">
           <div className="rounded-[var(--radius)] border border-[color:var(--color-border)] bg-white p-5 shadow-[var(--shadow-sm)]">
             <h4 className="m-0 mb-3.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-muted)]">

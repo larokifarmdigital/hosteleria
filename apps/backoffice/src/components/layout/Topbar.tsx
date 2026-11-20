@@ -17,7 +17,6 @@ function buildCrumbs(pathname: string): Crumb[] {
   if (pathname === '/media') return [{ label: 'Contenido', href: '/dashboard' }, { label: 'Media library' }];
   if (pathname === '/settings') return [{ label: 'Sistema', href: '/dashboard' }, { label: 'Ajustes' }];
 
-  // /restaurants/[slug] or /restaurants/[slug]/spaces/[spaceId]
   const restaurantMatch = pathname.match(/^\/restaurants\/([^/]+)(?:\/spaces\/([^/]+))?/);
   if (restaurantMatch) {
     const [, slug, spaceId] = restaurantMatch;

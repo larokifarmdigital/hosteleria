@@ -3,10 +3,7 @@
 import { LogOut } from 'lucide-react';
 import { logoutAction } from '@/lib/actions';
 
-/**
- * Botón que ejecuta la server action de logout. Usa el mismo look que
- * NavItem pero como `<button>` para poder disparar la acción.
- */
+/** Mismo look que NavItem, pero `<button>` para poder disparar la server action. */
 export function LogoutButton() {
   return (
     <form action={logoutAction}>

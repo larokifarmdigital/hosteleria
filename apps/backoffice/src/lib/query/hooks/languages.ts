@@ -6,7 +6,7 @@ import { api } from '../../api/browser';
 import { useErrorToast } from '../../api/errorHandling';
 import { qk } from '../keys';
 
-/** Idiomas globales — cambian poco, staleTime largo. */
+// staleTime largo: los idiomas cambian poco.
 export function useLanguages() {
   return useQuery({ queryKey: qk.languages.list(), queryFn: api.languages.list, staleTime: 10 * 60_000 });
 }

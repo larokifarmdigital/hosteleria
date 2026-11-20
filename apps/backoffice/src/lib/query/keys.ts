@@ -1,14 +1,5 @@
-/**
- * Factory de query keys — una sola fuente de verdad para TanStack Query.
- *
- * Convención: cada recurso expone `all`, `lists()`, `list(filters)`,
- * `details()`, `detail(id)`. Permite invalidar granular:
- *   - `qk.restaurants.all` → invalida TODO lo de restaurantes
- *   - `qk.restaurants.lists()` → solo listados
- *   - `qk.restaurants.detail('casabella')` → un detalle concreto
- *
- * Patrón: https://tkdodo.eu/blog/effective-react-query-keys
- */
+/** Keys jerárquicas para invalidar por prefijo: `qk.restaurants.all` invalida
+ *  todo lo de restaurantes, `lists()` solo los listados, `detail(slug)` uno. */
 export const qk = {
   auth: {
     all: ['auth'] as const,

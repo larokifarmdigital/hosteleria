@@ -5,11 +5,6 @@ import { useActionState } from 'react';
 import { Mail } from 'lucide-react';
 import { loginAction } from '@/lib/actions';
 
-/**
- * Formulario de login usando useActionState (React 19) + server action.
- * El server action llama al api, relaya la cookie de sesión al cookie
- * store de Next y hace redirect a /dashboard.
- */
 export function LoginForm() {
   const [state, formAction, isPending] = useActionState(loginAction, { error: null as string | null });
 

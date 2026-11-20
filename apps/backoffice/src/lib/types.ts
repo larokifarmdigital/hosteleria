@@ -1,16 +1,3 @@
-/**
- * Types del dominio — re-export desde `@hosteleria/api-client`.
- *
- * ANTES: types duplicados aquí y usados por los mocks. AHORA: la fuente
- * única es el package api-client, que refleja los DTOs del api. Así
- * componentes ↔ mock ↔ api usan exactamente los mismos shapes.
- *
- * Los tipos legacy (User con `initials`+`lastAccessRelative`, Task del
- * dashboard, MediaAsset con `restaurantSlug`+`gradient`) que solo existían
- * en el mockup y no vienen del api se mantienen abajo hasta que las
- * pantallas correspondientes se migren al api.
- */
-
 export type {
   LocaleCode,
   I18nString,
@@ -36,9 +23,7 @@ export type {
   MediaUsage
 } from '@hosteleria/api-client';
 
-// ─── Types legacy solo del mockup ────────────────────────────────
-// Se mantienen mientras Media, Users y Dashboard usen mock-data.
-// Cuando se migren al api, borrar y usar los tipos oficiales.
+// Tipos del mockup que no vienen del api; hoy solo los usa `mock-data.ts`.
 
 export interface User {
   id: string;

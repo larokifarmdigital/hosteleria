@@ -1,15 +1,9 @@
 @import "tailwindcss";
 
-/* ═══════════════════════════════════════════════════════════════════
-   Backoffice — Paleta cobre monocromática (aprobada tras 17 iteraciones)
-
-   Un solo color principal (cobre) en escala completa 50-950 + neutros +
-   estados críticos apagados. Sidebar cobre-950 (marrón oscuro, no negro).
-   Sin cursivas en ningún lado (reset abajo). Tipografía única: Manrope.
-   ═══════════════════════════════════════════════════════════════════ */
+/* Paleta monocromática: un solo color principal (cobre) + neutros + estados
+   críticos apagados. Sidebar cobre-950 (marrón oscuro, no negro). */
 
 @theme {
-  /* Escala cobre — el color principal en 11 pasos */
   --color-copper-50:  #fdf7f4;
   --color-copper-100: #fbeee6;
   --color-copper-200: #f4d8c5;
@@ -22,14 +16,12 @@
   --color-copper-900: #4a2416;
   --color-copper-950: #2a1409;
 
-  /* Superficies (neutros) */
   --color-bg: #ffffff;
   --color-surface: #ffffff;
   --color-surface-2: #faf8f5;
   --color-border: #eee8e0;
   --color-border-strong: #c8c1b5;
 
-  /* Ink */
   --color-ink: #0a0a0a;
   --color-ink-soft: #26221e;
   --color-muted: #6d6862;
@@ -57,17 +49,14 @@
   --color-danger: #a24238;
   --color-danger-soft: #f2e0dd;
 
-  /* Fuente */
   --font-sans: 'Manrope', system-ui, sans-serif;
 
-  /* Radios generosos */
   --radius-sm: 10px;
   --radius: 14px;
   --radius-lg: 20px;
   --radius-pill: 999px;
 }
 
-/* Tokens no-Tailwind (medidas globales y gradientes) */
 :root {
   --sidebar-w: 244px;
   --accent-ring: rgb(180 89 59 / 0.18);
@@ -82,11 +71,8 @@
   --shadow-glow: 0 0 0 4px rgb(180 89 59 / 0.10);
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   shadcn/ui token mapping — los primitives Radix + variantes CVA leen
-   estas variables. Aquí las alineamos con la paleta cobre para que
-   Button/Input/Tabs/etc "hereden" el look sin sobreescribir clase por clase.
-   ═══════════════════════════════════════════════════════════════════ */
+/* Variables que leen los primitives de shadcn/ui: alineadas con la paleta
+   cobre para no sobreescribir Button/Input/Tabs clase por clase. */
 :root {
   --background: 0 0% 100%;
   --foreground: 0 0% 4%;
@@ -110,7 +96,6 @@
   --radius: 0.625rem;
 }
 
-/* ═══════════════════════════════════════════════════════════════════ BASE */
 @layer base {
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
@@ -142,11 +127,8 @@
   img { max-width: 100%; height: auto; display: block; }
 }
 
-/* ═══════════════════════════════════════════════════════════════════ UTILITIES
-   Utilidades que se repiten mucho en el mockup y no tienen equivalente
-   directo en Tailwind. Prefiero clases semánticas cortas antes que largas
-   listas de utilities pegadas.
-   ═══════════════════════════════════════════════════════════════════ */
+/* Clases semánticas cortas para patrones repetidos sin equivalente directo
+   en Tailwind. */
 @layer utilities {
   .slug {
     font-size: 12px;

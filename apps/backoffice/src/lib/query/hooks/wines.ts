@@ -44,7 +44,6 @@ export function useDeleteWine() {
   });
 }
 
-// ─── Categories ──────────────────────────────────────────────────
 export function useWineCategories(spaceId?: string) {
   return useQuery({ queryKey: qk.wines.categories(spaceId), queryFn: () => api.wines.categories.list(spaceId) });
 }

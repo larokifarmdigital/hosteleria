@@ -5,10 +5,7 @@ import { Menu, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { Sidebar } from './Sidebar';
 
-/**
- * En <900px la sidebar desaparece. Este header muestra un burger que abre
- * un drawer fixed con la misma Sidebar dentro. Cierra al navegar.
- */
+/** Solo en <900px: la Sidebar pasa a un drawer que se cierra al navegar. */
 export function MobileHeader() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();

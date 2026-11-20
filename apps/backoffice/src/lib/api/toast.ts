@@ -3,10 +3,6 @@
 import { toast } from 'sonner';
 export { Toaster } from 'sonner';
 
-/**
- * Fachada sobre `sonner` — centraliza el estilo de los toasts del api.
- * Si en algún momento cambiamos de lib, solo tocamos este archivo.
- */
 export const showErrorToast = (message: string, description?: string) =>
   toast.error(message, { description, duration: 6000 });
 
