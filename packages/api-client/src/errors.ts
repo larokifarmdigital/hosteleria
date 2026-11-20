@@ -5,53 +5,63 @@
  * para branching — ese es texto para humanos). Mantén la lista sincronizada con
  * `apps/api/src/interface/http/httpErrors.ts` + los `DomainError` subclases.
  */
-export type ErrorCode =
+/**
+ * Const object con los codes como valores — para autocompletado:
+ *
+ *   if (ApiError.is(err, ErrorCode.EMAIL_TAKEN)) { ... }
+ *
+ * Union type `ErrorCode` derivado para tipado estricto en firmas.
+ */
+export const ErrorCode = {
   // ─── 400 ────────────────────────────────────────────────────────
-  | 'VALIDATION_ERROR'
-  | 'UNKNOWN_LOCALE'
-  | 'WEAK_PASSWORD'
-  | 'NO_SNAPSHOT'
-  | 'LANGUAGE_IN_USE'
-  | 'CANNOT_DELETE_LAST_SPACE'
-  | 'CANNOT_DELETE_SELF'
-  | 'MUST_HAVE_DEFAULT_SPACE'
-  | 'CATEGORY_HAS_DISHES'
-  | 'CATEGORY_HAS_WINES'
-  | 'MEDIA_IN_USE'
-  | 'UPLOAD_NOT_FOUND_IN_R2'
-  | 'UPLOAD_SIZE_MISMATCH'
-  | 'INVALID_OR_EXPIRED_TOKEN'
-  | 'MISSING_SLUG'
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+  UNKNOWN_LOCALE: 'UNKNOWN_LOCALE',
+  WEAK_PASSWORD: 'WEAK_PASSWORD',
+  NO_SNAPSHOT: 'NO_SNAPSHOT',
+  LANGUAGE_IN_USE: 'LANGUAGE_IN_USE',
+  CANNOT_DELETE_LAST_SPACE: 'CANNOT_DELETE_LAST_SPACE',
+  CANNOT_DELETE_SELF: 'CANNOT_DELETE_SELF',
+  MUST_HAVE_DEFAULT_SPACE: 'MUST_HAVE_DEFAULT_SPACE',
+  CATEGORY_HAS_DISHES: 'CATEGORY_HAS_DISHES',
+  CATEGORY_HAS_WINES: 'CATEGORY_HAS_WINES',
+  MEDIA_IN_USE: 'MEDIA_IN_USE',
+  UPLOAD_NOT_FOUND_IN_R2: 'UPLOAD_NOT_FOUND_IN_R2',
+  UPLOAD_SIZE_MISMATCH: 'UPLOAD_SIZE_MISMATCH',
+  INVALID_OR_EXPIRED_TOKEN: 'INVALID_OR_EXPIRED_TOKEN',
+  MISSING_SLUG: 'MISSING_SLUG',
   // ─── 401 ────────────────────────────────────────────────────────
-  | 'INVALID_CREDENTIALS'
-  | 'UNAUTHORIZED'
+  INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
+  UNAUTHORIZED: 'UNAUTHORIZED',
   // ─── 403 ────────────────────────────────────────────────────────
-  | 'ADMIN_REQUIRED'
-  | 'RESTAURANT_FORBIDDEN'
-  | 'SPACE_FORBIDDEN'
+  ADMIN_REQUIRED: 'ADMIN_REQUIRED',
+  RESTAURANT_FORBIDDEN: 'RESTAURANT_FORBIDDEN',
+  SPACE_FORBIDDEN: 'SPACE_FORBIDDEN',
   // ─── 404 ────────────────────────────────────────────────────────
-  | 'RESTAURANT_NOT_FOUND'
-  | 'USER_NOT_FOUND'
-  | 'SESSION_NOT_FOUND'
-  | 'LANGUAGE_NOT_FOUND'
-  | 'SPACE_NOT_FOUND'
-  | 'DISH_NOT_FOUND'
-  | 'DISH_CATEGORY_NOT_FOUND'
-  | 'WINE_NOT_FOUND'
-  | 'WINE_CATEGORY_NOT_FOUND'
-  | 'MEDIA_NOT_FOUND'
+  RESTAURANT_NOT_FOUND: 'RESTAURANT_NOT_FOUND',
+  USER_NOT_FOUND: 'USER_NOT_FOUND',
+  SESSION_NOT_FOUND: 'SESSION_NOT_FOUND',
+  LANGUAGE_NOT_FOUND: 'LANGUAGE_NOT_FOUND',
+  SPACE_NOT_FOUND: 'SPACE_NOT_FOUND',
+  DISH_NOT_FOUND: 'DISH_NOT_FOUND',
+  DISH_CATEGORY_NOT_FOUND: 'DISH_CATEGORY_NOT_FOUND',
+  WINE_NOT_FOUND: 'WINE_NOT_FOUND',
+  WINE_CATEGORY_NOT_FOUND: 'WINE_CATEGORY_NOT_FOUND',
+  MEDIA_NOT_FOUND: 'MEDIA_NOT_FOUND',
   // ─── 409 ────────────────────────────────────────────────────────
-  | 'SLUG_TAKEN'
-  | 'EMAIL_TAKEN'
-  | 'LANGUAGE_CODE_TAKEN'
-  | 'SPACE_SLUG_TAKEN'
+  SLUG_TAKEN: 'SLUG_TAKEN',
+  EMAIL_TAKEN: 'EMAIL_TAKEN',
+  LANGUAGE_CODE_TAKEN: 'LANGUAGE_CODE_TAKEN',
+  SPACE_SLUG_TAKEN: 'SPACE_SLUG_TAKEN',
   // ─── 429 ────────────────────────────────────────────────────────
-  | 'RATE_LIMITED'
+  RATE_LIMITED: 'RATE_LIMITED',
   // ─── 500 ────────────────────────────────────────────────────────
-  | 'INTERNAL_ERROR'
-  | 'HTTP_ERROR'
+  INTERNAL_ERROR: 'INTERNAL_ERROR',
+  HTTP_ERROR: 'HTTP_ERROR',
   // Fallbacks de red/cliente
-  | 'NETWORK_ERROR';
+  NETWORK_ERROR: 'NETWORK_ERROR'
+} as const;
+
+export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
 
 /** Shape del body que devuelve el backend en cualquier respuesta de error. */
 export interface ErrorBody {

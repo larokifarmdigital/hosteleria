@@ -1,6 +1,6 @@
 'use client';
 
-import { ApiError, type ErrorCode } from '@hosteleria/api-client';
+import { ApiError, ErrorCode, type ErrorCode as ErrorCodeType } from '@hosteleria/api-client';
 import { showErrorToast } from './toast';
 
 /**
@@ -33,21 +33,36 @@ export function useErrorToast() {
  *
  *   if (ApiError.is(err, 'EMAIL_TAKEN')) setFieldError('email', err.message);
  */
-export function matchErrorCode<T>(err: unknown, map: Partial<Record<ErrorCode, (e: ApiError) => T>>): T | null {
+export function matchErrorCode<T>(err: unknown, map: Partial<Record<ErrorCodeType, (e: ApiError) => T>>): T | null {
   if (!ApiError.is(err)) return null;
-  const handler = map[err.code as ErrorCode];
+  const handler = map[err.code as ErrorCodeType];
   return handler ? handler(err) : null;
 }
 
 /**
- * Stub de observabilidad. Hoy loguea; mañana se reemplaza por
- * `Sentry.captureException(err, { extra: ctx })`.
+ * Observabilidad de errores.
+ *
+ * Hoy: loguea en consola (dev) y hace `window.__sentry?.captureException`
+ * si existe (soft dependency — para no forzar bundle de Sentry).
+ *
+ * Cuando instalemos `@sentry/nextjs`:
+ *   1. `pnpm --filter @hosteleria/backoffice add @sentry/nextjs`
+ *   2. Reemplazar el cuerpo por `Sentry.captureException(err, { extra: ctx, tags: { code } })`.
+ *   3. Pasar `traceId` del ApiError como tag para correlar con logs del Worker.
  */
 export function reportError(err: unknown, ctx?: Record<string, unknown>): void {
+  const code = ApiError.is(err) ? err.code : undefined;
+  const traceId = ApiError.is(err) ? err.traceId : undefined;
+
   if (process.env.NODE_ENV === 'development') {
-    console.error('[reportError]', err, ctx);
+    console.error('[reportError]', { code, traceId, err, ctx });
   }
-  // TODO: Sentry.captureException(err, { extra: ctx });
+
+  // Soft Sentry: si hay un wrapper montado por otro feature, lo usa.
+  const win = typeof window !== 'undefined' ? (window as any) : null;
+  if (win?.Sentry?.captureException) {
+    win.Sentry.captureException(err, { extra: { ...ctx, code, traceId } });
+  }
 }
 
-export { ApiError };
+export { ApiError, ErrorCode };
