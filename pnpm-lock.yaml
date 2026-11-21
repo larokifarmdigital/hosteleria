@@ -386,6 +386,9 @@ importers:
       '@hosteleria/booking-form':
         specifier: workspace:*
         version: link:../../packages/booking-form
+      '@hosteleria/content-client':
+        specifier: workspace:*
+        version: link:../../packages/content-client
       '@hosteleria/i18n-utils':
         specifier: workspace:*
         version: link:../../packages/i18n-utils
@@ -514,6 +517,19 @@ importers:
         version: 5.9.3
 
   packages/booking-form: {}
+
+  packages/content-client:
+    dependencies:
+      '@hosteleria/api-client':
+        specifier: workspace:*
+        version: link:../api-client
+      '@hosteleria/sanity-client':
+        specifier: workspace:*
+        version: link:../sanity-client
+    devDependencies:
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
 
   packages/i18n-utils:
     dependencies:

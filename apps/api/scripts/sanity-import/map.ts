@@ -65,7 +65,7 @@ function spanMarkdown(span: Doc, markDefs: Doc[], warn: Warn): string {
 export function portableToMarkdown(blocks: unknown, warn: Warn = () => {}): string {
   if (!Array.isArray(blocks)) return '';
   const out: string[] = [];
-  let previousWasList = false;
+  let previousList: string | null = null;
   let counter = 0;
   for (const block of blocks) {
     if (block?._type !== 'block') {
@@ -75,15 +75,17 @@ export function portableToMarkdown(blocks: unknown, warn: Warn = () => {}): stri
     const text = (block.children ?? []).map((c: Doc) => spanMarkdown(c, block.markDefs ?? [], warn)).join('').trim();
     if (text === '') continue;
     if (block.listItem) {
-      counter = previousWasList ? counter + 1 : 1;
+      // Una lista de otro tipo pegada a la anterior es otra lista.
+      const sameList = previousList === block.listItem;
+      counter = sameList ? counter + 1 : 1;
       const indent = '  '.repeat(Math.max(0, (block.level ?? 1) - 1));
       const line = `${indent}${block.listItem === 'number' ? `${counter}.` : '-'} ${text}`;
-      if (previousWasList) out[out.length - 1] += `\n${line}`;
+      if (sameList) out[out.length - 1] += `\n${line}`;
       else out.push(line);
-      previousWasList = true;
+      previousList = block.listItem;
       continue;
     }
-    previousWasList = false;
+    previousList = null;
     const style = block.style ?? 'normal';
     if (style !== 'normal' && !(style in HEADING)) warn(`estilo de párrafo «${style}» tratado como texto normal`);
     out.push(`${HEADING[style] ?? ''}${text}`);
