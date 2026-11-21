@@ -62,3 +62,12 @@ export class MediaUploadSizeMismatchError extends DomainError {
     this.name = 'MediaUploadSizeMismatchError';
   }
 }
+/** Se intenta asignar a un plato o portada una imagen de otro restaurante. */
+export class MediaNotInRestaurantError extends DomainError {
+  readonly code = 'MEDIA_NOT_IN_RESTAURANT';
+  readonly status = 400;
+  constructor() {
+    super('Esa imagen es de otro restaurante. Elige una de este.');
+    this.name = 'MediaNotInRestaurantError';
+  }
+}

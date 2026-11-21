@@ -3,7 +3,7 @@ import { validate } from '../validate.js';
 import { z } from 'zod';
 import type { Context } from 'hono';
 import { requireAuth } from '../middleware/authMiddleware.js';
-import { allowedSpaceIds, assertSpaceAccess } from '../accessControl.js';
+import { allowedSpaceIds, assertMediaInRestaurant, assertSpaceAccess } from '../accessControl.js';
 import { dishToDto } from '../dto/dishDto.js';
 import {
   DishCategoryNotFoundError,
@@ -79,6 +79,7 @@ export function createDishesRoutes() {
   app.post('/', validate('json', dishCreateSchema), async (c) => {
     const body = c.req.valid('json');
     await assertSpaceAccess(c, body.spaceId);
+    if (body.imageAssetId) await assertDishImage(c, body.spaceId, body.imageAssetId);
     const d = await c.get('container').dishes.create.execute({
       spaceId: body.spaceId,
       categoryId: body.categoryId,
@@ -98,7 +99,9 @@ export function createDishesRoutes() {
     const id = c.req.param('id');
     const existing = await c.get('container').dishes.get.execute(id);
     await assertSpaceAccess(c, existing.spaceId);
-    const d = await c.get('container').dishes.update.execute(id, c.req.valid('json'), user.id);
+    const body = c.req.valid('json');
+    if (body.imageAssetId) await assertDishImage(c, existing.spaceId, body.imageAssetId);
+    const d = await c.get('container').dishes.update.execute(id, body, user.id);
     return c.json({ dish: await enrichDish(c, d) });
   });
 
@@ -111,6 +114,12 @@ export function createDishesRoutes() {
   });
 
   return app;
+}
+
+async function assertDishImage(c: Context<AppBindings>, spaceId: string, mediaId: string) {
+  const space = await c.get('container').repos.spacesRepo.findById(spaceId);
+  if (!space) throw new SpaceNotFoundError(spaceId);
+  await assertMediaInRestaurant(c, mediaId, space.restaurantId);
 }
 
 async function enrichDish(c: Context<AppBindings>, dish: Dish) {

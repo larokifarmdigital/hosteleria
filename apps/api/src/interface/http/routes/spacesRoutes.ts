@@ -3,6 +3,7 @@ import { validate } from '../validate.js';
 import { z } from 'zod';
 import { HTTPException } from 'hono/http-exception';
 import { requireAuth, requireRestaurant } from '../middleware/authMiddleware.js';
+import { assertMediaInRestaurant } from '../accessControl.js';
 import { spaceToDto } from '../dto/spaceDto.js';
 import type { AppBindings } from '../types.js';
 
@@ -40,8 +41,10 @@ export function createSpacesRoutes() {
   app.patch('/:spaceId', validate('json', patchSchema), async (c) => {
     const user = c.get('user')!;
     const restaurantId = await resolveRestaurantId(c);
+    const body = c.req.valid('json');
+    if (body.hero?.imageAssetId) await assertMediaInRestaurant(c, body.hero.imageAssetId, restaurantId);
     const s = await c.get('container').spaces.patch.execute(
-      restaurantId, c.req.param('spaceId'), c.req.valid('json'), user.id
+      restaurantId, c.req.param('spaceId'), body, user.id
     );
     return c.json({ space: spaceToDto(s) });
   });
