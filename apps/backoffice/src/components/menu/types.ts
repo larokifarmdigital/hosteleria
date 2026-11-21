@@ -5,6 +5,7 @@ export type MenuCategory = DishCategory | WineCategory;
 
 /** Lo que el formulario necesita saber del sitio donde se edita la carta. */
 export interface MenuScope {
+  restaurantSlug: string;
   spaceId: string;
   locales: string[];
   defaultLocale: string;

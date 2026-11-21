@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Dish, DishCategory } from '@hosteleria/api-client';
 import { I18nField } from '@/components/editor/I18nField';
+import { ImageField } from '@/components/media/ImageField';
 import { LocaleTabs } from '@/components/space/LocaleTabs';
 import { Field } from '@/components/ui/Field';
 import { Checkbox, Select, TextInput } from '@/components/ui/inputs';
@@ -22,7 +23,8 @@ const schema = z.object({
   name: i18nValues,
   note: i18nValues,
   price: priceText,
-  active: z.boolean()
+  active: z.boolean(),
+  imageAssetId: z.string().nullable()
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -47,10 +49,11 @@ export function DishSheet({ scope, categories, dish, initialCategoryId, nextOrde
       name: i18nToForm(dish?.name, scope.locales),
       note: i18nToForm(dish?.note, scope.locales),
       price: priceToForm(dish?.price),
-      active: dish?.active ?? true
+      active: dish?.active ?? true,
+      imageAssetId: dish?.imageAssetId ?? null
     }
   });
-  const { register, handleSubmit, setError, setFocus, formState: { errors, isDirty } } = form;
+  const { register, handleSubmit, setError, setFocus, setValue, watch, formState: { errors, isDirty } } = form;
 
   const create = useCreateDish();
   const update = useUpdateDish();
@@ -71,12 +74,13 @@ export function DishSheet({ scope, categories, dish, initialCategoryId, nextOrde
     const price = priceFromForm(values.price);
     try {
       if (dish) {
-        await update.mutateAsync({ id: dish.id, body: { categoryId: values.categoryId, name, note, price, active: values.active } });
+        await update.mutateAsync({ id: dish.id, body: { categoryId: values.categoryId, name, note, price, active: values.active, imageAssetId: values.imageAssetId } });
         showSuccessToast('Plato guardado');
       } else {
         await create.mutateAsync({
           spaceId: scope.spaceId, categoryId: values.categoryId, name, note,
-          price: price ?? undefined, active: values.active, order: nextOrder
+          price: price ?? undefined, active: values.active, order: nextOrder,
+          imageAssetId: values.imageAssetId ?? undefined
         });
         showSuccessToast('Plato añadido');
       }
@@ -127,6 +131,16 @@ export function DishSheet({ scope, categories, dish, initialCategoryId, nextOrde
           <Field id="d-price" label="Precio" hint="En euros. Déjalo vacío si no quieres mostrar precio." error={errors.price?.message} className="max-w-[200px]">
             {control => <TextInput {...control} inputMode="decimal" autoComplete="off" placeholder="0,00" {...register('price')} />}
           </Field>
+
+          <ImageField
+            label="Foto del plato"
+            hint="Opcional. Mejor una foto del plato tal como llega a la mesa."
+            scope={scope}
+            purpose="dish"
+            assetId={watch('imageAssetId')}
+            onChange={asset => setValue('imageAssetId', asset?.id ?? null, { shouldDirty: true })}
+            showDescription
+          />
 
           <Checkbox id="d-active" label="Visible en la carta" hint="Desmárcalo para ocultarlo sin borrarlo, por ejemplo fuera de temporada." {...register('active')} />
         </div>

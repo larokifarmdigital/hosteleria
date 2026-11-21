@@ -43,8 +43,9 @@ export const qk = {
   },
   media: {
     all: ['media'] as const,
+    lists: () => [...qk.media.all, 'list'] as const,
     list: (filters?: { restaurantSlug?: string; usage?: string; missingAlt?: boolean }) =>
-      [...qk.media.all, 'list', filters ?? {}] as const,
+      [...qk.media.lists(), filters ?? {}] as const,
     detail: (id: string) => [...qk.media.all, 'detail', id] as const
   }
 } as const;

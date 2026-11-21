@@ -1,9 +1,11 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { MediaUsage, I18nString, ApiClient } from '@hosteleria/api-client';
+import type { MediaUsage, I18nString } from '@hosteleria/api-client';
 import { api } from '../../api/browser';
 import { useErrorToast } from '../../api/errorHandling';
+import type { ImageSize } from '../../media/imageChecks';
+import { uploadMedia } from '../../media/upload';
 import { qk } from '../keys';
 
 type ListFilters = { restaurantSlug?: string; usage?: string; missingAlt?: boolean };
@@ -12,34 +14,13 @@ export function useMediaList(filters?: ListFilters) {
   return useQuery({ queryKey: qk.media.list(filters), queryFn: () => api.media.list(filters) });
 }
 
-/** El PUT a R2 usa `fetch` crudo: R2 no acepta la cookie de sesión ni el
- *  `X-Trace-Id`, y su respuesta no debe pasar por el `onError` del client. */
+/** Sin toast de error: quien sube (`MediaUploader`) lo muestra junto al archivo, con «Reintentar». */
 export function useMediaUpload(restaurantSlug: string) {
   const qc = useQueryClient();
-  const toastError = useErrorToast();
-
   return useMutation({
-    mutationFn: async (vars: { file: File; altText?: I18nString }) => {
-      const { file, altText } = vars;
-      const { uploadUrl, mediaId } = await api.media.uploadUrl({
-        restaurantSlug,
-        filename: file.name,
-        mimeType: file.type,
-        sizeKb: Math.ceil(file.size / 1024)
-      });
-
-      const putRes = await fetch(uploadUrl, {
-        method: 'PUT',
-        body: file,
-        headers: { 'Content-Type': file.type }
-      });
-      if (!putRes.ok) throw new Error(`No se pudo subir el archivo a R2 (${putRes.status}).`);
-
-      const dims = await extractImageDimensions(file).catch(() => undefined);
-      return api.media.confirm(mediaId, { ...dims, altText });
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.media.all }),
-    onError: toastError
+    mutationFn: (vars: { file: File; size?: ImageSize | null; onProgress?: (fraction: number) => void }) =>
+      uploadMedia(restaurantSlug, vars.file, { size: vars.size, onProgress: vars.onProgress }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.media.all })
   });
 }
 
@@ -59,26 +40,20 @@ export function useDeleteMedia() {
   const toastError = useErrorToast();
   return useMutation({
     mutationFn: (id: string) => api.media.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.media.all }),
+    // Solo los listados: el diálogo de borrado sigue abierto un instante con la
+    // consulta de usos de esta foto, y refrescarla daría un 404.
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.media.lists() }),
     onError: toastError
   });
 }
 
+/** Sin caché: se consulta justo antes de borrar, y una respuesta antigua daría un aviso falso. */
 export function useMediaReferences(id: string, opts?: { enabled?: boolean }) {
   return useQuery({
     queryKey: [...qk.media.detail(id), 'references'] as const,
     queryFn: () => api.media.references(id),
-    enabled: opts?.enabled ?? Boolean(id)
-  });
-}
-
-function extractImageDimensions(file: File): Promise<{ width: number; height: number } | undefined> {
-  if (!file.type.startsWith('image/')) return Promise.resolve(undefined);
-  return new Promise((resolve) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => { URL.revokeObjectURL(url); resolve({ width: img.naturalWidth, height: img.naturalHeight }); };
-    img.onerror = () => { URL.revokeObjectURL(url); resolve(undefined); };
-    img.src = url;
+    enabled: opts?.enabled ?? Boolean(id),
+    staleTime: 0,
+    gcTime: 0
   });
 }

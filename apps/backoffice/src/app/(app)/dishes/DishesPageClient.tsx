@@ -20,7 +20,7 @@ import { showSuccessToast } from '@/lib/api';
 import { formatPrice } from '@/lib/forms/price';
 import { cn } from '@/lib/utils';
 import {
-  useDeleteDishCategory, useDeleteWineCategory, useDishCategories, useDishes, useLanguages, useRestaurants,
+  useDeleteDishCategory, useDeleteWineCategory, useDishCategories, useDishes, useLanguages, useMediaList, useRestaurants,
   useSetDishActive, useSetWineActive, useSpaces, useWineCategories, useWines
 } from '@/lib/query/hooks';
 
@@ -51,6 +51,8 @@ export function DishesPageClient() {
   const dishCategoriesQuery = useDishCategories(spaceId || undefined);
   const wineCategoriesQuery = useWineCategories(spaceId || undefined);
   const { data: languages = [] } = useLanguages();
+  // Solo para las miniaturas de la lista: si falla, la carta se ve igual sin ellas.
+  const { data: media } = useMediaList({ restaurantSlug: slug });
 
   const setDishActive = useSetDishActive();
   const setWineActive = useSetWineActive();
@@ -65,7 +67,7 @@ export function DishesPageClient() {
   const locales = (restaurant?.activeLocales ?? []) as string[];
   const defaultLocale = (restaurant?.defaultLocale ?? 'es') as string;
   const localeNames = useMemo(() => Object.fromEntries(languages.map(l => [l.code as string, l.name])), [languages]);
-  const scope: MenuScope = { spaceId, locales, defaultLocale, localeNames };
+  const scope: MenuScope = { restaurantSlug: slug, spaceId, locales, defaultLocale, localeNames };
 
   const dishes = useMemo(() => (dishesQuery.data ?? []).filter(d => d.spaceId === spaceId), [dishesQuery.data, spaceId]);
   const wines = useMemo(() => (winesQuery.data ?? []).filter(w => w.spaceId === spaceId), [winesQuery.data, spaceId]);
@@ -85,7 +87,8 @@ export function DishesPageClient() {
         detail: d.note?.[defaultLocale],
         price: d.price !== null ? formatPrice(d.price) : 'Sin precio',
         active: d.active,
-        missing: missingOf(d.localesFilled as string[])
+        missing: missingOf(d.localesFilled as string[]),
+        imageUrl: d.imageAssetId ? media?.find(m => m.id === d.imageAssetId)?.publicUrl : undefined
       }));
     }
     return [...wines].sort((a, b) => a.order - b.order).map(w => ({
@@ -99,7 +102,7 @@ export function DishesPageClient() {
       // El nombre de un vino no se traduce: aquí no hay traducciones pendientes que avisar.
       missing: []
     }));
-  }, [kind, dishes, wines, locales, defaultLocale]);
+  }, [kind, dishes, wines, locales, defaultLocale, media]);
 
   const totals = useMemo(() => {
     const out: Record<string, number> = {};

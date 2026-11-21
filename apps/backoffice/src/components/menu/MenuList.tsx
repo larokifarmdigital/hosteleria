@@ -16,6 +16,8 @@ export interface MenuRow {
   active: boolean;
   /** Códigos de idioma en los que falta texto. */
   missing: string[];
+  /** Foto del plato, si tiene. */
+  imageUrl?: string;
 }
 
 interface Props {
@@ -65,6 +67,11 @@ export function MenuList({ categories, rows, totals, filtering, defaultLocale, i
               <ul className="m-0 list-none divide-y divide-[color:var(--color-border)] p-0">
                 {items.map(row => (
                   <li key={row.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-5">
+                    {row.imageUrl && (
+                      // Decorativa: el nombre del plato va justo al lado.
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={row.imageUrl} alt="" loading="lazy" decoding="async" className="h-11 w-11 flex-shrink-0 rounded-lg object-cover" />
+                    )}
                     <div className="min-w-0 flex-[1_1_220px]">
                       <p className={cn('m-0 text-[14.5px] font-semibold', row.active ? 'text-[color:var(--color-ink)]' : 'text-[color:var(--color-muted)]')}>
                         {row.name}

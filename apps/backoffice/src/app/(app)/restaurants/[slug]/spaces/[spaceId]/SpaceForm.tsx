@@ -9,6 +9,7 @@ import { I18nField } from '@/components/editor/I18nField';
 import { PublishPanel } from '@/components/editor/PublishPanel';
 import { SaveBar } from '@/components/editor/SaveBar';
 import { ScheduleEditor } from '@/components/editor/ScheduleEditor';
+import { ImageField } from '@/components/media/ImageField';
 import { Section } from '@/components/shared/Section';
 import { LocaleTabs } from '@/components/space/LocaleTabs';
 import { Field } from '@/components/ui/Field';
@@ -34,7 +35,9 @@ const schema = z.object({
     metaLeft: i18nValues,
     metaRight: i18nValues,
     cta: i18nValues,
-    imageAlt: i18nValues
+    imageAlt: i18nValues,
+    /** Vacío = sin foto. */
+    imageAssetId: z.string()
   }),
   manifesto: z.object({ eyebrow: i18nValues, text: i18nValues }),
   schedule: scheduleSchema
@@ -46,7 +49,10 @@ function toForm(space: Space, locales: string[]): FormValues {
   return {
     name: space.name,
     descriptor: space.descriptor ?? '',
-    hero: Object.fromEntries(HERO_FIELDS.map(f => [f, i18nToForm(space.hero[f], locales)])) as FormValues['hero'],
+    hero: {
+      ...Object.fromEntries(HERO_FIELDS.map(f => [f, i18nToForm(space.hero[f], locales)])),
+      imageAssetId: space.hero.imageAssetId ?? ''
+    } as FormValues['hero'],
     manifesto: Object.fromEntries(MANIFESTO_FIELDS.map(f => [f, i18nToForm(space.manifesto[f], locales)])) as FormValues['manifesto'],
     schedule: space.schedule.map(d => ({ day: d.day, shifts: d.shifts.map(s => ({ open: s.open, close: s.close })) }))
   };
@@ -79,7 +85,7 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
   const locales = restaurant.activeLocales as string[];
   const [locale, setLocale] = useState(restaurant.defaultLocale as string);
   const form = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: toForm(space, locales) });
-  const { register, handleSubmit, reset, formState: { errors, isDirty, isSubmitted } } = form;
+  const { register, handleSubmit, reset, setError, setFocus, setValue, watch, formState: { errors, isDirty, isSubmitted } } = form;
 
   const patch = usePatchSpace(restaurant.slug, space.id);
   const publish = usePublishSpace(restaurant.slug, space.id);
@@ -87,16 +93,30 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
 
   useUnsavedChangesWarning(isDirty);
 
+  const heroImageId = watch('hero.imageAssetId');
+  const altErrorLocale = locales.find(code => errors.hero?.imageAlt?.[code]);
+
   const onSave = handleSubmit(async values => {
+    // Una portada con foto no se guarda sin su descripción en todos los idiomas.
+    const missingAlt = values.hero.imageAssetId ? locales.find(code => !values.hero.imageAlt[code]?.trim()) : undefined;
+    if (missingAlt) {
+      setLocale(missingAlt);
+      setError(`hero.imageAlt.${missingAlt}`, { message: `Describe la foto en ${localeNames[missingAlt] ?? missingAlt.toUpperCase()}.` });
+      setTimeout(() => setFocus(`hero.imageAlt.${missingAlt}`), 0);
+      return;
+    }
+    // `hero` se envía entero: la foto anterior se quita aquí y solo vuelve si sigue elegida.
+    const { imageAssetId: _previousImage, ...heroBase } = space.hero;
     try {
       const saved = await patch.mutateAsync({
         name: values.name,
         descriptor: values.descriptor,
         // El api sustituye `hero` y `manifesto` enteros: se parte del valor actual
-        // para conservar lo que este formulario no edita (la foto de portada).
+        // para conservar lo que este formulario no edita.
         hero: {
-          ...space.hero,
-          ...Object.fromEntries(HERO_FIELDS.map(f => [f, i18nFromForm(space.hero[f], values.hero[f])]))
+          ...heroBase,
+          ...Object.fromEntries(HERO_FIELDS.map(f => [f, i18nFromForm(space.hero[f], values.hero[f])])),
+          ...(values.hero.imageAssetId ? { imageAssetId: values.hero.imageAssetId } : {})
         },
         manifesto: {
           ...space.manifesto,
@@ -114,6 +134,7 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
   });
 
   const i18n = { locales, activeLocale: locale, localeNames };
+  const mediaScope = { restaurantSlug: restaurant.slug, locales, defaultLocale: restaurant.defaultLocale as string, localeNames };
 
   return (
     <FormProvider {...form}>
@@ -143,7 +164,31 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
                     <I18nField name="hero.metaLeft" label="Dato a la izquierda" hint="Por ejemplo, el barrio." {...i18n} />
                     <I18nField name="hero.metaRight" label="Dato a la derecha" hint="Por ejemplo, el tipo de cocina." {...i18n} />
                     <I18nField name="hero.cta" label="Texto del botón" hint="Por ejemplo, «Reservar mesa»." {...i18n} />
-                    <I18nField name="hero.imageAlt" label="Descripción de la foto" hint="Qué se ve en la foto, para quien no puede verla." {...i18n} />
+                    <div className="md:col-span-2">
+                      <ImageField
+                        label="Foto de portada"
+                        hint="Horizontal y de al menos 1600 px de ancho."
+                        scope={mediaScope}
+                        purpose="hero"
+                        assetId={heroImageId || null}
+                        onChange={asset => {
+                          setValue('hero.imageAssetId', asset?.id ?? '', { shouldDirty: true });
+                          // La descripción va con la foto: al cambiarla, entra la de la nueva.
+                          if (asset) locales.forEach(code => setValue(`hero.imageAlt.${code}`, asset.altText?.[code] ?? '', { shouldDirty: true, shouldValidate: true }));
+                        }}
+                      />
+                    </div>
+                    {heroImageId && (
+                      <I18nField
+                        className="md:col-span-2"
+                        name="hero.imageAlt"
+                        label="Descripción de la foto"
+                        hint="Qué se ve en la foto, para quien no puede verla."
+                        errorFor={altErrorLocale}
+                        error={altErrorLocale ? errors.hero?.imageAlt?.[altErrorLocale]?.message : undefined}
+                        {...i18n}
+                      />
+                    )}
                   </div>
                 </Section>
 
