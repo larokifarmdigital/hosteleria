@@ -259,7 +259,14 @@ const schemas = {
       restaurant: {
         description: 'Campos de contenido de `Restaurant` tal como se publicaron, más `slug`, `defaultLocale`, `activeLocales` y `publishedAt`. Sin `state`, `rebuildHookUrl` ni contadores.',
         allOf: [{ $ref: '#/components/schemas/Restaurant' }],
-        properties: { publishedAt: { type: 'string', format: 'date-time', nullable: true } }
+        properties: {
+          locales: {
+            type: 'array',
+            description: 'Los idiomas activos con su nombre; el principal primero.',
+            items: { type: 'object', properties: { code: { type: 'string' }, name: { type: 'string' } } }
+          },
+          publishedAt: { type: 'string', format: 'date-time', nullable: true }
+        }
       },
       spaces: {
         type: 'array',

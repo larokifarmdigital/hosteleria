@@ -65,7 +65,10 @@ export interface PublishedSite {
   restaurant: RestaurantContent & {
     slug: string;
     defaultLocale: string;
+    /** El principal primero; el resto, por código. */
     activeLocales: string[];
+    /** Los mismos idiomas, con el nombre que se enseña en el selector. */
+    locales: { code: string; name: string }[];
     publishedAt: string | null;
   };
   /** Solo los espacios publicados, en su orden. */
@@ -122,6 +125,8 @@ export interface PublishedSiteSources {
   wineCategories: WineCategory[];
   wines: Wine[];
   legalPages: LegalPage[];
+  /** Idiomas dados de alta, para dar nombre a los del restaurante. */
+  languages?: { code: string; name: string }[];
 }
 
 /** Ids de las imágenes que salen en la web publicada. */
@@ -210,12 +215,18 @@ export function buildPublishedSite(
     mediaMap[m.id] = { url: `${base}/${m.r2Key}`, width: m.width, height: m.height, mimeType: m.mimeType, alt: m.altText ?? {} };
   }
 
+  // jsonb y la tabla de idiomas no guardan orden: se fija uno para que dos
+  // builds del mismo contenido salgan iguales.
+  const defaultLocale = r.publishedSnapshot?.defaultLocaleCode ?? r.defaultLocaleCode;
+  const activeLocales = [...new Set([defaultLocale, ...[...(r.publishedSnapshot?.activeLocaleCodes ?? r.activeLocaleCodes)].sort()])];
+
   return {
     restaurant: {
       slug: r.slug,
       ...content,
-      defaultLocale: r.publishedSnapshot?.defaultLocaleCode ?? r.defaultLocaleCode,
-      activeLocales: r.publishedSnapshot?.activeLocaleCodes ?? r.activeLocaleCodes,
+      defaultLocale,
+      activeLocales,
+      locales: activeLocales.map(code => ({ code, name: src.languages?.find(l => l.code === code)?.name ?? code })),
       publishedAt: r.lastPublishedAt?.toISOString() ?? null
     },
     spaces,

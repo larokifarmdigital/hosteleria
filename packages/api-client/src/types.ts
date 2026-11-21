@@ -373,7 +373,11 @@ export interface PublishedSpace extends Pick<Space,
 }
 /** Lo que una landing necesita para construirse: solo lo publicado. */
 export interface PublishedSite {
-  restaurant: Pick<Restaurant, RestaurantContentKey | 'slug' | 'defaultLocale' | 'activeLocales'> & { publishedAt: string | null };
+  restaurant: Pick<Restaurant, RestaurantContentKey | 'slug' | 'defaultLocale' | 'activeLocales'> & {
+    /** Los idiomas activos con su nombre; el principal primero. */
+    locales: { code: LocaleCode; name: string }[];
+    publishedAt: string | null;
+  };
   /** Solo los espacios publicados, en su orden. */
   spaces: PublishedSpace[];
   legalPages: Pick<LegalPage, 'type' | 'title' | 'content' | 'lastUpdated'>[];

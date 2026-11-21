@@ -94,8 +94,16 @@ describe('sitio publicado', () => {
 
   it('idiomas y fecha son los de la publicación', () => {
     const site = buildPublishedSite({ restaurant: restaurant(), spaces: [], ...empty }, [], 'https://m')!;
-    expect(site.restaurant.activeLocales).toEqual(['es', 'ca']);
     expect(site.restaurant.defaultLocale).toBe('ca');
+    expect(site.restaurant.activeLocales).toEqual(['ca', 'es']);
+    expect(site.restaurant.locales).toEqual([{ code: 'ca', name: 'ca' }, { code: 'es', name: 'es' }]);
+    const named = buildPublishedSite({
+      restaurant: restaurant({ publishedSnapshot: { ...restaurant().publishedSnapshot, activeLocaleCodes: ['es', 'en', 'ca'] } }),
+      spaces: [], ...empty, languages: [{ code: 'es', name: 'Español' }, { code: 'ca', name: 'Català' }, { code: 'en', name: 'English' }]
+    }, [], 'https://m')!;
+    expect(named.restaurant.locales).toEqual([
+      { code: 'ca', name: 'Català' }, { code: 'en', name: 'English' }, { code: 'es', name: 'Español' }
+    ]);
     expect(site.restaurant.publishedAt).toBe('2026-11-20T10:00:00.000Z');
   });
 

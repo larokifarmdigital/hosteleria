@@ -184,7 +184,7 @@ export function buildContainer(env: Env) {
 
     public: {
       getSite: new GetPublishedSiteUseCase(
-        restaurantsRepo, spacesRepo, dishesRepo, winesRepo, legalPagesRepo, mediaRepo, env.R2_PUBLIC_URL
+        restaurantsRepo, spacesRepo, dishesRepo, winesRepo, legalPagesRepo, mediaRepo, languagesRepo, env.R2_PUBLIC_URL
       )
     },
 
