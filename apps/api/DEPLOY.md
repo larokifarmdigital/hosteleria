@@ -169,6 +169,19 @@ En **Settings → Bindings** del Worker debe aparecer:
 
 Si falta, revisá `wrangler.toml#r2_buckets` y re-deployá.
 
+### 5.3 CORS del bucket
+
+El backoffice sube las fotos directo al bucket con una URL firmada, así que el
+bucket tiene que aceptar `PUT` desde el dominio del backoffice. Las reglas
+están en `r2-cors.json`; al cambiar de dominio, añadilo ahí y volvé a aplicarlas:
+
+```bash
+pnpm exec wrangler r2 bucket cors set hostelery --file r2-cors.json
+pnpm exec wrangler r2 bucket cors list hostelery
+```
+
+Sin esto la subida falla en el navegador antes de salir (error de CORS).
+
 ---
 
 ## Paso 6 — Actualizar el backoffice

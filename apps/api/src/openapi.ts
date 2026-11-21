@@ -56,8 +56,8 @@ const schemas = {
   MediaReferences: {
     type: 'object',
     properties: {
-      dishes: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] } },
-      spaces: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] } }
+      dishes: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' }, name: { $ref: '#/components/schemas/I18nString' } }, required: ['id', 'name'] } },
+      spaces: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' } }, required: ['id', 'name'] } }
     },
     required: ['dishes', 'spaces']
   },
@@ -1150,10 +1150,11 @@ const paths: Record<string, any> = {
     parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
     get: {
       tags: ['Media'], summary: 'Lista platos y spaces que referencian este asset',
-      description: 'Útil para la UI antes de permitir borrar: "no puedes borrar, usado en N platos".',
+      description: 'Útil para la UI antes de permitir borrar: "no puedes borrar, usado en N platos". Cuenta también la portada publicada de un espacio, aunque el borrador ya use otra foto.',
       responses: {
         200: ok({ $ref: '#/components/schemas/MediaReferences' }),
         401: err401,
+        403: err403Rest,
         404: errRef('404 Not Found — `MEDIA_NOT_FOUND`'),
         500: err500
       }

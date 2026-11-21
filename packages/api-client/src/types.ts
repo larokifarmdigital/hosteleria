@@ -213,6 +213,12 @@ export interface MediaAsset {
   createdAt: string;
 }
 
+/** Dónde se usa una imagen: platos con esa foto y espacios con esa portada. */
+export interface MediaReferences {
+  dishes: Array<{ id: string; name: I18nString }>;
+  spaces: Array<{ id: string; name: string }>;
+}
+
 export interface UploadUrlResponse {
   mediaId: string;
   uploadUrl: string;

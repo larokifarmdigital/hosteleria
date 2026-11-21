@@ -24,6 +24,10 @@ APP_URL = "http://localhost:4400"
 [[r2_buckets]]
 binding = "MEDIA"
 bucket_name = "hostelery"
+# Solo afecta a `wrangler dev`: usa el bucket real en vez de uno simulado en
+# disco. El navegador sube con URL firmada al bucket real, así que con el
+# simulado `confirm` nunca encontraría el archivo.
+remote = true
 
 # `scheduled` en src/index.ts compara `event.cron` con estas cadenas exactas.
 [triggers]

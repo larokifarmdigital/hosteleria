@@ -85,12 +85,17 @@ export class DrizzleMediaRepository implements MediaRepository {
    * `dishes.imageAssetId` es FK normal; `spaces.hero` guarda la referencia
    * dentro del jsonb — ahí hace falta `->>` para extraerla. `gallery` queda
    * reservado para cuando añadamos tabla de galerías.
+   *
+   * También cuenta la portada publicada: una foto ya sustituida en el
+   * borrador sigue en la web hasta que se publique el cambio.
    */
   async findReferences(id: string): Promise<{ kind: 'hero' | 'gallery' | 'dish'; refId: string }[]> {
     const [dishRows, spaceRows] = await Promise.all([
       this.db.select({ id: dishes.id }).from(dishes).where(eq(dishes.imageAssetId, id)),
       this.db.execute(sql`
-        SELECT s.id FROM spaces s WHERE s.hero ->> 'imageAssetId' = ${id}
+        SELECT s.id FROM spaces s
+        WHERE s.hero ->> 'imageAssetId' = ${id}
+           OR s.published_snapshot -> 'hero' ->> 'imageAssetId' = ${id}
       `)
     ]);
     const refs: { kind: 'hero' | 'gallery' | 'dish'; refId: string }[] = [];

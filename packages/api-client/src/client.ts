@@ -9,6 +9,7 @@ import type {
   WineCategory,
   Wine,
   MediaAsset,
+  MediaReferences,
   UploadUrlResponse,
   I18nString
 } from './types';
@@ -263,7 +264,7 @@ export function createApiClient(opts: ApiClientOpts) {
         req<{ media: MediaAsset }>(`/media/${id}`, { method: 'PATCH', body: JSON.stringify(body) }).then(r => r.media),
       delete: (id: string) => req<{ ok: true }>(`/media/${id}`, { method: 'DELETE' }),
       references: (id: string) =>
-        req<{ dishes: Array<{ id: string }>; spaces: Array<{ id: string }> }>(`/media/${id}/references`)
+        req<MediaReferences>(`/media/${id}/references`)
     }
   };
 }

@@ -76,9 +76,24 @@ export function createMediaRoutes() {
   });
 
   app.get('/:id/references', async (c) => {
-    const refs = await c.get('container').media.references.execute(c.req.param('id'));
-    const dishes = refs.filter(r => r.kind === 'dish').map(r => ({ id: r.refId }));
-    const spaces = refs.filter(r => r.kind === 'hero').map(r => ({ id: r.refId }));
+    const id = c.req.param('id');
+    const { mediaRepo, dishesRepo, spacesRepo } = c.get('container').repos;
+    const existing = await mediaRepo.findById(id);
+    if (!existing) throw new MediaNotFoundError(id);
+    await assertMediaAccess(c, existing);
+
+    const refs = await c.get('container').media.references.execute(id);
+    // Con el nombre: el backoffice tiene que poder decir dónde se usa la foto.
+    const [dishes, spaces] = await Promise.all([
+      Promise.all(refs.filter(r => r.kind === 'dish').map(async r => {
+        const dish = await dishesRepo.findById(r.refId);
+        return { id: r.refId, name: dish?.name ?? {} };
+      })),
+      Promise.all(refs.filter(r => r.kind === 'hero').map(async r => {
+        const space = await spacesRepo.findById(r.refId);
+        return { id: r.refId, name: space?.name ?? '' };
+      }))
+    ]);
     return c.json({ dishes, spaces });
   });
 
