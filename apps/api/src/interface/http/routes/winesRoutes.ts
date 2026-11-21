@@ -35,6 +35,16 @@ export function createWinesRoutes() {
     return c.json({ category: row }, 201);
   });
 
+  cats.patch('/:id', validate('json', categoryPatchSchema), async (c) => {
+    const id = c.req.param('id');
+    const cat = await c.get('container').repos.winesRepo.findCategoryById(id);
+    if (!cat) throw new WineCategoryNotFoundError(id);
+    await assertSpaceAccess(c, cat.spaceId);
+    await c.get('container').wines.updateCategory.execute(id, c.req.valid('json'));
+    const updated = await c.get('container').repos.winesRepo.findCategoryById(id);
+    return c.json({ category: updated });
+  });
+
   cats.delete('/:id', async (c) => {
     const id = c.req.param('id');
     const cat = await c.get('container').repos.winesRepo.findCategoryById(id);
@@ -121,6 +131,11 @@ const categoryCreateSchema = z.object({
   name: i18nSchema,
   order: z.number().int().min(0).default(0)
 });
+
+const categoryPatchSchema = z.object({
+  name: i18nSchema.optional(),
+  order: z.number().int().min(0).optional()
+}).partial();
 
 const wineCreateSchema = z.object({
   spaceId: z.string().min(1),

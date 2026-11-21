@@ -68,6 +68,7 @@ import { DeleteWineUseCase } from '../../application/wines/deleteWineUseCase.js'
 import { ListWineCategoriesUseCase } from '../../application/wines/listWineCategoriesUseCase.js';
 import { CreateWineCategoryUseCase } from '../../application/wines/createWineCategoryUseCase.js';
 import { DeleteWineCategoryUseCase } from '../../application/wines/deleteWineCategoryUseCase.js';
+import { UpdateWineCategoryUseCase } from '../../application/wines/updateWineCategoryUseCase.js';
 
 import { ListMediaUseCase } from '../../application/media/listMediaUseCase.js';
 import { RequestMediaUploadUseCase } from '../../application/media/requestMediaUploadUseCase.js';
@@ -166,6 +167,7 @@ export function buildContainer(env: Env) {
       delete: new DeleteWineUseCase(winesRepo),
       listCategories: new ListWineCategoriesUseCase(winesRepo),
       createCategory: new CreateWineCategoryUseCase(winesRepo),
+      updateCategory: new UpdateWineCategoryUseCase(winesRepo),
       deleteCategory: new DeleteWineCategoryUseCase(winesRepo)
     },
 

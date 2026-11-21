@@ -221,6 +221,8 @@ export function createApiClient(opts: ApiClientOpts) {
           req<{ categories: WineCategory[] }>(`/wines/categories${spaceId ? `?spaceId=${spaceId}` : ''}`).then(r => r.categories),
         create: (body: { spaceId: string; name: I18nString; order?: number }) =>
           req<{ category: WineCategory }>('/wines/categories', { method: 'POST', body: JSON.stringify(body) }).then(r => r.category),
+        patch: (id: string, body: { name?: I18nString; order?: number }) =>
+          req<{ category: WineCategory }>(`/wines/categories/${id}`, { method: 'PATCH', body: JSON.stringify(body) }).then(r => r.category),
         delete: (id: string) => req<{ ok: true }>(`/wines/categories/${id}`, { method: 'DELETE' })
       }
     },

@@ -910,6 +910,19 @@ const paths: Record<string, any> = {
   },
   '/wines/categories/{id}': {
     parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    patch: {
+      tags: ['Wines'], summary: 'Actualiza categoría de vinos',
+      requestBody: jsonBody({
+        type: 'object',
+        properties: { name: { $ref: '#/components/schemas/I18nString' }, order: { type: 'integer', minimum: 0 } }
+      }),
+      responses: {
+        200: ok({ type: 'object', properties: { category: { $ref: '#/components/schemas/WineCategory' } }, required: ['category'] }),
+        401: err401, 403: err403Space,
+        404: errRef('404 Not Found — `WINE_CATEGORY_NOT_FOUND`'),
+        500: err500
+      }
+    },
     delete: {
       tags: ['Wines'], summary: 'Elimina categoría de vinos (restrict si tiene vinos)',
       responses: {

@@ -98,6 +98,11 @@ export class DrizzleWineRepository implements WineRepository {
     return rowToWineCategory(row);
   }
 
+  async updateCategory(id: string, patch: { name?: I18nValue; order?: number }): Promise<void> {
+    if (Object.keys(patch).length === 0) return;
+    await this.db.update(wineCategories).set(patch).where(eq(wineCategories.id, id));
+  }
+
   async deleteCategory(id: string): Promise<void> {
     const [{ n }] = await this.db
       .select({ n: count() })

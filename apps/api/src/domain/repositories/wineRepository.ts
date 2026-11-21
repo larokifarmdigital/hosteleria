@@ -13,6 +13,8 @@ export interface WineRepository {
   findCategoryById(id: string): Promise<WineCategory | null>;
   createCategory(input: { spaceId: string; name: I18nValue; order: number }): Promise<WineCategory>;
 
+  updateCategory(id: string, patch: { name?: I18nValue; order?: number }): Promise<void>;
+
   /** Restrict: lanza `CategoryHasWinesError` si tiene vinos. */
   deleteCategory(id: string): Promise<void>;
 }
