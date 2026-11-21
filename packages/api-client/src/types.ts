@@ -67,7 +67,74 @@ export interface Socials {
 export interface Seo {
   title?: I18nString;
   description?: I18nText;
+  /** Imagen al compartir el enlace. */
+  imageAssetId?: string;
 }
+
+export interface Branding {
+  logoAssetId?: string;
+  faviconAssetId?: string;
+  appIconAssetId?: string;
+}
+/** Tarjeta destacada de la portada de un grupo con varios espacios. */
+export interface HomeBlock {
+  id: string;
+  title?: I18nString;
+  text?: I18nText;
+  imageAssetId?: string;
+  ctaText?: I18nString;
+  ctaHref?: string;
+}
+export interface About {
+  eyebrow?: I18nString;
+  title?: I18nString;
+  /** Texto plano; los párrafos se separan con una línea en blanco. */
+  body?: I18nText;
+  imageAssetIds?: string[];
+}
+export type GroupFeatureIcon = 'users' | 'chef' | 'wine' | 'clock' | 'pin' | 'star';
+export interface Groups {
+  eyebrow?: I18nString;
+  title?: I18nString;
+  cta?: I18nString;
+  imageAssetId?: string;
+  highlights?: Array<{ id: string; text?: I18nString }>;
+  features?: Array<{ id: string; icon: GroupFeatureIcon; label?: I18nString; text?: I18nText }>;
+}
+/** Textos fijos de la landing (menú, títulos de sección, formulario, pie). */
+export interface UiTexts {
+  nav?: Partial<Record<'place' | 'kitchen' | 'wines' | 'gallery' | 'book', I18nString>>;
+  sections?: Partial<Record<
+    'dishesEyebrow' | 'dishesTitle' | 'winesEyebrow' | 'winesTitle' | 'winesFootnote' |
+    'galleryEyebrow' | 'galleryTitle' | 'drinksEyebrow' | 'drinksTitle', I18nString>>;
+  form?: Partial<Record<
+    'title' | 'intro' | 'labelName' | 'labelPhone' | 'labelEmail' | 'labelGuests' |
+    'labelDate' | 'labelTime' | 'labelNotes' | 'submit' | 'success', I18nString>>;
+  footer?: Partial<Record<'contactColumn' | 'byline', I18nString>>;
+}
+export interface Faq {
+  eyebrow?: I18nString;
+  title?: I18nString;
+  titleAccent?: I18nString;
+  items?: Array<{ id: string; question?: I18nString; answer?: I18nText }>;
+}
+export type PaymentMethod = 'cash' | 'credit_card' | 'debit_card' | 'contactless' | 'apple_pay' | 'google_pay' | 'bizum';
+export type ExtraService =
+  | 'terraza' | 'grupos' | 'sala_privada' | 'vegetariano' | 'vegano' | 'sin_gluten' | 'menu_dia'
+  | 'menu_degustacion' | 'carta_vinos' | 'bar' | 'familiar' | 'pet_friendly' | 'accesible' | 'aparcamiento';
+/** Datos del negocio para buscadores (JSON-LD). */
+export interface Business {
+  averagePrice?: number;
+  paymentMethods?: PaymentMethod[];
+  extraServices?: ExtraService[];
+}
+
+/** Campos del restaurante que entran en el borrador y en lo publicado. */
+export type RestaurantContentKey =
+  | 'name' | 'domain' | 'logoInitial' | 'coverGradient' | 'timezone'
+  | 'address' | 'contact' | 'socials' | 'seo' | 'acceptsBookings' | 'showSocials'
+  | 'foundedYear' | 'branding' | 'homeBlocks' | 'about' | 'groups' | 'mapUrl'
+  | 'showReviews' | 'uiTexts' | 'faq' | 'aiSummary' | 'analyticsToken' | 'business';
 
 export interface Restaurant {
   id: string;
@@ -89,9 +156,23 @@ export interface Restaurant {
   contact: Contact;
   socials: Socials;
   seo: Seo;
+  foundedYear: number | null;
+  branding: Branding;
+  homeBlocks: HomeBlock[];
+  about: About;
+  groups: Groups;
+  /** Enlace o código de inserción de Google Maps. */
+  mapUrl: string | null;
+  showReviews: boolean;
+  uiTexts: UiTexts;
+  faq: Faq;
+  /** Resumen para asistentes de IA (`llms.txt`). */
+  aiSummary: I18nText;
+  analyticsToken: string | null;
+  business: Business;
   lastPublishedAt: string | null;
-  /** Lo último publicado; `null` si nunca se publicó. */
-  publishedSnapshot: Partial<Pick<Restaurant, 'name' | 'domain' | 'logoInitial' | 'coverGradient' | 'timezone' | 'address' | 'contact' | 'socials' | 'seo' | 'acceptsBookings' | 'showSocials'>> | null;
+  /** Lo último publicado; `null` si nunca se publicó. Los antiguos no traen los campos añadidos después. */
+  publishedSnapshot: (Partial<Pick<Restaurant, RestaurantContentKey>> & { activeLocaleCodes?: LocaleCode[]; defaultLocaleCode?: LocaleCode }) | null;
   completePercent: number;
   spacesCount: number;
   dishesCount: number;
@@ -122,6 +203,19 @@ export interface Manifesto {
   text?: I18nText;
 }
 
+export interface ScheduleTexts {
+  title?: I18nString;
+  text?: I18nText;
+  open?: I18nString;
+  nextOpening?: I18nString;
+  closed?: I18nString;
+}
+export interface BookingContact {
+  phone?: string;
+  whatsapp?: string;
+  email?: string;
+}
+
 export interface Space {
   id: string;
   restaurantId: string;
@@ -135,9 +229,16 @@ export interface Space {
   descriptor: string;
   hero: Hero;
   manifesto: Manifesto;
+  /** Ids de imagen, en el orden en que se enseñan. */
+  gallery: string[];
+  scheduleTexts: ScheduleTexts;
+  /** Dirección, mapa y contacto propios; vacíos = los del restaurante. */
+  address: Address;
+  mapUrl: string | null;
+  bookingContact: BookingContact;
   schedule: ScheduleDay[];
   /** Lo último publicado; `null` si nunca se publicó. */
-  publishedSnapshot: Partial<Pick<Space, 'name' | 'hero' | 'manifesto' | 'descriptor' | 'coverGradient' | 'schedule'>> | null;
+  publishedSnapshot: Partial<Pick<Space, 'name' | 'hero' | 'manifesto' | 'descriptor' | 'coverGradient' | 'schedule' | 'gallery' | 'scheduleTexts' | 'address' | 'mapUrl' | 'bookingContact'>> | null;
   galleryCount: number;
   dishesCount: number;
   winesCount: number;
@@ -214,9 +315,28 @@ export interface MediaAsset {
 }
 
 /** Dónde se usa una imagen: platos con esa foto y espacios con esa portada. */
+export type RestaurantMediaUse = 'logo' | 'favicon' | 'appIcon' | 'seo' | 'about' | 'groups' | 'homeBlock';
 export interface MediaReferences {
   dishes: Array<{ id: string; name: I18nString }>;
+  /** Espacios que la usan de portada. */
   spaces: Array<{ id: string; name: string }>;
+  /** Espacios que la tienen en la galería. */
+  galleries: Array<{ id: string; name: string }>;
+  /** Sitios de la ficha del restaurante donde se usa. */
+  restaurant: RestaurantMediaUse[];
+}
+
+// ─── Legal pages ─────────────────────────────────────────────────
+export type LegalPageType = 'legal-notice' | 'privacy' | 'cookies';
+export interface LegalPage {
+  id: string;
+  type: LegalPageType;
+  title: I18nString;
+  /** Markdown por idioma. */
+  content: I18nText;
+  /** "YYYY-MM-DD". */
+  lastUpdated: string | null;
+  updatedAt: string;
 }
 
 export interface UploadUrlResponse {

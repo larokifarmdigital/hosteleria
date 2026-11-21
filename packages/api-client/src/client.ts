@@ -10,6 +10,8 @@ import type {
   Wine,
   MediaAsset,
   MediaReferences,
+  LegalPage,
+  LegalPageType,
   UploadUrlResponse,
   I18nString
 } from './types';
@@ -175,12 +177,23 @@ export function createApiClient(opts: ApiClientOpts) {
         slug: string; name: string; type?: Space['type']; descriptor?: string; isDefault?: boolean;
       }) =>
         req<{ space: Space }>(`/restaurants/${restaurantSlug}/spaces`, { method: 'POST', body: JSON.stringify(body) }).then(r => r.space),
-      patch: (restaurantSlug: string, spaceId: string, body: Partial<Pick<Space, 'name' | 'type' | 'descriptor' | 'isDefault' | 'order' | 'coverGradient' | 'state' | 'hero' | 'manifesto' | 'schedule'>>) =>
+      patch: (restaurantSlug: string, spaceId: string, body: Partial<Pick<Space, 'name' | 'type' | 'descriptor' | 'isDefault' | 'order' | 'coverGradient' | 'state' | 'hero' | 'manifesto' | 'schedule' | 'gallery' | 'scheduleTexts' | 'address' | 'mapUrl' | 'bookingContact'>>) =>
         req<{ space: Space }>(`/restaurants/${restaurantSlug}/spaces/${spaceId}`, { method: 'PATCH', body: JSON.stringify(body) }).then(r => r.space),
       delete: (restaurantSlug: string, spaceId: string) =>
         req<{ ok: true }>(`/restaurants/${restaurantSlug}/spaces/${spaceId}`, { method: 'DELETE' }),
       discard: (restaurantSlug: string, spaceId: string) =>
         req<{ space: Space }>(`/restaurants/${restaurantSlug}/spaces/${spaceId}/discard`, { method: 'POST' }).then(r => r.space)
+    },
+
+    // ─── Legal pages ────────────────────────────────────────────
+    legalPages: {
+      list: (restaurantSlug: string) =>
+        req<{ legalPages: LegalPage[] }>(`/restaurants/${restaurantSlug}/legal-pages`).then(r => r.legalPages),
+      /** Crea la página o sustituye la que hubiera de ese tipo. */
+      save: (restaurantSlug: string, type: LegalPageType, body: Pick<LegalPage, 'title' | 'content' | 'lastUpdated'>) =>
+        req<{ legalPage: LegalPage }>(`/restaurants/${restaurantSlug}/legal-pages/${type}`, { method: 'PUT', body: JSON.stringify(body) }).then(r => r.legalPage),
+      delete: (restaurantSlug: string, type: LegalPageType) =>
+        req<{ ok: true }>(`/restaurants/${restaurantSlug}/legal-pages/${type}`, { method: 'DELETE' })
     },
 
     // ─── Dishes ─────────────────────────────────────────────────

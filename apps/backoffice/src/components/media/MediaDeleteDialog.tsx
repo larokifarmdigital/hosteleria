@@ -1,6 +1,6 @@
 'use client';
 
-import type { MediaAsset } from '@hosteleria/api-client';
+import type { MediaAsset, RestaurantMediaUse } from '@hosteleria/api-client';
 import { Button } from '@/components/shared/Button';
 import { Modal } from '@/components/ui/Modal';
 import { showSuccessToast } from '@/lib/api';
@@ -12,6 +12,16 @@ interface Props {
   onClose: () => void;
 }
 
+const RESTAURANT_USES: Record<RestaurantMediaUse, string> = {
+  logo: 'logo',
+  favicon: 'icono de la pestaña',
+  appIcon: 'icono de la app',
+  seo: 'imagen al compartir',
+  about: 'sobre nosotros',
+  groups: 'grupos y eventos',
+  homeBlock: 'bloque destacado'
+};
+
 /** Antes de borrar comprueba dónde se usa la foto: si está en uso, lo dice y no deja borrarla. */
 export function MediaDeleteDialog({ asset, defaultLocale, onClose }: Props) {
   const references = useMediaReferences(asset.id);
@@ -20,6 +30,8 @@ export function MediaDeleteDialog({ asset, defaultLocale, onClose }: Props) {
   const uses = references.data
     ? [
         ...references.data.spaces.map(s => `Portada de «${s.name}»`),
+        ...(references.data.galleries ?? []).map(s => `Galería de «${s.name}»`),
+        ...(references.data.restaurant ?? []).map(use => `Ficha del restaurante: ${RESTAURANT_USES[use]}`),
         ...references.data.dishes.map(d => `Plato «${d.name[defaultLocale] ?? Object.values(d.name).find(Boolean) ?? 'sin nombre'}»`)
       ]
     : [];
