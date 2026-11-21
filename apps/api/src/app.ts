@@ -17,7 +17,7 @@ import { createUsersRoutes } from './interface/http/routes/usersRoutes.js';
 import { createMediaRoutes } from './interface/http/routes/mediaRoutes.js';
 import { openApiSpec } from './openapi.js';
 import { sentryMiddleware } from './middleware/sentry.js';
-import { rateLimit } from './middleware/rate-limit.js';
+import { getClientIp, rateLimit } from './middleware/rate-limit.js';
 import type { AppBindings } from './interface/http/types.js';
 
 export function createApp() {
@@ -47,7 +47,18 @@ export function createApp() {
   app.use('*', sentryMiddleware());
 
   // `auth/*` tiene limiters propios más estrictos; health/docs son públicos.
-  const globalLimiter = rateLimit({ bucket: 'global', limit: 100, windowSeconds: 60 });
+  // Con sesión se cuenta por usuario y no por IP: las peticiones del backoffice
+  // llegan todas desde la IP de su servidor, y contarlas juntas haría que unos
+  // usuarios agotaran el límite de otros.
+  const globalLimiter = rateLimit({
+    bucket: 'global',
+    limit: 100,
+    windowSeconds: 60,
+    keyFn: (c) => {
+      const user = c.get('user');
+      return user ? `user:${user.id}` : getClientIp(c);
+    }
+  });
   app.use('*', async (c, next) => {
     const path = c.req.path;
     const skip =

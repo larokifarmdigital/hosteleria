@@ -35,6 +35,9 @@ export async function runWithRequestDb<T>(
   fn: () => Promise<T>
 ): Promise<T> {
   const pool = new Pool({ connectionString: databaseUrl });
+  // Al acabar la petición el runtime corta el WebSocket y el cliente inactivo
+  // emite `error`; sin un listener, eso sube como excepción no capturada.
+  pool.on('error', () => {});
   try {
     return await requestDb.run(drizzle(pool, { schema }), fn);
   } finally {

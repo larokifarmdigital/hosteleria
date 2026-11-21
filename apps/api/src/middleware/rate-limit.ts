@@ -15,7 +15,7 @@ export interface RateLimitOpts {
   keyFn?: (c: any) => string | Promise<string>;
 }
 
-function getClientIp(c: any): string {
+export function getClientIp(c: any): string {
   const h = c.req.header('cf-connecting-ip')
     ?? c.req.header('x-forwarded-for')
     ?? c.req.header('x-real-ip')
