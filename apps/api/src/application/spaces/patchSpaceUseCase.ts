@@ -1,4 +1,6 @@
 import type { SpaceRepository } from '../../domain/repositories/spaceRepository.js';
+import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
+import { assertTranslationsComplete } from '../../domain/models/i18n.js';
 import {
   SpaceNotFoundError,
   type Hero,
@@ -34,7 +36,10 @@ export interface PatchSpaceInput {
 }
 
 export class PatchSpaceUseCase {
-  constructor(private readonly spaces: SpaceRepository) {}
+  constructor(
+    private readonly spaces: SpaceRepository,
+    private readonly restaurants: RestaurantRepository
+  ) {}
 
   async execute(restaurantId: string, spaceId: string, input: PatchSpaceInput, actorId: string): Promise<Space> {
     const s = await this.spaces.findById(spaceId);
@@ -45,6 +50,24 @@ export class PatchSpaceUseCase {
       const siblings = await this.spaces.listByRestaurantId(restaurantId);
       const otherDefault = siblings.some(x => x.id !== spaceId && x.isDefault);
       if (!otherDefault) throw new MustHaveDefaultSpaceError();
+    }
+
+    if (input.state === 'published') {
+      const restaurant = await this.restaurants.findById(restaurantId);
+      const hero = input.hero ?? s.hero;
+      const manifesto = input.manifesto ?? s.manifesto;
+      assertTranslationsComplete({
+        'Título de la portada': hero?.title,
+        'Subtítulo de la portada': hero?.subtitle,
+        'Texto breve de la portada': hero?.note,
+        'Dato a la izquierda': hero?.metaLeft,
+        'Dato a la derecha': hero?.metaRight,
+        'Texto del botón': hero?.cta,
+        // Sin foto, su descripción no se enseña.
+        ...(hero?.imageAssetId ? { 'Descripción de la foto': hero.imageAlt } : {}),
+        'Antetítulo de la presentación': manifesto?.eyebrow,
+        'Texto de presentación': manifesto?.text
+      }, restaurant?.activeLocaleCodes ?? []);
     }
 
     const patch: Partial<Space> = {};

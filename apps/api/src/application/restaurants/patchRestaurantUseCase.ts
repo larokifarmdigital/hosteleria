@@ -10,6 +10,7 @@ import type {
   RestaurantSnapshot
 } from '../../domain/models/restaurant.js';
 import { RestaurantNotFoundError } from '../../domain/models/restaurant.js';
+import { assertTranslationsComplete } from '../../domain/models/i18n.js';
 
 export interface PatchRestaurantInput {
   name?: string;
@@ -42,6 +43,14 @@ export class PatchRestaurantUseCase {
 
     const wasPublished = r.state === 'published';
     const willBePublished = input.state === 'published';
+
+    if (willBePublished) {
+      const seo = input.seo ?? r.seo;
+      assertTranslationsComplete(
+        { 'Título en Google': seo?.title, 'Descripción en Google': seo?.description },
+        input.activeLocaleCodes ?? r.activeLocaleCodes
+      );
+    }
 
     const patch: Record<string, unknown> = {};
     if (input.name !== undefined) patch.name = input.name;

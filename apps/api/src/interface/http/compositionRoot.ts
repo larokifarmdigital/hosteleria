@@ -142,7 +142,7 @@ export function buildContainer(env: Env) {
       list: new ListSpacesUseCase(spacesRepo),
       get: new GetSpaceUseCase(spacesRepo),
       create: new CreateSpaceUseCase(spacesRepo),
-      patch: new PatchSpaceUseCase(spacesRepo),
+      patch: new PatchSpaceUseCase(spacesRepo, restaurantsRepo),
       discard: new DiscardSpaceChangesUseCase(spacesRepo),
       delete: new DeleteSpaceUseCase(spacesRepo)
     },
