@@ -16,6 +16,6 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*.ts", "api/**/*.ts", "drizzle.config.ts"],
+  "include": ["src/**/*.ts", "api/**/*.ts", "scripts/**/*.ts", "drizzle.config.ts"],
   "exclude": ["node_modules", ".wrangler"]
 }
