@@ -7,6 +7,7 @@ import { Field } from '@/components/ui/Field';
 import { TextInput } from '@/components/ui/inputs';
 import { showSuccessToast } from '@/lib/api';
 import { i18nFromForm, i18nToForm } from '@/lib/forms/i18n';
+import { missingLocales } from '@/lib/forms/translations';
 import { useCreateDishCategory, useCreateWineCategory, usePatchDishCategory, usePatchWineCategory } from '@/lib/query/hooks';
 import type { MenuCategory, MenuKind, MenuScope } from './types';
 
@@ -21,9 +22,11 @@ interface Props {
 
 /** Pocos campos y cortos: un input por idioma, todos a la vista, en vez de pestañas. */
 export function CategoryDialog({ kind, scope, category, nextOrder, onClose }: Props) {
-  const { register, handleSubmit, setError, formState: { errors } } = useForm<Record<string, string>>({
+  const { register, handleSubmit, setError, watch, formState: { errors } } = useForm<Record<string, string>>({
     defaultValues: i18nToForm(category?.name, scope.locales)
   });
+
+  const missing = missingLocales(watch(), scope.locales);
 
   const createDish = useCreateDishCategory();
   const createWine = useCreateWineCategory();
@@ -70,6 +73,7 @@ export function CategoryDialog({ kind, scope, category, nextOrder, onClose }: Pr
                 label={scope.locales.length > 1 ? `Nombre en ${(scope.localeNames[code] ?? code).toLowerCase()}` : 'Nombre'}
                 required={code === scope.defaultLocale}
                 error={errors[code]?.message}
+                warning={missing.includes(code) && !errors[code] ? 'Falta esta traducción.' : undefined}
               >
                 {control => <TextInput lang={code} autoComplete="off" {...control} {...register(code)} />}
               </Field>

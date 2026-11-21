@@ -18,6 +18,7 @@ import { Field } from '@/components/ui/Field';
 import { Select, TextInput } from '@/components/ui/inputs';
 import { showSuccessToast } from '@/lib/api';
 import { formatPrice } from '@/lib/forms/price';
+import { missingLocales } from '@/lib/forms/translations';
 import { cn } from '@/lib/utils';
 import {
   useDeleteDishCategory, useDeleteWineCategory, useDishCategories, useDishes, useLanguages, useMediaList, useRestaurants,
@@ -78,7 +79,9 @@ export function DishesPageClient() {
   );
 
   const allRows: MenuRow[] = useMemo(() => {
-    const missingOf = (filled: string[]) => locales.filter(code => !filled.includes(code));
+    // Idiomas en los que falta algún texto del elemento (nombre o descripción).
+    const missingOf = (...texts: (Record<string, string | undefined> | null | undefined)[]) =>
+      locales.filter(code => texts.some(text => missingLocales(text, locales).includes(code)));
     if (kind === 'dishes') {
       return [...dishes].sort((a, b) => a.order - b.order).map(d => ({
         id: d.id,
@@ -87,7 +90,7 @@ export function DishesPageClient() {
         detail: d.note?.[defaultLocale],
         price: d.price !== null ? formatPrice(d.price) : 'Sin precio',
         active: d.active,
-        missing: missingOf(d.localesFilled as string[]),
+        missing: missingOf(d.name, d.note),
         imageUrl: d.imageAssetId ? media?.find(m => m.id === d.imageAssetId)?.publicUrl : undefined
       }));
     }
@@ -99,8 +102,8 @@ export function DishesPageClient() {
       price: [w.priceGlass !== null ? `${formatPrice(w.priceGlass)} copa` : null, w.priceBottle !== null ? `${formatPrice(w.priceBottle)} botella` : null]
         .filter(Boolean).join(' · ') || 'Sin precio',
       active: w.active,
-      // El nombre de un vino no se traduce: aquí no hay traducciones pendientes que avisar.
-      missing: []
+      // El nombre de un vino no se traduce; su nota, sí.
+      missing: missingOf(w.note)
     }));
   }, [kind, dishes, wines, locales, defaultLocale, media]);
 
@@ -223,7 +226,7 @@ export function DishesPageClient() {
                               <option value="all">Todos</option>
                               <option value="visible">Solo visibles</option>
                               <option value="hidden">Solo ocultos</option>
-                              {kind === 'dishes' && locales.length > 1 && <option value="missing">Con traducción pendiente</option>}
+                              {locales.length > 1 && <option value="missing">Falta traducción</option>}
                             </Select>
                           )}
                         </Field>
@@ -248,6 +251,7 @@ export function DishesPageClient() {
                       ) : (
                         <MenuList
                           categories={categories}
+                          locales={locales}
                           rows={rows}
                           totals={totals}
                           filtering={filtering}

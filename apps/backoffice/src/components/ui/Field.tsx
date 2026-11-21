@@ -13,6 +13,10 @@ interface Props {
   labelSuffix?: string;
   hint?: string;
   error?: string;
+  /** Aviso que no impide guardar, p. ej. una traducción pendiente. */
+  warning?: string;
+  /** Id de otro elemento que también describe el control. */
+  describedBy?: string;
   required?: boolean;
   /** Contador «usados / máximo». */
   count?: { value: number; max: number };
@@ -21,10 +25,11 @@ interface Props {
 }
 
 /** Enlaza etiqueta, ayuda y error con el control por `id`, para que un lector de pantalla los lea juntos. */
-export function Field({ id, label, labelSuffix, hint, error, required, count, className, children }: Props) {
+export function Field({ id, label, labelSuffix, hint, error, warning, describedBy: extraDescribedBy, required, count, className, children }: Props) {
   const hintId = hint ? `${id}-hint` : undefined;
   const errorId = error ? `${id}-error` : undefined;
-  const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
+  const warningId = warning ? `${id}-warning` : undefined;
+  const describedBy = [extraDescribedBy, hintId, warningId, errorId].filter(Boolean).join(' ') || undefined;
   const over = count ? count.value > count.max : false;
 
   return (
@@ -48,6 +53,12 @@ export function Field({ id, label, labelSuffix, hint, error, required, count, cl
       {hint && (
         <p id={hintId} className="m-0 mt-1.5 text-[12.5px] leading-[1.5] text-[color:var(--color-muted)]">
           {hint}
+        </p>
+      )}
+      {warning && (
+        <p id={warningId} className="m-0 mt-1.5 flex items-start gap-1.5 text-[13px] font-medium leading-[1.45] text-[color:var(--color-warn-fg)]">
+          <span aria-hidden className="mt-[5px] inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-current" />
+          {warning}
         </p>
       )}
       {error && (

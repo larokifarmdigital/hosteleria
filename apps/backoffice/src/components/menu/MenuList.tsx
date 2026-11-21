@@ -3,6 +3,7 @@
 import { Pencil, Plus } from 'lucide-react';
 import { Button } from '@/components/shared/Button';
 import { Pill } from '@/components/shared/Pill';
+import { missingLocales } from '@/lib/forms/translations';
 import { cn } from '@/lib/utils';
 import { categoryLabel, type MenuCategory } from './types';
 
@@ -22,6 +23,8 @@ export interface MenuRow {
 
 interface Props {
   categories: MenuCategory[];
+  /** Idiomas activos, para avisar de categorías sin traducir. */
+  locales: string[];
   rows: MenuRow[];
   /** Nº total de elementos por categoría, sin filtros: decide si se puede borrar. */
   totals: Record<string, number>;
@@ -35,22 +38,26 @@ interface Props {
   onDeleteCategory: (category: MenuCategory) => void;
 }
 
-export function MenuList({ categories, rows, totals, filtering, defaultLocale, itemNoun, onAdd, onEdit, onToggle, onRenameCategory, onDeleteCategory }: Props) {
+export function MenuList({ categories, locales, rows, totals, filtering, defaultLocale, itemNoun, onAdd, onEdit, onToggle, onRenameCategory, onDeleteCategory }: Props) {
   return (
     <div className="flex flex-col gap-6">
       {categories.map(category => {
         const label = categoryLabel(category, defaultLocale);
         const items = rows.filter(r => r.categoryId === category.id);
         const total = totals[category.id] ?? 0;
+        const untranslated = missingLocales(category.name, locales);
         // Con un filtro activo, las categorías sin coincidencias solo estorban.
         if (filtering && items.length === 0) return null;
 
         return (
           <section key={category.id} aria-labelledby={`cat-${category.id}`} className="rounded-[var(--radius)] border border-[color:var(--color-border)] bg-white shadow-[var(--shadow-sm)]">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--color-border)] px-4 py-3 sm:px-5">
-              <h2 id={`cat-${category.id}`} className="m-0 text-[15px] font-bold tracking-[-0.005em]">
-                {label} <span className="font-normal text-[color:var(--color-muted)]">· {total}</span>
-              </h2>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                <h2 id={`cat-${category.id}`} className="m-0 text-[15px] font-bold tracking-[-0.005em]">
+                  {label} <span className="font-normal text-[color:var(--color-muted)]">· {total}</span>
+                </h2>
+                {untranslated.length > 0 && <Pill variant="warn">Falta traducir: {untranslated.map(c => c.toUpperCase()).join(', ')}</Pill>}
+              </div>
               <div className="flex flex-wrap gap-1">
                 <Button size="sm" variant="ghost" aria-label={`Cambiar nombre de ${label}`} onClick={() => onRenameCategory(category)}>
                   Cambiar nombre

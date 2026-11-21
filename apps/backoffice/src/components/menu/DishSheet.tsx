@@ -13,6 +13,7 @@ import { Checkbox, Select, TextInput } from '@/components/ui/inputs';
 import { showSuccessToast } from '@/lib/api';
 import { i18nFromForm, i18nToForm } from '@/lib/forms/i18n';
 import { priceFromForm, priceText, priceToForm } from '@/lib/forms/price';
+import { gapsByLocale, translationGaps } from '@/lib/forms/translations';
 import { i18nValues } from '@/lib/forms/rules';
 import { useCreateDish, useDeleteDish, useUpdateDish } from '@/lib/query/hooks';
 import { ItemSheetShell } from './ItemSheetShell';
@@ -27,6 +28,11 @@ const schema = z.object({
   imageAssetId: z.string().nullable()
 });
 type FormValues = z.infer<typeof schema>;
+
+const DISH_TEXTS = [
+  { name: 'name', label: 'Nombre del plato', section: '' },
+  { name: 'note', label: 'Descripción', section: '' }
+];
 
 interface Props {
   scope: MenuScope;
@@ -90,7 +96,8 @@ export function DishSheet({ scope, categories, dish, initialCategoryId, nextOrde
     }
   });
 
-  const i18n = { locales: scope.locales, activeLocale: locale, localeNames: scope.localeNames };
+  const i18n = { locales: scope.locales, activeLocale: locale, localeNames: scope.localeNames, defaultLocale: scope.defaultLocale };
+  const pending = gapsByLocale(translationGaps(DISH_TEXTS, { name: watch('name'), note: watch('note') }, scope.locales));
 
   return (
     <ItemSheetShell
@@ -120,7 +127,7 @@ export function DishSheet({ scope, categories, dish, initialCategoryId, nextOrde
 
           <div>
             {scope.locales.length > 1 && (
-              <LocaleTabs locales={scope.locales} value={locale} onChange={setLocale} names={scope.localeNames} />
+              <LocaleTabs locales={scope.locales} value={locale} onChange={setLocale} names={scope.localeNames} missing={pending} />
             )}
             <div className="flex flex-col gap-5">
               <I18nField name="name" label="Nombre del plato" errorFor={scope.defaultLocale} error={errors.name?.[scope.defaultLocale]?.message} {...i18n} />

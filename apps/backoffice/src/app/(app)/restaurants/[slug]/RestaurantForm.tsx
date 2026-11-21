@@ -8,6 +8,7 @@ import type { Restaurant } from '@hosteleria/api-client';
 import { I18nField } from '@/components/editor/I18nField';
 import { PublishPanel } from '@/components/editor/PublishPanel';
 import { SaveBar } from '@/components/editor/SaveBar';
+import { TranslationBadge } from '@/components/editor/TranslationBadge';
 import { LangList } from '@/components/restaurant/LangList';
 import { Section } from '@/components/shared/Section';
 import { LocaleTabs } from '@/components/space/LocaleTabs';
@@ -17,6 +18,8 @@ import { showSuccessToast } from '@/lib/api';
 import { countErrors } from '@/lib/forms/errors';
 import { compact, i18nFromForm, i18nToForm, sameContent } from '@/lib/forms/i18n';
 import { i18nValues, optionalEmail, optionalText, optionalUrl, requiredText } from '@/lib/forms/rules';
+import type { TranslatableField } from '@/lib/forms/translations';
+import { useTranslationStatus } from '@/lib/forms/useTranslationStatus';
 import { useUnsavedChangesWarning } from '@/lib/forms/useUnsavedChangesWarning';
 import { useDiscardRestaurant, usePatchRestaurant, usePublishRestaurant } from '@/lib/query/hooks';
 
@@ -47,6 +50,12 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
+
+const GOOGLE = 'Cómo aparece en Google';
+const TRANSLATABLE: TranslatableField[] = [
+  { name: 'seo.title', label: 'Título', section: GOOGLE },
+  { name: 'seo.description', label: 'Descripción', section: GOOGLE }
+];
 
 function toForm(r: Restaurant): FormValues {
   return {
@@ -88,7 +97,7 @@ function changedBlocks(r: Restaurant): string[] {
     ['Dirección', r.address, snap.address],
     ['Contacto', r.contact, snap.contact],
     ['Redes sociales', r.socials, snap.socials],
-    ['Cómo aparece en Google', r.seo, snap.seo],
+    [GOOGLE, r.seo, snap.seo],
     ['Reservas online', r.acceptsBookings, snap.acceptsBookings],
     ['Mostrar redes en la web', r.showSocials, snap.showSocials]
   ];
@@ -103,13 +112,25 @@ interface Props {
 export function RestaurantForm({ restaurant, localeNames }: Props) {
   const [locale, setLocale] = useState(restaurant.defaultLocale as string);
   const form = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: toForm(restaurant) });
-  const { register, handleSubmit, reset, formState: { errors, isDirty, isSubmitted } } = form;
+  const { register, handleSubmit, reset, setFocus, control, formState: { errors, isDirty, isSubmitted } } = form;
 
   const patch = usePatchRestaurant(restaurant.slug);
   const publish = usePublishRestaurant(restaurant.slug);
   const discard = useDiscardRestaurant(restaurant.slug);
 
   useUnsavedChangesWarning(isDirty);
+
+  const translations = useTranslationStatus({
+    control,
+    fields: TRANSLATABLE,
+    locales: restaurant.activeLocales,
+    localeNames,
+    onGo: (fieldName, code) => {
+      setLocale(code);
+      // El campo de ese idioma está oculto hasta el siguiente render.
+      setTimeout(() => setFocus(`${fieldName}.${code}` as Parameters<typeof setFocus>[0]), 0);
+    }
+  });
 
   const onSave = handleSubmit(async values => {
     try {
@@ -180,11 +201,11 @@ export function RestaurantForm({ restaurant, localeNames }: Props) {
               <Checkbox id="r-show-socials" className="mt-4" label="Mostrar las redes en la web" {...register('showSocials')} />
             </Section>
 
-            <Section title="Cómo aparece en Google" description="Título y descripción que se ven en los resultados de búsqueda.">
-              <LocaleTabs locales={restaurant.activeLocales} value={locale} onChange={setLocale} names={localeNames} />
+            <Section title={GOOGLE} description="Título y descripción que se ven en los resultados de búsqueda." badge={<TranslationBadge count={translations.inSection(GOOGLE)} />}>
+              <LocaleTabs locales={restaurant.activeLocales} value={locale} onChange={setLocale} names={localeNames} missing={translations.byLocale} />
               <div className="flex flex-col gap-5">
-                <I18nField name="seo.title" label="Título" locales={restaurant.activeLocales} activeLocale={locale} localeNames={localeNames} recommendedMax={60} />
-                <I18nField name="seo.description" label="Descripción" locales={restaurant.activeLocales} activeLocale={locale} localeNames={localeNames} multiline recommendedMax={160} hint="Una o dos frases que inviten a entrar." />
+                <I18nField reference="side" defaultLocale={restaurant.defaultLocale} name="seo.title" label="Título" locales={restaurant.activeLocales} activeLocale={locale} localeNames={localeNames} recommendedMax={60} />
+                <I18nField reference="side" defaultLocale={restaurant.defaultLocale} name="seo.description" label="Descripción" locales={restaurant.activeLocales} activeLocale={locale} localeNames={localeNames} multiline recommendedMax={160} hint="Una o dos frases que inviten a entrar." />
               </div>
             </Section>
 
@@ -205,6 +226,7 @@ export function RestaurantForm({ restaurant, localeNames }: Props) {
               hasPublishedVersion={!!restaurant.publishedSnapshot || !!restaurant.lastPublishedAt}
               lastPublishedAt={restaurant.lastPublishedAt}
               changes={changedBlocks(restaurant)}
+              blockers={translations.blockers}
               formDirty={isDirty}
               publishing={publish.isPending}
               discarding={discard.isPending}

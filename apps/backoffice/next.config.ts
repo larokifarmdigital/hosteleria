@@ -3,6 +3,9 @@ import type { NextConfig } from 'next';
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8787';
 
 const nextConfig: NextConfig = {
+  // Permite compilar a otra carpeta (`NEXT_DIST_DIR=.next-verify`) para verificar el
+  // build de producción sin pisar el `.next` de un `next dev` que esté abierto.
+  distDir: process.env.NEXT_DIST_DIR ?? '.next',
   reactStrictMode: true,
   transpilePackages: [],
   // La cookie de sesión vive en el dominio del backoffice (la fija la server

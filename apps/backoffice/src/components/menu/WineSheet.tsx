@@ -12,6 +12,7 @@ import { Checkbox, Select, TextInput } from '@/components/ui/inputs';
 import { showSuccessToast } from '@/lib/api';
 import { i18nFromForm, i18nToForm } from '@/lib/forms/i18n';
 import { priceFromForm, priceText, priceToForm } from '@/lib/forms/price';
+import { gapsByLocale, translationGaps } from '@/lib/forms/translations';
 import { i18nValues, optionalText, requiredText } from '@/lib/forms/rules';
 import { useCreateWine, useDeleteWine, useUpdateWine } from '@/lib/query/hooks';
 import { ItemSheetShell } from './ItemSheetShell';
@@ -52,7 +53,8 @@ export function WineSheet({ scope, categories, wine, initialCategoryId, nextOrde
       active: wine?.active ?? true
     }
   });
-  const { register, handleSubmit, formState: { errors, isDirty } } = form;
+  const { register, handleSubmit, watch, formState: { errors, isDirty } } = form;
+  const pending = gapsByLocale(translationGaps([{ name: 'note', label: 'Nota', section: '' }], { note: watch('note') }, scope.locales));
 
   const create = useCreateWine();
   const update = useUpdateWine();
@@ -121,9 +123,9 @@ export function WineSheet({ scope, categories, wine, initialCategoryId, nextOrde
 
           <div>
             {scope.locales.length > 1 && (
-              <LocaleTabs locales={scope.locales} value={locale} onChange={setLocale} names={scope.localeNames} />
+              <LocaleTabs locales={scope.locales} value={locale} onChange={setLocale} names={scope.localeNames} missing={pending} />
             )}
-            <I18nField name="note" label="Nota" hint="Uva, crianza o una frase breve. Opcional." multiline locales={scope.locales} activeLocale={locale} localeNames={scope.localeNames} />
+            <I18nField name="note" label="Nota" hint="Uva, crianza o una frase breve. Opcional." multiline locales={scope.locales} activeLocale={locale} localeNames={scope.localeNames} defaultLocale={scope.defaultLocale} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
