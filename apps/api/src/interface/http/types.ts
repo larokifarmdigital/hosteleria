@@ -10,6 +10,8 @@ export interface AppVars {
   session: Session | null;
   /** Lo cablea `withContainer`. */
   container: Container;
+  /** Lo pone una ruta de escritura cuando su cambio se ve en la web; lo lee `rebuildSiteAfterWrite`. */
+  rebuild?: { spaceId?: string; restaurantSlug?: string };
 }
 
 export type AppBindings = { Bindings: Env; Variables: AppVars };

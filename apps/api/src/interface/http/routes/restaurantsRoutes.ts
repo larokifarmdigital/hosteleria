@@ -1,3 +1,4 @@
+import { HTTPException } from 'hono/http-exception';
 import { Hono } from 'hono';
 import { validate } from '../validate.js';
 import { z } from 'zod';
@@ -41,6 +42,9 @@ export function createRestaurantsRoutes() {
     const user = c.get('user')!;
     const slug = c.req.param('slug');
     const body = c.req.valid('json');
+    // El hook es una URL a la que el api llama por su cuenta: solo la fija un administrador.
+    if (body.rebuildHookUrl !== undefined && user.role !== 'admin') throw new HTTPException(403, { message: 'ADMIN_REQUIRED' });
+    if (body.state === 'published') c.set('rebuild', { restaurantSlug: slug });
     const mediaIds = [...new Set(restaurantMediaUses(body as Partial<RestaurantContent>).map(u => u.assetId))];
     if (mediaIds.length > 0) {
       const current = await c.get('container').restaurants.get.execute(slug);

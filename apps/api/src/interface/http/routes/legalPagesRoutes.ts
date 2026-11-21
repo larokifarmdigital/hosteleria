@@ -39,6 +39,7 @@ export function createLegalPagesRoutes() {
   });
 
   app.put('/:type', validate('param', typeParamSchema), validate('json', saveSchema), async (c) => {
+    c.set('rebuild', { restaurantSlug: c.req.param('slug')! });
     const page = await c.get('container').legalPages.save.execute(
       c.req.param('slug')!, c.req.valid('param').type, c.req.valid('json'), c.get('user')!.id
     );
@@ -46,6 +47,7 @@ export function createLegalPagesRoutes() {
   });
 
   app.delete('/:type', validate('param', typeParamSchema), async (c) => {
+    c.set('rebuild', { restaurantSlug: c.req.param('slug')! });
     await c.get('container').legalPages.delete.execute(c.req.param('slug')!, c.req.valid('param').type);
     return c.json({ ok: true });
   });

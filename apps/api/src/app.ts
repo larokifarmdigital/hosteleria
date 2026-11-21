@@ -6,6 +6,7 @@ import { apiReference } from '@scalar/hono-api-reference';
 import { getDb } from './infrastructure/persistence/drizzle/client.js';
 import { validateSession } from './interface/http/middleware/authMiddleware.js';
 import { withContainer } from './interface/http/middleware/withContainer.js';
+import { rebuildSiteAfterWrite } from './interface/http/middleware/rebuildSite.js';
 import { globalErrorHandler } from './interface/http/httpErrors.js';
 import { createAuthRoutes } from './interface/http/routes/authRoutes.js';
 import { createRestaurantsRoutes } from './interface/http/routes/restaurantsRoutes.js';
@@ -45,6 +46,7 @@ export function createApp() {
   }));
 
   app.use('*', withContainer);
+  app.use('*', rebuildSiteAfterWrite);
   // `/public` no mira la sesión: su respuesta es la misma para todo el mundo
   // y no debe llevar cookies.
   app.use('*', async (c, next) => {

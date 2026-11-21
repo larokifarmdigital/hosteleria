@@ -48,6 +48,7 @@ export function createSpacesRoutes() {
     const s = await c.get('container').spaces.patch.execute(
       restaurantId, c.req.param('spaceId'), body, user.id
     );
+    if (body.state === 'published') c.set('rebuild', { spaceId: s.id });
     return c.json({ space: spaceToDto(s) });
   });
 

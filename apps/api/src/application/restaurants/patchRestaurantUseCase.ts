@@ -1,6 +1,5 @@
 import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
 import type { LanguageRepository } from '../../domain/repositories/languageRepository.js';
-import type { RebuildHookCaller } from '../../domain/services/rebuildHookCaller.js';
 import {
   RESTAURANT_CONTENT_KEYS,
   RestaurantNotFoundError,
@@ -22,15 +21,13 @@ export interface PatchRestaurantInput extends Partial<RestaurantContent> {
 export class PatchRestaurantUseCase {
   constructor(
     private readonly restaurants: RestaurantRepository,
-    private readonly languages: LanguageRepository,
-    private readonly rebuildHook: RebuildHookCaller
+    private readonly languages: LanguageRepository
   ) {}
 
   async execute(slug: string, input: PatchRestaurantInput, actorId: string): Promise<{ id: string }> {
     const r = await this.restaurants.findBySlug(slug);
     if (!r) throw new RestaurantNotFoundError(slug);
 
-    const wasPublished = r.state === 'published';
     const willBePublished = input.state === 'published';
 
     // El contenido tal como queda tras este PATCH: lo guardado más lo que llega.
@@ -63,13 +60,6 @@ export class PatchRestaurantUseCase {
     if (input.activeLocaleCodes) {
       const activeIds = await this.languages.resolveCodes(input.activeLocaleCodes);
       await this.restaurants.replaceLocales(r.id, activeIds);
-    }
-
-    // Rebuild cuando: pasó a published ahora, o ya estaba published y se
-    // editó algún campo (los providers de deploy deduplican rebuilds).
-    const shouldRebuild = (willBePublished && !wasPublished) || (wasPublished && input.state === undefined);
-    if (shouldRebuild && r.rebuildHookUrl) {
-      void this.rebuildHook.call(r.rebuildHookUrl, { restaurantSlug: r.slug });
     }
 
     return { id: r.id };

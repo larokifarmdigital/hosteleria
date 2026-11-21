@@ -80,6 +80,7 @@ import { DeleteMediaUseCase } from '../../application/media/deleteMediaUseCase.j
 
 import { ListLegalPagesUseCase, SaveLegalPageUseCase, DeleteLegalPageUseCase } from '../../application/legalPages/legalPagesUseCases.js';
 import { GetPublishedSiteUseCase } from '../../application/public/getPublishedSiteUseCase.js';
+import { RequestSiteRebuildUseCase } from '../../application/public/requestSiteRebuildUseCase.js';
 
 export type Container = ReturnType<typeof buildContainer>;
 
@@ -114,7 +115,7 @@ export function buildContainer(env: Env) {
       create: new CreateRestaurantUseCase(restaurantsRepo, languagesRepo),
       list: new ListRestaurantsUseCase(restaurantsRepo, usersRepo),
       get: new GetRestaurantUseCase(restaurantsRepo),
-      patch: new PatchRestaurantUseCase(restaurantsRepo, languagesRepo, rebuildHook),
+      patch: new PatchRestaurantUseCase(restaurantsRepo, languagesRepo),
       discard: new DiscardChangesUseCase(restaurantsRepo, languagesRepo),
       delete: new DeleteRestaurantUseCase(restaurantsRepo)
     },
@@ -185,7 +186,8 @@ export function buildContainer(env: Env) {
     public: {
       getSite: new GetPublishedSiteUseCase(
         restaurantsRepo, spacesRepo, dishesRepo, winesRepo, legalPagesRepo, mediaRepo, languagesRepo, env.R2_PUBLIC_URL
-      )
+      ),
+      requestRebuild: new RequestSiteRebuildUseCase(restaurantsRepo, spacesRepo, rebuildHook)
     },
 
     media: {
