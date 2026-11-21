@@ -17,11 +17,11 @@ export function useSpaces(restaurantSlug: string) {
   });
 }
 
-export function useSpace(restaurantSlug: string, spaceId: string) {
+export function useSpace(restaurantSlug: string, spaceId: string, opts?: { enabled?: boolean }) {
   return useQuery({
     queryKey: qk.spaces.detail(restaurantSlug, spaceId),
     queryFn: () => api.spaces.get(restaurantSlug, spaceId),
-    enabled: Boolean(restaurantSlug && spaceId)
+    enabled: opts?.enabled ?? Boolean(restaurantSlug && spaceId)
   });
 }
 

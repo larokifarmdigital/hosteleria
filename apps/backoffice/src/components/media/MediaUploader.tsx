@@ -6,16 +6,19 @@ import type { MediaAsset } from '@hosteleria/api-client';
 import { Button } from '@/components/shared/Button';
 import { handleApiError } from '@/lib/api';
 import { ACCEPT_ATTRIBUTE, checkImage, formatFileSize, readImageSize, type ImagePurpose, type ImageSize } from '@/lib/media/imageChecks';
+import { optimizeImage } from '@/lib/media/optimize';
 import { useMediaUpload } from '@/lib/query/hooks';
 import { cn } from '@/lib/utils';
 
-type Status = 'blocked' | 'review' | 'uploading' | 'error';
+type Status = 'preparing' | 'blocked' | 'review' | 'uploading' | 'error';
 
 interface Item {
   key: string;
   file: File;
   previewUrl: string | null;
   size: ImageSize | null;
+  /** Peso original en bytes, si la foto se ha reducido antes de subir. */
+  reducedFrom?: number;
   status: Status;
   /** Por qué no se puede subir, o por qué falló la subida. */
   problem?: string;
@@ -35,8 +38,9 @@ interface Props {
 let nextKey = 0;
 
 /**
- * Zona para soltar fotos o elegirlas del dispositivo. Cada foto se revisa antes
- * de subir: si pesa o mide mal, espera a que el usuario decida; si no, sube sola.
+ * Zona para soltar fotos o elegirlas del dispositivo. Cada foto se reduce si es
+ * más grande de lo necesario y se revisa antes de subir: si aun así pesa o mide
+ * mal, espera a que el usuario decida; si no, sube sola.
  */
 export function MediaUploader({ restaurantSlug, purpose = 'any', multiple = true, onUploaded }: Props) {
   const upload = useMediaUpload(restaurantSlug);
@@ -45,10 +49,16 @@ export function MediaUploader({ restaurantSlug, purpose = 'any', multiple = true
   const [announcement, setAnnouncement] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const previews = useRef(new Set<string>());
+  const uploads = useRef(new Set<AbortController>());
 
+  // Al salir de la pantalla a media subida, se cancela: `uploadMedia` borra lo que dejó a medias.
   useEffect(() => {
     const urls = previews.current;
-    return () => urls.forEach(url => URL.revokeObjectURL(url));
+    const controllers = uploads.current;
+    return () => {
+      urls.forEach(url => URL.revokeObjectURL(url));
+      controllers.forEach(controller => controller.abort());
+    };
   }, []);
 
   const update = (key: string, changes: Partial<Item>) =>
@@ -64,10 +74,13 @@ export function MediaUploader({ restaurantSlug, purpose = 'any', multiple = true
 
   const start = async (item: Item) => {
     update(item.key, { status: 'uploading', progress: 0, problem: undefined });
+    const controller = new AbortController();
+    uploads.current.add(controller);
     try {
       const asset = await upload.mutateAsync({
         file: item.file,
         size: item.size,
+        signal: controller.signal,
         onProgress: fraction => update(item.key, { progress: Math.round(fraction * 100) })
       });
       remove(item);
@@ -76,34 +89,50 @@ export function MediaUploader({ restaurantSlug, purpose = 'any', multiple = true
     } catch (err) {
       update(item.key, { status: 'error', problem: handleApiError(err) });
       setAnnouncement(`No se ha podido subir «${item.file.name}».`);
+    } finally {
+      uploads.current.delete(controller);
     }
   };
 
   const addFiles = async (files: File[]) => {
-    for (const file of multiple ? files : files.slice(0, 1)) {
-      const size = await readImageSize(file);
-      const check = checkImage(file, size, purpose);
-      const previewUrl = size ? URL.createObjectURL(file) : null;
+    const pending: Item[] = (multiple ? files : files.slice(0, 1)).map(file => ({
+      key: `upload-${nextKey++}`, file, previewUrl: null, size: null, status: 'preparing', warnings: [], progress: 0
+    }));
+    setItems(list => (multiple ? [...list, ...pending] : pending));
+
+    // De una en una: reducir varias fotos de móvil a la vez dispara la memoria.
+    for (const item of pending) {
+      const optimized = await optimizeImage(item.file, await readImageSize(item.file));
+      const check = checkImage(optimized.file, optimized.size, purpose);
+      const previewUrl = optimized.size ? URL.createObjectURL(optimized.file) : null;
       if (previewUrl) previews.current.add(previewUrl);
 
-      const item: Item = {
-        key: `upload-${nextKey++}`,
-        file,
+      const ready: Item = {
+        ...item,
+        file: optimized.file,
+        size: optimized.size,
+        reducedFrom: optimized.reducedFrom,
         previewUrl,
-        size,
         status: check.blocker ? 'blocked' : check.warnings.length > 0 ? 'review' : 'uploading',
         problem: check.blocker,
-        warnings: check.warnings,
-        progress: 0
+        warnings: check.warnings
       };
-      setItems(list => (multiple ? [...list, item] : [item]));
+      update(item.key, ready);
 
-      if (item.status === 'uploading') void start(item);
-      else setAnnouncement(check.blocker ? `«${file.name}» no se puede subir.` : `Revisa «${file.name}» antes de subirla.`);
+      if (ready.status === 'uploading') void start(ready);
+      else setAnnouncement(check.blocker ? `«${ready.file.name}» no se puede subir.` : `Revisa «${ready.file.name}» antes de subirla.`);
     }
   };
 
-  const busy = items.some(i => i.status === 'uploading');
+  const busy = items.some(i => i.status === 'uploading' || i.status === 'preparing');
+
+  // Cerrar o recargar la pestaña a media subida dejaría la foto a medias.
+  useEffect(() => {
+    if (!busy) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [busy]);
 
   return (
     <div>
@@ -154,6 +183,8 @@ export function MediaUploader({ restaurantSlug, purpose = 'any', multiple = true
                 // Decorativa: el nombre del archivo va al lado.
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={item.previewUrl} alt="" className="h-14 w-14 flex-shrink-0 rounded-lg object-cover" />
+              ) : item.status === 'preparing' ? (
+                <span aria-hidden className="h-14 w-14 flex-shrink-0 animate-pulse rounded-lg bg-[color:var(--color-surface-2)] motion-reduce:animate-none" />
               ) : (
                 <span aria-hidden className="grid h-14 w-14 flex-shrink-0 place-items-center rounded-lg bg-[color:var(--color-danger-soft)] text-[color:var(--color-danger)]">
                   <TriangleAlert className="h-5 w-5" />
@@ -163,9 +194,14 @@ export function MediaUploader({ restaurantSlug, purpose = 'any', multiple = true
               <div className="min-w-0 flex-[1_1_200px]">
                 <p className="m-0 truncate text-[13.5px] font-semibold text-[color:var(--color-ink)]">{item.file.name}</p>
                 <p className="tabular m-0 text-[12.5px] text-[color:var(--color-muted)]">
-                  {formatFileSize(item.file.size / 1024)}
+                  {item.status === 'preparing' ? 'Preparando…' : formatFileSize(item.file.size / 1024)}
                   {item.size && ` · ${item.size.width} × ${item.size.height} px`}
                 </p>
+                {item.reducedFrom !== undefined && (
+                  <p className="m-0 text-[12.5px] text-[color:var(--color-ok-fg)]">
+                    Reducida para la web: pesaba {formatFileSize(item.reducedFrom / 1024)}.
+                  </p>
+                )}
 
                 {item.status === 'uploading' && (
                   <div className="mt-2 flex items-center gap-2.5">
@@ -196,7 +232,7 @@ export function MediaUploader({ restaurantSlug, purpose = 'any', multiple = true
                 )}
               </div>
 
-              {item.status !== 'uploading' && (
+              {item.status !== 'uploading' && item.status !== 'preparing' && (
                 <div className="flex flex-wrap gap-2">
                   {item.status === 'review' && (
                     <Button size="sm" aria-label={`Subir ${item.file.name} de todos modos`} onClick={() => void start(item)}>Subir de todos modos</Button>

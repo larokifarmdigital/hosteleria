@@ -1,9 +1,9 @@
 'use client';
 
-import { useRef } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useReturnFocus } from './useReturnFocus';
 
 interface Props {
   open: boolean;
@@ -16,20 +16,14 @@ interface Props {
 
 /** Diálogo con cabecera fija y cuerpo con scroll. En móvil ocupa casi toda la pantalla. */
 export function Modal({ open, onClose, title, description, size = 'md', children }: Props) {
-  const opener = useRef<HTMLElement | null>(null);
+  const returnFocus = useReturnFocus();
 
   return (
     <Dialog.Root open={open} onOpenChange={next => { if (!next) onClose(); }}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45" />
         <Dialog.Content
-          // Radix solo devuelve el foco a un `Dialog.Trigger`, y estos diálogos se
-          // abren desde botones normales: se guarda quién lo abrió y se le devuelve.
-          onOpenAutoFocus={() => { opener.current = document.activeElement as HTMLElement | null; }}
-          onCloseAutoFocus={e => {
-            e.preventDefault();
-            (opener.current?.isConnected ? opener.current : document.getElementById('contenido'))?.focus();
-          }}
+          {...returnFocus}
           className={cn(
             'fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-[var(--radius-lg)] bg-white shadow-[var(--shadow-lg)] focus:outline-none',
             size === 'lg' ? 'max-w-[760px]' : 'max-w-[520px]'

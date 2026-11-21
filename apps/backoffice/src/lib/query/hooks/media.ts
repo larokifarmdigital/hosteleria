@@ -18,8 +18,8 @@ export function useMediaList(filters?: ListFilters) {
 export function useMediaUpload(restaurantSlug: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (vars: { file: File; size?: ImageSize | null; onProgress?: (fraction: number) => void }) =>
-      uploadMedia(restaurantSlug, vars.file, { size: vars.size, onProgress: vars.onProgress }),
+    mutationFn: (vars: { file: File; size?: ImageSize | null; onProgress?: (fraction: number) => void; signal?: AbortSignal }) =>
+      uploadMedia(restaurantSlug, vars.file, { size: vars.size, onProgress: vars.onProgress, signal: vars.signal }),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.media.all })
   });
 }

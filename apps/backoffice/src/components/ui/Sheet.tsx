@@ -2,6 +2,7 @@
 
 import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
+import { useReturnFocus } from './useReturnFocus';
 
 interface Props {
   open: boolean;
@@ -14,11 +15,13 @@ interface Props {
 
 /** Panel lateral para editar sin salir de la lista. En móvil ocupa toda la pantalla. */
 export function Sheet({ open, onRequestClose, title, description, children }: Props) {
+  const returnFocus = useReturnFocus();
   return (
     <Dialog.Root open={open} onOpenChange={next => { if (!next) onRequestClose(); }}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/45" />
         <Dialog.Content
+          {...returnFocus}
           className="fixed inset-y-0 right-0 z-40 flex w-full max-w-[520px] flex-col bg-white shadow-[var(--shadow-lg)] focus:outline-none"
         >
           <div className="flex items-start justify-between gap-3 border-b border-[color:var(--color-border)] px-5 py-4">

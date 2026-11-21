@@ -36,6 +36,8 @@ export function MediaPageClient() {
   const { data: languages = [] } = useLanguages();
 
   const [show, setShow] = useState<Show>('all');
+  // Fotos cuyo archivo no carga: subidas que no llegaron a terminar.
+  const [broken, setBroken] = useState<Set<string>>(new Set());
   const [action, setAction] = useState<Action>(null);
 
   const scope: MediaScope = useMemo(() => ({
@@ -105,14 +107,21 @@ export function MediaPageClient() {
                       const needsAlt = missingAltLocales(m, scope.locales).length > 0;
                       return (
                         <li key={m.id} className="flex flex-col overflow-hidden rounded-[var(--radius)] border border-[color:var(--color-border)] bg-white">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={m.publicUrl}
-                            alt={m.altText?.[scope.defaultLocale] ?? ''}
-                            loading="lazy"
-                            decoding="async"
-                            className="aspect-square w-full bg-[color:var(--color-copper-100)] object-cover"
-                          />
+                          {broken.has(m.id) ? (
+                            <p className="m-0 grid aspect-square w-full place-items-center bg-[color:var(--color-surface-2)] px-3 text-center text-[12.5px] leading-[1.45] text-[color:var(--color-ink-soft)]">
+                              No se puede mostrar. Seguramente la subida no terminó: bórrala y súbela de nuevo.
+                            </p>
+                          ) : (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={m.publicUrl}
+                              alt={m.altText?.[scope.defaultLocale] ?? ''}
+                              loading="lazy"
+                              decoding="async"
+                              onError={() => setBroken(prev => new Set(prev).add(m.id))}
+                              className="aspect-square w-full bg-[color:var(--color-copper-100)] object-cover"
+                            />
+                          )}
                           <div className="flex flex-1 flex-col gap-1 px-3 py-2.5">
                             <p className="m-0 truncate text-[12.5px] font-semibold text-[color:var(--color-ink)]">{m.name}</p>
                             <p className="tabular m-0 text-[12px] text-[color:var(--color-muted)]">

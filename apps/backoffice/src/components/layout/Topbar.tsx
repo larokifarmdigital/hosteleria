@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useRestaurants, useSpace } from '@/lib/query/hooks';
@@ -27,7 +28,12 @@ export function Topbar() {
   // detalle aquí lanzaría una petición extra antes de que la página lo hidrate.
   const { data: restaurants = [] } = useRestaurants();
   const restaurant = restaurants.find(r => r.slug === slug);
-  const { data: space } = useSpace(slug ?? '', spaceId ?? '');
+  // El espacio lo carga la página, no el layout: en el servidor y al hidratar
+  // puede estar o no según quién llegue antes, y esa diferencia rompía la
+  // hidratación. Aquí solo se lee de la caché, y el nombre se pinta ya montado.
+  const { data: space } = useSpace(slug ?? '', spaceId ?? '', { enabled: false });
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   let crumbs: Crumb[];
   if (slug) {
@@ -35,7 +41,7 @@ export function Topbar() {
       { label: 'Restaurantes', href: '/restaurants' },
       { label: restaurant?.name ?? slug, href: `/restaurants/${slug}` }
     ];
-    if (spaceId) crumbs.push({ label: space?.name ?? 'Espacio' });
+    if (spaceId) crumbs.push({ label: (mounted && space?.name) || 'Espacio' });
   } else {
     crumbs = [{ label: SECTION_LABEL[pathname] ?? 'Inicio' }];
   }
