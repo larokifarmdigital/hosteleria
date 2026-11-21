@@ -149,7 +149,7 @@ Tomemos `GET /restaurants` como ejemplo:
 
 1. Crear `src/db/schema/<tabla>.ts` con `pgTable` + `relations`.
 2. Re-exportar en `src/db/schema/index.ts`.
-3. `pnpm db:generate` genera la migración incremental en `migrations/`.
+3. `pnpm exec tsx node_modules/drizzle-kit/bin.cjs generate` genera la migración incremental en `migrations/` (`pnpm db:generate` a secas no resuelve los imports `.js` del schema).
 4. Inspeccionarla a mano (Drizzle a veces falla con cambios complejos).
 5. `pnpm db:migrate` → aplica a la BD apuntada por `DATABASE_URL`.
 6. Si querés exponerla por HTTP, crear `src/<recurso>/route.ts` (ver sección anterior).

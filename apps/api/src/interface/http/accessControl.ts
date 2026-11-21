@@ -30,6 +30,6 @@ export async function assertSpaceAccess(c: Context<AppBindings>, spaceId: string
 /** Una imagen solo se puede asignar a contenido de su mismo restaurante. */
 export async function assertMediaInRestaurant(c: Context<AppBindings>, mediaId: string, restaurantId: string): Promise<void> {
   const media = await c.get('container').repos.mediaRepo.findById(mediaId);
-  if (!media) throw new MediaNotFoundError(mediaId);
+  if (!media || !media.confirmedAt) throw new MediaNotFoundError(mediaId);
   if (media.restaurantId !== restaurantId) throw new MediaNotInRestaurantError();
 }

@@ -7,6 +7,7 @@ import type { I18nValue } from '../models/i18n.js';
  */
 export interface MediaRepository {
   findById(id: string): Promise<MediaAsset | null>;
+  /** Solo subidas confirmadas. */
   list(filters?: {
     restaurantSlug?: string;
     usage?: MediaUsage;
@@ -34,6 +35,9 @@ export interface MediaRepository {
   >>): Promise<void>;
 
   deleteById(id: string): Promise<void>;
+
+  /** Subidas que se pidieron antes de `before` y nunca se confirmaron. */
+  listUnconfirmedBefore(before: Date): Promise<MediaAsset[]>;
 
   /** Pre-check para delete: no borramos un asset referenciado desde ningún lado. */
   findReferences(id: string): Promise<{ kind: 'hero' | 'gallery' | 'dish'; refId: string }[]>;

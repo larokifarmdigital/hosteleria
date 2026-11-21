@@ -7,7 +7,8 @@ import { restaurants } from './content.js';
 import { users } from './auth.js';
 
 /** 1 fila = 1 objeto en R2. `usage` arranca en `unused` y cambia al asignarse
- *  el asset a un campo. */
+ *  el asset a un campo. La fila nace al pedir la URL de subida, antes de que
+ *  exista el objeto: `confirmedAt` null = subida sin terminar. */
 export const mediaAssets = pgTable('media_assets', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   name: text('name').notNull(),
@@ -23,7 +24,8 @@ export const mediaAssets = pgTable('media_assets', {
     .references(() => restaurants.id, { onDelete: 'set null' }),
   uploadedBy: text('uploaded_by')
     .references(() => users.id, { onDelete: 'set null' }),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  confirmedAt: timestamp('confirmed_at', { withTimezone: true })
 });
 
 export const mediaAssetsRelations = relations(mediaAssets, ({ one }) => ({

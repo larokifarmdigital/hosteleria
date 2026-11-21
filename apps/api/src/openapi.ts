@@ -1097,7 +1097,7 @@ const paths: Record<string, any> = {
     parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
     post: {
       tags: ['Media'], summary: 'Confirma upload — verifica HEAD contra R2',
-      description: 'Si R2 no tiene el objeto, hace rollback (borra fila) y responde 400. Si el tamaño difiere >50% del declarado, igual rollback (y borra el objeto R2).',
+      description: 'Si R2 no tiene el objeto, hace rollback (borra fila) y responde 400. Si el tamaño difiere >50% del declarado, igual rollback (y borra el objeto R2). Hasta confirmarse, la imagen no sale en el listado ni se puede asignar; el cron diario borra las que llevan más de un día sin confirmar.',
       requestBody: jsonBody({
         type: 'object',
         properties: {

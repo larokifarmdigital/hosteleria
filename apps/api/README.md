@@ -88,7 +88,7 @@ src/
 ## Scheduled (cron)
 
 - **03:00 UTC** → backup diario de la BD a R2 (retención 30 días)
-- **04:00 UTC** → cleanup de sesiones y rate_limits expirados
+- **04:00 UTC** → cleanup de sesiones y rate_limits expirados, y de subidas de imagen sin confirmar (más de un día)
 
 Ver `src/index.ts#scheduled` y `wrangler.toml#triggers`.
 

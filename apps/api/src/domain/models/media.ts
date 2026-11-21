@@ -18,6 +18,8 @@ export interface MediaAsset {
   hasAltText: boolean;
   altText: I18nValue;
   readonly createdAt: Date;
+  /** Null mientras la subida no se ha confirmado: el objeto puede no existir en R2. */
+  confirmedAt: Date | null;
   readonly uploadedBy: string | null;
 }
 

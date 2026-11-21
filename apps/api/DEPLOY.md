@@ -160,7 +160,7 @@ Debería renderizar Scalar con todos los endpoints agrupados por tag.
 En Cloudflare dashboard → **Workers & Pages → hostelery-api → Triggers**.
 Deberían aparecer 2 cron jobs:
 - `0 3 * * *` → backup diario a R2
-- `0 4 * * *` → cleanup de sesiones/rate_limits
+- `0 4 * * *` → cleanup de sesiones/rate_limits y subidas de imagen sin confirmar
 
 ### 5.2 R2 binding
 

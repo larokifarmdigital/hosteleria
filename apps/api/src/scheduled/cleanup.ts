@@ -2,6 +2,9 @@ import { lt } from 'drizzle-orm';
 import { getDb } from '../infrastructure/persistence/drizzle/client.js';
 import { sessions } from '../infrastructure/persistence/drizzle/schema/auth.js';
 import { cleanupStaleRateLimits } from '../middleware/rate-limit.js';
+import { DrizzleMediaRepository } from '../infrastructure/persistence/drizzle/drizzleMediaRepository.js';
+import { R2MediaStorage } from '../infrastructure/storage/r2MediaStorage.js';
+import { CleanupUnconfirmedMediaUseCase } from '../application/media/cleanupUnconfirmedMediaUseCase.js';
 import type { Env } from '../env.js';
 
 export async function runCleanup(env: Env) {
@@ -15,9 +18,15 @@ export async function runCleanup(env: Env) {
 
   const deletedRateLimits = await cleanupStaleRateLimits(env);
 
+  const deletedUploads = await new CleanupUnconfirmedMediaUseCase(
+    new DrizzleMediaRepository(env),
+    new R2MediaStorage(env)
+  ).execute(now);
+
   const result = {
     deletedSessions: deletedSessions.length,
     deletedRateLimits,
+    deletedUploads,
     ranAt: now.toISOString()
   };
   console.log('[cron:cleanup]', result);

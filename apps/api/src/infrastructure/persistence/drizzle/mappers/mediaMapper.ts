@@ -16,6 +16,7 @@ export function rowToMedia(row: typeof mediaAssets.$inferSelect): MediaAsset {
     hasAltText: row.hasAltText,
     altText: (row.altText as I18nValue) ?? {},
     createdAt: row.createdAt,
+    confirmedAt: row.confirmedAt,
     uploadedBy: row.uploadedBy
   };
 }

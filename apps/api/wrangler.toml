@@ -32,6 +32,6 @@ remote = true
 # `scheduled` en src/index.ts compara `event.cron` con estas cadenas exactas.
 [triggers]
 crons = [
-  "0 4 * * *",  # Cleanup sesiones expiradas + rate_limits viejos
+  "0 4 * * *",  # Cleanup sesiones expiradas + rate_limits viejos + subidas sin confirmar
   "0 3 * * *"   # Backup diario de BD a R2
 ]

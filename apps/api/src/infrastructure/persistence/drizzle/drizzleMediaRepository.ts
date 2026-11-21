@@ -1,4 +1,4 @@
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, desc, sql, isNull, isNotNull, lt } from 'drizzle-orm';
 import { getDb } from './client.js';
 import { mediaAssets } from './schema/media.js';
 import { dishes, restaurants } from './schema/content.js';
@@ -22,7 +22,7 @@ export class DrizzleMediaRepository implements MediaRepository {
     usage?: MediaUsage;
     missingAlt?: boolean;
   }): Promise<MediaAsset[]> {
-    const conds = [];
+    const conds = [isNotNull(mediaAssets.confirmedAt)];
     if (filters?.restaurantSlug) {
       const r = await this.db.query.restaurants.findFirst({
         where: eq(restaurants.slug, filters.restaurantSlug)
@@ -34,7 +34,7 @@ export class DrizzleMediaRepository implements MediaRepository {
     if (filters?.missingAlt) conds.push(eq(mediaAssets.hasAltText, false));
 
     const rows = await this.db.query.mediaAssets.findMany({
-      where: conds.length > 0 ? and(...conds) : undefined,
+      where: and(...conds),
       orderBy: [desc(mediaAssets.createdAt)]
     });
     return rows.map(rowToMedia);
@@ -61,7 +61,7 @@ export class DrizzleMediaRepository implements MediaRepository {
     height?: number;
     altText?: I18nValue;
   }): Promise<MediaAsset> {
-    const updates: Partial<typeof mediaAssets.$inferInsert> = {};
+    const updates: Partial<typeof mediaAssets.$inferInsert> = { confirmedAt: new Date() };
     if (patch.width !== undefined) updates.width = patch.width;
     if (patch.height !== undefined) updates.height = patch.height;
     if (patch.altText !== undefined) {
@@ -79,6 +79,13 @@ export class DrizzleMediaRepository implements MediaRepository {
 
   async deleteById(id: string): Promise<void> {
     await this.db.delete(mediaAssets).where(eq(mediaAssets.id, id));
+  }
+
+  async listUnconfirmedBefore(before: Date): Promise<MediaAsset[]> {
+    const rows = await this.db.query.mediaAssets.findMany({
+      where: and(isNull(mediaAssets.confirmedAt), lt(mediaAssets.createdAt, before))
+    });
+    return rows.map(rowToMedia);
   }
 
   /**
