@@ -79,6 +79,7 @@ import { GetMediaReferencesUseCase } from '../../application/media/getMediaRefer
 import { DeleteMediaUseCase } from '../../application/media/deleteMediaUseCase.js';
 
 import { ListLegalPagesUseCase, SaveLegalPageUseCase, DeleteLegalPageUseCase } from '../../application/legalPages/legalPagesUseCases.js';
+import { GetPublishedSiteUseCase } from '../../application/public/getPublishedSiteUseCase.js';
 
 export type Container = ReturnType<typeof buildContainer>;
 
@@ -179,6 +180,12 @@ export function buildContainer(env: Env) {
       list: new ListLegalPagesUseCase(legalPagesRepo, restaurantsRepo),
       save: new SaveLegalPageUseCase(legalPagesRepo, restaurantsRepo),
       delete: new DeleteLegalPageUseCase(legalPagesRepo, restaurantsRepo)
+    },
+
+    public: {
+      getSite: new GetPublishedSiteUseCase(
+        restaurantsRepo, spacesRepo, dishesRepo, winesRepo, legalPagesRepo, mediaRepo, env.R2_PUBLIC_URL
+      )
     },
 
     media: {

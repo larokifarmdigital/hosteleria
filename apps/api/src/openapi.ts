@@ -253,6 +253,100 @@ const schemas = {
     required: ['id', 'type', 'title', 'content']
   },
 
+  PublishedSite: {
+    type: 'object',
+    properties: {
+      restaurant: {
+        description: 'Campos de contenido de `Restaurant` tal como se publicaron, más `slug`, `defaultLocale`, `activeLocales` y `publishedAt`. Sin `state`, `rebuildHookUrl` ni contadores.',
+        allOf: [{ $ref: '#/components/schemas/Restaurant' }],
+        properties: { publishedAt: { type: 'string', format: 'date-time', nullable: true } }
+      },
+      spaces: {
+        type: 'array',
+        items: {
+          description: 'Contenido publicado de `Space` (sin `state` ni contadores), con el horario de los siete días y su carta.',
+          allOf: [{ $ref: '#/components/schemas/Space' }],
+          properties: {
+            dishCategories: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  name: { $ref: '#/components/schemas/I18nString' },
+                  dishes: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        name: { $ref: '#/components/schemas/I18nString' },
+                        note: { $ref: '#/components/schemas/I18nString' },
+                        price: { type: 'number', nullable: true },
+                        imageAssetId: { type: 'string', nullable: true }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            wineCategories: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  name: { $ref: '#/components/schemas/I18nString' },
+                  wines: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        name: { type: 'string' },
+                        region: { type: 'string', nullable: true },
+                        note: { $ref: '#/components/schemas/I18nString' },
+                        priceGlass: { type: 'number', nullable: true },
+                        priceBottle: { type: 'number', nullable: true }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      legalPages: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            type: { type: 'string', enum: ['legal-notice', 'privacy', 'cookies'] },
+            title: { $ref: '#/components/schemas/I18nString' },
+            content: { $ref: '#/components/schemas/I18nString' },
+            lastUpdated: { type: 'string', nullable: true }
+          }
+        }
+      },
+      media: {
+        type: 'object',
+        description: 'Por id de imagen. Un id referenciado que no esté aquí es una imagen que ya no existe.',
+        additionalProperties: {
+          type: 'object',
+          properties: {
+            url: { type: 'string', format: 'uri' },
+            width: { type: 'integer', nullable: true },
+            height: { type: 'integer', nullable: true },
+            mimeType: { type: 'string' },
+            alt: { $ref: '#/components/schemas/I18nString' }
+          }
+        }
+      }
+    },
+    required: ['restaurant', 'spaces', 'legalPages', 'media']
+  },
+
   Dish: {
     type: 'object',
     properties: {
@@ -403,6 +497,27 @@ const paths: Record<string, any> = {
           version: { type: 'string' }
         }}),
         503: errRef('503 Service Unavailable — BD inaccesible')
+      }
+    }
+  },
+
+  '/public/restaurants/{slug}': {
+    parameters: [{ name: 'slug', in: 'path', required: true, schema: { type: 'string' }, example: 'pubilla' }],
+    get: {
+      tags: ['Public'], summary: 'Sitio publicado de un restaurante', security: [],
+      description: [
+        'Sin sesión. Todo lo que una landing necesita para construirse, en una sola respuesta.',
+        'Solo sale lo publicado: la ficha y los espacios salen de su última publicación, nunca del borrador;',
+        'un espacio sin publicar no sale, ni su carta. La carta (solo platos y vinos activos) y las páginas',
+        'legales no tienen borrador y salen tal como están guardadas.',
+        '`media` trae, por id, la URL y la descripción de cada imagen referenciada.',
+        'Caché: `public, max-age=0, must-revalidate` con `ETag`; con `If-None-Match` responde 304.'
+      ].join(' '),
+      responses: {
+        200: ok({ $ref: '#/components/schemas/PublishedSite' }),
+        304: { description: 'Sin cambios desde el `ETag` enviado' },
+        404: errRef('404 Not Found — `RESTAURANT_NOT_FOUND`: no existe o no se ha publicado nunca'),
+        429: err429, 500: err500
       }
     }
   },
@@ -1251,6 +1366,7 @@ export const openApiSpec = {
   servers: SERVERS,
   tags: [
     { name: 'System', description: 'Health y metadatos' },
+    { name: 'Public', description: 'Lectura pública, sin sesión: lo publicado de un restaurante, para construir su landing' },
     { name: 'Auth', description: 'Sesión (cookie `hs_session`, Lucia + scrypt via @noble/hashes)' },
     { name: 'Restaurants', description: 'Ficha de restaurante — datos compartidos por todos los espacios' },
     { name: 'Spaces', description: 'Espacios del restaurante — hero, horarios, cartas por sala' },

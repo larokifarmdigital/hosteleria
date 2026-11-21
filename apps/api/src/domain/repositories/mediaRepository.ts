@@ -7,6 +7,7 @@ import type { I18nValue } from '../models/i18n.js';
  */
 export interface MediaRepository {
   findById(id: string): Promise<MediaAsset | null>;
+  findByIds(ids: string[]): Promise<MediaAsset[]>;
   /** Solo subidas confirmadas. */
   list(filters?: {
     restaurantSlug?: string;

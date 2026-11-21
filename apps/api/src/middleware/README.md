@@ -12,7 +12,7 @@ en ninguna carpeta de recurso.
 
 | Archivo | Qué hace | Dónde se usa |
 |---|---|---|
-| `cache.ts` | `cacheHeaders({ maxAge, swr })` → Cache-Control + ETag + 304. `noCache` → fuerza no cachear | `languages/route.ts`, `restaurants/route.ts` (list + detail), `auth/route.ts` (session endpoints) |
+| `cache.ts` | `cacheHeaders({ maxAge, swr, scope })` → Cache-Control + ETag + 304 (`scope: 'public'` solo sin sesión; `maxAge: 0` = revalidar siempre). `noCache` → fuerza no cachear | `languages/route.ts`, `restaurants/route.ts` (list + detail), `auth/route.ts` (session endpoints), `publicRoutes.ts` |
 | `rate-limit.ts` | Factory `rateLimit({ bucket, limit, windowSeconds, keyFn? })` + `cleanupStaleRateLimits()` | `app.ts` global (100/min), `auth/route.ts` (login 5/h, forgot 3/h) |
 | `sentry.ts` | `sentryMiddleware()` → captura 500+ a Sentry con context (user, path, method) | `app.ts` global |
 

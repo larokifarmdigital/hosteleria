@@ -16,6 +16,7 @@ import { createWinesRoutes } from './interface/http/routes/winesRoutes.js';
 import { createLanguagesRoutes } from './interface/http/routes/languagesRoutes.js';
 import { createUsersRoutes } from './interface/http/routes/usersRoutes.js';
 import { createMediaRoutes } from './interface/http/routes/mediaRoutes.js';
+import { createPublicRoutes } from './interface/http/routes/publicRoutes.js';
 import { openApiSpec } from './openapi.js';
 import { sentryMiddleware } from './middleware/sentry.js';
 import { getClientIp, rateLimit } from './middleware/rate-limit.js';
@@ -44,7 +45,14 @@ export function createApp() {
   }));
 
   app.use('*', withContainer);
-  app.use('*', validateSession);
+  // `/public` no mira la sesión: su respuesta es la misma para todo el mundo
+  // y no debe llevar cookies.
+  app.use('*', async (c, next) => {
+    if (!c.req.path.startsWith('/public/')) return validateSession(c, next);
+    c.set('user', null);
+    c.set('session', null);
+    return next();
+  });
   app.use('*', sentryMiddleware());
 
   // `auth/*` tiene limiters propios más estrictos; health/docs son públicos.
@@ -106,6 +114,7 @@ export function createApp() {
     metaData: { title: '@hosteleria/api — Reference' }
   }));
 
+  app.route('/public', createPublicRoutes());
   app.route('/auth', createAuthRoutes());
   app.route('/restaurants', createRestaurantsRoutes());
   app.route('/restaurants/:slug/spaces', createSpacesRoutes());

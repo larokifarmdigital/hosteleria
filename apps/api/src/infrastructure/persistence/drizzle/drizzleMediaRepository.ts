@@ -1,4 +1,4 @@
-import { eq, and, desc, sql, isNull, isNotNull, lt } from 'drizzle-orm';
+import { eq, and, desc, sql, isNull, isNotNull, lt, inArray } from 'drizzle-orm';
 import { getDb } from './client.js';
 import { mediaAssets } from './schema/media.js';
 import { dishes, restaurants } from './schema/content.js';
@@ -16,6 +16,12 @@ export class DrizzleMediaRepository implements MediaRepository {
   async findById(id: string): Promise<MediaAsset | null> {
     const row = await this.db.query.mediaAssets.findFirst({ where: eq(mediaAssets.id, id) });
     return row ? rowToMedia(row) : null;
+  }
+
+  async findByIds(ids: string[]): Promise<MediaAsset[]> {
+    if (ids.length === 0) return [];
+    const rows = await this.db.query.mediaAssets.findMany({ where: inArray(mediaAssets.id, ids) });
+    return rows.map(rowToMedia);
   }
 
   async list(filters?: {

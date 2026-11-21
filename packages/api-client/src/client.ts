@@ -12,6 +12,7 @@ import type {
   MediaReferences,
   LegalPage,
   LegalPageType,
+  PublishedSite,
   UploadUrlResponse,
   I18nString
 } from './types';
@@ -183,6 +184,12 @@ export function createApiClient(opts: ApiClientOpts) {
         req<{ ok: true }>(`/restaurants/${restaurantSlug}/spaces/${spaceId}`, { method: 'DELETE' }),
       discard: (restaurantSlug: string, spaceId: string) =>
         req<{ space: Space }>(`/restaurants/${restaurantSlug}/spaces/${spaceId}/discard`, { method: 'POST' }).then(r => r.space)
+    },
+
+    // ─── Lectura pública ────────────────────────────────────────
+    public: {
+      /** Sin sesión. 404 si el restaurante no existe o no se ha publicado nunca. */
+      site: (restaurantSlug: string) => req<PublishedSite>(`/public/restaurants/${restaurantSlug}`)
     },
 
     // ─── Legal pages ────────────────────────────────────────────

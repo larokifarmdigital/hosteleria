@@ -339,6 +339,48 @@ export interface LegalPage {
   updatedAt: string;
 }
 
+// ─── Sitio publicado (lectura pública, sin sesión) ───────────────
+export interface PublishedMedia {
+  url: string;
+  width: number | null;
+  height: number | null;
+  mimeType: string;
+  alt: I18nString;
+}
+export interface PublishedDish {
+  id: string;
+  name: I18nString;
+  note: I18nText;
+  price: number | null;
+  imageAssetId: string | null;
+}
+export interface PublishedWine {
+  id: string;
+  name: string;
+  region: string | null;
+  note: I18nText;
+  priceGlass: number | null;
+  priceBottle: number | null;
+}
+export interface PublishedSpace extends Pick<Space,
+  'id' | 'slug' | 'type' | 'isDefault' | 'name' | 'hero' | 'manifesto' | 'descriptor' | 'coverGradient'
+  | 'gallery' | 'scheduleTexts' | 'address' | 'mapUrl' | 'bookingContact'> {
+  /** Los siete días, de lunes a domingo; sin turnos = cerrado. */
+  schedule: ScheduleDay[];
+  /** Solo platos activos; las categorías sin ninguno no salen. */
+  dishCategories: { id: string; name: I18nString; dishes: PublishedDish[] }[];
+  wineCategories: { id: string; name: I18nString; wines: PublishedWine[] }[];
+}
+/** Lo que una landing necesita para construirse: solo lo publicado. */
+export interface PublishedSite {
+  restaurant: Pick<Restaurant, RestaurantContentKey | 'slug' | 'defaultLocale' | 'activeLocales'> & { publishedAt: string | null };
+  /** Solo los espacios publicados, en su orden. */
+  spaces: PublishedSpace[];
+  legalPages: Pick<LegalPage, 'type' | 'title' | 'content' | 'lastUpdated'>[];
+  /** Por id de imagen. Un id que no esté aquí es una imagen que ya no existe. */
+  media: Record<string, PublishedMedia>;
+}
+
 export interface UploadUrlResponse {
   mediaId: string;
   uploadUrl: string;

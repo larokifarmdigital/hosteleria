@@ -5,13 +5,15 @@ import type { Env } from '../env.js';
 export interface CacheOpts {
   maxAge: number;
   swr?: number;
+  /** `public` solo para respuestas iguales para todo el mundo (sin sesión). */
+  scope?: 'private' | 'public';
 }
 
 export function cacheHeaders(opts: CacheOpts) {
-  const { maxAge, swr = 0 } = opts;
+  const { maxAge, swr = 0, scope = 'private' } = opts;
   const cacheControl = swr > 0
-    ? `private, max-age=${maxAge}, stale-while-revalidate=${swr}`
-    : `private, max-age=${maxAge}`;
+    ? `${scope}, max-age=${maxAge}, stale-while-revalidate=${swr}`
+    : maxAge > 0 ? `${scope}, max-age=${maxAge}` : `${scope}, max-age=0, must-revalidate`;
 
   return createMiddleware<{ Bindings: Env; Variables: Record<string, unknown> }>(async (c, next) => {
     await next();
