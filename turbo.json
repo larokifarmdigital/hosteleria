@@ -30,6 +30,7 @@
       "persistent": true
     },
     "build": {
+      "cache": false,
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".astro/**", ".next/**", "!.next/cache/**"]
     },
