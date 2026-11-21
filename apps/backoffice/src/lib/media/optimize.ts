@@ -7,6 +7,8 @@ const SKIP_BELOW_BYTES = 500 * 1024;
 // GIF y AVIF se dejan como están: uno puede ser animado y el otro ya es eficiente.
 const REDUCIBLE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
+const EXTENSIONS: Record<string, string> = { 'image/webp': 'webp', 'image/jpeg': 'jpg', 'image/png': 'png' };
+
 export interface OptimizedImage {
   file: File;
   size: ImageSize | null;
@@ -36,18 +38,31 @@ export async function optimizeImage(file: File, size: ImageSize | null): Promise
     if (!context) return original;
     context.drawImage(await loadImage(file), 0, 0, target.width, target.height);
 
-    // WebP conserva la transparencia de un PNG. Safari antiguo no sabe generarlo
-    // y devuelve PNG: ahí solo hay alternativa segura (JPG) si el original ya era JPG.
+    // WebP conserva la transparencia de un PNG. Safari no sabe generarlo y
+    // devuelve PNG: ahí se usa JPG si la foto no tiene transparencia, y si la
+    // tiene se queda en PNG, que al menos sale reescalado.
     let blob = await toBlob(canvas, 'image/webp', 0.82);
-    if (blob?.type !== 'image/webp') blob = file.type === 'image/jpeg' ? await toBlob(canvas, 'image/jpeg', 0.85) : null;
+    if (blob?.type !== 'image/webp') {
+      const opaque = file.type === 'image/jpeg' || isOpaque(context, target);
+      blob = opaque ? await toBlob(canvas, 'image/jpeg', 0.85) : await toBlob(canvas, 'image/png', 1);
+    }
     if (!blob || blob.size > file.size * 0.9) return original;
 
-    const extension = blob.type === 'image/webp' ? 'webp' : 'jpg';
+    const extension = EXTENSIONS[blob.type];
+    if (!extension) return original;
     const name = `${file.name.replace(/\.[^.]+$/, '')}.${extension}`;
     return { file: new File([blob], name, { type: blob.type }), size: target, reducedFrom: file.size };
   } catch {
     return original;
   }
+}
+
+function isOpaque(context: CanvasRenderingContext2D, size: ImageSize): boolean {
+  const { data } = context.getImageData(0, 0, size.width, size.height);
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] !== 255) return false;
+  }
+  return true;
 }
 
 function loadImage(file: File): Promise<HTMLImageElement> {
