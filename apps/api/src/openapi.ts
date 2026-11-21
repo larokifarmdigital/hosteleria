@@ -57,9 +57,11 @@ const schemas = {
     type: 'object',
     properties: {
       dishes: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' }, name: { $ref: '#/components/schemas/I18nString' } }, required: ['id', 'name'] } },
-      spaces: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' } }, required: ['id', 'name'] } }
+      spaces: { type: 'array', description: 'Espacios que la usan de portada.', items: { type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' } }, required: ['id', 'name'] } },
+      galleries: { type: 'array', description: 'Espacios que la tienen en la galería.', items: { type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' } }, required: ['id', 'name'] } },
+      restaurant: { type: 'array', description: 'Sitios de la ficha donde se usa.', items: { type: 'string', enum: ['logo', 'favicon', 'appIcon', 'seo', 'about', 'groups', 'homeBlock'] } }
     },
-    required: ['dishes', 'spaces']
+    required: ['dishes', 'spaces', 'galleries', 'restaurant']
   },
 
   I18nString: {
@@ -135,7 +137,20 @@ const schemas = {
       contact: { $ref: '#/components/schemas/Contact' },
       socials: { $ref: '#/components/schemas/Socials' },
       seo: { type: 'object' },
+      foundedYear: { type: 'integer', nullable: true },
+      branding: { type: 'object', description: '`logoAssetId`, `faviconAssetId`, `appIconAssetId`' },
+      homeBlocks: { type: 'array', items: { type: 'object' }, description: 'Tarjetas destacadas: `id`, `title`, `text`, `imageAssetId`, `ctaText`, `ctaHref`' },
+      about: { type: 'object', description: '`eyebrow`, `title`, `body` (párrafos separados por línea en blanco), `imageAssetIds`' },
+      groups: { type: 'object', description: '`eyebrow`, `title`, `cta`, `imageAssetId`, `highlights[]`, `features[]` (icono + título + texto)' },
+      mapUrl: { type: 'string', nullable: true },
+      showReviews: { type: 'boolean' },
+      uiTexts: { type: 'object', description: 'Textos fijos de la landing en cuatro grupos: `nav`, `sections`, `form`, `footer`' },
+      faq: { type: 'object', description: '`eyebrow`, `title`, `titleAccent`, `items[]` (`id`, `question`, `answer`)' },
+      aiSummary: { $ref: '#/components/schemas/I18nString' },
+      analyticsToken: { type: 'string', nullable: true },
+      business: { type: 'object', description: '`averagePrice`, `paymentMethods[]`, `extraServices[]` (para JSON-LD)' },
       lastPublishedAt: { type: 'string', nullable: true, format: 'date-time' },
+      publishedSnapshot: { type: 'object', nullable: true, description: 'Lo último publicado, con los idiomas activos de ese momento.' },
       completePercent: { type: 'integer', minimum: 0, maximum: 100 },
       spacesCount: { type: 'integer' },
       dishesCount: { type: 'integer' },
@@ -211,6 +226,11 @@ const schemas = {
         }
       },
       schedule: { type: 'array', items: { $ref: '#/components/schemas/ScheduleDay' } },
+      gallery: { type: 'array', items: { type: 'string' }, description: 'Ids de imagen, en orden.' },
+      scheduleTexts: { type: 'object', description: '`title`, `text`, `open`, `nextOpening`, `closed`' },
+      address: { $ref: '#/components/schemas/Address' },
+      mapUrl: { type: 'string', nullable: true },
+      bookingContact: { type: 'object', description: '`phone`, `whatsapp`, `email`; vacío = los del restaurante' },
       galleryCount: { type: 'integer' },
       dishesCount: { type: 'integer' },
       winesCount: { type: 'integer' },
@@ -218,6 +238,19 @@ const schemas = {
       lastEditedAt: { type: 'string', format: 'date-time' }
     },
     required: ['id', 'restaurantId', 'slug', 'name', 'type']
+  },
+
+  LegalPage: {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      type: { type: 'string', enum: ['legal-notice', 'privacy', 'cookies'] },
+      title: { $ref: '#/components/schemas/I18nString' },
+      content: { $ref: '#/components/schemas/I18nString' },
+      lastUpdated: { type: 'string', nullable: true },
+      updatedAt: { type: 'string', format: 'date-time' }
+    },
+    required: ['id', 'type', 'title', 'content']
   },
 
   Dish: {
@@ -536,7 +569,7 @@ const paths: Record<string, any> = {
     },
     patch: {
       tags: ['Restaurants'], summary: 'Actualiza campos del restaurante',
-      description: 'Si `state=published` crea snapshot. Si ya estaba publicado y se tocó algún campo, dispara el rebuild hook fire-and-forget.',
+      description: 'Si `state=published` crea snapshot (contenido e idiomas activos) y exige que cada texto esté en todos los idiomas activos o en ninguno. Las imágenes que se asignen tienen que ser del restaurante. Si ya estaba publicado y se tocó algún campo, dispara el rebuild hook fire-and-forget.',
       requestBody: jsonBody({
         type: 'object',
         properties: {
@@ -547,6 +580,18 @@ const paths: Record<string, any> = {
           contact: { $ref: '#/components/schemas/Contact' },
           socials: { $ref: '#/components/schemas/Socials' },
           seo: { type: 'object' },
+          foundedYear: { type: 'integer', nullable: true },
+          branding: { type: 'object', description: '`logoAssetId`, `faviconAssetId`, `appIconAssetId`' },
+          homeBlocks: { type: 'array', items: { type: 'object' }, description: 'Tarjetas destacadas: `id`, `title`, `text`, `imageAssetId`, `ctaText`, `ctaHref`' },
+          about: { type: 'object', description: '`eyebrow`, `title`, `body` (párrafos separados por línea en blanco), `imageAssetIds`' },
+          groups: { type: 'object', description: '`eyebrow`, `title`, `cta`, `imageAssetId`, `highlights[]`, `features[]` (icono + título + texto)' },
+          mapUrl: { type: 'string', nullable: true },
+          showReviews: { type: 'boolean' },
+          uiTexts: { type: 'object', description: 'Textos fijos de la landing en cuatro grupos: `nav`, `sections`, `form`, `footer`' },
+          faq: { type: 'object', description: '`eyebrow`, `title`, `titleAccent`, `items[]` (`id`, `question`, `answer`)' },
+          aiSummary: { $ref: '#/components/schemas/I18nString' },
+          analyticsToken: { type: 'string', nullable: true },
+          business: { type: 'object', description: '`averagePrice`, `paymentMethods[]`, `extraServices[]` (para JSON-LD)' },
           activeLocaleCodes: { type: 'array', items: { type: 'string' } },
           defaultLocaleCode: { type: 'string' },
           acceptsBookings: { type: 'boolean' }, showSocials: { type: 'boolean' },
@@ -555,7 +600,7 @@ const paths: Record<string, any> = {
       }),
       responses: {
         200: ok({ type: 'object', properties: { restaurant: { $ref: '#/components/schemas/Restaurant' } }, required: ['restaurant'] }),
-        400: errRef('400 Bad Request — `UNKNOWN_LOCALE`'),
+        400: errRef('400 Bad Request — `UNKNOWN_LOCALE`, `TRANSLATIONS_INCOMPLETE`, `MEDIA_NOT_IN_RESTAURANT`'),
         401: err401, 403: err403Rest,
         404: errRef('404 Not Found — `RESTAURANT_NOT_FOUND`'),
         500: err500
@@ -586,6 +631,44 @@ const paths: Record<string, any> = {
     }
   },
 
+  '/restaurants/{slug}/legal-pages': {
+    parameters: [{ name: 'slug', in: 'path', required: true, schema: { type: 'string' } }],
+    get: {
+      tags: ['Legal pages'], summary: 'Páginas legales del restaurante',
+      responses: {
+        200: ok({ type: 'object', properties: { legalPages: { type: 'array', items: { $ref: '#/components/schemas/LegalPage' } } }, required: ['legalPages'] }),
+        401: err401, 403: err403Rest, 500: err500
+      }
+    }
+  },
+  '/restaurants/{slug}/legal-pages/{type}': {
+    parameters: [
+      { name: 'slug', in: 'path', required: true, schema: { type: 'string' } },
+      { name: 'type', in: 'path', required: true, schema: { type: 'string', enum: ['legal-notice', 'privacy', 'cookies'] } }
+    ],
+    put: {
+      tags: ['Legal pages'], summary: 'Crea o sustituye la página de ese tipo',
+      description: 'Sin borrador: lo guardado es lo que se publica. `content` es Markdown por idioma.',
+      requestBody: jsonBody({
+        type: 'object',
+        properties: {
+          title: { $ref: '#/components/schemas/I18nString' },
+          content: { $ref: '#/components/schemas/I18nString' },
+          lastUpdated: { type: 'string', nullable: true, example: '2026-11-21' }
+        },
+        required: ['title', 'content']
+      }),
+      responses: {
+        200: ok({ type: 'object', properties: { legalPage: { $ref: '#/components/schemas/LegalPage' } }, required: ['legalPage'] }),
+        400: errRef('400 Bad Request — body o tipo inválido'),
+        401: err401, 403: err403Rest, 500: err500
+      }
+    },
+    delete: {
+      tags: ['Legal pages'], summary: 'Borra la página de ese tipo',
+      responses: { 200: ok({ type: 'object', properties: { ok: { type: 'boolean' } } }), 401: err401, 403: err403Rest, 500: err500 }
+    }
+  },
   '/restaurants/{slug}/spaces': {
     parameters: [{ name: 'slug', in: 'path', required: true, schema: { type: 'string' } }],
     get: {
@@ -631,7 +714,7 @@ const paths: Record<string, any> = {
       }
     },
     patch: {
-      tags: ['Spaces'], summary: 'Actualiza hero, manifesto, schedule, estado o default',
+      tags: ['Spaces'], summary: 'Actualiza hero, manifesto, galería, horarios y sus textos, contacto propio, estado o default',
       requestBody: jsonBody({
         type: 'object',
         properties: {
@@ -1149,7 +1232,7 @@ const paths: Record<string, any> = {
   '/media/{id}/references': {
     parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
     get: {
-      tags: ['Media'], summary: 'Lista platos y spaces que referencian este asset',
+      tags: ['Media'], summary: 'Dónde se usa la imagen: platos, portadas, galerías y ficha del restaurante',
       description: 'Útil para la UI antes de permitir borrar: "no puedes borrar, usado en N platos". Cuenta también la portada publicada de un espacio, aunque el borrador ya use otra foto.',
       responses: {
         200: ok({ $ref: '#/components/schemas/MediaReferences' }),
@@ -1171,6 +1254,7 @@ export const openApiSpec = {
     { name: 'Auth', description: 'Sesión (cookie `hs_session`, Lucia + scrypt via @noble/hashes)' },
     { name: 'Restaurants', description: 'Ficha de restaurante — datos compartidos por todos los espacios' },
     { name: 'Spaces', description: 'Espacios del restaurante — hero, horarios, cartas por sala' },
+    { name: 'Legal pages', description: 'Aviso legal, privacidad y cookies (Markdown por idioma, sin borrador)' },
     { name: 'Dishes', description: 'Platos + categorías' },
     { name: 'Wines', description: 'Vinos + categorías (name NO es i18n)' },
     { name: 'Languages', description: 'Idiomas del sistema' },

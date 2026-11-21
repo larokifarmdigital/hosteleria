@@ -1,5 +1,5 @@
 import type { I18nValue } from './i18n.js';
-import type { PublishState } from './restaurant.js';
+import type { PublishState, Address } from './restaurant.js';
 import { DomainError } from './errors.js';
 
 export type SpaceType =
@@ -33,7 +33,30 @@ export interface Manifesto {
   text?: I18nValue;
 }
 
-export type SpaceSnapshot = Partial<Pick<Space, 'name' | 'hero' | 'manifesto' | 'descriptor' | 'coverGradient' | 'schedule'>>;
+/** Textos del bloque de horarios y del aviso «abierto ahora». */
+export interface ScheduleTexts {
+  title?: I18nValue;
+  text?: I18nValue;
+  open?: I18nValue;
+  nextOpening?: I18nValue;
+  closed?: I18nValue;
+}
+
+export interface BookingContact {
+  phone?: string;
+  whatsapp?: string;
+  email?: string;
+}
+
+/** Como en el restaurante: lo que entra en borrador, publicado y descarte. Los horarios van aparte (tabla propia). */
+export const SPACE_CONTENT_KEYS = [
+  'name', 'hero', 'manifesto', 'descriptor', 'coverGradient',
+  'gallery', 'scheduleTexts', 'address', 'mapUrl', 'bookingContact'
+] as const;
+export type SpaceContentKey = (typeof SPACE_CONTENT_KEYS)[number];
+export type SpaceContent = Pick<Space, SpaceContentKey>;
+
+export type SpaceSnapshot = Partial<SpaceContent> & { schedule?: ScheduleDay[] };
 
 export interface Space {
   readonly id: string;
@@ -48,8 +71,41 @@ export interface Space {
   descriptor: string;
   hero: Hero;
   manifesto: Manifesto;
+  /** Ids de imagen, en el orden en que se enseñan. */
+  gallery: string[];
+  scheduleTexts: ScheduleTexts;
+  /** Dirección, mapa y contacto propios; vacíos = los del restaurante. */
+  address: Address;
+  mapUrl: string | null;
+  bookingContact: BookingContact;
   schedule: ScheduleDay[];
   publishedSnapshot: SpaceSnapshot | null;
+}
+
+/** Textos traducibles del espacio, con el nombre que ve el editor. */
+export function spaceTranslatableTexts(c: Partial<SpaceContent>): Record<string, I18nValue | undefined> {
+  return {
+    'Título de la portada': c.hero?.title,
+    'Subtítulo de la portada': c.hero?.subtitle,
+    'Texto breve de la portada': c.hero?.note,
+    'Dato a la izquierda': c.hero?.metaLeft,
+    'Dato a la derecha': c.hero?.metaRight,
+    'Texto del botón': c.hero?.cta,
+    // Sin foto, su descripción no se enseña.
+    ...(c.hero?.imageAssetId ? { 'Descripción de la foto': c.hero.imageAlt } : {}),
+    'Antetítulo de la presentación': c.manifesto?.eyebrow,
+    'Texto de presentación': c.manifesto?.text,
+    'Horarios: título': c.scheduleTexts?.title,
+    'Horarios: texto': c.scheduleTexts?.text,
+    'Horarios: aviso de abierto': c.scheduleTexts?.open,
+    'Horarios: aviso de próxima apertura': c.scheduleTexts?.nextOpening,
+    'Horarios: aviso de cerrado': c.scheduleTexts?.closed
+  };
+}
+
+export function spaceMediaIds(c: Partial<SpaceContent> | null | undefined): string[] {
+  if (!c) return [];
+  return [c.hero?.imageAssetId, ...(c.gallery ?? [])].filter((id): id is string => !!id);
 }
 
 export class SpaceNotFoundError extends DomainError {

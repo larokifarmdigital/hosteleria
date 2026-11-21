@@ -2,11 +2,12 @@ import type { SpaceRepository } from '../../domain/repositories/spaceRepository.
 import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
 import { assertTranslationsComplete } from '../../domain/models/i18n.js';
 import {
+  SPACE_CONTENT_KEYS,
   SpaceNotFoundError,
-  type Hero,
-  type Manifesto,
+  spaceTranslatableTexts,
   type ScheduleDay,
   type Space,
+  type SpaceContent,
   type SpaceSnapshot,
   type SpaceType
 } from '../../domain/models/space.js';
@@ -22,16 +23,11 @@ export class MustHaveDefaultSpaceError extends DomainError {
   }
 }
 
-export interface PatchSpaceInput {
-  name?: string;
+export interface PatchSpaceInput extends Partial<SpaceContent> {
   type?: SpaceType;
-  descriptor?: string;
   isDefault?: boolean;
   order?: number;
-  coverGradient?: string;
   state?: PublishState;
-  hero?: Hero;
-  manifesto?: Manifesto;
   schedule?: ScheduleDay[];
 }
 
@@ -52,33 +48,22 @@ export class PatchSpaceUseCase {
       if (!otherDefault) throw new MustHaveDefaultSpaceError();
     }
 
-    if (input.state === 'published') {
-      const restaurant = await this.restaurants.findById(restaurantId);
-      const hero = input.hero ?? s.hero;
-      const manifesto = input.manifesto ?? s.manifesto;
-      assertTranslationsComplete({
-        'Título de la portada': hero?.title,
-        'Subtítulo de la portada': hero?.subtitle,
-        'Texto breve de la portada': hero?.note,
-        'Dato a la izquierda': hero?.metaLeft,
-        'Dato a la derecha': hero?.metaRight,
-        'Texto del botón': hero?.cta,
-        // Sin foto, su descripción no se enseña.
-        ...(hero?.imageAssetId ? { 'Descripción de la foto': hero.imageAlt } : {}),
-        'Antetítulo de la presentación': manifesto?.eyebrow,
-        'Texto de presentación': manifesto?.text
-      }, restaurant?.activeLocaleCodes ?? []);
+    // El contenido tal como queda tras este PATCH: lo guardado más lo que llega.
+    const content = {} as Record<string, unknown>;
+    const patch: Partial<Space> = {};
+    for (const key of SPACE_CONTENT_KEYS) {
+      content[key] = input[key] !== undefined ? input[key] : s[key];
+      if (input[key] !== undefined) (patch as Record<string, unknown>)[key] = input[key];
     }
 
-    const patch: Partial<Space> = {};
-    if (input.name !== undefined) patch.name = input.name;
+    if (input.state === 'published') {
+      const restaurant = await this.restaurants.findById(restaurantId);
+      assertTranslationsComplete(spaceTranslatableTexts(content as SpaceContent), restaurant?.activeLocaleCodes ?? []);
+    }
+
     if (input.type !== undefined) patch.type = input.type;
-    if (input.descriptor !== undefined) patch.descriptor = input.descriptor;
     if (input.order !== undefined) patch.order = input.order;
-    if (input.coverGradient !== undefined) patch.coverGradient = input.coverGradient;
     if (input.state !== undefined) patch.state = input.state;
-    if (input.hero !== undefined) patch.hero = input.hero;
-    if (input.manifesto !== undefined) patch.manifesto = input.manifesto;
     if (input.isDefault !== undefined) patch.isDefault = input.isDefault;
 
     await this.spaces.update(spaceId, patch, actorId);
@@ -86,14 +71,7 @@ export class PatchSpaceUseCase {
     if (input.isDefault === true) await this.spaces.clearDefaultsExcept(restaurantId, spaceId);
 
     if (input.state === 'published') {
-      const snap: SpaceSnapshot = {
-        name: input.name ?? s.name,
-        schedule: input.schedule ?? s.schedule,
-        hero: input.hero ?? s.hero,
-        manifesto: input.manifesto ?? s.manifesto,
-        descriptor: input.descriptor ?? s.descriptor,
-        coverGradient: input.coverGradient ?? s.coverGradient
-      };
+      const snap: SpaceSnapshot = { ...(content as SpaceContent), schedule: input.schedule ?? s.schedule };
       await this.spaces.saveSnapshot(spaceId, snap);
     }
 

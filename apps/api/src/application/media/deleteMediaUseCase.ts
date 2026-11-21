@@ -15,8 +15,8 @@ export class DeleteMediaUseCase {
     const refs = await this.media.findReferences(id);
     if (refs.length > 0) {
       const dishesCount = refs.filter(r => r.kind === 'dish').length;
-      const spacesCount = refs.filter(r => r.kind === 'hero').length;
-      throw new MediaHasReferencesError(dishesCount, spacesCount);
+      const spacesCount = new Set(refs.filter(r => r.kind === 'hero' || r.kind === 'gallery').map(r => r.refId)).size;
+      throw new MediaHasReferencesError(dishesCount, spacesCount, refs.some(r => r.kind === 'restaurant'));
     }
 
     // Primero el objeto, luego la fila: si el DELETE de R2 falla, la fila

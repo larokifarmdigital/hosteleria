@@ -36,11 +36,13 @@ export class MediaHasReferencesError extends DomainError {
   readonly status = 400;
   readonly dishesCount: number;
   readonly spacesCount: number;
-  constructor(dishesCount: number, spacesCount: number) {
+  constructor(dishesCount: number, spacesCount: number, inRestaurant = false) {
     const parts: string[] = [];
     if (dishesCount > 0) parts.push(`${dishesCount} plato${dishesCount === 1 ? '' : 's'}`);
     if (spacesCount > 0) parts.push(`${spacesCount} espacio${spacesCount === 1 ? '' : 's'}`);
-    super(`No puedes borrar este archivo: lo usan ${parts.join(' y ')}.`);
+    if (inRestaurant) parts.push('la ficha del restaurante');
+    const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} y ${parts[parts.length - 1]}` : parts[0];
+    super(`No puedes borrar este archivo: lo usa${dishesCount + spacesCount > 1 || parts.length > 1 ? 'n' : ''} ${list}.`);
     this.name = 'MediaHasReferencesError';
     this.dishesCount = dishesCount;
     this.spacesCount = spacesCount;
@@ -72,4 +74,11 @@ export class MediaNotInRestaurantError extends DomainError {
     super('Esa imagen es de otro restaurante. Elige una de este.');
     this.name = 'MediaNotInRestaurantError';
   }
+}
+
+/** Dónde se usa una imagen. `use` solo viene cuando la usa la ficha del restaurante. */
+export interface MediaReference {
+  kind: 'hero' | 'gallery' | 'dish' | 'restaurant';
+  refId: string;
+  use?: import('./restaurant.js').RestaurantMediaUse;
 }

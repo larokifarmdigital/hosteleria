@@ -22,6 +22,18 @@ export function restaurantToDto(r: Restaurant) {
     contact: r.contact,
     socials: r.socials,
     seo: r.seo,
+    foundedYear: r.foundedYear,
+    branding: r.branding,
+    homeBlocks: r.homeBlocks,
+    about: r.about,
+    groups: r.groups,
+    mapUrl: r.mapUrl,
+    showReviews: r.showReviews,
+    uiTexts: r.uiTexts,
+    faq: r.faq,
+    aiSummary: r.aiSummary,
+    analyticsToken: r.analyticsToken,
+    business: r.business,
     lastPublishedAt: r.lastPublishedAt?.toISOString() ?? null,
     // Lo último publicado: el backoffice lo compara con lo actual para
     // resumir qué cambia antes de publicar.

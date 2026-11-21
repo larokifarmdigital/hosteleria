@@ -1,4 +1,4 @@
-import type { MediaAsset, MediaUsage } from '../models/media.js';
+import type { MediaAsset, MediaReference, MediaUsage } from '../models/media.js';
 import type { I18nValue } from '../models/i18n.js';
 
 /**
@@ -40,5 +40,6 @@ export interface MediaRepository {
   listUnconfirmedBefore(before: Date): Promise<MediaAsset[]>;
 
   /** Pre-check para delete: no borramos un asset referenciado desde ningún lado. */
-  findReferences(id: string): Promise<{ kind: 'hero' | 'gallery' | 'dish'; refId: string }[]>;
+  /** Cuenta también lo publicado: una foto que sigue en la web no se borra. */
+  findReferences(id: string): Promise<MediaReference[]>;
 }

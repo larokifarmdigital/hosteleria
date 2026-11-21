@@ -9,6 +9,7 @@ import { DrizzleLanguageRepository } from '../../infrastructure/persistence/driz
 import { DrizzleSpaceRepository } from '../../infrastructure/persistence/drizzle/drizzleSpaceRepository.js';
 import { DrizzleDishRepository } from '../../infrastructure/persistence/drizzle/drizzleDishRepository.js';
 import { DrizzleWineRepository } from '../../infrastructure/persistence/drizzle/drizzleWineRepository.js';
+import { DrizzleLegalPageRepository } from '../../infrastructure/persistence/drizzle/drizzleLegalPageRepository.js';
 import { DrizzleMediaRepository } from '../../infrastructure/persistence/drizzle/drizzleMediaRepository.js';
 import { DrizzleTokenGenerator } from '../../infrastructure/persistence/drizzle/drizzleTokenGenerator.js';
 import { LuciaSessionRepository } from '../../infrastructure/auth/luciaSessionRepository.js';
@@ -77,6 +78,8 @@ import { UpdateMediaUseCase } from '../../application/media/updateMediaUseCase.j
 import { GetMediaReferencesUseCase } from '../../application/media/getMediaReferencesUseCase.js';
 import { DeleteMediaUseCase } from '../../application/media/deleteMediaUseCase.js';
 
+import { ListLegalPagesUseCase, SaveLegalPageUseCase, DeleteLegalPageUseCase } from '../../application/legalPages/legalPagesUseCases.js';
+
 export type Container = ReturnType<typeof buildContainer>;
 
 export function buildContainer(env: Env) {
@@ -87,6 +90,7 @@ export function buildContainer(env: Env) {
   const dishesRepo = new DrizzleDishRepository(env);
   const winesRepo = new DrizzleWineRepository(env);
   const mediaRepo = new DrizzleMediaRepository(env);
+  const legalPagesRepo = new DrizzleLegalPageRepository(env);
   const sessionsRepo = new LuciaSessionRepository(env);
   const tokenGen = new DrizzleTokenGenerator(env);
 
@@ -110,7 +114,7 @@ export function buildContainer(env: Env) {
       list: new ListRestaurantsUseCase(restaurantsRepo, usersRepo),
       get: new GetRestaurantUseCase(restaurantsRepo),
       patch: new PatchRestaurantUseCase(restaurantsRepo, languagesRepo, rebuildHook),
-      discard: new DiscardChangesUseCase(restaurantsRepo),
+      discard: new DiscardChangesUseCase(restaurantsRepo, languagesRepo),
       delete: new DeleteRestaurantUseCase(restaurantsRepo)
     },
 
@@ -169,6 +173,12 @@ export function buildContainer(env: Env) {
       createCategory: new CreateWineCategoryUseCase(winesRepo),
       updateCategory: new UpdateWineCategoryUseCase(winesRepo),
       deleteCategory: new DeleteWineCategoryUseCase(winesRepo)
+    },
+
+    legalPages: {
+      list: new ListLegalPagesUseCase(legalPagesRepo, restaurantsRepo),
+      save: new SaveLegalPageUseCase(legalPagesRepo, restaurantsRepo),
+      delete: new DeleteLegalPageUseCase(legalPagesRepo, restaurantsRepo)
     },
 
     media: {

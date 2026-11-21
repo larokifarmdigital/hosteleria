@@ -13,6 +13,11 @@ export interface SpaceRow {
   descriptor: string;
   hero: unknown;
   manifesto: unknown;
+  gallery?: unknown;
+  scheduleTexts?: unknown;
+  address?: unknown;
+  mapUrl?: string | null;
+  bookingContact?: unknown;
   publishedSnapshot: unknown;
   schedule?: ScheduleDay[];
 }
@@ -31,6 +36,11 @@ export function rowToSpace(row: SpaceRow): Space {
     descriptor: row.descriptor,
     hero: (row.hero as Hero) ?? {},
     manifesto: (row.manifesto as Manifesto) ?? {},
+    gallery: (row.gallery as string[]) ?? [],
+    scheduleTexts: (row.scheduleTexts as Space['scheduleTexts']) ?? {},
+    address: (row.address as Space['address']) ?? {},
+    mapUrl: row.mapUrl ?? null,
+    bookingContact: (row.bookingContact as Space['bookingContact']) ?? {},
     schedule: row.schedule ?? [],
     publishedSnapshot: (row.publishedSnapshot as SpaceSnapshot | null) ?? null
   };

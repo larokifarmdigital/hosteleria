@@ -4,7 +4,18 @@ import { z } from 'zod';
 import { requireAuth, requireAdmin, requireRestaurant } from '../middleware/authMiddleware.js';
 import { cacheHeaders } from '../../../middleware/cache.js';
 import { restaurantToDto } from '../dto/restaurantDto.js';
-import { RestaurantNotFoundError } from '../../../domain/models/restaurant.js';
+import {
+  RestaurantNotFoundError,
+  restaurantMediaUses,
+  GROUP_FEATURE_ICONS,
+  PAYMENT_METHODS,
+  EXTRA_SERVICES,
+  UI_TEXT_KEYS,
+  type RestaurantContent
+} from '../../../domain/models/restaurant.js';
+import type { PatchRestaurantInput } from '../../../application/restaurants/patchRestaurantUseCase.js';
+import { assertMediaInRestaurant } from '../accessControl.js';
+import { addressSchema, i18nSchema, assetIdSchema } from '../schemas.js';
 import type { AppBindings } from '../types.js';
 
 export function createRestaurantsRoutes() {
@@ -29,7 +40,13 @@ export function createRestaurantsRoutes() {
   app.patch('/:slug', requireAuth, requireRestaurant('slug'), validate('json', patchSchema), async (c) => {
     const user = c.get('user')!;
     const slug = c.req.param('slug');
-    await c.get('container').restaurants.patch.execute(slug, c.req.valid('json'), user.id);
+    const body = c.req.valid('json');
+    const mediaIds = [...new Set(restaurantMediaUses(body as Partial<RestaurantContent>).map(u => u.assetId))];
+    if (mediaIds.length > 0) {
+      const current = await c.get('container').restaurants.get.execute(slug);
+      for (const id of mediaIds) await assertMediaInRestaurant(c, id, current.id);
+    }
+    await c.get('container').restaurants.patch.execute(slug, body as PatchRestaurantInput, user.id);
     const r = await c.get('container').restaurants.get.execute(slug);
     return c.json({ restaurant: restaurantToDto(r) });
   });
@@ -50,15 +67,6 @@ export function createRestaurantsRoutes() {
 
   return app;
 }
-
-const addressSchema = z.object({
-  street: z.string().optional(),
-  postalCode: z.string().optional(),
-  city: z.string().optional(),
-  province: z.string().optional(),
-  district: z.string().optional(),
-  country: z.string().optional()
-}).partial();
 
 const contactSchema = z.object({
   phone: z.string().optional(),
@@ -82,6 +90,14 @@ const createSchema = z.object({
   activeLocaleCodes: z.array(z.string().min(2).max(5)).min(1)
 });
 
+/** Identificador de un elemento de lista; lo pone el cliente para poder reordenar. */
+const itemIdSchema = z.string().min(1).max(40);
+
+function uiTextGroupSchema<G extends keyof typeof UI_TEXT_KEYS>(group: G) {
+  const shape = Object.fromEntries(UI_TEXT_KEYS[group].map(key => [key, i18nSchema.optional()]));
+  return z.object(shape).strict();
+}
+
 const patchSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   domain: z.string().min(1).max(255).optional(),
@@ -98,7 +114,66 @@ const patchSchema = z.object({
   timezone: z.string().min(1).max(64).optional(),
   rebuildHookUrl: z.string().url().nullable().optional(),
   seo: z.object({
-    title: z.record(z.string()).optional(),
-    description: z.record(z.string()).optional()
+    title: i18nSchema.optional(),
+    description: i18nSchema.optional(),
+    imageAssetId: assetIdSchema.optional()
+  }).optional(),
+  foundedYear: z.number().int().min(1500).max(2100).nullable().optional(),
+  branding: z.object({
+    logoAssetId: assetIdSchema.optional(),
+    faviconAssetId: assetIdSchema.optional(),
+    appIconAssetId: assetIdSchema.optional()
+  }).optional(),
+  homeBlocks: z.array(z.object({
+    id: itemIdSchema,
+    title: i18nSchema.optional(),
+    text: i18nSchema.optional(),
+    imageAssetId: assetIdSchema.optional(),
+    ctaText: i18nSchema.optional(),
+    ctaHref: z.string().max(500).optional()
+  })).max(12).optional(),
+  about: z.object({
+    eyebrow: i18nSchema.optional(),
+    title: i18nSchema.optional(),
+    body: i18nSchema.optional(),
+    imageAssetIds: z.array(assetIdSchema).max(12).optional()
+  }).optional(),
+  groups: z.object({
+    eyebrow: i18nSchema.optional(),
+    title: i18nSchema.optional(),
+    cta: i18nSchema.optional(),
+    imageAssetId: assetIdSchema.optional(),
+    highlights: z.array(z.object({ id: itemIdSchema, text: i18nSchema.optional() })).max(12).optional(),
+    features: z.array(z.object({
+      id: itemIdSchema,
+      icon: z.enum(GROUP_FEATURE_ICONS),
+      label: i18nSchema.optional(),
+      text: i18nSchema.optional()
+    })).max(12).optional()
+  }).optional(),
+  mapUrl: z.string().max(2000).nullable().optional(),
+  showReviews: z.boolean().optional(),
+  uiTexts: z.object({
+    nav: uiTextGroupSchema('nav').optional(),
+    sections: uiTextGroupSchema('sections').optional(),
+    form: uiTextGroupSchema('form').optional(),
+    footer: uiTextGroupSchema('footer').optional()
+  }).optional(),
+  faq: z.object({
+    eyebrow: i18nSchema.optional(),
+    title: i18nSchema.optional(),
+    titleAccent: i18nSchema.optional(),
+    items: z.array(z.object({
+      id: itemIdSchema,
+      question: i18nSchema.optional(),
+      answer: i18nSchema.optional()
+    })).max(40).optional()
+  }).optional(),
+  aiSummary: i18nSchema.optional(),
+  analyticsToken: z.string().max(200).nullable().optional(),
+  business: z.object({
+    averagePrice: z.number().min(0).max(10000).optional(),
+    paymentMethods: z.array(z.enum(PAYMENT_METHODS)).optional(),
+    extraServices: z.array(z.enum(EXTRA_SERVICES)).optional()
   }).optional()
 }).partial();

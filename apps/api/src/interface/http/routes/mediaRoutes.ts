@@ -84,17 +84,21 @@ export function createMediaRoutes() {
 
     const refs = await c.get('container').media.references.execute(id);
     // Con el nombre: el backoffice tiene que poder decir dónde se usa la foto.
-    const [dishes, spaces] = await Promise.all([
+    const spaceRefs = (kind: 'hero' | 'gallery') => Promise.all(refs.filter(r => r.kind === kind).map(async r => {
+      const space = await spacesRepo.findById(r.refId);
+      return { id: r.refId, name: space?.name ?? '' };
+    }));
+    const [dishes, spaces, galleries] = await Promise.all([
       Promise.all(refs.filter(r => r.kind === 'dish').map(async r => {
         const dish = await dishesRepo.findById(r.refId);
         return { id: r.refId, name: dish?.name ?? {} };
       })),
-      Promise.all(refs.filter(r => r.kind === 'hero').map(async r => {
-        const space = await spacesRepo.findById(r.refId);
-        return { id: r.refId, name: space?.name ?? '' };
-      }))
+      spaceRefs('hero'),
+      spaceRefs('gallery')
     ]);
-    return c.json({ dishes, spaces });
+    // `restaurant`: sitios de la ficha donde se usa (logo, sobre nosotros…).
+    const restaurant = refs.filter(r => r.kind === 'restaurant').map(r => r.use!);
+    return c.json({ dishes, spaces, galleries, restaurant });
   });
 
   app.delete('/:id', async (c) => {

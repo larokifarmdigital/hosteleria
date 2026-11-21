@@ -10,6 +10,7 @@ import { globalErrorHandler } from './interface/http/httpErrors.js';
 import { createAuthRoutes } from './interface/http/routes/authRoutes.js';
 import { createRestaurantsRoutes } from './interface/http/routes/restaurantsRoutes.js';
 import { createSpacesRoutes } from './interface/http/routes/spacesRoutes.js';
+import { createLegalPagesRoutes } from './interface/http/routes/legalPagesRoutes.js';
 import { createDishesRoutes } from './interface/http/routes/dishesRoutes.js';
 import { createWinesRoutes } from './interface/http/routes/winesRoutes.js';
 import { createLanguagesRoutes } from './interface/http/routes/languagesRoutes.js';
@@ -108,6 +109,7 @@ export function createApp() {
   app.route('/auth', createAuthRoutes());
   app.route('/restaurants', createRestaurantsRoutes());
   app.route('/restaurants/:slug/spaces', createSpacesRoutes());
+  app.route('/restaurants/:slug/legal-pages', createLegalPagesRoutes());
   app.route('/dishes', createDishesRoutes());
   app.route('/wines', createWinesRoutes());
   app.route('/languages', createLanguagesRoutes());

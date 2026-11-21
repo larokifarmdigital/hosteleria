@@ -1,31 +1,20 @@
 import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
 import type { LanguageRepository } from '../../domain/repositories/languageRepository.js';
 import type { RebuildHookCaller } from '../../domain/services/rebuildHookCaller.js';
-import type {
-  PublishState,
-  Address,
-  Contact,
-  Socials,
-  Seo,
-  RestaurantSnapshot
+import {
+  RESTAURANT_CONTENT_KEYS,
+  RestaurantNotFoundError,
+  restaurantTranslatableTexts,
+  type PublishState,
+  type Restaurant,
+  type RestaurantContent,
+  type RestaurantSnapshot
 } from '../../domain/models/restaurant.js';
-import { RestaurantNotFoundError } from '../../domain/models/restaurant.js';
 import { assertTranslationsComplete } from '../../domain/models/i18n.js';
 
-export interface PatchRestaurantInput {
-  name?: string;
-  domain?: string;
-  logoInitial?: string;
-  coverGradient?: string;
+export interface PatchRestaurantInput extends Partial<RestaurantContent> {
   state?: PublishState;
-  acceptsBookings?: boolean;
-  showSocials?: boolean;
-  timezone?: string;
   rebuildHookUrl?: string | null;
-  address?: Address;
-  contact?: Contact;
-  socials?: Socials;
-  seo?: Seo;
   defaultLocaleCode?: string;
   activeLocaleCodes?: string[];
 }
@@ -44,48 +33,30 @@ export class PatchRestaurantUseCase {
     const wasPublished = r.state === 'published';
     const willBePublished = input.state === 'published';
 
+    // El contenido tal como queda tras este PATCH: lo guardado más lo que llega.
+    const content = {} as Record<string, unknown>;
+    const patch: Partial<Restaurant> = {};
+    for (const key of RESTAURANT_CONTENT_KEYS) {
+      content[key] = input[key] !== undefined ? input[key] : r[key];
+      if (input[key] !== undefined) (patch as Record<string, unknown>)[key] = input[key];
+    }
+    const activeLocaleCodes = input.activeLocaleCodes ?? r.activeLocaleCodes;
+    const defaultLocaleCode = input.defaultLocaleCode ?? r.defaultLocaleCode;
+
     if (willBePublished) {
-      const seo = input.seo ?? r.seo;
-      assertTranslationsComplete(
-        { 'Título en Google': seo?.title, 'Descripción en Google': seo?.description },
-        input.activeLocaleCodes ?? r.activeLocaleCodes
-      );
+      assertTranslationsComplete(restaurantTranslatableTexts(content as RestaurantContent), activeLocaleCodes);
     }
 
-    const patch: Record<string, unknown> = {};
-    if (input.name !== undefined) patch.name = input.name;
-    if (input.domain !== undefined) patch.domain = input.domain;
-    if (input.logoInitial !== undefined) patch.logoInitial = input.logoInitial;
-    if (input.coverGradient !== undefined) patch.coverGradient = input.coverGradient;
-    if (input.acceptsBookings !== undefined) patch.acceptsBookings = input.acceptsBookings;
-    if (input.showSocials !== undefined) patch.showSocials = input.showSocials;
-    if (input.timezone !== undefined) patch.timezone = input.timezone;
     if (input.rebuildHookUrl !== undefined) patch.rebuildHookUrl = input.rebuildHookUrl;
-    if (input.address !== undefined) patch.address = input.address;
-    if (input.contact !== undefined) patch.contact = input.contact;
-    if (input.socials !== undefined) patch.socials = input.socials;
-    if (input.seo !== undefined) patch.seo = input.seo;
     if (input.state !== undefined) patch.state = input.state;
     if (input.defaultLocaleCode !== undefined) patch.defaultLocaleCode = input.defaultLocaleCode;
 
     await this.restaurants.update(r.id, patch, actorId);
 
-    // Snapshot al publicar: combina los campos actuales con los del body —
-    // es lo que `discardChanges` restaurará si el editor se arrepiente.
+    // Lo publicado: es lo que leerá la web y lo que `discardChanges`
+    // restaurará si el editor se arrepiente.
     if (willBePublished) {
-      const snapshot: RestaurantSnapshot = {
-        name: input.name ?? r.name,
-        domain: input.domain ?? r.domain,
-        logoInitial: input.logoInitial ?? r.logoInitial,
-        coverGradient: input.coverGradient ?? r.coverGradient,
-        timezone: input.timezone ?? r.timezone,
-        address: input.address ?? r.address,
-        contact: input.contact ?? r.contact,
-        socials: input.socials ?? r.socials,
-        seo: input.seo ?? r.seo,
-        acceptsBookings: input.acceptsBookings ?? r.acceptsBookings,
-        showSocials: input.showSocials ?? r.showSocials
-      };
+      const snapshot: RestaurantSnapshot = { ...(content as RestaurantContent), activeLocaleCodes, defaultLocaleCode };
       await this.restaurants.saveSnapshot(r.id, snapshot, new Date());
     }
 

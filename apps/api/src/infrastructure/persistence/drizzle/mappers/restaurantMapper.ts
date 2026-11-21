@@ -23,6 +23,18 @@ export interface RestaurantRow {
   contact: unknown;
   socials: unknown;
   seo: unknown;
+  foundedYear: number | null;
+  branding: unknown;
+  homeBlocks: unknown;
+  about: unknown;
+  groups: unknown;
+  mapUrl: string | null;
+  showReviews: boolean;
+  uiTexts: unknown;
+  faq: unknown;
+  aiSummary: unknown;
+  analyticsToken: string | null;
+  business: unknown;
   // La SQL cruda del repo devuelve el timestamp como string; `findFirst` lo da como Date.
   lastPublishedAt: Date | string | null;
   publishedSnapshot: unknown;
@@ -50,6 +62,18 @@ export function rowToRestaurant(row: RestaurantRow): Restaurant {
     contact: (row.contact as any) ?? {},
     socials: (row.socials as any) ?? {},
     seo: (row.seo as any) ?? {},
+    foundedYear: row.foundedYear ?? null,
+    branding: (row.branding as any) ?? {},
+    homeBlocks: (row.homeBlocks as any) ?? [],
+    about: (row.about as any) ?? {},
+    groups: (row.groups as any) ?? {},
+    mapUrl: row.mapUrl ?? null,
+    showReviews: row.showReviews ?? false,
+    uiTexts: (row.uiTexts as any) ?? {},
+    faq: (row.faq as any) ?? {},
+    aiSummary: (row.aiSummary as any) ?? {},
+    analyticsToken: row.analyticsToken ?? null,
+    business: (row.business as any) ?? {},
     lastPublishedAt: row.lastPublishedAt ? new Date(row.lastPublishedAt) : null,
     publishedSnapshot: (row.publishedSnapshot as RestaurantSnapshot | null) ?? null,
     spacesCount: row.spacesCount,

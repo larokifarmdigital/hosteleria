@@ -5,6 +5,8 @@ import { HTTPException } from 'hono/http-exception';
 import { requireAuth, requireRestaurant } from '../middleware/authMiddleware.js';
 import { assertMediaInRestaurant } from '../accessControl.js';
 import { spaceToDto } from '../dto/spaceDto.js';
+import { spaceMediaIds } from '../../../domain/models/space.js';
+import { addressSchema, i18nSchema, assetIdSchema } from '../schemas.js';
 import type { AppBindings } from '../types.js';
 
 export function createSpacesRoutes() {
@@ -42,7 +44,7 @@ export function createSpacesRoutes() {
     const user = c.get('user')!;
     const restaurantId = await resolveRestaurantId(c);
     const body = c.req.valid('json');
-    if (body.hero?.imageAssetId) await assertMediaInRestaurant(c, body.hero.imageAssetId, restaurantId);
+    for (const id of new Set(spaceMediaIds(body))) await assertMediaInRestaurant(c, id, restaurantId);
     const s = await c.get('container').spaces.patch.execute(
       restaurantId, c.req.param('spaceId'), body, user.id
     );
@@ -65,8 +67,6 @@ export function createSpacesRoutes() {
 
   return app;
 }
-
-const i18nSchema = z.record(z.string());
 
 const heroSchema = z.object({
   title: i18nSchema.optional(),
@@ -112,5 +112,20 @@ const patchSchema = z.object({
   state: z.enum(['published', 'draft', 'warnings', 'new']).optional(),
   hero: heroSchema.optional(),
   manifesto: manifestoSchema.optional(),
-  schedule: scheduleSchema.optional()
+  schedule: scheduleSchema.optional(),
+  gallery: z.array(assetIdSchema).max(60).optional(),
+  scheduleTexts: z.object({
+    title: i18nSchema.optional(),
+    text: i18nSchema.optional(),
+    open: i18nSchema.optional(),
+    nextOpening: i18nSchema.optional(),
+    closed: i18nSchema.optional()
+  }).optional(),
+  address: addressSchema.optional(),
+  mapUrl: z.string().max(2000).nullable().optional(),
+  bookingContact: z.object({
+    phone: z.string().max(40).optional(),
+    whatsapp: z.string().max(40).optional(),
+    email: z.string().email().optional().or(z.literal(''))
+  }).optional()
 }).partial();

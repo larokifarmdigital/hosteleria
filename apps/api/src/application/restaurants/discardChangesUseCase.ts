@@ -1,29 +1,36 @@
 import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
-import { RestaurantNotFoundError, NoSnapshotError } from '../../domain/models/restaurant.js';
+import type { LanguageRepository } from '../../domain/repositories/languageRepository.js';
+import {
+  RESTAURANT_CONTENT_KEYS,
+  RestaurantNotFoundError,
+  NoSnapshotError,
+  type Restaurant
+} from '../../domain/models/restaurant.js';
 
 export class DiscardChangesUseCase {
-  constructor(private readonly restaurants: RestaurantRepository) {}
+  constructor(
+    private readonly restaurants: RestaurantRepository,
+    private readonly languages: LanguageRepository
+  ) {}
 
   async execute(slug: string, actorId: string): Promise<{ id: string }> {
     const r = await this.restaurants.findBySlug(slug);
     if (!r) throw new RestaurantNotFoundError(slug);
     if (!r.publishedSnapshot) throw new NoSnapshotError();
 
+    // Lo que el snapshot no trae (campos añadidos después de publicar) se
+    // deja como está.
     const snap = r.publishedSnapshot;
-    await this.restaurants.update(r.id, {
-      name: snap.name ?? r.name,
-      domain: snap.domain ?? r.domain,
-      logoInitial: snap.logoInitial ?? r.logoInitial,
-      coverGradient: snap.coverGradient ?? r.coverGradient,
-      timezone: snap.timezone ?? r.timezone,
-      address: snap.address ?? r.address,
-      contact: snap.contact ?? r.contact,
-      socials: snap.socials ?? r.socials,
-      seo: snap.seo ?? r.seo,
-      acceptsBookings: snap.acceptsBookings ?? r.acceptsBookings,
-      showSocials: snap.showSocials ?? r.showSocials,
-      state: 'published'
-    }, actorId);
+    const patch: Partial<Restaurant> = { state: 'published' };
+    for (const key of RESTAURANT_CONTENT_KEYS) {
+      if (key in snap && snap[key] !== undefined) (patch as Record<string, unknown>)[key] = snap[key];
+    }
+    if (snap.defaultLocaleCode) patch.defaultLocaleCode = snap.defaultLocaleCode;
+    await this.restaurants.update(r.id, patch, actorId);
+
+    if (snap.activeLocaleCodes?.length) {
+      await this.restaurants.replaceLocales(r.id, await this.languages.resolveCodes(snap.activeLocaleCodes));
+    }
 
     return { id: r.id };
   }

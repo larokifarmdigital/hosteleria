@@ -36,7 +36,7 @@ type AddressJson = {
 };
 type ContactJson = { phone?: string; whatsapp?: string; email?: string; web?: string };
 type SocialsJson = { instagram?: string; facebook?: string; tiktok?: string };
-type SeoJson = { title?: I18nValue; description?: I18nValue };
+type SeoJson = { title?: I18nValue; description?: I18nValue; imageAssetId?: string };
 
 export const restaurants = pgTable('restaurants', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
@@ -60,6 +60,19 @@ export const restaurants = pgTable('restaurants', {
   contact: jsonb('contact').$type<ContactJson>().default({}),
   socials: jsonb('socials').$type<SocialsJson>().default({}),
   seo: jsonb('seo').$type<SeoJson>().default({}),
+  // Las formas de estos jsonb están en `domain/models/restaurant.ts`.
+  foundedYear: integer('founded_year'),
+  branding: jsonb('branding').default({}),
+  homeBlocks: jsonb('home_blocks').default([]),
+  about: jsonb('about').default({}),
+  groups: jsonb('groups').default({}),
+  mapUrl: text('map_url'),
+  showReviews: boolean('show_reviews').notNull().default(false),
+  uiTexts: jsonb('ui_texts').default({}),
+  faq: jsonb('faq').default({}),
+  aiSummary: i18nText('ai_summary'),
+  analyticsToken: text('analytics_token'),
+  business: jsonb('business').default({}),
   lastPublishedAt: timestamp('last_published_at', { withTimezone: true }),
   publishedSnapshot: jsonb('published_snapshot'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -111,6 +124,11 @@ export const spaces = pgTable(
     descriptor: text('descriptor').notNull().default(''),
     hero: jsonb('hero').$type<HeroJson>().default({}),
     manifesto: jsonb('manifesto').$type<ManifestoJson>().default({}),
+    gallery: jsonb('gallery').$type<string[]>().default([]),
+    scheduleTexts: jsonb('schedule_texts').default({}),
+    address: jsonb('address').$type<AddressJson>().default({}),
+    mapUrl: text('map_url'),
+    bookingContact: jsonb('booking_contact').default({}),
     publishedSnapshot: jsonb('published_snapshot'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -136,6 +154,27 @@ export const spaceSchedule = pgTable('space_schedule', {
 }, (t) => ({
   spaceDayIdx: index('space_schedule_space_day_idx').on(t.spaceId, t.day)
 }));
+
+/** Aviso legal, privacidad y cookies. Como la carta, no tienen borrador. */
+export const legalPages = pgTable(
+  'legal_pages',
+  {
+    id: text('id').primaryKey().$defaultFn(() => createId()),
+    restaurantId: text('restaurant_id')
+      .notNull()
+      .references(() => restaurants.id, { onDelete: 'cascade' }),
+    type: text('type').notNull(), // 'legal-notice' | 'privacy' | 'cookies'
+    title: i18nString('title'),
+    /** Markdown por idioma. */
+    content: i18nText('content'),
+    lastUpdated: text('last_updated'), // "YYYY-MM-DD"
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedBy: text('updated_by')
+  },
+  (t) => ({
+    typePerRestaurant: unique('legal_pages_type_per_restaurant').on(t.restaurantId, t.type)
+  })
+);
 
 export const dishCategories = pgTable('dish_categories', {
   id: text('id').primaryKey().$defaultFn(() => createId()),

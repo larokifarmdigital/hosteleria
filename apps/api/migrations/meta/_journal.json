@@ -71,6 +71,13 @@
       "when": 1795251992041,
       "tag": "0009_burly_may_parker",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795274571972,
+      "tag": "0010_soft_gorgon",
+      "breakpoints": true
     }
   ]
 }

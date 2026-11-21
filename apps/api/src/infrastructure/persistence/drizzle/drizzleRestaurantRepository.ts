@@ -2,7 +2,7 @@ import { sql, eq } from 'drizzle-orm';
 import { getDb } from './client.js';
 import { restaurants, restaurantLocales, languages } from './schema/content.js';
 import type { Restaurant, RestaurantSnapshot } from '../../../domain/models/restaurant.js';
-import { UnknownLocaleError } from '../../../domain/models/restaurant.js';
+import { UnknownLocaleError, RESTAURANT_CONTENT_KEYS } from '../../../domain/models/restaurant.js';
 import { SlugTakenError } from '../../../domain/models/restaurant.js';
 import type { RestaurantRepository } from '../../../domain/repositories/restaurantRepository.js';
 import type { Env } from '../../../env.js';
@@ -29,6 +29,14 @@ export class DrizzleRestaurantRepository implements RestaurantRepository {
         r.accepts_bookings AS "acceptsBookings",
         r.show_socials AS "showSocials",
         r.address, r.contact, r.socials, r.seo,
+        r.founded_year AS "foundedYear",
+        r.branding, r.about, r.groups, r.faq, r.business,
+        r.home_blocks AS "homeBlocks",
+        r.map_url AS "mapUrl",
+        r.show_reviews AS "showReviews",
+        r.ui_texts AS "uiTexts",
+        r.ai_summary AS "aiSummary",
+        r.analytics_token AS "analyticsToken",
         r.last_published_at AS "lastPublishedAt",
         r.published_snapshot AS "publishedSnapshot",
         dl.code AS "defaultLocaleCode",
@@ -112,19 +120,12 @@ export class DrizzleRestaurantRepository implements RestaurantRepository {
       updatedAt: new Date(),
       updatedBy: actorId
     };
-    if (patch.name !== undefined) updates.name = patch.name;
-    if (patch.domain !== undefined) updates.domain = patch.domain;
-    if (patch.logoInitial !== undefined) updates.logoInitial = patch.logoInitial;
-    if (patch.coverGradient !== undefined) updates.coverGradient = patch.coverGradient;
+    // Las columnas de contenido se llaman igual que en el dominio.
+    for (const key of RESTAURANT_CONTENT_KEYS) {
+      if (patch[key] !== undefined) (updates as Record<string, unknown>)[key] = patch[key];
+    }
     if (patch.state !== undefined) updates.state = patch.state;
-    if (patch.acceptsBookings !== undefined) updates.acceptsBookings = patch.acceptsBookings;
-    if (patch.showSocials !== undefined) updates.showSocials = patch.showSocials;
-    if (patch.timezone !== undefined) updates.timezone = patch.timezone;
     if (patch.rebuildHookUrl !== undefined) updates.rebuildHookUrl = patch.rebuildHookUrl;
-    if (patch.address !== undefined) updates.address = patch.address;
-    if (patch.contact !== undefined) updates.contact = patch.contact;
-    if (patch.socials !== undefined) updates.socials = patch.socials;
-    if (patch.seo !== undefined) updates.seo = patch.seo;
     if (patch.lastPublishedAt !== undefined) updates.lastPublishedAt = patch.lastPublishedAt;
 
     // El puerto trabaja con `defaultLocaleCode`; aquí lo traducimos al id FK.

@@ -1,7 +1,7 @@
 import { eq, and, ne, asc, count } from 'drizzle-orm';
 import { getDb } from './client.js';
 import { spaces, spaceSchedule, restaurants } from './schema/content.js';
-import type { Space, SpaceSnapshot, ScheduleDay } from '../../../domain/models/space.js';
+import { SPACE_CONTENT_KEYS, type Space, type SpaceSnapshot, type ScheduleDay } from '../../../domain/models/space.js';
 import type { SpaceRepository } from '../../../domain/repositories/spaceRepository.js';
 import type { Env } from '../../../env.js';
 import { rowToSpace } from './mappers/spaceMapper.js';
@@ -87,15 +87,14 @@ export class DrizzleSpaceRepository implements SpaceRepository {
       updatedAt: new Date(),
       updatedBy: actorId
     };
-    if (patch.name !== undefined) updates.name = patch.name;
+    // Las columnas de contenido se llaman igual que en el dominio.
+    for (const key of SPACE_CONTENT_KEYS) {
+      if (patch[key] !== undefined) (updates as Record<string, unknown>)[key] = patch[key];
+    }
     if (patch.type !== undefined) updates.type = patch.type;
-    if (patch.descriptor !== undefined) updates.descriptor = patch.descriptor;
     if (patch.isDefault !== undefined) updates.isDefault = patch.isDefault;
     if (patch.order !== undefined) updates.order = patch.order;
-    if (patch.coverGradient !== undefined) updates.coverGradient = patch.coverGradient;
     if (patch.state !== undefined) updates.state = patch.state;
-    if (patch.hero !== undefined) updates.hero = patch.hero;
-    if (patch.manifesto !== undefined) updates.manifesto = patch.manifesto;
 
     await this.db.update(spaces).set(updates).where(eq(spaces.id, id));
   }
