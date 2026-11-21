@@ -6,3 +6,4 @@ export * from './wines';
 export * from './languages';
 export * from './users';
 export * from './media';
+export * from './menu';

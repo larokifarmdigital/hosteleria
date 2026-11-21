@@ -19,6 +19,16 @@ export const TextArea = forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttrib
   }
 );
 
+export const Select = forwardRef<HTMLSelectElement, React.SelectHTMLAttributes<HTMLSelectElement>>(
+  function Select({ className, children, ...props }, ref) {
+    return (
+      <select ref={ref} {...props} className={cn(BASE, 'min-h-11 cursor-pointer py-2.5', className)}>
+        {children}
+      </select>
+    );
+  }
+);
+
 interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
   label: string;
   hint?: string;

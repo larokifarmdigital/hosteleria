@@ -1,55 +1,311 @@
 'use client';
 
+import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Plus } from 'lucide-react';
+import { CategoryDialog } from '@/components/menu/CategoryDialog';
+import { DishSheet } from '@/components/menu/DishSheet';
+import { MenuList, type MenuRow } from '@/components/menu/MenuList';
+import { WineSheet } from '@/components/menu/WineSheet';
+import { categoryLabel, type MenuCategory, type MenuKind, type MenuScope } from '@/components/menu/types';
+import { Button } from '@/components/shared/Button';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { LocaleChips } from '@/components/shared/LocaleChip';
-import { QueryBoundary } from '@/components/shared/QueryBoundary';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { Pill } from '@/components/shared/Pill';
-import { Table, Td } from '@/components/shared/Table';
-import { useDishes } from '@/lib/query/hooks';
+import { QueryBoundary } from '@/components/shared/QueryBoundary';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Field } from '@/components/ui/Field';
+import { Select, TextInput } from '@/components/ui/inputs';
+import { showSuccessToast } from '@/lib/api';
+import { formatPrice } from '@/lib/forms/price';
+import { cn } from '@/lib/utils';
+import {
+  useDeleteDishCategory, useDeleteWineCategory, useDishCategories, useDishes, useLanguages, useRestaurants,
+  useSetDishActive, useSetWineActive, useSpaces, useWineCategories, useWines
+} from '@/lib/query/hooks';
 
-const COLUMNS = [
-  { label: 'Plato' },
-  { label: 'Restaurante' },
-  { label: 'Categoría' },
-  { label: 'Idiomas' },
-  { label: 'Precio' },
-  { label: 'Estado' }
-];
+type Visibility = 'all' | 'visible' | 'hidden' | 'missing';
+type Editing = { type: 'item'; id: string | null; categoryId?: string } | { type: 'category'; category: MenuCategory | null } | null;
 
-const price = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
+const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 export function DishesPageClient() {
-  const dishesQuery = useDishes();
-  const dishes = dishesQuery.data ?? [];
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+
+  const restaurantsQuery = useRestaurants();
+  const restaurants = restaurantsQuery.data ?? [];
+  const restaurant = restaurants.find(r => r.slug === params.get('r')) ?? restaurants[0];
+  const slug = restaurant?.slug ?? '';
+
+  const spacesQuery = useSpaces(slug);
+  const spaces = spacesQuery.data ?? [];
+  const space = spaces.find(s => s.id === params.get('e')) ?? spaces.find(s => s.isDefault) ?? spaces[0];
+  const spaceId = space?.id ?? '';
+
+  const kind: MenuKind = params.get('tipo') === 'vinos' ? 'wines' : 'dishes';
+
+  const dishesQuery = useDishes({ restaurantSlug: slug });
+  const winesQuery = useWines({ restaurantSlug: slug });
+  const dishCategoriesQuery = useDishCategories(spaceId || undefined);
+  const wineCategoriesQuery = useWineCategories(spaceId || undefined);
+  const { data: languages = [] } = useLanguages();
+
+  const setDishActive = useSetDishActive();
+  const setWineActive = useSetWineActive();
+  const deleteDishCategory = useDeleteDishCategory();
+  const deleteWineCategory = useDeleteWineCategory();
+
+  const [search, setSearch] = useState('');
+  const [visibility, setVisibility] = useState<Visibility>('all');
+  const [editing, setEditing] = useState<Editing>(null);
+  const [deleting, setDeleting] = useState<MenuCategory | null>(null);
+
+  const locales = (restaurant?.activeLocales ?? []) as string[];
+  const defaultLocale = (restaurant?.defaultLocale ?? 'es') as string;
+  const localeNames = useMemo(() => Object.fromEntries(languages.map(l => [l.code as string, l.name])), [languages]);
+  const scope: MenuScope = { spaceId, locales, defaultLocale, localeNames };
+
+  const dishes = useMemo(() => (dishesQuery.data ?? []).filter(d => d.spaceId === spaceId), [dishesQuery.data, spaceId]);
+  const wines = useMemo(() => (winesQuery.data ?? []).filter(w => w.spaceId === spaceId), [winesQuery.data, spaceId]);
+
+  const categories: MenuCategory[] = useMemo(
+    () => [...((kind === 'dishes' ? dishCategoriesQuery.data : wineCategoriesQuery.data) ?? [])].sort((a, b) => a.order - b.order),
+    [kind, dishCategoriesQuery.data, wineCategoriesQuery.data]
+  );
+
+  const allRows: MenuRow[] = useMemo(() => {
+    const missingOf = (filled: string[]) => locales.filter(code => !filled.includes(code));
+    if (kind === 'dishes') {
+      return [...dishes].sort((a, b) => a.order - b.order).map(d => ({
+        id: d.id,
+        categoryId: d.categoryId,
+        name: d.name[defaultLocale] ?? Object.values(d.name).find(Boolean) ?? 'Sin nombre',
+        detail: d.note?.[defaultLocale],
+        price: d.price !== null ? formatPrice(d.price) : 'Sin precio',
+        active: d.active,
+        missing: missingOf(d.localesFilled as string[])
+      }));
+    }
+    return [...wines].sort((a, b) => a.order - b.order).map(w => ({
+      id: w.id,
+      categoryId: w.categoryId,
+      name: w.name,
+      detail: w.region ?? undefined,
+      price: [w.priceGlass !== null ? `${formatPrice(w.priceGlass)} copa` : null, w.priceBottle !== null ? `${formatPrice(w.priceBottle)} botella` : null]
+        .filter(Boolean).join(' · ') || 'Sin precio',
+      active: w.active,
+      // El nombre de un vino no se traduce: aquí no hay traducciones pendientes que avisar.
+      missing: []
+    }));
+  }, [kind, dishes, wines, locales, defaultLocale]);
+
+  const totals = useMemo(() => {
+    const out: Record<string, number> = {};
+    allRows.forEach(r => { out[r.categoryId] = (out[r.categoryId] ?? 0) + 1; });
+    return out;
+  }, [allRows]);
+
+  const filtering = search.trim() !== '' || visibility !== 'all';
+  const rows = allRows.filter(r => {
+    if (search.trim() && !normalize(r.name).includes(normalize(search.trim()))) return false;
+    if (visibility === 'visible') return r.active;
+    if (visibility === 'hidden') return !r.active;
+    if (visibility === 'missing') return r.missing.length > 0;
+    return true;
+  });
+
+  const setParam = (changes: Record<string, string | null>) => {
+    const next = new URLSearchParams(params.toString());
+    Object.entries(changes).forEach(([k, v]) => (v === null ? next.delete(k) : next.set(k, v)));
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
+  const tabHref = (tipo: MenuKind) => {
+    const next = new URLSearchParams(params.toString());
+    if (tipo === 'wines') next.set('tipo', 'vinos'); else next.delete('tipo');
+    const qs = next.toString();
+    return qs ? `${pathname}?${qs}` : pathname;
+  };
+
+  const itemNoun = kind === 'dishes' ? 'plato' : 'vino';
+  const editingItem = editing?.type === 'item' ? editing : null;
+  const nextItemOrder = (categoryId?: string) => allRows.filter(r => r.categoryId === categoryId).length;
 
   return (
     <>
-      <PageHeader title="Carta">Los platos de todos tus restaurantes.</PageHeader>
+      <PageHeader title="Carta">Los platos y vinos de cada espacio, agrupados por categoría.</PageHeader>
 
-      <QueryBoundary queries={[dishesQuery]}>
-      {dishes.length === 0 ? (
-        <EmptyState title="Todavía no hay platos en la carta" />
-      ) : (
-        <Table caption="Platos" columns={COLUMNS}>
-          {dishes.map(d => (
-            <tr key={d.id}>
-              <Td>
-                <strong className="font-semibold text-[color:var(--color-ink)]">
-                  {d.name.es ?? Object.values(d.name)[0] ?? 'Sin nombre'}
-                </strong>
-              </Td>
-              <Td className="text-[color:var(--color-ink-soft)]">{d.restaurantName}</Td>
-              <Td><Pill>{d.categoryName}</Pill></Td>
-              <Td><LocaleChips codes={d.localesFilled} /></Td>
-              <Td className="tabular whitespace-nowrap font-semibold text-[color:var(--color-ink)]">
-                {d.price !== null ? price.format(d.price) : <span className="font-normal text-[color:var(--color-muted)]">Sin precio</span>}
-              </Td>
-              <Td>{d.active ? <Pill variant="ok" dot>Visible</Pill> : <Pill dot>Oculto</Pill>}</Td>
-            </tr>
-          ))}
-        </Table>
-      )}
+      <QueryBoundary queries={[restaurantsQuery, spacesQuery]}>
+        {!restaurant ? (
+          <EmptyState title="Todavía no tienes ningún restaurante asignado">Pide a un administrador que te dé acceso al tuyo.</EmptyState>
+        ) : (
+          <>
+            {(restaurants.length > 1 || spaces.length > 1) && (
+              <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:max-w-[640px]">
+                {restaurants.length > 1 && (
+                  <Field id="carta-restaurante" label="Restaurante">
+                    {control => (
+                      <Select {...control} value={slug} onChange={e => setParam({ r: e.target.value, e: null })}>
+                        {restaurants.map(r => <option key={r.id} value={r.slug}>{r.name}</option>)}
+                      </Select>
+                    )}
+                  </Field>
+                )}
+                {spaces.length > 1 && (
+                  <Field id="carta-espacio" label="Espacio">
+                    {control => (
+                      <Select {...control} value={spaceId} onChange={e => setParam({ e: e.target.value })}>
+                        {spaces.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </Select>
+                    )}
+                  </Field>
+                )}
+              </div>
+            )}
+
+            {!space ? (
+              <EmptyState title={`${restaurant.name} aún no tiene espacios`}>
+                La carta se organiza por espacio. Cuando exista uno, podrás añadir aquí sus platos y vinos.
+              </EmptyState>
+            ) : (
+              <>
+                <nav aria-label="Tipo de carta" className="mb-5 border-b border-[color:var(--color-border)]">
+                  <ul className="m-0 flex list-none gap-1 p-0">
+                    {([['dishes', 'Platos', dishes.length], ['wines', 'Vinos', wines.length]] as const).map(([tipo, label, count]) => (
+                      <li key={tipo}>
+                        <Link
+                          href={tabHref(tipo)}
+                          replace
+                          scroll={false}
+                          aria-current={kind === tipo ? 'page' : undefined}
+                          className={cn(
+                            '-mb-px inline-flex min-h-11 items-center gap-1.5 border-b-2 px-4 text-[14px] font-semibold transition-colors',
+                            kind === tipo
+                              ? 'border-[color:var(--color-accent)] text-[color:var(--color-accent)]'
+                              : 'border-transparent text-[color:var(--color-muted)] hover:text-[color:var(--color-ink)]'
+                          )}
+                        >
+                          {label}
+                          <span className="tabular text-[12.5px] font-medium text-[color:var(--color-muted)]">{count}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+
+                <QueryBoundary queries={kind === 'dishes' ? [dishesQuery, dishCategoriesQuery] : [winesQuery, wineCategoriesQuery]}>
+                  {categories.length === 0 ? (
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-full">
+                        <EmptyState title={kind === 'dishes' ? 'Esta carta aún no tiene categorías' : 'Esta carta de vinos aún no tiene categorías'}>
+                          Empieza creando una, por ejemplo {kind === 'dishes' ? '«Entrantes»' : '«Tintos»'}. Después podrás añadir {kind === 'dishes' ? 'platos' : 'vinos'} dentro.
+                        </EmptyState>
+                      </div>
+                      <Button variant="primary" onClick={() => setEditing({ type: 'category', category: null })}>
+                        <Plus aria-hidden className="h-4 w-4" />
+                        Añadir categoría
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mb-5 flex flex-wrap items-end gap-4">
+                        <Field id="carta-buscar" label={`Buscar ${itemNoun}`} className="min-w-[200px] flex-1 sm:max-w-[320px]">
+                          {control => <TextInput {...control} type="search" autoComplete="off" value={search} onChange={e => setSearch(e.target.value)} />}
+                        </Field>
+                        <Field id="carta-mostrar" label="Mostrar" className="min-w-[180px]">
+                          {control => (
+                            <Select {...control} value={visibility} onChange={e => setVisibility(e.target.value as Visibility)}>
+                              <option value="all">Todos</option>
+                              <option value="visible">Solo visibles</option>
+                              <option value="hidden">Solo ocultos</option>
+                              {kind === 'dishes' && locales.length > 1 && <option value="missing">Con traducción pendiente</option>}
+                            </Select>
+                          )}
+                        </Field>
+                        <div className="ml-auto flex gap-2.5">
+                          <Button onClick={() => setEditing({ type: 'category', category: null })}>
+                            <Plus aria-hidden className="h-4 w-4" />
+                            Añadir categoría
+                          </Button>
+                          <Button variant="primary" onClick={() => setEditing({ type: 'item', id: null })}>
+                            <Plus aria-hidden className="h-4 w-4" />
+                            Añadir {itemNoun}
+                          </Button>
+                        </div>
+                      </div>
+
+                      <p role="status" className={filtering ? 'mb-3 mt-0 text-[13.5px] text-[color:var(--color-muted)]' : 'sr-only'}>
+                        {filtering ? (rows.length === 1 ? '1 resultado' : `${rows.length} resultados`) : ''}
+                      </p>
+
+                      {filtering && rows.length === 0 ? (
+                        <EmptyState title="Nada coincide con lo que buscas">Prueba con otro nombre o cambia el filtro «Mostrar».</EmptyState>
+                      ) : (
+                        <MenuList
+                          categories={categories}
+                          rows={rows}
+                          totals={totals}
+                          filtering={filtering}
+                          defaultLocale={defaultLocale}
+                          itemNoun={itemNoun}
+                          onAdd={categoryId => setEditing({ type: 'item', id: null, categoryId })}
+                          onEdit={id => setEditing({ type: 'item', id })}
+                          onToggle={(id, active) => (kind === 'dishes' ? setDishActive : setWineActive).mutate({ id, active })}
+                          onRenameCategory={category => setEditing({ type: 'category', category })}
+                          onDeleteCategory={setDeleting}
+                        />
+                      )}
+                    </>
+                  )}
+                </QueryBoundary>
+
+                {editingItem && kind === 'dishes' && (
+                  <DishSheet
+                    key={editingItem.id ?? 'nuevo'}
+                    scope={scope}
+                    categories={dishCategoriesQuery.data ?? []}
+                    dish={editingItem.id ? dishes.find(d => d.id === editingItem.id) ?? null : null}
+                    initialCategoryId={editingItem.categoryId}
+                    nextOrder={nextItemOrder(editingItem.categoryId ?? categories[0]?.id)}
+                    onClose={() => setEditing(null)}
+                  />
+                )}
+                {editingItem && kind === 'wines' && (
+                  <WineSheet
+                    key={editingItem.id ?? 'nuevo'}
+                    scope={scope}
+                    categories={wineCategoriesQuery.data ?? []}
+                    wine={editingItem.id ? wines.find(w => w.id === editingItem.id) ?? null : null}
+                    initialCategoryId={editingItem.categoryId}
+                    nextOrder={nextItemOrder(editingItem.categoryId ?? categories[0]?.id)}
+                    onClose={() => setEditing(null)}
+                  />
+                )}
+                {editing?.type === 'category' && (
+                  <CategoryDialog kind={kind} scope={scope} category={editing.category} nextOrder={categories.length} onClose={() => setEditing(null)} />
+                )}
+                <ConfirmDialog
+                  open={!!deleting}
+                  onOpenChange={open => { if (!open) setDeleting(null); }}
+                  title={deleting ? `¿Eliminar la categoría «${categoryLabel(deleting, defaultLocale)}»?` : ''}
+                  confirmLabel="Sí, eliminar"
+                  pendingLabel="Eliminando…"
+                  pending={deleteDishCategory.isPending || deleteWineCategory.isPending}
+                  onConfirm={() => {
+                    if (!deleting) return;
+                    (kind === 'dishes' ? deleteDishCategory : deleteWineCategory)
+                      .mutateAsync(deleting.id)
+                      .then(() => { showSuccessToast('Categoría eliminada'); setDeleting(null); }, () => {});
+                  }}
+                >
+                  <p className="m-0">Está vacía, así que no se pierde ningún {itemNoun}. No se puede deshacer.</p>
+                </ConfirmDialog>
+              </>
+            )}
+          </>
+        )}
       </QueryBoundary>
     </>
   );

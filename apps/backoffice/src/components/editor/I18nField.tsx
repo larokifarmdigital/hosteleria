@@ -15,6 +15,9 @@ interface Props {
   multiline?: boolean;
   /** Longitud recomendada: muestra contador, no bloquea. */
   recommendedMax?: number;
+  /** Error a mostrar y en qué idioma: solo el control de ese idioma lo enseña. */
+  error?: string;
+  errorFor?: string;
   className?: string;
 }
 
@@ -22,7 +25,7 @@ interface Props {
  * Un control por idioma; solo se ve el del idioma activo. Los demás siguen
  * montados (ocultos) para que el formulario conserve y valide sus valores.
  */
-export function I18nField({ name, label, hint, locales, activeLocale, localeNames, multiline, recommendedMax, className }: Props) {
+export function I18nField({ name, label, hint, locales, activeLocale, localeNames, multiline, recommendedMax, error, errorFor, className }: Props) {
   const { register, control } = useFormContext();
   const values = (useWatch({ control, name }) ?? {}) as Record<string, string>;
 
@@ -38,6 +41,7 @@ export function I18nField({ name, label, hint, locales, activeLocale, localeName
               label={label}
               labelSuffix={localeNames[code] ?? code}
               hint={hint}
+              error={code === errorFor ? error : undefined}
               count={recommendedMax ? { value: length, max: recommendedMax } : undefined}
             >
               {control =>
