@@ -26,6 +26,8 @@ export function useTranslationStatus<T extends FieldValues>({ control, fields, l
   }));
 
   return {
+    /** Campos con traducción pendiente y los idiomas que les faltan. */
+    gaps,
     blockers,
     /** Nº de textos que faltan en cada idioma. */
     byLocale: gapsByLocale(gaps),

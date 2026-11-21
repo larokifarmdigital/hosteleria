@@ -7,3 +7,4 @@ export * from './languages';
 export * from './users';
 export * from './media';
 export * from './menu';
+export * from './legalPages';

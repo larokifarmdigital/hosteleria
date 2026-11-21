@@ -19,6 +19,10 @@ export const qk = {
     detail: (restaurantSlug: string, spaceId: string) =>
       [...qk.spaces.all, 'detail', restaurantSlug, spaceId] as const
   },
+  legalPages: {
+    all: ['legalPages'] as const,
+    byRestaurant: (restaurantSlug: string) => [...qk.legalPages.all, restaurantSlug] as const
+  },
   dishes: {
     all: ['dishes'] as const,
     list: (filters?: { restaurantSlug?: string; categoryId?: string; missingLocale?: string }) =>

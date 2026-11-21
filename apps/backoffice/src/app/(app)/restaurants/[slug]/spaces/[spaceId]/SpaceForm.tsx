@@ -11,14 +11,15 @@ import { SaveBar } from '@/components/editor/SaveBar';
 import { TranslationBadge } from '@/components/editor/TranslationBadge';
 import { ScheduleEditor } from '@/components/editor/ScheduleEditor';
 import { ImageField } from '@/components/media/ImageField';
+import { ImageListField } from '@/components/media/ImageListField';
 import { Section } from '@/components/shared/Section';
 import { LocaleTabs } from '@/components/space/LocaleTabs';
 import { Field } from '@/components/ui/Field';
-import { TextInput } from '@/components/ui/inputs';
+import { TextArea, TextInput } from '@/components/ui/inputs';
 import { showSuccessToast } from '@/lib/api';
 import { countErrors } from '@/lib/forms/errors';
-import { i18nFromForm, i18nToForm, sameContent } from '@/lib/forms/i18n';
-import { i18nValues, optionalText, requiredText } from '@/lib/forms/rules';
+import { compact, i18nFromForm, i18nToForm, sameContent } from '@/lib/forms/i18n';
+import { i18nValues, optionalEmail, optionalMap, optionalText, requiredText } from '@/lib/forms/rules';
 import { scheduleForCompare, scheduleSchema } from '@/lib/forms/schedule';
 import type { TranslatableField } from '@/lib/forms/translations';
 import { useTranslationStatus } from '@/lib/forms/useTranslationStatus';
@@ -27,9 +28,13 @@ import { useDiscardSpace, usePatchSpace, usePublishSpace } from '@/lib/query/hoo
 
 const HERO_FIELDS = ['title', 'subtitle', 'note', 'metaLeft', 'metaRight', 'cta', 'imageAlt'] as const;
 const MANIFESTO_FIELDS = ['eyebrow', 'text'] as const;
+const SCHEDULE_TEXT_FIELDS = ['title', 'text', 'open', 'nextOpening', 'closed'] as const;
+const ADDRESS_FIELDS = ['street', 'postalCode', 'city', 'district', 'province', 'country'] as const;
+const BOOKING_FIELDS = ['phone', 'whatsapp', 'email'] as const;
 
 const COVER = 'Portada';
 const INTRO = 'Texto de presentación';
+const SCHEDULE_TEXTS = 'Textos del horario';
 const TRANSLATABLE: TranslatableField[] = [
   { name: 'hero.title', label: 'Título', section: COVER },
   { name: 'hero.subtitle', label: 'Subtítulo', section: COVER },
@@ -38,7 +43,12 @@ const TRANSLATABLE: TranslatableField[] = [
   { name: 'hero.metaRight', label: 'Dato a la derecha', section: COVER },
   { name: 'hero.cta', label: 'Texto del botón', section: COVER },
   { name: 'manifesto.eyebrow', label: 'Antetítulo', section: INTRO },
-  { name: 'manifesto.text', label: 'Texto', section: INTRO }
+  { name: 'manifesto.text', label: 'Texto', section: INTRO },
+  { name: 'scheduleTexts.title', label: 'Título', section: SCHEDULE_TEXTS },
+  { name: 'scheduleTexts.text', label: 'Texto', section: SCHEDULE_TEXTS },
+  { name: 'scheduleTexts.open', label: 'Aviso de abierto', section: SCHEDULE_TEXTS },
+  { name: 'scheduleTexts.nextOpening', label: 'Aviso de próxima apertura', section: SCHEDULE_TEXTS },
+  { name: 'scheduleTexts.closed', label: 'Aviso de cerrado', section: SCHEDULE_TEXTS }
 ];
 const IMAGE_ALT: TranslatableField = { name: 'hero.imageAlt', label: 'Descripción de la foto', section: COVER };
 
@@ -57,7 +67,19 @@ const schema = z.object({
     imageAssetId: z.string()
   }),
   manifesto: z.object({ eyebrow: i18nValues, text: i18nValues }),
-  schedule: scheduleSchema
+  gallery: z.array(z.string()),
+  scheduleTexts: z.object({ title: i18nValues, text: i18nValues, open: i18nValues, nextOpening: i18nValues, closed: i18nValues }),
+  schedule: scheduleSchema,
+  address: z.object({
+    street: optionalText(200),
+    postalCode: optionalText(20),
+    city: optionalText(120),
+    district: optionalText(120),
+    province: optionalText(120),
+    country: optionalText(120)
+  }),
+  mapUrl: optionalMap,
+  bookingContact: z.object({ phone: optionalText(40), whatsapp: optionalText(40), email: optionalEmail })
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -71,7 +93,12 @@ function toForm(space: Space, locales: string[]): FormValues {
       imageAssetId: space.hero.imageAssetId ?? ''
     } as FormValues['hero'],
     manifesto: Object.fromEntries(MANIFESTO_FIELDS.map(f => [f, i18nToForm(space.manifesto[f], locales)])) as FormValues['manifesto'],
-    schedule: space.schedule.map(d => ({ day: d.day, shifts: d.shifts.map(s => ({ open: s.open, close: s.close })) }))
+    gallery: space.gallery,
+    scheduleTexts: Object.fromEntries(SCHEDULE_TEXT_FIELDS.map(f => [f, i18nToForm(space.scheduleTexts[f], locales)])) as FormValues['scheduleTexts'],
+    schedule: space.schedule.map(d => ({ day: d.day, shifts: d.shifts.map(s => ({ open: s.open, close: s.close })) })),
+    address: Object.fromEntries(ADDRESS_FIELDS.map(f => [f, space.address[f] ?? ''])) as FormValues['address'],
+    mapUrl: space.mapUrl ?? '',
+    bookingContact: Object.fromEntries(BOOKING_FIELDS.map(f => [f, space.bookingContact[f] ?? ''])) as FormValues['bookingContact']
   };
 }
 
@@ -86,7 +113,10 @@ function changedBlocks(space: Space): string[] {
   // Las versiones publicadas antes de que el api guardara nombre y horarios no
   // los traen: sin referencia no se puede decir que hayan cambiado.
   if (snap.name !== undefined) blocks.unshift(['Nombre', space.name, snap.name]);
+  if (snap.gallery !== undefined) blocks.push(['Galería', space.gallery, snap.gallery]);
   if (snap.schedule !== undefined) blocks.push(['Horarios', scheduleForCompare(space.schedule), scheduleForCompare(snap.schedule)]);
+  if (snap.scheduleTexts !== undefined) blocks.push([SCHEDULE_TEXTS, space.scheduleTexts, snap.scheduleTexts]);
+  if (snap.address !== undefined) blocks.push(['Dirección y contacto propios', [space.address, space.mapUrl, space.bookingContact], [snap.address, snap.mapUrl, snap.bookingContact]]);
   return blocks.filter(([, now, before]) => !sameContent(now, before)).map(([label]) => label);
 }
 
@@ -111,6 +141,7 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
   useUnsavedChangesWarning(isDirty);
 
   const heroImageId = watch('hero.imageAssetId');
+  const gallery = watch('gallery');
   const altErrorLocale = locales.find(code => errors.hero?.imageAlt?.[code]);
 
   const translations = useTranslationStatus({
@@ -152,7 +183,15 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
           ...space.manifesto,
           ...Object.fromEntries(MANIFESTO_FIELDS.map(f => [f, i18nFromForm(space.manifesto[f], values.manifesto[f])]))
         },
+        gallery: values.gallery,
+        scheduleTexts: {
+          ...space.scheduleTexts,
+          ...Object.fromEntries(SCHEDULE_TEXT_FIELDS.map(f => [f, i18nFromForm(space.scheduleTexts[f], values.scheduleTexts[f])]))
+        },
         schedule: values.schedule,
+        address: compact(values.address),
+        mapUrl: values.mapUrl || null,
+        bookingContact: compact(values.bookingContact),
         // Guardar nunca publica: deja el contenido como borrador hasta que se pulse Publicar.
         state: 'draft'
       });
@@ -229,11 +268,68 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
                     <I18nField reference="side" name="manifesto.text" label="Texto" multiline {...i18n} />
                   </div>
                 </Section>
+
+                <Section title={SCHEDULE_TEXTS} description="Lo que acompaña al horario en la web. Si los dejas vacíos, la web usa sus textos de siempre." badge={<TranslationBadge count={translations.inSection(SCHEDULE_TEXTS)} />}>
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <I18nField className="md:col-span-2" reference="side" name="scheduleTexts.title" label="Título" hint="Por ejemplo, «Cuándo venir»." {...i18n} />
+                    <I18nField className="md:col-span-2" reference="side" name="scheduleTexts.text" label="Texto" multiline rows={3} {...i18n} />
+                    <I18nField name="scheduleTexts.open" label="Aviso de abierto" hint="Escribe {hora} donde va la hora de cierre: «Abierto hasta las {hora}»." {...i18n} />
+                    <I18nField name="scheduleTexts.nextOpening" label="Aviso de próxima apertura" hint="Escribe {hora} donde va la hora de apertura: «Hoy abrimos a las {hora}»." {...i18n} />
+                    <I18nField name="scheduleTexts.closed" label="Aviso de cerrado" hint="Por ejemplo, «Hoy cerramos»." {...i18n} />
+                  </div>
+                </Section>
               </div>
             </div>
 
+            <Section title="Galería" description="Las fotos del espacio, en el orden en que se ven en la web.">
+              <ImageListField
+                label="Fotos de la galería"
+                hint="Horizontales o verticales, de al menos 800 px de ancho."
+                scope={mediaScope}
+                purpose="dish"
+                max={60}
+                assetIds={gallery}
+                onChange={ids => setValue('gallery', ids, { shouldDirty: true })}
+              />
+            </Section>
+
             <Section title="Horarios" description="Un día sin turnos se muestra en la web como cerrado.">
               <ScheduleEditor />
+            </Section>
+
+            <Section title="Dirección y contacto propios" description="Solo si este espacio tiene una dirección o un contacto distintos de los del restaurante. Lo que dejes vacío sale de la ficha del restaurante.">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <Field id="s-street" className="md:col-span-2" label="Calle y número" error={errors.address?.street?.message}>
+                  {control => <TextInput {...control} autoComplete="off" {...register('address.street')} />}
+                </Field>
+                <Field id="s-postal" label="Código postal" error={errors.address?.postalCode?.message}>
+                  {control => <TextInput {...control} autoComplete="off" {...register('address.postalCode')} />}
+                </Field>
+                <Field id="s-city" label="Ciudad" error={errors.address?.city?.message}>
+                  {control => <TextInput {...control} autoComplete="off" {...register('address.city')} />}
+                </Field>
+                <Field id="s-district" label="Barrio" error={errors.address?.district?.message}>
+                  {control => <TextInput {...control} autoComplete="off" {...register('address.district')} />}
+                </Field>
+                <Field id="s-province" label="Provincia" error={errors.address?.province?.message}>
+                  {control => <TextInput {...control} autoComplete="off" {...register('address.province')} />}
+                </Field>
+                <Field id="s-country" label="País" error={errors.address?.country?.message}>
+                  {control => <TextInput {...control} autoComplete="off" {...register('address.country')} />}
+                </Field>
+                <Field id="s-map" className="md:col-span-2" label="Mapa de Google" error={errors.mapUrl?.message} hint="En Google Maps: Compartir → Insertar un mapa → Copiar HTML. Pégalo aquí tal cual.">
+                  {control => <TextArea {...control} rows={3} autoComplete="off" spellCheck={false} {...register('mapUrl')} />}
+                </Field>
+                <Field id="s-phone" label="Teléfono de reservas" error={errors.bookingContact?.phone?.message}>
+                  {control => <TextInput {...control} type="tel" inputMode="tel" autoComplete="off" {...register('bookingContact.phone')} />}
+                </Field>
+                <Field id="s-whatsapp" label="WhatsApp de reservas" error={errors.bookingContact?.whatsapp?.message} hint="Con prefijo de país, por ejemplo +34 600 000 000.">
+                  {control => <TextInput {...control} type="tel" inputMode="tel" autoComplete="off" {...register('bookingContact.whatsapp')} />}
+                </Field>
+                <Field id="s-email" label="Email de reservas" error={errors.bookingContact?.email?.message}>
+                  {control => <TextInput {...control} type="email" inputMode="email" autoComplete="off" {...register('bookingContact.email')} />}
+                </Field>
+              </div>
             </Section>
           </div>
 

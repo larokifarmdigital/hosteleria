@@ -40,7 +40,7 @@ export function ImageField({ label, hint, scope, purpose, assetId, onChange, sho
       <div className="flex flex-col gap-3.5 sm:flex-row sm:items-start">
         {asset ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={asset.publicUrl} alt={asset.altText?.[scope.defaultLocale] ?? ''} className={cn(frame, 'object-cover')} />
+          <img src={asset.publicUrl} alt={asset.altText?.[scope.defaultLocale] ?? ''} className={cn(frame, purpose === 'logo' ? 'object-contain p-2' : 'object-cover')} />
         ) : (
           <div className={cn(frame, 'grid place-items-center border-dashed border-[color:var(--color-border-strong)] text-[color:var(--color-muted)]', assetId && isPending && 'animate-pulse motion-reduce:animate-none')}>
             {!(assetId && isPending) && (

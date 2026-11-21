@@ -18,3 +18,15 @@ export const optionalUrl = z
 
 /** Un texto por idioma, sin validación: la longitud es recomendación, no límite. */
 export const i18nValues = z.record(z.string());
+
+/** Enlace de Google Maps o el código «Insertar un mapa» tal cual se copia. Vacío = sin mapa. */
+export const optionalMap = z
+  .string()
+  .trim()
+  .max(2000, 'Es demasiado largo. Copia solo el enlace o el código del mapa.')
+  .refine(v => v === '' || /^https?:\/\/\S+$/.test(v) || /<iframe[^>]+src=["']https?:\/\//i.test(v), 'Pega el enlace del mapa o el código de «Insertar un mapa» de Google Maps.');
+
+/** Elemento nuevo de una lista: el id lo pone el formulario para poder reordenar. */
+export function newItemId(): string {
+  return crypto.randomUUID();
+}

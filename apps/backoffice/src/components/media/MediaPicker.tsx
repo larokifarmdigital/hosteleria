@@ -20,6 +20,8 @@ interface Props {
   purpose: Exclude<ImagePurpose, 'any'>;
   /** Foto asignada ahora mismo, para marcarla. */
   currentId?: string | null;
+  /** Fotos que ya están en la lista a la que se añade: no se ofrecen otra vez. */
+  excludeIds?: string[];
   /** Siempre llega con descripción en todos los idiomas del restaurante. */
   onSelect: (asset: MediaAsset) => void;
 }
@@ -28,9 +30,9 @@ interface Props {
  * Elegir una foto del restaurante o subir una nueva. Una foto sin descripción
  * en algún idioma pasa antes por el paso de describirla: no se puede asignar sin ella.
  */
-export function MediaPicker({ open, onClose, scope, purpose, currentId, onSelect }: Props) {
+export function MediaPicker({ open, onClose, scope, purpose, currentId, excludeIds, onSelect }: Props) {
   const mediaQuery = useMediaList({ restaurantSlug: scope.restaurantSlug });
-  const media = mediaQuery.data ?? [];
+  const media = (mediaQuery.data ?? []).filter(m => !excludeIds?.includes(m.id));
   const [describing, setDescribing] = useState<MediaAsset | null>(null);
 
   const close = () => { setDescribing(null); onClose(); };
@@ -67,7 +69,9 @@ export function MediaPicker({ open, onClose, scope, purpose, currentId, onSelect
             <h3 id="picker-library" className="m-0 mb-2.5 text-[14px] font-bold">Tus fotos</h3>
             <QueryBoundary queries={[mediaQuery]}>
               {media.length === 0 ? (
-                <p className="m-0 text-[13.5px] text-[color:var(--color-muted)]">Todavía no has subido ninguna foto.</p>
+                <p className="m-0 text-[13.5px] text-[color:var(--color-muted)]">
+                  {mediaQuery.data?.length ? 'Ya has añadido todas tus fotos. Sube una nueva si necesitas más.' : 'Todavía no has subido ninguna foto.'}
+                </p>
               ) : (
                 <ul className="m-0 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3 md:grid-cols-4">
                   {media.map(asset => {

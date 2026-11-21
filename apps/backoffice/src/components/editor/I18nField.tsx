@@ -19,6 +19,8 @@ interface Props {
   /** Dónde va la referencia: al lado del campo (campos anchos) o encima. */
   reference?: 'side' | 'above';
   multiline?: boolean;
+  /** Alto inicial del campo de varias líneas. */
+  rows?: number;
   /** Longitud recomendada: muestra contador, no bloquea. */
   recommendedMax?: number;
   /** Error a mostrar y en qué idioma: solo el control de ese idioma lo enseña. */
@@ -31,7 +33,7 @@ interface Props {
  * Un control por idioma; solo se ve el del idioma activo. Los demás siguen
  * montados (ocultos) para que el formulario conserve y valide sus valores.
  */
-export function I18nField({ name, label, hint, locales, activeLocale, localeNames, defaultLocale, reference = 'above', multiline, recommendedMax, error, errorFor, className }: Props) {
+export function I18nField({ name, label, hint, locales, activeLocale, localeNames, defaultLocale, reference = 'above', multiline, rows, recommendedMax, error, errorFor, className }: Props) {
   const { register, control } = useFormContext();
   const values = (useWatch({ control, name }) ?? {}) as Record<string, string>;
   const missing = missingLocales(values, locales);
@@ -68,7 +70,7 @@ export function I18nField({ name, label, hint, locales, activeLocale, localeName
             >
               {control =>
                 multiline ? (
-                  <TextArea lang={code} {...control} {...register(`${name}.${code}`)} />
+                  <TextArea lang={code} rows={rows} {...control} {...register(`${name}.${code}`)} />
                 ) : (
                   <TextInput lang={code} {...control} {...register(`${name}.${code}`)} />
                 )
