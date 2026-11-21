@@ -15,23 +15,25 @@ const eyebrow = t(espacio.manifiestoEyebrow, locale, defaultLocale);
 const texto = t(espacio.manifiestoTexto, locale, defaultLocale);
 ---
 
-<!--
-  Manifesto rediseñado: strip compacto sobre bg-surface-2 (crema oscura).
-  Eyebrow con dashes warm + quote grande centrado. Sin blob, sin marcas
-  gráficas competing. Ancla visualmente entre Hero y About sin flotar.
--->
-<section class='py-[14vh] px-(--gap) bg-surface-2 max-[960px]:py-[10vh]'>
-  <div class='reveal mx-auto max-w-[880px] text-center'>
-    {eyebrow && (
-      <div class='inline-flex items-center justify-center gap-4 mb-8 text-[10.5px] uppercase tracking-[0.32em] text-warm font-medium'>
-        <span class='w-8 h-px bg-warm/60'></span>
-        <span>{eyebrow}</span>
-        <span class='w-8 h-px bg-warm/60'></span>
-      </div>
-    )}
-
-    <blockquote class='font-serif text-ink font-normal italic leading-[1.28] text-[clamp(26px,3.4vw,44px)] tracking-[-0.01em] max-w-[24ch] mx-auto'>
-      {texto}
-    </blockquote>
-  </div>
-</section>
+{texto && (
+  <section class='section-y px-(--gap)'>
+    <figure class='stagger mx-auto max-w-[920px] flex flex-col items-center text-center'>
+      <span
+        aria-hidden='true'
+        class='reveal font-serif italic text-warm leading-none text-[clamp(72px,9vw,120px)] h-[0.55em] select-none'
+      >“</span>
+      <blockquote
+        class='reveal font-serif text-ink font-normal leading-[1.28] text-[clamp(25px,3.1vw,42px)] tracking-[-0.015em] text-balance'
+      >
+        {texto}
+      </blockquote>
+      {eyebrow && (
+        <figcaption class='reveal mt-9 flex items-center gap-4 max-[960px]:mt-7'>
+          <span aria-hidden='true' class='h-px w-10 bg-line-strong'></span>
+          <span class='eyebrow'>{eyebrow}</span>
+          <span aria-hidden='true' class='h-px w-10 bg-line-strong'></span>
+        </figcaption>
+      )}
+    </figure>
+  </section>
+)}

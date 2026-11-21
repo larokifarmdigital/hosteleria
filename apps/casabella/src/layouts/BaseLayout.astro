@@ -139,7 +139,7 @@ const skipToContent = SKIP_TO_CONTENT[locale] ?? SKIP_TO_CONTENT.es;
     {/* Skip navigation link (WCAG 2.4.1) — invisible hasta focus con teclado */}
     <a
       href='#main'
-      class='sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200] focus:bg-accent focus:text-bg focus:px-4 focus:py-2 focus:rounded focus:font-medium focus:no-underline'
+      class='sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[200] focus:bg-ink focus:text-bg focus-visible:outline-warm-soft focus:shadow-[0_0_0_7px_var(--color-ink)] focus:px-4 focus:py-2 focus:rounded focus:font-medium focus:no-underline'
     >
       {skipToContent}
     </a>

@@ -1,0 +1,157 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant, LegalPageDoc } from '../lib/queries';
+import { getLocation, telHref } from '../lib/location';
+import Icon from './Icon.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+  legalPages?: LegalPageDoc[];
+  waHref: string;
+  whatsappRaw: string;
+  bookingPhone: string;
+  bookingEmail: string;
+}
+
+const {
+  restaurant,
+  locale,
+  defaultLocale,
+  legalPages = [],
+  waHref,
+  whatsappRaw,
+  bookingPhone,
+  bookingEmail
+} = Astro.props;
+
+const { dir, mapsUrl } = getLocation(restaurant, locale);
+const byline = t(restaurant.textosFooter?.bylineIzq, locale, defaultLocale);
+
+const showSocial = restaurant.mostrarRedes === true;
+const social = showSocial
+  ? [
+      { label: 'Instagram', icon: 'instagram', href: restaurant.redes?.instagram },
+      { label: 'Facebook', icon: 'facebook', href: restaurant.redes?.facebook },
+      { label: 'TikTok', icon: 'tiktok', href: restaurant.redes?.tiktok }
+    ].filter((s) => s.href)
+  : [];
+
+const legalPath = (slug: string) =>
+  locale === defaultLocale ? `/legal/${slug}` : `/${locale}/legal/${slug}`;
+
+const T = {
+  es: { footer: 'Datos del local', visit: 'Dónde estamos', directions: 'Cómo llegar', contact: 'Contacto', social: 'Síguenos', legal: 'Legal', on: 'en' },
+  ca: { footer: 'Dades del local', visit: 'On som', directions: 'Com arribar', contact: 'Contacte', social: 'Segueix-nos', legal: 'Legal', on: 'a' },
+  en: { footer: 'Venue details', visit: 'Where we are', directions: 'Get directions', contact: 'Contact', social: 'Follow us', legal: 'Legal', on: 'on' }
+};
+const tt = T[locale as keyof typeof T] ?? T.es;
+
+const parts = restaurant.nombre.match(/^(Casa|La|El)?\s?(.*)$/);
+const brandStart = parts?.[1] ?? '';
+const brandRest = parts?.[2] ?? restaurant.nombre;
+
+const headingCls = 'label mb-4';
+const contactCls =
+  'group inline-flex items-center gap-3 min-h-[40px] text-ink-soft text-[15.5px] cursor-pointer transition-colors duration-200 hover:text-accent';
+const contactIconCls = 'text-accent transition-transform duration-200 group-hover:scale-110';
+const legalCls =
+  'inline-flex items-center min-h-[32px] cursor-pointer underline decoration-line-strong underline-offset-4 transition-colors duration-200 hover:text-accent hover:decoration-accent';
+---
+
+<footer class='px-(--gap) pt-[clamp(56px,9vh,96px)] pb-8 border-t border-line bg-surface'>
+  <div class='mx-auto max-w-[var(--max)]'>
+    <h2 class='sr-only'>{tt.footer}</h2>
+
+    <div class='flex flex-wrap justify-between gap-x-[clamp(40px,6vw,96px)] gap-y-10 mb-12'>
+      <div class='max-w-[340px]'>
+        <p class='font-serif text-ink text-[34px] leading-none tracking-[-0.01em] mb-4'>
+          {brandStart ? <>{brandStart}<em class='italic text-warm'>{brandRest}</em></> : restaurant.nombre}
+        </p>
+        {byline && <p class='text-muted text-[15.5px] leading-[1.6]'>{byline}</p>}
+      </div>
+
+      <div>
+        <h3 class={headingCls}>{tt.visit}</h3>
+        <p class='text-ink-soft text-[15.5px] leading-[1.6]'>
+          {dir.calle}<br />
+          {[dir.codigoPostal, dir.ciudad].filter(Boolean).join(' ')}
+          {dir.barrio && <><br />{dir.barrio}</>}
+        </p>
+        {mapsUrl && (
+          <a
+            href={mapsUrl}
+            target='_blank'
+            rel='noopener'
+            class='group mt-4 inline-flex items-center gap-2 min-h-[42px] pl-3.5 pr-4 rounded-full border border-line-strong text-ink text-[14.5px] font-semibold cursor-pointer transition-colors duration-200 hover:border-accent hover:text-accent'
+          >
+            <Icon name='pin' size={17} class='text-accent' />
+            {tt.directions}
+            <Icon name='arrow' size={15} class='transition-transform duration-200 group-hover:translate-x-1' />
+          </a>
+        )}
+      </div>
+
+      <div>
+        <h3 class={headingCls}>{tt.contact}</h3>
+        <ul class='list-none flex flex-col'>
+          {bookingPhone && (
+            <li>
+              <a href={telHref(bookingPhone)} class:list={[contactCls, 'tabular-nums']}>
+                <Icon name='phone' size={18} class={contactIconCls} />{bookingPhone}
+              </a>
+            </li>
+          )}
+          {waHref && whatsappRaw && (
+            <li>
+              <a href={waHref} target='_blank' rel='noopener' class={contactCls}>
+                <Icon name='chat' size={18} class={contactIconCls} />WhatsApp · {whatsappRaw}
+              </a>
+            </li>
+          )}
+          {bookingEmail && (
+            <li>
+              <a href={`mailto:${bookingEmail}`} class:list={[contactCls, 'break-all']}>
+                <Icon name='mail' size={18} class={contactIconCls} />{bookingEmail}
+              </a>
+            </li>
+          )}
+        </ul>
+      </div>
+
+      {social.length > 0 && (
+        <div>
+          <h3 class={headingCls}>{tt.social}</h3>
+          <ul class='list-none flex gap-2.5'>
+            {social.map((s) => (
+              <li>
+                <a
+                  href={s.href}
+                  target='_blank'
+                  rel='noopener'
+                  aria-label={`${restaurant.nombre} ${tt.on} ${s.label}`}
+                  title={s.label}
+                  class='flex items-center justify-center w-11 h-11 rounded-full border border-line-strong text-ink cursor-pointer transition-[background-color,border-color,color,transform] duration-200 hover:bg-accent hover:border-accent hover:text-white hover:-translate-y-0.5 motion-reduce:hover:translate-y-0'
+                >
+                  <Icon name={s.icon} size={20} />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+
+    <div class='border-t border-line pt-6 flex flex-wrap items-center justify-between gap-x-8 gap-y-3 text-muted text-[14px]'>
+      <span>© {new Date().getFullYear()} {restaurant.nombre}</span>
+      {legalPages.length > 0 && (
+        <ul aria-label={tt.legal} class='list-none flex flex-wrap gap-x-6 gap-y-1'>
+          {legalPages.map((p) => (
+            <li><a href={legalPath(p.tipo)} class={legalCls}>{t(p.titulo, locale, defaultLocale)}</a></li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </div>
+</footer>

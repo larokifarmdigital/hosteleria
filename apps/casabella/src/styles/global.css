@@ -1,5 +1,6 @@
 /* Self-hosted fonts (privacy/perf: no request a Google Fonts) */
-@import "@fontsource-variable/fraunces";
+@import "@fontsource-variable/fraunces/full.css";
+@import "@fontsource-variable/fraunces/full-italic.css";
 @import "@fontsource-variable/manrope";
 
 @import "tailwindcss";
@@ -10,28 +11,33 @@
 @source "../../../../packages/booking-form/src/**/*.ts";
 
 /* ═════════════════════════════════════════════════════════════════ DESIGN TOKENS
-   Casabella — paleta carbón + crema + ámbar. Registro sofisticado urbano tipo
-   bistró barcelonés contemporáneo. Los NOMBRES de token se conservan para que
+   Casabella — bar-restaurante de barrio: papel crema, tinta marrón y un
+   tostado cálido como acento. Títulos en Fraunces con terminales blandas.
+   Cálido sin disfrazarse: nada de manuscritas ni manteles de cuadros. Los NOMBRES de token se conservan para que
    Footer / Nav / MobileOverlay / Eyebrow del paquete UI hereden la paleta.
 */
 @theme {
-  --color-bg: #f6f0e6;
-  --color-surface: #fbf6ec;
-  --color-surface-2: #eee6d3;
-  --color-ink: #161412;
-  --color-ink-soft: #2a2520;
-  --color-muted: #6a6055;
-  --color-dim: #9c9284;
-  --color-line: #e0d5be;
-  --color-accent: #966000;
-  --color-accent-hover: #7a4e00;
+  --color-bg: #f7efe2;
+  --color-surface: #fcf6ea;
+  --color-surface-2: #f0e4cf;
+  --color-ink: #2a1c14;
+  --color-ink-soft: #3d2b20;
+  --color-muted: #63554a;
+  /* dim y accent oscurecidos: sobre surface-2 los anteriores no llegaban a 4.5:1 */
+  --color-dim: #6e6055;
+  --color-line: #e4d6bd;
+  --color-line-strong: #d2bf9f;
+  --color-accent: #964a1e;
+  --color-accent-hover: #7a3a15;
 
   /* Tobacco cálido más claro para acentos serif itálicos y micro-detalles.
      Ligeramente más luminoso que el accent para que los itálicos se lean como
      texto (no como botón).  */
-  --color-warm: #b48725;
-  --color-warm-hover: #9a721b;
-  --color-warm-soft: #f4e8ce;
+  /* Solo para texto grande (itálicas de título, ≥24px): 3.6:1 sobre surface-2.
+     Para texto pequeño usar accent. */
+  --color-warm: #ab5a26;
+  --color-warm-hover: #964a1e;
+  --color-warm-soft: #f6e7d6;
 
   /* Blobs decorativos (usados como fondo sutil en secciones) */
   --color-blob-green: #ede2c8;
@@ -39,25 +45,25 @@
   --color-blob-warm: #ecdcbc;
 
   /* WhatsApp FAB outline */
-  --wa-outline: rgb(150 96 0 / 0.35);
-  --wa-outline-hover: rgb(122 78 0 / 0.7);
+  --wa-outline: rgb(150 74 30 / 0.35);
+  --wa-outline-hover: rgb(122 58 21 / 0.7);
 
   --font-serif: 'Fraunces Variable', 'Fraunces', 'Cormorant Garamond', serif;
   --font-sans: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
 
-  /* Keyframes registrados en @theme */
-  --animate-heroScrollFade: heroScrollFade 1s ease 1.4s forwards;
-  --animate-heroScrollLine: heroScrollLine 2.2s ease-in-out infinite;
 }
 
 /* Tokens no-Tailwind (medidas globales) */
 :root {
   --gap: clamp(24px, 5vw, 80px);
-  --max: 1400px;
+  --max: 1280px;
+  --section-y: clamp(72px, 12vh, 136px);
+  --nav-h: 68px;
+  --bar-h: 64px;
   --radius-card: 14px;
   --radius-pill: 999px;
-  --shadow-card: 0 10px 32px -18px rgb(26 24 21 / 0.20);
-  --shadow-card-lift: 0 20px 50px -22px rgb(26 24 21 / 0.30);
+  --shadow-card: 0 10px 32px -18px rgb(74 52 14 / 0.22);
+  --shadow-card-lift: 0 22px 50px -24px rgb(74 52 14 / 0.38);
 }
 
 /* ═════════════════════════════════════════════════════════════════ BASE */
@@ -69,6 +75,8 @@
      Se anula automáticamente si el usuario activa "reducir movimiento" en el SO. */
   html {
     scroll-behavior: smooth;
+    /* Lo enfocado con Tab no debe quedar bajo el nav fijo. */
+    scroll-padding-top: calc(var(--nav-h) + 16px);
   }
 
   /* Margen superior para anchors — evita que las secciones queden tapadas
@@ -88,46 +96,145 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
-    min-width: 375px;
+    /* Fraunces con terminales blandas: más cálida, sin llegar a caricatura.
+       Manrope ignora estos ejes. */
+    font-variation-settings: 'SOFT' 100, 'WONK' 0;
   }
   body.overlay-open { overflow: hidden; }
 
-  ::selection { background: var(--color-warm); color: var(--color-ink); }
+  ::selection { background: var(--color-warm-soft); color: var(--color-ink); }
+
+  h1, h2, h3 { text-wrap: balance; }
+  p { text-wrap: pretty; }
 
   img { max-width: 100%; height: auto; display: block; }
   a { color: inherit; text-decoration: none; }
 
   :focus-visible {
-    outline: 2px solid var(--color-warm);
+    outline: 2px solid var(--color-accent);
     outline-offset: 3px;
     border-radius: 2px;
   }
+  /* El destino de un salto interno recibe el foco por script: sin anillo. */
+  [tabindex='-1']:focus { outline: none; }
 }
 
-/* ═════════════════════════════════════════════════════════════════ KEYFRAMES */
-@keyframes heroScrollFade { to { opacity: 1; } }
-@keyframes heroScrollLine {
-  0%   { transform: scaleY(0.4); transform-origin: top; }
-  50%  { transform: scaleY(1); transform-origin: top; }
-  50.01% { transform-origin: bottom; }
-  100% { transform: scaleY(0); transform-origin: bottom; }
+/* Sobre la foto del hero el anillo tostado no se ve: ahí va en crema. */
+#top :focus-visible,
+#nav:not([data-scrolled='true']) :focus-visible { outline-color: var(--color-warm-soft); }
+
+/* En móvil el texto del hero ocupa todo el ancho: el velo diagonal dejaba la
+   mitad derecha sin contraste suficiente. */
+@media (max-width: 960px) {
+  #top > [data-hero-veil] {
+    background-image: linear-gradient(to top, rgb(18 12 6 / 0.78), rgb(18 12 6 / 0.62) 50%, rgb(18 12 6 / 0.5));
+  }
 }
 
-/* ═════════════════════════════════════════════════════════════════ BLOBS
-   Formas orgánicas sutilísimas usadas de fondo en secciones. Opacidad
-   base baja para que no dominen — solo dan calidez.
-*/
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(6px);
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.25;
+/* ═════════════════════════════════════════════════════════════════ COMPONENTES */
+@layer components {
+  .section-y { padding-block: var(--section-y); }
+
+  /* Etiqueta pequeña sobre títulos y bloques de datos. */
+  .eyebrow,
+  .label {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+
+  .h-section {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-size: clamp(34px, 4.4vw, 60px);
+    color: var(--color-ink);
+  }
+  .h-section em { font-style: italic; color: var(--color-warm); }
+
+  .price {
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--color-ink);
+  }
+
+  /* Estado abierto/cerrado: lo rellena HoursScript en el navegador. */
+  .status-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--color-dim);
+  }
+  [data-open-status][data-state='open'] .status-dot {
+    background: #2e7d4f;
+    box-shadow: 0 0 0 4px rgb(46 125 79 / 0.18);
+  }
+  [data-open-status][data-state='closed'] .status-dot { background: #a8402c; box-shadow: none; }
+  /* Hasta que el script decide el estado no hay nada que enseñar. */
+  [data-open-status]:not([data-state]) { visibility: hidden; }
+  [data-open-status] [data-status-detail]:not(:empty)::before { content: '· '; }
+
+  /* Latido suave del punto mientras está abierto. */
+  [data-open-status][data-state='open'] .status-dot { animation: status-pulse 2.4s ease-out infinite; }
+
+  /* Estado sobre la foto del hero: pastilla translúcida. */
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    align-self: flex-start;
+    min-height: 38px;
+    padding: 6px 16px 6px 13px;
+    border-radius: 999px;
+    border: 1px solid rgb(255 255 255 / 0.28);
+    background: rgb(18 12 6 / 0.62);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: 14.5px;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+  }
+  .status-chip:hover { background: rgb(18 12 6 / 0.8); border-color: rgb(255 255 255 / 0.55); }
+  .status-chip[data-state='open'] .status-dot { --dot-glow: rgb(95 208 140 / 0.6); background: #5fd08c; }
+  .status-chip[data-state='closed'] .status-dot { background: #f0a08c; }
+
+  /* Estado junto al horario: etiqueta de color. */
+  .status-badge {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    padding: 5px 13px 5px 11px;
+    border-radius: 999px;
+    font-size: 14px;
+    line-height: 1.3;
+  }
+  .status-badge[data-state='open'] { background: #e1eedd; color: #1f5c38; }
+  .status-badge[data-state='closed'] { background: #f4dfd6; color: #8a2a17; }
+
+  [data-hours-row][data-today] { color: var(--color-ink); font-weight: 600; }
+  [data-hours-row] [data-today-tag] { display: none; }
+  [data-hours-row][data-today] [data-today-tag] { display: inline; }
 }
-.blob-green { background: var(--color-blob-green); }
-.blob-cream { background: var(--color-blob-cream); }
-.blob-warm  { background: var(--color-blob-warm); }
+
+/* Con la barra de acciones fija en móvil, el final de la página y el FAB de
+   WhatsApp necesitan dejarle sitio. */
+@media (max-width: 960px) {
+  html:has(#actionBar) { scroll-padding-bottom: calc(var(--bar-h) + env(safe-area-inset-bottom) + 16px); }
+  body:has(#actionBar) { padding-bottom: calc(var(--bar-h) + env(safe-area-inset-bottom)); }
+  body:has(#actionBar[data-visible='true']) a[href^='https://wa.me'].fixed {
+    bottom: calc(var(--bar-h) + env(safe-area-inset-bottom) + 12px);
+  }
+}
+body.overlay-open a[href^='https://wa.me'].fixed { visibility: hidden; }
 
 /* ═════════════════════════════════════════════════════════════════ MENU ROW
    Línea de puntos clásica plato-precio (estilo carta impresa).
@@ -139,7 +246,7 @@
   gap: 12px;
 }
 .menu-row > .leader {
-  border-bottom: 1px dotted var(--color-line);
+  border-bottom: 1px dotted var(--color-line-strong);
   transform: translateY(-4px);
   min-width: 24px;
 }
@@ -147,14 +254,100 @@
 /* ═════════════════════════════════════════════════════════════════ REVEAL */
 .reveal {
   opacity: 0;
-  transform: translateY(20px);
-  transition: opacity .9s cubic-bezier(.16,.6,.2,1), transform .9s cubic-bezier(.16,.6,.2,1);
+  transform: translateY(28px);
+  transition: opacity .8s cubic-bezier(.16,.7,.2,1), transform .9s cubic-bezier(.16,.7,.2,1);
+  transition-delay: var(--d, 0ms);
 }
+.reveal[data-reveal='left'] { transform: translateX(-40px); }
+.reveal[data-reveal='right'] { transform: translateX(40px); }
+.reveal[data-reveal='zoom'] { transform: scale(0.92); }
+/* En una columna la entrada lateral se saldría del ancho: ahí sube como el resto.
+   En escritorio, la sección recorta el desplazamiento para no crear scroll. */
+@media (max-width: 960px) {
+  .reveal[data-reveal='left'],
+  .reveal[data-reveal='right'] { transform: translateY(28px); }
+}
+section:has(> * [data-reveal='left'], > * [data-reveal='right'], > [data-reveal='left'], > [data-reveal='right']) { overflow-x: clip; }
 .reveal.in { opacity: 1; transform: none; }
+
+/* Fotos: se descubren de abajo arriba mientras la imagen se asienta. El recorte
+   va en la <img>, no en el elemento observado: un elemento recortado del todo
+   no cuenta como visible para IntersectionObserver y nunca se revelaría. */
+.reveal[data-reveal='img'] {
+  transform: none;
+  transition: opacity .5s ease-out;
+  transition-delay: var(--d, 0ms);
+}
+.reveal[data-reveal='img'] img {
+  clip-path: inset(100% 0 0 0);
+  transform: scale(1.18);
+  transition: clip-path 1.1s cubic-bezier(.65,0,.2,1), transform 1.7s cubic-bezier(.16,.7,.2,1);
+  transition-delay: var(--d, 0ms);
+}
+.reveal[data-reveal='img'].in img { clip-path: inset(0); transform: none; }
+
+/* Hijos en cascada: cada uno entra un poco después que el anterior. */
+.stagger > :nth-child(2) { --d: 70ms; }
+.stagger > :nth-child(3) { --d: 140ms; }
+.stagger > :nth-child(4) { --d: 210ms; }
+.stagger > :nth-child(5) { --d: 280ms; }
+.stagger > :nth-child(6) { --d: 350ms; }
+.stagger > :nth-child(7) { --d: 420ms; }
+.stagger > :nth-child(n + 8) { --d: 490ms; }
+
+/* ═════════════════════════════════════════════════════════════════ ENTRADA DEL HERO
+   Solo `from`: sin animación (movimiento reducido) todo queda visible.
+*/
+@keyframes hero-rise { from { opacity: 0; transform: translateY(30px); } }
+@keyframes hero-zoom { from { scale: 1.12; } }
+@keyframes hero-drift { to { translate: 0 14%; } }
+@keyframes status-pulse {
+  0% { box-shadow: 0 0 0 0 var(--dot-glow, rgb(46 125 79 / 0.45)); }
+  70%, 100% { box-shadow: 0 0 0 9px transparent; }
+}
+.hero-in {
+  animation: hero-rise 1s cubic-bezier(.16,.7,.2,1) both;
+  animation-delay: calc(var(--i, 0) * 120ms + 120ms);
+}
+.hero-img { animation: hero-zoom 2.6s cubic-bezier(.16,.7,.2,1) both; }
+/* La foto se desplaza más despacio que la página al hacer scroll. */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-img {
+      animation: hero-zoom 2.6s cubic-bezier(.16,.7,.2,1) both, hero-drift linear both;
+      animation-timeline: auto, scroll(root);
+      animation-range: normal, 0 100vh;
+    }
+  }
+}
+
+/* Sin JavaScript nadie pone `.in`: el contenido no puede quedarse oculto. */
+@media (scripting: none) {
+  .reveal, .reveal[data-reveal] { opacity: 1; transform: none; }
+  .reveal[data-reveal='img'] img { clip-path: none; transform: none; }
+}
+/* Si el foco de teclado llega antes que el scroll, se muestra ya. */
+.reveal:has(:focus-visible), .reveal:focus-visible { opacity: 1; transform: none; }
+.reveal[data-reveal='img']:has(:focus-visible) img { clip-path: inset(0); transform: none; }
+
+/* ═════════════════════════════════════════════════════════════════ CAMBIO DE PÁGINA
+   Entre la portada y las páginas legales: fundido suave en vez de corte seco.
+   Es CSS puro (transiciones entre documentos); donde no hay soporte, la
+   navegación es la normal. El nav se mantiene en su sitio durante el cambio.
+*/
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+  #nav { view-transition-name: site-nav; }
+  ::view-transition-old(root) { animation: page-out 0.22s ease-in both; }
+  ::view-transition-new(root) { animation: page-in 0.5s cubic-bezier(.16,.7,.2,1) both; }
+}
+@keyframes page-out { to { opacity: 0; transform: translateY(-8px); } }
+@keyframes page-in { from { opacity: 0; transform: translateY(16px); } }
 
 /* ═════════════════════════════════════════════════════════════════ REDUCED MOTION */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .reveal { opacity: 1; transform: none; transition: none; }
+  .reveal, .reveal[data-reveal] { opacity: 1; transform: none; transition: none; }
+  .reveal[data-reveal='img'] img { clip-path: none; transform: none; transition: none; }
   * { animation: none !important; transition-duration: 0.01ms !important; }
 }

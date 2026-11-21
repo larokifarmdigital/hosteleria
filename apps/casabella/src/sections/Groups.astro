@@ -2,7 +2,7 @@
 import { t } from '@hosteleria/i18n-utils';
 import { img } from '../lib/sanity';
 import type { Restaurant } from '../lib/queries';
-import Eyebrow from '@hosteleria/ui/components/Eyebrow.astro';
+import Icon from '../components/Icon.astro';
 import CtaButton from '../components/CtaButton.astro';
 import { resolveBookingAction } from '@hosteleria/utils';
 
@@ -51,59 +51,41 @@ const features = restaurant.gruposFeatures?.length
     }))
   : featuresFallback[locale] ?? featuresFallback.es;
 
-// Biblioteca de iconos SVG (paths). Debe cubrir los 6 valores del enum del
-// schema (`users | chef | wine | clock | pin | star`). Si Sanity devuelve un
-// icono no listado, `iconPaths[f.icon]` es undefined y el <path> no se dibuja.
-const iconPaths: Record<string, string> = {
-  users: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75',
-  chef:  'M6 10a6 6 0 0 1 12 0 M6 10v10h12V10 M9 21v-6 M15 21v-6',
-  wine:  'M8 22h8 M12 22v-6 M6 3h12l-1 8a5 5 0 0 1-10 0L6 3z',
-  clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 7v5l3 2',
-  pin:   'M12 22s-8-8-8-14a8 8 0 1 1 16 0c0 6-8 14-8 14z M12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
-  star:  'M12 2l2.4 6.4L21 9l-5 4.5L17.5 21 12 17.5 6.5 21 8 13.5 3 9l6.6-.6L12 2z'
-};
+const eyebrow = t(restaurant.gruposEyebrow, locale, defaultLocale);
+const cta = t(restaurant.gruposCta, locale, defaultLocale);
 ---
 
-<section id='groups' class='relative overflow-hidden py-[16vh] px-(--gap) max-[960px]:py-[10vh]'>
-  <div class='blob blob-cream w-[420px] h-[420px] -top-32 -right-24 max-[960px]:hidden'></div>
-
-  <div class='relative z-[1] mx-auto max-w-[var(--max)] grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-[clamp(40px,6vw,110px)] max-[960px]:grid-cols-1 max-[960px]:gap-12'>
-    <figure class='reveal overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card)] aspect-[4/5]'>
-      <img src={gruposImgUrl} alt='' class='w-full h-full object-cover' loading='lazy' />
+<section id='groups' class='section-y px-(--gap)'>
+  <div class='mx-auto max-w-[var(--max)] grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] items-center gap-[clamp(40px,7vw,120px)] max-[960px]:grid-cols-1 max-[960px]:gap-10'>
+    <figure data-reveal='img' class='reveal overflow-hidden bg-surface-2 rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] aspect-[4/5] max-[960px]:aspect-[4/3]'>
+      <img src={gruposImgUrl} alt='' class='w-full h-full object-cover' loading='lazy' decoding='async' />
     </figure>
 
-    <div class='reveal flex flex-col'>
-      <Eyebrow class='block mb-6'>{t(restaurant.gruposEyebrow, locale, defaultLocale)}</Eyebrow>
+    <div class='reveal flex flex-col' data-reveal='right'>
+      {eyebrow && <p class='eyebrow mb-5'>{eyebrow}</p>}
 
-      <h2 class='font-serif font-normal leading-[1.05] tracking-[-0.02em] text-[clamp(36px,4.6vw,60px)] text-ink mb-8'>
-        <em class='italic text-warm font-normal'>{first}</em>{restText && ' ' + restText}
+      <h2 class='h-section mb-7'>
+        <em>{first}</em>{restText && ' ' + restText}
       </h2>
 
-      <ul class='grid grid-cols-2 gap-4 mb-10 max-[560px]:grid-cols-1'>
+      <dl class='mb-9 border-t border-line-strong divide-y divide-line'>
         {features.map((f) => (
-          <li class='flex items-start gap-3.5 p-4 bg-surface border border-line rounded-[var(--radius-card)]'>
-            <span class='shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-warm-soft text-warm'
-                  style='background: var(--color-warm-soft);'>
-              <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
-                <path d={iconPaths[f.icon]} />
-              </svg>
-            </span>
-            <div class='min-w-0'>
-              <div class='font-sans font-semibold uppercase text-ink text-[11px] tracking-[0.22em] mb-1'>{f.label}</div>
-              <div class='text-muted text-[13.5px] leading-[1.55]'>{f.text}</div>
-            </div>
-          </li>
+          <div class='grid grid-cols-[24px_minmax(92px,0.36fr)_1fr] items-baseline gap-x-4 py-4 max-[560px]:grid-cols-[24px_1fr]'>
+            <Icon name={f.icon} class='text-accent self-center' />
+            <dt class='font-sans font-semibold text-ink text-[15px]'>{f.label}</dt>
+            <dd class='text-muted text-[15.5px] leading-[1.55] max-[560px]:col-start-2'>{f.text}</dd>
+          </div>
         ))}
-      </ul>
+      </dl>
 
-      {bookingAction && (
+      {bookingAction && cta && (
         <CtaButton
           href={bookingAction.href}
           target={bookingAction.external ? '_blank' : undefined}
           rel={bookingAction.external ? 'noopener' : undefined}
           class='self-start'
         >
-          {t(restaurant.gruposCta, locale, defaultLocale)}
+          {cta}
         </CtaButton>
       )}
     </div>

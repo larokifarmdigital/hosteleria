@@ -1,0 +1,102 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant } from '../lib/queries';
+import { getLocation, telHref } from '../lib/location';
+import { resolveBookingAction } from '@hosteleria/utils';
+import Icon from './Icon.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+}
+
+const { restaurant, locale, defaultLocale } = Astro.props;
+
+const phone = restaurant.contacto?.telefono ?? '';
+const { mapsUrl } = getLocation(restaurant, locale);
+const bookingAction = resolveBookingAction(restaurant, locale);
+
+const T = {
+  es: { bar: 'Acciones rápidas', call: 'Llamar', directions: 'Mapa', book: 'Reservar' },
+  ca: { bar: 'Accions ràpides', call: 'Trucar', directions: 'Mapa', book: 'Reservar' },
+  en: { bar: 'Quick actions', call: 'Call', directions: 'Map', book: 'Book' }
+};
+const tt = T[locale as keyof typeof T] ?? T.es;
+
+// Si reservar ya es una llamada, no se repite el botón.
+const showBooking = bookingAction && bookingAction.kind !== 'tel';
+const bookLabel =
+  bookingAction?.kind === 'form' ? tt.book : t(restaurant.textosNav?.linkReservar, locale, defaultLocale) || tt.book;
+
+const itemCls =
+  'flex-1 flex items-center justify-center gap-2 min-h-[48px] px-3 rounded-full font-sans font-semibold text-[15px] whitespace-nowrap cursor-pointer transition-colors duration-200';
+---
+
+<!-- En móvil, quien busca un bar quiere llamar o llegar: siempre a un toque.
+     Aparece al pasar el hero y se retira dentro del formulario de reserva. -->
+{(phone || mapsUrl) && (
+  <nav
+    id='actionBar'
+    aria-label={tt.bar}
+    data-visible='false'
+    inert
+    class="fixed z-40 inset-x-0 bottom-0 min-[961px]:hidden
+           flex items-center gap-2 px-3 pt-2 pb-[calc(8px+env(safe-area-inset-bottom))]
+           bg-surface/95 backdrop-blur-md border-t border-line shadow-[0_-10px_30px_-18px_rgb(74_52_14/0.4)]
+           translate-y-full transition-transform duration-300 ease-out
+           data-[visible='true']:translate-y-0 motion-reduce:transition-none"
+  >
+    {phone && (
+      <a href={telHref(phone)} class:list={[itemCls, 'text-ink border border-line-strong hover:bg-surface-2']}>
+        <Icon name='phone' size={18} />
+        {tt.call}
+      </a>
+    )}
+    {mapsUrl && (
+      <a href={mapsUrl} target='_blank' rel='noopener' class:list={[itemCls, 'text-ink border border-line-strong hover:bg-surface-2']}>
+        <Icon name='pin' size={18} />
+        {tt.directions}
+      </a>
+    )}
+    {showBooking && (
+      <a
+        href={bookingAction.href}
+        target={bookingAction.external ? '_blank' : undefined}
+        rel={bookingAction.external ? 'noopener' : undefined}
+        class:list={[itemCls, 'bg-accent text-white hover:bg-accent-hover']}
+      >
+        {bookLabel}
+      </a>
+    )}
+  </nav>
+)}
+
+<script is:inline>
+  (function () {
+    const bar = document.getElementById('actionBar');
+    const hero = document.getElementById('top');
+    if (!bar || !hero || !('IntersectionObserver' in window)) return;
+
+    let pastHero = false;
+    let inBooking = false;
+    const sync = () => {
+      const visible = pastHero && !inBooking;
+      bar.dataset.visible = visible ? 'true' : 'false';
+      bar.inert = !visible;
+    };
+
+    new IntersectionObserver(([entry]) => {
+      pastHero = !entry.isIntersecting;
+      sync();
+    }).observe(hero);
+
+    const form = document.getElementById('reservaForm');
+    if (form) {
+      new IntersectionObserver(([entry]) => {
+        inBooking = entry.isIntersecting;
+        sync();
+      }, { rootMargin: '-20% 0px -20% 0px' }).observe(form);
+    }
+  })();
+</script>

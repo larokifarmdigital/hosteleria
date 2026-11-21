@@ -1,0 +1,33 @@
+---
+interface Props {
+  eyebrow?: string;
+  title: string;
+  /** Final del título en itálica. Sin él, se resalta la primera palabra. */
+  accent?: string;
+  /** Texto de apoyo a la derecha del título (debajo en móvil). */
+  note?: string;
+  class?: string;
+}
+
+const { eyebrow, title, accent, note, class: cls } = Astro.props;
+
+// Firma de la marca: la primera palabra del título va en itálica cálida.
+const [first, ...rest] = title.trim().split(' ');
+const restText = rest.join(' ');
+---
+
+<header
+  class:list={[
+    'stagger flex flex-wrap items-end justify-between gap-x-12 gap-y-5 mb-12 max-[960px]:mb-9',
+    cls
+  ]}
+>
+  <div class='reveal'>
+    {eyebrow && <p class='eyebrow mb-4'>{eyebrow}</p>}
+    <h2 class='h-section max-w-[16ch]'>
+      {accent ? <>{title}{' '}<em>{accent}</em></> : <><em>{first}</em>{restText && ` ${restText}`}</>}
+    </h2>
+  </div>
+  {note && <p class='reveal text-muted text-[16px] leading-[1.65] max-w-[42ch] pb-1.5'>{note}</p>}
+  <slot />
+</header>

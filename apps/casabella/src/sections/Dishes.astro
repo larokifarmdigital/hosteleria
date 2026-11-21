@@ -1,7 +1,7 @@
 ---
 import { t } from '@hosteleria/i18n-utils';
 import type { Restaurant, DishCategory, Dish } from '../lib/queries';
-import Eyebrow from '@hosteleria/ui/components/Eyebrow.astro';
+import SectionHeader from '../components/SectionHeader.astro';
 
 interface Props {
   restaurant: Restaurant;
@@ -19,75 +19,112 @@ const dishesByCategory = dishCategories
   .map((cat) => ({ category: cat, items: dishes.filter((d) => d.categoria?._id === cat._id) }))
   .filter(({ items }) => items.length > 0);
 
-const titulo = t(sec.platosTitulo, locale, defaultLocale);
-const [first, ...restTitle] = titulo.split(' ');
-const restText = restTitle.join(' ');
+if (dishesByCategory.length === 0) return null;
+
+const T = {
+  es: { sections: 'Secciones de la carta', allergens: '¿Alergias o intolerancias? Pregúntanos antes de pedir.', vat: 'Precios con IVA incluido.' },
+  ca: { sections: 'Seccions de la carta', allergens: 'Al·lèrgies o intoleràncies? Pregunta’ns abans de demanar.', vat: 'Preus amb IVA inclòs.' },
+  en: { sections: 'Menu sections', allergens: 'Allergies or intolerances? Ask us before ordering.', vat: 'Prices include VAT.' }
+};
+const tt = T[locale as keyof typeof T] ?? T.es;
+
+const priceFormat = new Intl.NumberFormat(locale, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 ---
 
-<section
-  id='plates'
-  class='relative overflow-hidden py-[16vh] px-(--gap) bg-surface-2 max-[960px]:py-[10vh]'
->
-  <div class='blob blob-cream w-[440px] h-[440px] -top-32 -right-24 max-[960px]:hidden'></div>
+<section id='plates' class='section-y px-(--gap)'>
+  <div class='mx-auto max-w-[var(--max)]'>
+    <SectionHeader
+      eyebrow={t(sec.platosEyebrow, locale, defaultLocale)}
+      title={t(sec.platosTitulo, locale, defaultLocale) || 'Carta'}
+    />
 
-  <div class='relative z-[1] mx-auto max-w-[var(--max)]'>
-    <div class='reveal text-center mb-16 max-[960px]:mb-12'>
-      <Eyebrow class='block mb-5'>{t(sec.platosEyebrow, locale, defaultLocale)}</Eyebrow>
-      <h2 class='font-serif font-normal leading-[1.05] tracking-[-0.02em] text-[clamp(38px,5vw,68px)] text-ink max-w-[18ch] mx-auto'>
-        <em class='italic text-warm font-normal'>{first}</em>{restText && ' ' + restText}
-      </h2>
-    </div>
-
-    <!-- Nav de categorías tipo tabs editorial (uppercase, underline sutil) -->
+    <!-- Atajos a cada sección: se quedan pegados bajo el nav mientras se lee
+         la carta, y en móvil se deslizan en horizontal. -->
     {dishesByCategory.length > 1 && (
-      <div class='reveal flex flex-wrap justify-center gap-x-10 gap-y-3 mb-16 pb-6 border-b border-line max-[960px]:mb-12 max-[960px]:gap-x-6'>
-        {dishesByCategory.map(({ category }) => (
-          <a
-            href={`#plate-cat-${category._id}`}
-            class='font-sans font-medium uppercase text-[11.5px] tracking-[0.22em] text-muted py-1 border-b border-transparent transition-[color,border-color] duration-300 hover:text-warm hover:border-warm'
-          >
-            {t(category.nombre, locale, defaultLocale)}
-          </a>
-        ))}
-      </div>
+      <nav
+        aria-label={tt.sections}
+        class='sticky z-30 top-[calc(var(--nav-h)-8px)] -mx-(--gap) px-(--gap) mb-10 bg-bg/95 backdrop-blur-sm border-y border-line'
+      >
+        <ul class='flex gap-2 py-2.5 overflow-x-auto list-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+          {dishesByCategory.map(({ category }) => (
+            <li class='shrink-0'>
+              <a
+                href={`#plate-cat-${category._id}`}
+                data-menu-tab
+                class='inline-flex items-center min-h-[44px] px-4 rounded-full font-sans font-semibold text-[14.5px] text-muted cursor-pointer
+                       transition-colors duration-200 hover:text-ink hover:bg-surface-2
+                       aria-[current=true]:bg-ink aria-[current=true]:text-bg'
+              >
+                {t(category.nombre, locale, defaultLocale)}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
     )}
 
-    <!-- Carta clásica: dos columnas de rows con dotted leader plato–precio -->
-    <div class='grid grid-cols-2 gap-x-[clamp(48px,7vw,120px)] gap-y-16 max-[900px]:grid-cols-1 max-[900px]:gap-y-12'>
+    <div class='grid grid-cols-2 gap-x-[clamp(48px,7vw,112px)] gap-y-14 max-[900px]:grid-cols-1 max-[900px]:gap-y-11'>
       {dishesByCategory.map(({ category, items }) => (
-        <div id={`plate-cat-${category._id}`} class='reveal scroll-mt-32 break-inside-avoid'>
-          <header class='flex items-baseline gap-4 mb-8 pb-3 border-b border-line'>
-            <h3 class='font-serif font-normal italic text-warm text-[clamp(22px,2.2vw,28px)] tracking-[-0.005em]'>
-              {t(category.nombre, locale, defaultLocale)}
-            </h3>
-            <span class='flex-1'></span>
-            <span class='font-sans text-[10.5px] font-medium uppercase tracking-[0.28em] text-dim'>
-              {items.length} {locale === 'en' ? 'plates' : locale === 'ca' ? 'plats' : 'platos'}
-            </span>
-          </header>
+        <div
+          id={`plate-cat-${category._id}`}
+          data-menu-section
+          class='scroll-mt-[calc(var(--nav-h)+84px)]'
+        >
+          <h3 class='reveal font-serif font-normal italic text-warm text-[clamp(26px,2.4vw,32px)] leading-tight pb-3 mb-2 border-b border-line-strong'>
+            {t(category.nombre, locale, defaultLocale)}
+          </h3>
 
-          <ul class='flex flex-col gap-6'>
-            {items.map((dish) => (
-              <li>
-                <div class='menu-row'>
-                  <div class='font-serif text-ink font-normal text-[clamp(17px,1.55vw,20px)] leading-tight tracking-[-0.005em]'>
-                    {t(dish.nombre, locale, defaultLocale)}
+          <ul class='stagger list-none divide-y divide-line'>
+            {items.map((dish) => {
+              const note = t(dish.nota, locale, defaultLocale);
+              return (
+                <li class='reveal py-4'>
+                  <div class='menu-row'>
+                    <span class='font-serif text-ink text-[clamp(18px,1.55vw,20.5px)] leading-snug tracking-[-0.005em]'>
+                      {t(dish.nombre, locale, defaultLocale)}
+                    </span>
+                    <span class='leader' aria-hidden='true'></span>
+                    {dish.precio != null && (
+                      <span class='price text-[16px]'>{priceFormat.format(dish.precio)} €</span>
+                    )}
                   </div>
-                  <span class='leader' aria-hidden='true'></span>
-                  <span class='font-sans text-ink text-[14px] font-medium whitespace-nowrap'>
-                    {dish.precio != null ? `${dish.precio} €` : '—'}
-                  </span>
-                </div>
-                {t(dish.nota, locale, defaultLocale) && (
-                  <p class='mt-1.5 text-muted text-[13.5px] leading-[1.55] pr-16 italic'>
-                    {t(dish.nota, locale, defaultLocale)}
-                  </p>
-                )}
-              </li>
-            ))}
+                  {note && <p class='mt-1 text-muted text-[15px] leading-[1.5] pr-14'>{note}</p>}
+                </li>
+              );
+            })}
           </ul>
         </div>
       ))}
     </div>
+
+    <p class='mt-12 pt-6 border-t border-line text-muted text-[14.5px] leading-relaxed'>
+      {tt.allergens} {tt.vat}
+    </p>
   </div>
 </section>
+
+<script is:inline>
+  (function () {
+    const tabs = Array.from(document.querySelectorAll('[data-menu-tab]'));
+    if (!tabs.length || !('IntersectionObserver' in window)) return;
+    const byId = new Map(tabs.map((tab) => [tab.getAttribute('href').slice(1), tab]));
+    const setCurrent = (id) => {
+      tabs.forEach((tab) => tab.removeAttribute('aria-current'));
+      const tab = byId.get(id);
+      if (!tab) return;
+      tab.setAttribute('aria-current', 'true');
+      // Solo desplaza la fila de pestañas, nunca la página.
+      const list = tab.closest('ul');
+      const offset = tab.offsetLeft - (list.clientWidth - tab.offsetWidth) / 2;
+      list.scrollTo({ left: offset, behavior: 'smooth' });
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (visible.length) setCurrent(visible[0].target.id);
+      },
+      { rootMargin: '-25% 0px -65% 0px' }
+    );
+    document.querySelectorAll('[data-menu-section]').forEach((el) => io.observe(el));
+  })();
+</script>

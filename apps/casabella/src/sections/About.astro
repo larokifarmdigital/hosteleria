@@ -3,7 +3,6 @@ import { t } from '@hosteleria/i18n-utils';
 import { img } from '../lib/sanity';
 import type { Restaurant } from '../lib/queries';
 import { extractI18nParagraphs } from '@hosteleria/utils';
-import Eyebrow from '@hosteleria/ui/components/Eyebrow.astro';
 
 interface Props {
   restaurant: Restaurant;
@@ -14,7 +13,7 @@ interface Props {
 const { restaurant, locale, defaultLocale } = Astro.props;
 
 const imagesInput = (restaurant.sobreImagenes ?? [])
-  .slice(0, 3)
+  .slice(0, 2)
   .map(i => img.url(i))
   .filter((u): u is string => Boolean(u));
 const images = imagesInput.length > 0 ? imagesInput : ['/img/gal-room.jpg'];
@@ -25,34 +24,30 @@ const paragraphs = extractI18nParagraphs(restaurant.sobreCuerpo, locale, default
 
 const [emph, ...restTitle] = titulo.split(' ');
 const restText = restTitle.join(' ');
+
+const figureCls = 'overflow-hidden bg-surface-2 rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)]';
 ---
 
-<!--
-  About: split editorial. Izquierda texto, derecha mosaico asimétrico con
-  1 foto grande + 2 secundarias (si hay), todas rectas. Blob discreto detrás.
--->
-<section id='about' class='relative overflow-hidden py-[14vh] px-(--gap) max-[960px]:py-[10vh]'>
-  <div class='blob blob-warm w-[440px] h-[440px] -bottom-32 -left-24 max-[960px]:hidden'></div>
-
+<section id='about' class='section-y px-(--gap)'>
   <div
-    class='relative z-[1] mx-auto max-w-[var(--max)] grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] items-center gap-[clamp(40px,6vw,110px)] max-[960px]:grid-cols-1 max-[960px]:gap-12'
+    class='mx-auto max-w-[var(--max)] grid grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] items-center gap-[clamp(40px,7vw,120px)] max-[960px]:grid-cols-1 max-[960px]:gap-10'
   >
-    <!-- Izquierda: texto editorial -->
-    <div class='reveal flex flex-col max-[960px]:order-2'>
-      <Eyebrow class='block mb-6'>{eyebrow}</Eyebrow>
+    <div class='reveal flex flex-col' data-reveal='left'>
+      {eyebrow && <p class='eyebrow mb-5'>{eyebrow}</p>}
 
-      <h2
-        class='font-serif font-normal leading-[1.05] tracking-[-0.02em] text-[clamp(36px,4.6vw,64px)] text-ink mb-8'
-      >
-        <em class='italic text-warm font-normal'>{emph}</em>{restText && ' ' + restText}
+      <h2 class='h-section mb-8 max-[960px]:mb-6'>
+        <em>{emph}</em>{restText && ' ' + restText}
       </h2>
 
       {
         paragraphs.length > 0 && (
-          <div class='flex flex-col gap-5'>
+          <div class='flex flex-col gap-5 max-w-[58ch]'>
             {paragraphs.map((p, i) => (
               <p
-                class:list={['text-muted text-[16.5px] leading-[1.8]', i === 0 && 'text-ink-soft']}
+                class:list={[
+                  'leading-[1.75]',
+                  i === 0 ? 'text-ink-soft text-[18px]' : 'text-muted text-[16.5px]'
+                ]}
               >
                 {p}
               </p>
@@ -62,36 +57,16 @@ const restText = restTitle.join(' ');
       }
     </div>
 
-    <!-- Derecha: layout adaptativo según nº de imágenes reales (1 / 2 / 3+) -->
-    {images.length === 1 && (
-      <figure class='reveal w-full aspect-[4/5] overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] max-[960px]:order-1'>
-        <img src={images[0]} alt='' class='w-full h-full object-cover' loading='lazy' />
+    <!-- Una foto, o dos solapadas: la segunda baja y monta sobre la primera. -->
+    <div class:list={['relative', images.length > 1 && 'pb-[14%] pr-[12%]']}>
+      <figure data-reveal='img' class:list={['reveal', figureCls, 'aspect-[4/5]']}>
+        <img src={images[0]} alt='' class='w-full h-full object-cover' loading='lazy' decoding='async' />
       </figure>
-    )}
-
-    {images.length === 2 && (
-      <div class='reveal grid grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] grid-rows-2 gap-4 w-full max-[960px]:order-1 max-[600px]:grid-cols-1 max-[600px]:grid-rows-none'>
-        <figure class='row-span-2 aspect-[4/5] overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] max-[600px]:row-span-1'>
-          <img src={images[0]} alt='' class='w-full h-full object-cover' loading='lazy' />
+      {images.length > 1 && (
+        <figure data-reveal='img' style='--d:250ms' class:list={['reveal', figureCls, 'absolute bottom-0 right-0 w-[46%] aspect-square border-[6px] border-bg']}>
+          <img src={images[1]} alt='' class='w-full h-full object-cover' loading='lazy' decoding='async' />
         </figure>
-        <figure class='row-start-2 aspect-[4/5] overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] max-[600px]:row-start-auto'>
-          <img src={images[1]} alt='' class='w-full h-full object-cover' loading='lazy' />
-        </figure>
-      </div>
-    )}
-
-    {images.length >= 3 && (
-      <div class='reveal relative min-h-[680px] w-full max-[960px]:order-1 max-[960px]:min-h-[520px] max-[600px]:min-h-[420px]'>
-        <figure class='absolute top-0 left-0 w-[70%] aspect-[4/5] overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)]'>
-          <img src={images[0]} alt='' class='w-full h-full object-cover' loading='lazy' />
-        </figure>
-        <figure class='absolute bottom-0 right-0 w-[62%] aspect-square overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)]'>
-          <img src={images[1]} alt='' class='w-full h-full object-cover' loading='lazy' />
-        </figure>
-        <figure class='hidden md:block absolute top-14 right-0 w-[40%] aspect-[3/4] overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card)]'>
-          <img src={images[2]} alt='' class='w-full h-full object-cover' loading='lazy' />
-        </figure>
-      </div>
-    )}
+      )}
+    </div>
   </div>
 </section>

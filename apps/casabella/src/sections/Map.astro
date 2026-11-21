@@ -1,98 +1,114 @@
 ---
 import type { Restaurant } from '../lib/queries';
-import {
-  extractMapSrc,
-  withMapLocale,
-  extractCoords,
-  extractFTID,
-  ftidToCID,
-  buildMapsExternalUrl
-} from '@hosteleria/utils';
-import Eyebrow from '@hosteleria/ui/components/Eyebrow.astro';
+import type { HoursUi } from '../lib/hours';
+import { getLocation, telHref } from '../lib/location';
+import SectionHeader from '../components/SectionHeader.astro';
+import HoursList from '../components/HoursList.astro';
+import CtaButton from '../components/CtaButton.astro';
 
 interface Props {
   restaurant: Restaurant;
+  hours: HoursUi;
   locale: string;
 }
 
-const { restaurant, locale } = Astro.props;
+const { restaurant, hours, locale } = Astro.props;
 
-const rawMapSrc = extractMapSrc(restaurant.mapaUrl);
-if (!rawMapSrc) return null;
+const { dir, mapSrc, mapsUrl, area } = getLocation(restaurant, locale);
+const phone = restaurant.contacto?.telefono ?? '';
 
-const mapSrc = withMapLocale(rawMapSrc, locale);
-const dir = restaurant.direccion ?? {};
+if (!mapSrc && !hours.hasHours && !dir.calle) return null;
 
-const coords = extractCoords(rawMapSrc);
-const ftid = extractFTID(rawMapSrc);
-const cid = ftidToCID(ftid);
-const fullAddress = [dir.calle, dir.codigoPostal, dir.ciudad, dir.pais]
-  .filter(Boolean)
-  .join(', ');
-const mapsExternalUrl = buildMapsExternalUrl(cid, coords, fullAddress, locale);
+const T = {
+  es: { eyebrow: 'Horario y cómo llegar', title: 'Te esperamos en', address: 'Dirección', phone: 'Teléfono', directions: 'Cómo llegar', map: 'Mapa' },
+  ca: { eyebrow: 'Horari i com arribar', title: 'T’esperem a', address: 'Adreça', phone: 'Telèfon', directions: 'Com arribar', map: 'Mapa' },
+  en: { eyebrow: 'Hours and directions', title: 'Find us in', address: 'Address', phone: 'Phone', directions: 'Get directions', map: 'Map' }
+};
+const tt = T[locale as keyof typeof T] ?? T.es;
 
-const eyebrowText = locale === 'en' ? 'How to find us' : locale === 'ca' ? 'Com arribar' : 'Cómo llegar';
-const openLabel = locale === 'en' ? 'Open in Google Maps' : locale === 'ca' ? 'Obrir a Google Maps' : 'Ver en Google Maps';
+const place = dir.barrio || dir.ciudad || restaurant.nombre;
+const labelCls = 'label mb-2';
 ---
 
-<section id='map' class='py-[16vh] px-(--gap) max-[900px]:py-[10vh]'>
+<section id='map' class='section-y px-(--gap) bg-surface-2'>
   <div class='mx-auto max-w-[var(--max)]'>
-    <div class='reveal text-center mb-12 max-[900px]:mb-10'>
-      <Eyebrow class='block mb-5'>{eyebrowText}</Eyebrow>
-      <h2 class='font-serif font-normal leading-[1.05] tracking-[-0.02em] text-[clamp(34px,4.2vw,56px)] text-ink'>
-        {restaurant.nombre},
-        <em class='italic text-warm font-normal'>{dir.barrio || dir.ciudad || ''}</em>
-      </h2>
-    </div>
+    <SectionHeader eyebrow={tt.eyebrow} title={tt.title} accent={place} />
 
-    <div class='grid grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)] items-stretch gap-6 max-[960px]:grid-cols-1'>
-      <div class='reveal relative overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card)]'>
-        <iframe
-          src={mapSrc}
-          title={`${restaurant.nombre} — ${eyebrowText}`}
-          loading='lazy'
-          referrerpolicy='no-referrer-when-downgrade'
-          allowfullscreen
-          class='block w-full border-0 h-[clamp(420px,60vh,560px)] max-[900px]:h-[clamp(300px,50vh,420px)] [filter:grayscale(0.15)_contrast(0.97)]'
-        ></iframe>
-      </div>
+    <div class='grid grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] items-stretch gap-5 max-[960px]:grid-cols-1'>
+      <div class='flex flex-col gap-8 p-9 bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card)] max-[960px]:p-6'>
+        {hours.hasHours && (
+          <div id='hours' class='scroll-mt-[calc(var(--nav-h)+32px)]'>
+            <div class='flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-3 min-h-[32px]'>
+              <h3 class='label'>{hours.strings.hours}</h3>
+              <p data-open-status class='status-badge'>
+                <span class='status-dot' aria-hidden='true'></span>
+                <span class='font-semibold' data-status-label></span>
+                <span data-status-detail></span>
+              </p>
+            </div>
+            <HoursList hours={hours} />
+          </div>
+        )}
 
-      <aside class='reveal flex flex-col justify-between p-10 bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card)] max-[960px]:p-8'>
-        <div class='flex flex-col gap-8 text-[15px] leading-[1.65]'>
+        <div class='grid grid-cols-2 gap-6 max-[480px]:grid-cols-1'>
           {dir.calle && (
             <div>
-              <div class='font-sans uppercase text-[10.5px] tracking-[0.28em] text-warm font-medium mb-2'>
-                {locale === 'en' ? 'Address' : locale === 'ca' ? 'Adreça' : 'Dirección'}
-              </div>
-              <div class='text-ink font-serif text-[18px] leading-[1.4]'>{dir.calle}</div>
-              <div class='text-muted mt-1'>{[dir.codigoPostal, dir.ciudad].filter(Boolean).join(' · ')}</div>
+              <h3 class={labelCls}>{tt.address}</h3>
+              <p class='text-ink font-serif text-[19px] leading-[1.35]'>{dir.calle}</p>
+              <p class='text-muted text-[15.5px] mt-0.5'>{[dir.codigoPostal, dir.ciudad].filter(Boolean).join(' ')}</p>
+              {dir.barrio && <p class='text-muted text-[15.5px]'>{dir.barrio}</p>}
             </div>
           )}
-
-          {restaurant.contacto?.telefono && (
+          {phone && (
             <div>
-              <div class='font-sans uppercase text-[10.5px] tracking-[0.28em] text-warm font-medium mb-2'>
-                {locale === 'en' ? 'Phone' : locale === 'ca' ? 'Telèfon' : 'Teléfono'}
-              </div>
-              <a href={`tel:${restaurant.contacto.telefono}`} class='text-ink font-serif text-[18px] leading-[1.4] hover:text-warm transition-colors'>
-                {restaurant.contacto.telefono}
+              <h3 class={labelCls}>{tt.phone}</h3>
+              <a
+                href={telHref(phone)}
+                class='inline-flex items-center min-h-[32px] text-ink font-serif text-[19px] tabular-nums underline decoration-line-strong underline-offset-4 cursor-pointer transition-colors duration-200 hover:text-accent hover:decoration-accent'
+              >
+                {phone}
               </a>
             </div>
           )}
         </div>
 
-        {mapsExternalUrl && (
-          <a
-            href={mapsExternalUrl}
-            target='_blank'
-            rel='noopener'
-            class='mt-10 inline-flex items-center gap-3 font-sans uppercase text-[11px] tracking-[0.22em] text-ink font-medium border-b border-ink pb-1 self-start hover:text-warm hover:border-warm transition-[color,border-color] duration-300'
-          >
-            {openLabel}
-            <span aria-hidden='true'>→</span>
-          </a>
+        {mapsUrl && (
+          <CtaButton href={mapsUrl} target='_blank' rel='noopener' class='self-start mt-auto max-[480px]:w-full'>
+            {tt.directions}
+          </CtaButton>
         )}
-      </aside>
+      </div>
+
+      {mapSrc && (
+        <div class='overflow-hidden bg-surface-2 border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card)] min-h-[420px] max-[960px]:min-h-0 max-[960px]:h-[360px]'>
+          <iframe
+            src={mapSrc}
+            title={`${tt.map}: ${restaurant.nombre}${area ? `, ${area}` : ''}`}
+            loading='lazy'
+            referrerpolicy='no-referrer-when-downgrade'
+            allowfullscreen
+            data-map-frame
+            class='block w-full h-full border-0 rounded-[var(--radius-card)] [filter:grayscale(0.2)_contrast(0.97)] data-[kbd-focus]:outline-2 data-[kbd-focus]:outline-accent data-[kbd-focus]:-outline-offset-2'
+          ></iframe>
+        </div>
+      )}
     </div>
   </div>
 </section>
+
+<script is:inline>
+  // Un iframe de otro origen nunca casa con :focus, así que al llegar con Tab
+  // no se vería dónde está el foco. Se marca a mano, solo si se llegó con teclado.
+  (function () {
+    const frame = document.querySelector('[data-map-frame]');
+    if (!frame) return;
+    let lastTab = 0;
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') lastTab = Date.now();
+    });
+    window.addEventListener('blur', () => {
+      if (document.activeElement === frame && Date.now() - lastTab < 200) frame.setAttribute('data-kbd-focus', '');
+    });
+    window.addEventListener('focus', () => frame.removeAttribute('data-kbd-focus'));
+  })();
+</script>

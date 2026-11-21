@@ -1,7 +1,7 @@
 ---
 import { t } from '@hosteleria/i18n-utils';
 import type { Restaurant, WineCategory, Wine } from '../lib/queries';
-import Eyebrow from '@hosteleria/ui/components/Eyebrow.astro';
+import SectionHeader from '../components/SectionHeader.astro';
 
 interface Props {
   restaurant: Restaurant;
@@ -19,72 +19,67 @@ const winesByCategory = wineCategories
   .map((cat) => ({ category: cat, items: wines.filter((w) => w.categoria?._id === cat._id) }))
   .filter(({ items }) => items.length > 0);
 
-const titulo = t(sec.vinosTitulo, locale, defaultLocale);
-const [first, ...restTitle] = titulo.split(' ');
-const restText = restTitle.join(' ');
-const notaFinal = t(sec.vinosNotaFinal, locale, defaultLocale);
+if (winesByCategory.length === 0) return null;
+
+const T = {
+  es: { glass: 'Copa', bottle: 'Botella' },
+  ca: { glass: 'Copa', bottle: 'Ampolla' },
+  en: { glass: 'Glass', bottle: 'Bottle' }
+};
+const tt = T[locale as keyof typeof T] ?? T.es;
+
+// En Sanity el precio llega como número o texto libre: solo se le añade € si es una cifra.
+const price = (value: unknown) => {
+  if (value == null || value === '') return null;
+  const text = String(value).trim();
+  return /^\d+([.,]\d+)?$/.test(text) ? `${text} €` : text;
+};
+
+const colCls = 'w-[68px] text-right max-[420px]:w-[58px]';
 ---
 
-<section id='wines' class='relative overflow-hidden py-[16vh] px-(--gap) max-[960px]:py-[10vh]'>
-  <div class='blob blob-warm w-[420px] h-[420px] top-24 -left-20 max-[960px]:hidden'></div>
+<section id='wines' class='section-y px-(--gap) bg-surface-2'>
+  <div class='mx-auto max-w-[var(--max)]'>
+    <SectionHeader
+      eyebrow={t(sec.vinosEyebrow, locale, defaultLocale)}
+      title={t(sec.vinosTitulo, locale, defaultLocale) || 'Vinos'}
+      note={t(sec.vinosNotaFinal, locale, defaultLocale)}
+    />
 
-  <div class='relative z-[1] mx-auto max-w-[var(--max)]'>
-    <div class='reveal text-center mb-14 max-[960px]:mb-10'>
-      <Eyebrow class='block mb-5'>{t(sec.vinosEyebrow, locale, defaultLocale)}</Eyebrow>
-      <h2 class='font-serif font-normal leading-[1.05] tracking-[-0.02em] text-[clamp(38px,5vw,68px)] text-ink mb-4'>
-        <em class='italic text-warm font-normal'>{first}</em>{restText && ' ' + restText}
-      </h2>
-      {notaFinal && (
-        <p class='text-muted text-[15px] leading-[1.7] mx-auto max-w-[52ch]'>{notaFinal}</p>
-      )}
-    </div>
-
-    <!-- Header de columnas: nombre / copa / botella (menu clásico) -->
-    <div class='reveal grid grid-cols-2 gap-x-[clamp(48px,7vw,120px)] mb-4 max-[900px]:grid-cols-1'>
-      {[0, 1].map(() => (
-        <div class='hidden md:grid grid-cols-[1fr_auto_auto] gap-x-8 pb-3 border-b border-line font-sans font-medium uppercase text-[10.5px] tracking-[0.28em] text-dim'>
-          <span></span>
-          <span class='min-w-[52px] text-right'>{locale === 'en' ? 'Glass' : locale === 'ca' ? 'Copa' : 'Copa'}</span>
-          <span class='min-w-[64px] text-right'>{locale === 'en' ? 'Bottle' : locale === 'ca' ? 'Ampolla' : 'Botella'}</span>
-        </div>
-      ))}
-    </div>
-
-    <div class='grid grid-cols-2 gap-x-[clamp(48px,7vw,120px)] gap-y-14 max-[900px]:grid-cols-1 max-[900px]:gap-y-10'>
+    <div class='grid grid-cols-2 gap-x-[clamp(48px,7vw,112px)] gap-y-14 max-[900px]:grid-cols-1 max-[900px]:gap-y-11'>
       {winesByCategory.map(({ category, items }) => (
-        <div class='reveal break-inside-avoid'>
-          <header class='flex items-baseline gap-4 mb-7 pb-3 border-b border-line'>
-            <h3 class='font-serif font-normal italic text-warm text-[clamp(22px,2.2vw,28px)]'>
+        <div class='reveal'>
+          <!-- Copa y botella se rotulan en cada bloque: también se ven en móvil. -->
+          <div class='flex items-end gap-4 pb-3 mb-2 border-b border-line-strong'>
+            <h3 class='flex-1 font-serif font-normal italic text-warm text-[clamp(26px,2.4vw,32px)] leading-tight'>
               {t(category.nombre, locale, defaultLocale)}
             </h3>
-            <span class='flex-1'></span>
-            <span class='font-sans text-[10.5px] font-medium uppercase tracking-[0.28em] text-dim'>
-              {items.length} {locale === 'en' ? 'refs' : 'refs'}
-            </span>
-          </header>
+            <span aria-hidden='true' class:list={[colCls, 'text-muted text-[13px] font-semibold pb-1']}>{tt.glass}</span>
+            <span aria-hidden='true' class:list={[colCls, 'text-muted text-[13px] font-semibold pb-1']}>{tt.bottle}</span>
+          </div>
 
-          <ul class='flex flex-col gap-6'>
-            {items.map((wine) => (
-              <li>
-                <div class='grid grid-cols-[1fr_auto_auto] gap-x-8 items-baseline max-[500px]:grid-cols-[1fr_auto]'>
-                  <div class='font-serif text-ink font-normal text-[clamp(17px,1.55vw,20px)] leading-tight'>
-                    {wine.nombre}
+          <ul class='stagger list-none divide-y divide-line'>
+            {items.map((wine) => {
+              const note = [t(wine.nota, locale, defaultLocale), wine.region].filter(Boolean).join(' · ');
+              const glass = price(wine.precioCopa);
+              const bottle = price(wine.precioBotella);
+              return (
+                <li class='reveal flex items-baseline gap-4 py-4'>
+                  <div class='flex-1 min-w-0'>
+                    <span class='block font-serif text-ink text-[clamp(18px,1.55vw,20.5px)] leading-snug'>
+                      {wine.nombre}
+                    </span>
+                    {note && <span class='block mt-1 text-muted text-[15px] leading-[1.5]'>{note}</span>}
                   </div>
-                  <span class='font-sans text-ink text-[13.5px] font-medium min-w-[52px] text-right whitespace-nowrap'>
-                    {wine.precioCopa ?? '—'}
+                  <span class:list={[colCls, 'price text-[16px]']}>
+                    {glass ? <><span class='sr-only'>{tt.glass}: </span>{glass}</> : <span aria-hidden='true' class='text-dim font-normal'>—</span>}
                   </span>
-                  <span class='font-sans text-ink text-[13.5px] font-medium min-w-[64px] text-right whitespace-nowrap max-[500px]:hidden'>
-                    {wine.precioBotella ?? '—'}
+                  <span class:list={[colCls, 'price text-[16px]']}>
+                    {bottle ? <><span class='sr-only'>{tt.bottle}: </span>{bottle}</> : <span aria-hidden='true' class='text-dim font-normal'>—</span>}
                   </span>
-                </div>
-                {(t(wine.nota, locale, defaultLocale) || wine.region) && (
-                  <p class='mt-1.5 text-muted text-[13.5px] leading-[1.55] italic pr-16 max-[500px]:pr-0'>
-                    {t(wine.nota, locale, defaultLocale)}
-                    {wine.region && <> · {wine.region}</>}
-                  </p>
-                )}
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         </div>
       ))}

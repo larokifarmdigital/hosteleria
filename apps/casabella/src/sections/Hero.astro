@@ -2,17 +2,21 @@
 import { t } from '@hosteleria/i18n-utils';
 import { img } from '../lib/sanity';
 import type { Restaurant, Espacio } from '../lib/queries';
+import type { HoursUi } from '../lib/hours';
+import { getLocation, telHref } from '../lib/location';
 import CtaButton from '../components/CtaButton.astro';
+import Icon from '../components/Icon.astro';
 import { resolveBookingAction } from '@hosteleria/utils';
 
 interface Props {
   restaurant: Restaurant;
   espacio: Espacio;
+  hours: HoursUi;
   locale: string;
   defaultLocale: string;
 }
 
-const { restaurant, espacio, locale, defaultLocale } = Astro.props;
+const { restaurant, espacio, hours, locale, defaultLocale } = Astro.props;
 const heroImgUrl = img.url(espacio.heroImagen) ?? '/img/hero.jpg';
 const bookingAction = resolveBookingAction(restaurant, locale);
 
@@ -21,118 +25,139 @@ const metaDer = t(espacio.heroMetaDer, locale, defaultLocale);
 
 const titulo = t(espacio.heroTitulo, locale, defaultLocale);
 const emphasis = t(espacio.heroSubtitulo, locale, defaultLocale);
+
+const { dir, mapsUrl, area } = getLocation(restaurant, locale);
+const phone = restaurant.contacto?.telefono ?? '';
+
+const T = {
+  es: { menu: 'Ver la carta', directions: 'Cómo llegar', call: 'Llamar', info: 'Horario, dirección y teléfono' },
+  ca: { menu: 'Veure la carta', directions: 'Com arribar', call: 'Trucar', info: 'Horari, adreça i telèfon' },
+  en: { menu: 'View the menu', directions: 'Get directions', call: 'Call us', info: 'Opening hours, address and phone' }
+};
+const tt = T[locale as keyof typeof T] ?? T.es;
+
+const cellCls =
+  'group flex items-center gap-4 py-5 px-7 cursor-pointer transition-colors duration-200 hover:bg-surface-2/60 focus-visible:-outline-offset-4 focus-visible:rounded-[var(--radius-card)] max-[960px]:px-5 max-[960px]:py-4';
+const cellIconCls =
+  'flex items-center justify-center w-11 h-11 rounded-full bg-warm-soft text-accent shrink-0';
+const cellLabelCls = 'block text-muted text-[13px] leading-snug';
+const cellValueCls = 'block font-serif text-ink text-[19px] leading-snug tracking-[-0.005em]';
+const cellArrowCls =
+  'ml-auto text-accent opacity-60 transition-[opacity,transform] duration-200 group-hover:opacity-100 group-hover:translate-x-1';
 ---
 
-<!--
-  Hero full-bleed: la imagen ocupa toda la sección. Borde inferior recortado
-  con forma de nubes (varios bumps) via SVG overlay que se rellena del color
-  de la siguiente sección (Manifesto = bg-surface-2).
--->
-<section
-  id='top'
-  class='relative w-full min-h-[92vh] overflow-hidden max-[960px]:min-h-[78vh] max-[600px]:min-h-[70vh]'
->
-  <!-- Imagen fondo (LCP element — se preloadea desde BaseLayout) -->
+<section id='top' class='relative w-full overflow-hidden bg-ink'>
+  <!-- LCP: se precarga desde BaseLayout. Decorativa: el mensaje va en el h1. -->
   <img
     src={heroImgUrl}
-    alt={titulo}
+    alt=''
     fetchpriority='high'
     decoding='async'
-    class='absolute inset-0 w-full h-full object-cover'
+    class='hero-img absolute inset-0 w-full h-full object-cover'
   />
-
-  <!-- Overlay dark gradient para legibilidad del texto -->
   <div
     aria-hidden='true'
-    class='absolute inset-0 bg-[linear-gradient(120deg,rgb(0_0_0/0.55)_0%,rgb(0_0_0/0.30)_45%,rgb(0_0_0/0.05)_75%,transparent_100%)]'
-  ></div>
-  <div
-    aria-hidden='true'
-    class='absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(to_top,rgb(0_0_0/0.5),transparent)]'
+    data-hero-veil
+    class='absolute inset-0 bg-[linear-gradient(105deg,rgb(18_12_6/0.78)_0%,rgb(18_12_6/0.5)_45%,rgb(18_12_6/0.12)_80%),linear-gradient(to_top,rgb(18_12_6/0.6),transparent_45%)]'
   ></div>
 
-  <!-- Contenido overlay -->
+  <div class='relative z-[1] px-(--gap)'>
   <div
-    class='relative z-[1] h-full min-h-[92vh] max-[960px]:min-h-[78vh] max-[600px]:min-h-[70vh]
-           flex flex-col justify-center
-           px-(--gap) pt-32 pb-[18vh]
-           mx-auto max-w-[var(--max)]
-           max-[960px]:pt-28 max-[960px]:pb-[14vh]'
+    class='mx-auto max-w-[var(--max)] min-h-[min(88svh,860px)] flex flex-col justify-end
+           pt-[calc(var(--nav-h)+56px)] pb-[clamp(96px,14vh,150px)]
+           max-[960px]:min-h-[78svh] max-[960px]:pb-24'
   >
-    <div class='flex flex-col gap-7 max-w-[720px] max-[960px]:gap-6'>
+    <div class='flex flex-col gap-6 max-w-[720px]'>
+      {hours.hasHours && (
+        <!-- Estado de apertura: lo rellena HoursScript; sin JS no se muestra. -->
+        <a href='#hours' data-open-status class='status-chip hero-in' style='--i:0'>
+          <span class='status-dot' aria-hidden='true'></span>
+          <span class='font-semibold' data-status-label></span>
+          <span class='status-chip-detail' data-status-detail></span>
+        </a>
+      )}
       {(metaIzq || metaDer) && (
-        <div class='inline-flex self-start items-center gap-3 py-1.5 px-4 rounded-full bg-white/12 backdrop-blur-md border border-white/30 text-white text-[11px] uppercase tracking-[0.28em] font-medium'>
-          <span class='w-1.5 h-1.5 rounded-full bg-warm inline-block'></span>
+        <p style='--i:1' class='hero-in flex flex-wrap items-center gap-x-3 gap-y-1 text-white text-[12.5px] uppercase tracking-[0.16em] font-semibold'>
           {metaIzq && <span>{metaIzq}</span>}
-          {metaIzq && metaDer && <span class='opacity-70'>·</span>}
-          {metaDer && <span>{metaDer}</span>}
-        </div>
+          {metaIzq && metaDer && <span aria-hidden='true' class='w-6 h-px bg-warm-soft/70'></span>}
+          {metaDer && <span class='text-warm-soft'>{metaDer}</span>}
+        </p>
       )}
 
-      <h1 class='font-serif font-normal leading-[1.02] tracking-[-0.02em] text-[clamp(50px,6.6vw,92px)] text-white [text-shadow:0_2px_20px_rgb(0_0_0/0.35)]'>
+      <h1 style='--i:2' class='hero-in font-serif font-normal leading-[1.03] tracking-[-0.02em] text-[clamp(44px,6.4vw,88px)] text-white'>
         {titulo}
-        {emphasis && (
-          <>
-            <br />
-            <em class='italic font-normal text-warm-soft' style='color: var(--color-warm-soft);'>{emphasis}</em>
-          </>
-        )}
+        {emphasis && <em class='block italic text-warm-soft'>{emphasis}</em>}
       </h1>
 
       <p
-        class='text-white/90 text-[17px] leading-[1.7] max-w-[46ch] [text-shadow:0_1px_10px_rgb(0_0_0/0.35)]'
+        style='--i:3'
+        class='hero-in text-white/90 text-[clamp(17px,1.4vw,19px)] leading-[1.6] max-w-[44ch]'
         set:html={t(espacio.heroNota, locale, defaultLocale).replace(/\n/g, '<br />')}
       />
 
-      <div class='flex items-center gap-6 flex-wrap mt-2'>
+      <div style='--i:4' class='hero-in flex items-center gap-x-4 gap-y-3 flex-wrap mt-2'>
         {bookingAction && (
           <CtaButton
             href={bookingAction.href}
             target={bookingAction.external ? '_blank' : undefined}
             rel={bookingAction.external ? 'noopener' : undefined}
+            variant='primary'
           >
             {t(espacio.heroCta, locale, defaultLocale)}
           </CtaButton>
         )}
-        <a
-          href='#plates'
-          class='inline-flex items-center gap-2.5 py-3 px-6 rounded-full bg-white/10 backdrop-blur-md border border-white/45 text-white font-sans font-medium uppercase text-[11.5px] tracking-[0.2em] transition-[background-color,border-color] duration-300 hover:bg-white/20 hover:border-white/70'
-        >
-          {locale === 'en' ? 'View the menu' : locale === 'ca' ? 'Veure la carta' : 'Ver la carta'}
-          <span aria-hidden='true'>→</span>
-        </a>
+        <CtaButton href='#plates' variant='ghostOnDark'>{tt.menu}</CtaButton>
       </div>
     </div>
   </div>
-
-  <!-- Scroll indicator -->
-  <a
-    href='#about'
-    aria-hidden='true'
-    class="absolute bottom-[14vh] left-1/2 -translate-x-1/2 z-[2] flex flex-col items-center gap-2.5
-           text-[10px] tracking-[0.28em] uppercase text-white/70 pointer-events-none
-           opacity-0 animate-[heroScrollFade_1s_ease_1.4s_forwards]
-           after:content-[''] after:w-px after:h-10 after:bg-[linear-gradient(to_bottom,rgba(255,255,255,0.7),transparent)]
-           after:animate-[heroScrollLine_2.2s_ease-in-out_infinite]
-           max-[960px]:hidden"
-  >
-    <span>Scroll</span>
-  </a>
-
-  <!-- Borde inferior tipo onda seno/coseno (más sutil que la nube). Se rellena
-       con el color de la siguiente sección (Manifesto = bg-surface-2). -->
-  <svg
-    aria-hidden='true'
-    viewBox='0 0 1440 70'
-    preserveAspectRatio='none'
-    class='absolute bottom-[-1px] inset-x-0 w-full h-[60px] max-[960px]:h-[40px] max-[600px]:h-[26px] z-[3] pointer-events-none'
-    style='color: var(--color-surface-2);'
-  >
-    <path
-      d='M 0,32
-         Q 120,4 240,32 T 480,32 T 720,32 T 960,32 T 1200,32 T 1440,32
-         L 1440,70 L 0,70 Z'
-      fill='currentColor'
-    />
-  </svg>
+  </div>
 </section>
+
+<!-- Lo que más busca quien llega a la web de un bar: si está abierto, dónde
+     está y cómo llamar. Monta sobre el borde inferior del hero. -->
+<div class='relative z-[2] px-(--gap) bg-[linear-gradient(to_bottom,transparent_44px,var(--color-surface-2)_44px)]'>
+  <ul
+    aria-label={tt.info}
+    style='--i:5'
+    class='hero-in mx-auto max-w-[var(--max)] -mt-11 grid grid-cols-3 list-none overflow-hidden
+           bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)]
+           divide-x divide-line max-[960px]:grid-cols-1 max-[960px]:divide-x-0 max-[960px]:divide-y'
+  >
+    {hours.hasHours && (
+      <li>
+        <a href='#hours' class={cellCls}>
+          <span class={cellIconCls}><Icon name='clock' /></span>
+          <span class='min-w-0'>
+            <span class:list={[cellValueCls, 'tabular-nums']} data-today-hours>{hours.strings.hours}</span>
+            <span class={cellLabelCls}>{hours.strings.todayHours} · {hours.strings.fullWeek}</span>
+          </span>
+          <Icon name='arrow' size={18} class={cellArrowCls} />
+        </a>
+      </li>
+    )}
+    {dir.calle && (
+      <li>
+        <a href={mapsUrl || '#map'} target={mapsUrl ? '_blank' : undefined} rel={mapsUrl ? 'noopener' : undefined} class={cellCls}>
+          <span class={cellIconCls}><Icon name='pin' /></span>
+          <span class='min-w-0'>
+            <span class={cellValueCls}>{dir.calle}</span>
+            <span class={cellLabelCls}>{[area, tt.directions].filter(Boolean).join(' · ')}</span>
+          </span>
+          <Icon name='arrow' size={18} class={cellArrowCls} />
+        </a>
+      </li>
+    )}
+    {phone && (
+      <li>
+        <a href={telHref(phone)} class={cellCls}>
+          <span class={cellIconCls}><Icon name='phone' /></span>
+          <span class='min-w-0'>
+            <span class:list={[cellValueCls, 'tabular-nums']}>{phone}</span>
+            <span class={cellLabelCls}>{tt.call}</span>
+          </span>
+          <Icon name='arrow' size={18} class={cellArrowCls} />
+        </a>
+      </li>
+    )}
+  </ul>
+</div>

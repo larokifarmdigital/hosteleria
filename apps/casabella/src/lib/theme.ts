@@ -6,4 +6,4 @@
  *
  * Fuente única de verdad para el chrome del navegador (no se cambia desde Sanity).
  */
-export const accentColor = '#d4a655';
+export const accentColor = '#964a1e';

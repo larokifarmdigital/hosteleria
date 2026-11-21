@@ -1,7 +1,8 @@
 ---
 import { t } from '@hosteleria/i18n-utils';
 import type { Restaurant } from '../lib/queries';
-import Eyebrow from '@hosteleria/ui/components/Eyebrow.astro';
+import Icon from '../components/Icon.astro';
+import { telHref } from '../lib/location';
 
 interface Props {
   restaurant: Restaurant;
@@ -19,103 +20,140 @@ const eyebrowText =
   'Preguntas frecuentes';
 
 const titleText =
-  locale === 'en' ? { first: 'Everything', rest: 'you need to know' } :
-  locale === 'ca' ? { first: 'Tot',         rest: 'el que has de saber' } :
-                    { first: 'Todo',        rest: 'lo que necesitas saber' };
+  locale === 'en' ? 'Good to know' :
+  locale === 'ca' ? 'Abans de venir' :
+                    'Antes de venir';
+
+const [first, ...rest] = titleText.split(' ');
+const phone = restaurant.contacto?.telefono ?? '';
+const moreText =
+  locale === 'en' ? 'Something else you want to ask? Call us on' :
+  locale === 'ca' ? 'Tens un altre dubte? Truca’ns al' :
+                    '¿Tienes otra duda? Llámanos al';
 ---
 
-<section
-  id='faq'
-  class='relative overflow-hidden py-[16vh] px-(--gap) max-[700px]:py-[10vh]'
->
-  <div class='blob blob-cream w-[720px] h-[720px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-[960px]:w-[520px] max-[960px]:h-[520px]'></div>
+<section id='faq' class='section-y px-(--gap) bg-surface-2'>
+  <div class='mx-auto max-w-[840px]'>
+    <header class='reveal text-center mb-12 max-[960px]:mb-9'>
+      <p class='eyebrow mb-4'>{eyebrowText}</p>
+      <h2 class='h-section'><em>{first}</em>{rest.length > 0 && ` ${rest.join(' ')}`}</h2>
+    </header>
 
-  <div class='relative z-[1] mx-auto max-w-[880px]'>
-    <div class='reveal text-center mb-14 max-[700px]:mb-10'>
-      <Eyebrow class='block mb-5'>{eyebrowText}</Eyebrow>
-      <h2 class='font-serif font-normal leading-[1.05] tracking-[-0.02em] text-[clamp(34px,4.2vw,56px)] text-ink'>
-        <em class='italic text-warm font-normal'>{titleText.first}</em> {titleText.rest}
-      </h2>
-    </div>
-
-    <!-- Lista editorial: hairline entre filas, sin pill, toggle "+" fino -->
-    <div class='border-t border-line'>
-      {restaurant.faq.map((item, i) => (
-        <details
-          class="reveal group border-b border-line transition-colors duration-[300ms]
-                 hover:bg-[rgb(226_216_198/0.35)]"
-        >
+    <div class='stagger border-t border-line-strong'>
+      {restaurant.faq.map((item) => (
+        <details class='reveal faq-item group border-b border-line'>
           <summary
-            class="grid items-baseline grid-cols-[36px_1fr_auto] gap-5 py-6 px-2 cursor-pointer list-none
-                   [&::-webkit-details-marker]:hidden
-                   max-[700px]:grid-cols-[28px_1fr_auto] max-[700px]:gap-3 max-[700px]:py-5 max-[700px]:px-1"
+            class='flex items-center justify-between gap-6 py-5 cursor-pointer list-none
+                   [&::-webkit-details-marker]:hidden transition-colors duration-200 hover:text-accent'
           >
-            <span class='font-sans text-warm font-medium text-[11px] tracking-[0.24em] uppercase'>
-              {String(i + 1).padStart(2, '0')}
-            </span>
-            <span class='font-serif text-ink font-normal leading-[1.4] text-[clamp(17px,1.7vw,20px)] tracking-[-0.005em]'>
+            <span class='font-serif font-normal leading-[1.35] text-[clamp(18px,1.7vw,21px)] tracking-[-0.005em]'>
               {t(item.pregunta, locale, defaultLocale)}
             </span>
             <span
-              aria-hidden='true'
-              class='inline-flex items-center justify-center w-6 h-6 text-ink
-                     transition-[transform] duration-[400ms] ease-[cubic-bezier(.65,0,.35,1)]
-                     group-open:rotate-45
-                     motion-reduce:transition-none'
+              class='flex items-center justify-center w-9 h-9 rounded-full border border-line-strong text-ink shrink-0
+                     transition-transform duration-300 ease-[cubic-bezier(.65,0,.35,1)]
+                     group-open:rotate-45 motion-reduce:transition-none'
             >
-              <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.4' stroke-linecap='round'>
-                <path d='M12 5v14M5 12h14' />
-              </svg>
+              <Icon name='plus' size={16} />
             </span>
           </summary>
           <div
-            class='faq-body overflow-hidden opacity-0 -translate-y-1.5 h-0 will-change-[height]
-                   transition-[height,opacity,transform] duration-[420ms] ease-[cubic-bezier(.65,0,.35,1)]
-                   group-open:opacity-100 group-open:translate-y-0
-                   motion-reduce:transition-none'
+            class='faq-body overflow-hidden opacity-0 h-0
+                   transition-[height,opacity] duration-[360ms] ease-[cubic-bezier(.65,0,.35,1)]
+                   group-open:opacity-100 group-open:h-auto motion-reduce:transition-none'
           >
-            <p class='text-muted text-[15px] leading-[1.8] max-w-[62ch] pl-14 pr-10 pb-7 max-[700px]:pl-10 max-[700px]:pr-2 max-[700px]:pb-5'>
+            <p class='text-muted text-[16px] leading-[1.7] max-w-[62ch] pr-14 pb-6 max-[700px]:pr-2'>
               {t(item.respuesta, locale, defaultLocale)}
             </p>
           </div>
         </details>
       ))}
     </div>
+
+    {phone && (
+      <p class='reveal mt-10 text-center text-muted text-[16px] leading-[1.6]'>
+        {moreText}{' '}
+        <a
+          href={telHref(phone)}
+          class='font-semibold text-accent tabular-nums whitespace-nowrap underline underline-offset-4 decoration-accent/40 transition-colors duration-200 hover:text-accent-hover hover:decoration-accent'
+        >{phone}</a>
+      </p>
+    )}
   </div>
 </section>
 
 <script is:inline>
+  // Acordeón: solo una pregunta abierta a la vez; al abrir otra, la anterior se cierra.
   (function () {
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    document.querySelectorAll('details.reveal').forEach((details) => {
-      const summary = details.querySelector('summary');
+    const items = Array.from(document.querySelectorAll('details.faq-item'));
+
+    // Si la transición no llega a arrancar, `transitionend` no se dispara: el
+    // temporizador garantiza que la pregunta nunca se quede bloqueada a medias.
+    function onHeightEnd(body, done) {
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timer);
+        body.removeEventListener('transitionend', onEnd);
+        done();
+      };
+      const onEnd = (ev) => { if (ev.propertyName === 'height') finish(); };
+      const timer = setTimeout(finish, 480);
+      body.addEventListener('transitionend', onEnd);
+    }
+
+    function close(details) {
       const body = details.querySelector('.faq-body');
-      if (!summary || !body) return;
+      if (!details.hasAttribute('open')) return;
+      // Aún se está abriendo: se cerrará en cuanto termine.
+      if (details.dataset.animating) { details.dataset.closeAfter = '1'; return; }
+      details.dataset.animating = '1';
+      body.style.height = body.scrollHeight + 'px';
+      void body.offsetHeight; // fija la altura de partida antes de animar
+      body.style.height = '0px';
+      onHeightEnd(body, () => {
+        details.removeAttribute('open');
+        body.style.height = '';
+        delete details.dataset.animating;
+      });
+    }
+
+    function open(details) {
+      const body = details.querySelector('.faq-body');
+      if (details.dataset.animating) return;
+      details.dataset.animating = '1';
+      delete details.dataset.closeAfter;
+      details.setAttribute('open', '');
+      body.style.height = '0px';
+      void body.offsetHeight;
+      body.style.height = body.scrollHeight + 'px';
+      onHeightEnd(body, () => {
+        body.style.height = 'auto';
+        delete details.dataset.animating;
+        if (details.dataset.closeAfter) { delete details.dataset.closeAfter; close(details); }
+      });
+    }
+
+    items.forEach((details) => {
+      const summary = details.querySelector('summary');
+      if (!summary || !details.querySelector('.faq-body')) return;
+
+      if (reduce) {
+        // Sin animación: el navegador abre y cierra; aquí solo se cierran las demás.
+        details.addEventListener('toggle', () => {
+          if (details.open) items.forEach((other) => { if (other !== details) other.open = false; });
+        });
+        return;
+      }
+
       summary.addEventListener('click', (e) => {
-        if (reduce) return;
         e.preventDefault();
-        const isOpen = details.hasAttribute('open');
-        body.style.height = body.scrollHeight + 'px';
-        if (isOpen) {
-          requestAnimationFrame(() => { body.style.height = '0px'; });
-          body.addEventListener('transitionend', function once(ev) {
-            if (ev.propertyName !== 'height') return;
-            body.removeEventListener('transitionend', once);
-            details.removeAttribute('open');
-            body.style.height = '';
-          });
-        } else {
-          details.setAttribute('open', '');
-          body.style.height = '0px';
-          requestAnimationFrame(() => {
-            body.style.height = body.scrollHeight + 'px';
-          });
-          body.addEventListener('transitionend', function once(ev) {
-            if (ev.propertyName !== 'height') return;
-            body.removeEventListener('transitionend', once);
-            body.style.height = 'auto';
-          });
-        }
+        if (details.dataset.animating) return;
+        if (details.hasAttribute('open')) return close(details);
+        items.forEach((other) => { if (other !== details) close(other); });
+        open(details);
       });
     });
   })();

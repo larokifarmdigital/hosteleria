@@ -1,0 +1,84 @@
+---
+import type { HoursUi } from '../lib/hours';
+
+interface Props {
+  config: HoursUi['config'];
+}
+
+const { config } = Astro.props;
+---
+
+<script is:inline type='application/json' id='hoursConfig' set:html={JSON.stringify(config)}></script>
+
+<script is:inline>
+  (function () {
+    const el = document.getElementById('hoursConfig');
+    if (!el) return;
+    const { timeZone, days, dayNames, strings } = JSON.parse(el.textContent);
+    const DAY = 24 * 60;
+    const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const fmt = new Intl.DateTimeFormat('en-GB', {
+      timeZone,
+      weekday: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23'
+    });
+
+    const hhmm = (min) => {
+      const m = ((min % DAY) + DAY) % DAY;
+      return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+    };
+
+    function resolve() {
+      const parts = Object.fromEntries(fmt.formatToParts(new Date()).map((p) => [p.type, p.value]));
+      const today = WEEKDAYS.indexOf(parts.weekday);
+      const now = Number(parts.hour) * 60 + Number(parts.minute);
+
+      // El turno de ayer puede seguir abierto de madrugada.
+      const yesterday = (today + 6) % 7;
+      const late = (days[yesterday] || []).find(([, end]) => end > DAY && now < end - DAY);
+      if (late) return { today, open: true, detail: strings.closesAt.replace('{t}', hhmm(late[1])) };
+
+      const current = (days[today] || []).find(([start, end]) => now >= start && now < end);
+      if (current) return { today, open: true, detail: strings.closesAt.replace('{t}', hhmm(current[1])) };
+
+      for (let offset = 0; offset < 8; offset++) {
+        const day = (today + offset) % 7;
+        const next = (days[day] || []).find(([start]) => offset > 0 || start > now);
+        if (!next) continue;
+        const t = hhmm(next[0]);
+        const template =
+          offset === 0 ? strings.opensToday : offset === 1 ? strings.opensTomorrow : strings.opensDay;
+        return { today, open: false, detail: template.replace('{t}', t).replace('{d}', dayNames[day]) };
+      }
+      return { today, open: false, detail: '' };
+    }
+
+    function render() {
+      const status = resolve();
+      document.querySelectorAll('[data-open-status]').forEach((node) => {
+        node.dataset.state = status.open ? 'open' : 'closed';
+        const label = node.querySelector('[data-status-label]');
+        const detail = node.querySelector('[data-status-detail]');
+        if (label) label.textContent = status.open ? strings.open : strings.closed;
+        if (detail) detail.textContent = status.detail;
+      });
+      // Horario de hoy en una línea ("07:00–23:30"), o "Cerrado" si hoy no se abre.
+      const shifts = (days[status.today] || []).map(([start, end]) => hhmm(start) + '–' + hhmm(end));
+      document.querySelectorAll('[data-today-hours]').forEach((node) => {
+        node.textContent = shifts.length ? shifts.join(' · ') : strings.closedDay;
+      });
+      document.querySelectorAll('[data-hours-row]').forEach((row) => {
+        if (row.dataset.hoursRow.split(',').map(Number).includes(status.today)) row.setAttribute('data-today', '');
+        else row.removeAttribute('data-today');
+      });
+    }
+
+    render();
+    setInterval(render, 60 * 1000);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) render();
+    });
+  })();
+</script>

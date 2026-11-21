@@ -2,13 +2,12 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Nav from '../components/Nav.astro';
 import MobileOverlay from '../components/MobileOverlay.astro';
-import Footer from '@hosteleria/ui/components/Footer.astro';
+import Footer from '../components/Footer.astro';
 import WhatsAppFab from '@hosteleria/ui/components/WhatsAppFab.astro';
 import CtaButton from '../components/CtaButton.astro';
 import { fetchRestaurantData, fetchLegalPages } from '../lib/queries';
 import { img } from '../lib/sanity';
-import { buildWhatsAppHref, resolveBookingAction } from '@hosteleria/utils';
-import { t as tt } from '@hosteleria/i18n-utils';
+import { buildWhatsAppHref } from '@hosteleria/utils';
 
 const data = await fetchRestaurantData();
 const { restaurant } = data;
@@ -32,7 +31,6 @@ const bookingEmail = restaurant.contacto?.email ?? '';
 const bookingPhone = restaurant.contacto?.telefono ?? '';
 const whatsappRaw = restaurant.contacto?.whatsapp ?? '';
 const waHref = buildWhatsAppHref(whatsappRaw, restaurant.nombre, locale);
-const bookingAction = resolveBookingAction(restaurant, locale, '/');
 
 const COPY: Record<
   string,
@@ -208,18 +206,7 @@ const t = COPY[locale] ?? COPY.es;
     whatsappRaw={whatsappRaw}
     bookingPhone={bookingPhone}
     bookingEmail={bookingEmail}
-  >
-    {bookingAction && (
-      <CtaButton
-        slot='cta'
-        href={bookingAction.href}
-        target={bookingAction.external ? '_blank' : undefined}
-        rel={bookingAction.external ? 'noopener' : undefined}
-      >
-        {bookingAction.label ?? tt(restaurant.textosNav?.linkReservar, locale, defaultLocale) ?? 'Reservar'}
-      </CtaButton>
-    )}
-  </Footer>
+  />
 
   <WhatsAppFab href={waHref} locale={locale} />
 </BaseLayout>

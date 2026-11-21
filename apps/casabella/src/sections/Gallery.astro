@@ -2,7 +2,8 @@
 import { t } from '@hosteleria/i18n-utils';
 import { img } from '../lib/sanity';
 import type { Restaurant, Espacio } from '../lib/queries';
-import Eyebrow from '@hosteleria/ui/components/Eyebrow.astro';
+import SectionHeader from '../components/SectionHeader.astro';
+import Icon from '../components/Icon.astro';
 
 interface Props {
   restaurant: Restaurant;
@@ -15,79 +16,137 @@ const { restaurant, espacio, locale, defaultLocale } = Astro.props;
 
 const sec = restaurant.textosSecciones ?? {};
 
-const galeriaFallback = [
+const galleryFallback = [
   '/img/gal-table.jpg', '/img/gal-room.jpg', '/img/gal-soup.jpg',
   '/img/gal-martini.jpg', '/img/cellar.jpg', '/img/pass.jpg',
   '/img/glass.jpg', '/img/hire.jpg', '/img/kitchen.jpg'
 ];
-const galeriaImgs = espacio.galeria?.length
+const images = espacio.galeria?.length
   ? espacio.galeria.map((g) => img.url(g) ?? '/img/gal-room.jpg')
-  : galeriaFallback;
+  : galleryFallback;
 
-const titulo = t(sec.galeriaTitulo, locale, defaultLocale) || 'Nuestro espacio';
-const [first, ...restTitle] = titulo.split(' ');
-const restText = restTitle.join(' ');
+const T = {
+  es: { photo: 'Foto {n} de {total}', open: 'Ampliar foto {n} de {total}', viewer: 'Galería de fotos', close: 'Cerrar', prev: 'Foto anterior', next: 'Foto siguiente' },
+  ca: { photo: 'Foto {n} de {total}', open: 'Ampliar foto {n} de {total}', viewer: 'Galeria de fotos', close: 'Tancar', prev: 'Foto anterior', next: 'Foto següent' },
+  en: { photo: 'Photo {n} of {total}', open: 'Enlarge photo {n} of {total}', viewer: 'Photo gallery', close: 'Close', prev: 'Previous photo', next: 'Next photo' }
+};
+const tt = T[locale as keyof typeof T] ?? T.es;
+const fill = (template: string, n: number) =>
+  template.replace('{n}', String(n)).replace('{total}', String(images.length));
+
+const viewerBtnCls =
+  'flex items-center justify-center w-12 h-12 rounded-full bg-white/10 text-white border border-white/25 cursor-pointer transition-colors duration-200 hover:bg-white/25';
 ---
 
-<section id='gallery' class='py-[16vh] px-(--gap) bg-surface-2 max-[960px]:py-[10vh]'>
+<section id='gallery' class='section-y px-(--gap) bg-surface-2'>
   <div class='mx-auto max-w-[var(--max)]'>
-    <div class='reveal text-center mb-14 max-[960px]:mb-10'>
-      <Eyebrow class='block mb-5'>{t(sec.galeriaEyebrow, locale, defaultLocale)}</Eyebrow>
-      <h2 class='font-serif font-normal leading-[1.05] tracking-[-0.02em] text-[clamp(38px,5vw,64px)] text-ink'>
-        <em class='italic text-warm font-normal'>{first}</em>{restText && ' ' + restText}
-      </h2>
-    </div>
+    <SectionHeader
+      eyebrow={t(sec.galeriaEyebrow, locale, defaultLocale)}
+      title={t(sec.galeriaTitulo, locale, defaultLocale) || 'Nuestro espacio'}
+    />
 
-    <div class='grid grid-cols-3 gap-3 auto-rows-[260px] max-[960px]:grid-cols-2 max-[960px]:gap-2.5 max-[960px]:auto-rows-[220px] max-[600px]:grid-cols-1 max-[600px]:auto-rows-[280px]'>
-      {galeriaImgs.map((src) => (
-        <div
-          data-gallery-item
-          class='group relative overflow-hidden bg-surface cursor-zoom-in rounded-[var(--radius-card)] border border-line shadow-[var(--shadow-card)]
-                 transition-[box-shadow,border-color] duration-[400ms] ease-out
-                 hover:shadow-[var(--shadow-card-lift)] hover:border-warm/40
-                 [&:nth-child(6n+1)]:row-span-2 [&:nth-child(6n+4)]:row-span-2
-                 max-[960px]:[&:nth-child(6n+1)]:row-span-1 max-[960px]:[&:nth-child(6n+4)]:row-span-1'
+    <ul class='stagger grid grid-cols-3 gap-3 auto-rows-[250px] list-none max-[960px]:grid-cols-2 max-[960px]:gap-2 max-[960px]:auto-rows-[190px] max-[480px]:auto-rows-[150px]'>
+      {images.map((src, i) => (
+        <li
+          data-reveal='zoom'
+          class='reveal [&:nth-child(6n+1)]:row-span-2 [&:nth-child(6n+4)]:row-span-2
+                 max-[960px]:[&:nth-child(6n+4)]:row-span-1 max-[960px]:[&:nth-child(6n+1)]:col-span-2'
         >
-          <img
-            src={src} alt='' loading='lazy'
-            class='w-full h-full object-cover transition-[transform] duration-[900ms] ease-[cubic-bezier(.2,.6,.2,1)] group-hover:scale-[1.04]'
-          />
-        </div>
+          <button
+            type='button'
+            data-gallery-item={i}
+            aria-label={fill(tt.open, i + 1)}
+            class='group block w-full h-full overflow-hidden bg-surface cursor-pointer rounded-[10px] focus-visible:outline-[3px] focus-visible:outline-white focus-visible:-outline-offset-[5px] focus-visible:ring-2 focus-visible:ring-accent'
+          >
+            <img
+              src={src} alt='' loading='lazy' decoding='async'
+              class='w-full h-full object-cover transition-transform duration-[700ms] ease-[cubic-bezier(.2,.6,.2,1)] group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100'
+            />
+          </button>
+        </li>
       ))}
-    </div>
+    </ul>
   </div>
 </section>
 
-<!-- Lightbox editorial -->
-<div
+<dialog
   id='lightbox'
-  data-open='false'
-  class="fixed inset-0 z-[200] grid place-items-center cursor-zoom-out
-         invisible opacity-0
-         bg-[rgb(33_22_16/0.9)] backdrop-blur-sm
-         transition-[opacity,visibility] duration-[400ms] delay-[400ms]
-         data-[open='true']:visible data-[open='true']:opacity-100 data-[open='true']:delay-0"
+  aria-label={tt.viewer}
+  data-photo-label={tt.photo}
+  class='fixed inset-0 m-0 w-screen h-dvh max-w-none max-h-none p-0 bg-[rgb(20_14_8/0.94)] text-white backdrop:bg-transparent
+         open:grid grid-rows-[auto_1fr_auto]'
 >
-  <img src='' alt='' class='w-auto max-w-[88vw] h-auto max-h-[86vh] object-contain' />
-</div>
+  <div class='flex items-center justify-between gap-4 p-4'>
+    <p data-lightbox-count aria-live='polite' class='font-sans text-[15px] text-white/85 tabular-nums pl-2'></p>
+    <button type='button' data-lightbox-close aria-label={tt.close} class={viewerBtnCls}>
+      <Icon name='close' />
+    </button>
+  </div>
+  <div class='min-h-0 flex items-center justify-center px-4' data-lightbox-stage>
+    <img src='' alt='' class='max-w-full max-h-full object-contain rounded-[6px]' />
+  </div>
+  <div class='flex items-center justify-center gap-4 p-4'>
+    <button type='button' data-lightbox-prev aria-label={tt.prev} class={viewerBtnCls}>
+      <Icon name='arrow-left' />
+    </button>
+    <button type='button' data-lightbox-next aria-label={tt.next} class={viewerBtnCls}>
+      <Icon name='arrow' />
+    </button>
+  </div>
+</dialog>
 
 <script is:inline>
   (function () {
     const lb = document.getElementById('lightbox');
-    if (!lb) return;
-    const lbi = lb.querySelector('img');
-    const setOpen = (open) => { lb.dataset.open = open ? 'true' : 'false'; };
-    document.querySelectorAll('[data-gallery-item]').forEach((c) => {
-      const inner = c.querySelector('img');
-      if (!inner) return;
-      c.addEventListener('click', () => {
-        lbi.src = inner.src;
-        setOpen(true);
+    const items = Array.from(document.querySelectorAll('[data-gallery-item]'));
+    if (!lb || !items.length || typeof lb.showModal !== 'function') return;
+
+    const image = lb.querySelector('[data-lightbox-stage] img');
+    const count = lb.querySelector('[data-lightbox-count]');
+    const sources = items.map((item) => item.querySelector('img').src);
+    let index = 0;
+    let opener = null;
+
+    const show = (next) => {
+      index = (next + sources.length) % sources.length;
+      image.src = sources[index];
+      count.textContent = lb.dataset.photoLabel
+        .replace('{n}', index + 1)
+        .replace('{total}', sources.length);
+    };
+
+    items.forEach((item, i) => {
+      item.addEventListener('click', () => {
+        opener = item;
+        show(i);
+        lb.showModal();
       });
     });
-    lb.addEventListener('click', () => setOpen(false));
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') setOpen(false);
+
+    lb.querySelector('[data-lightbox-close]').addEventListener('click', () => lb.close());
+    lb.querySelector('[data-lightbox-prev]').addEventListener('click', () => show(index - 1));
+    lb.querySelector('[data-lightbox-next]').addEventListener('click', () => show(index + 1));
+    // Clic fuera de la foto (en el fondo) cierra.
+    lb.querySelector('[data-lightbox-stage]').addEventListener('click', (e) => {
+      if (e.target !== image) lb.close();
     });
+    lb.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') show(index - 1);
+      if (e.key === 'ArrowRight') show(index + 1);
+    });
+    lb.addEventListener('close', () => {
+      image.src = '';
+      opener?.focus();
+    });
+
+    // Deslizar en móvil.
+    let startX = null;
+    lb.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
+    lb.addEventListener('touchend', (e) => {
+      if (startX == null) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 50) show(index + (dx < 0 ? 1 : -1));
+      startX = null;
+    }, { passive: true });
   })();
 </script>

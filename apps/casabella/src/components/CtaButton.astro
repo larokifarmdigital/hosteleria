@@ -4,7 +4,7 @@ interface Props {
   rel?: string;
   href?: string;
   type?: 'submit' | 'button';
-  variant?: 'primary' | 'ghost' | 'link';
+  variant?: 'primary' | 'ghost' | 'onDark' | 'ghostOnDark' | 'link';
   class?: string;
 }
 const {
@@ -16,31 +16,25 @@ const {
   class: cls = ''
 } = Astro.props;
 
-// Pill sobrio: carbón por defecto, hover ámbar. Uppercase medio, sin bouncing.
 const base = [
-  'inline-flex items-center gap-3',
-  'font-sans font-medium uppercase',
-  'text-[11.5px] tracking-[0.2em]',
-  'cursor-pointer',
-  'transition-[background-color,color,border-color] duration-[350ms] ease-out',
-  '[&>.arrow]:transition-transform [&>.arrow]:duration-[350ms] hover:[&>.arrow]:translate-x-1'
+  'inline-flex items-center justify-center gap-2.5',
+  'font-sans font-semibold text-[15px] leading-none tracking-[0.01em]',
+  'cursor-pointer select-none',
+  'transition-[background-color,color,border-color,transform,box-shadow] duration-200 ease-out',
+  'hover:-translate-y-0.5 hover:shadow-[0_12px_26px_-14px_rgb(74_52_14/0.6)] motion-reduce:hover:translate-y-0',
+  'active:scale-[0.98] motion-reduce:active:scale-100',
+  '[&>.arrow]:transition-transform [&>.arrow]:duration-200 hover:[&>.arrow]:translate-x-1'
 ];
 
+const pill = 'min-h-[52px] py-3.5 px-7 rounded-full border';
+
 const variants = {
-  primary: [
-    'py-3.5 px-7',
-    'bg-accent text-white border border-accent rounded-full',
-    'hover:bg-accent-hover hover:border-accent-hover'
-  ],
-  ghost: [
-    'py-3.5 px-7',
-    'bg-transparent text-ink border border-ink rounded-full',
-    'hover:bg-ink hover:text-bg'
-  ],
-  link: [
-    'py-1 border-b border-accent text-accent',
-    'hover:text-accent-hover hover:border-accent-hover'
-  ]
+  primary: [pill, 'bg-accent text-white border-accent hover:bg-accent-hover hover:border-accent-hover'],
+  ghost: [pill, 'bg-transparent text-ink border-ink/70 hover:bg-ink hover:text-bg hover:border-ink'],
+  // Sobre la foto del hero: crema sobre oscuro destaca más que el ámbar.
+  onDark: [pill, 'bg-warm-soft text-ink border-warm-soft hover:bg-white hover:border-white'],
+  ghostOnDark: [pill, 'bg-black/20 text-white border-white/60 hover:bg-white/15 hover:border-white'],
+  link: ['hover:!translate-y-0 hover:!shadow-none py-2 border-b border-accent text-accent hover:text-accent-hover hover:border-accent-hover']
 } as const;
 ---
 
