@@ -53,8 +53,22 @@ const cleanup = async (original) => {
     const row = (name) => spaces.getByRole('listitem').filter({ hasText: name });
     const active = () => p.evaluate(() => document.activeElement?.getAttribute('aria-label') ?? '');
 
-    console.log('— Espacios');
+    console.log('— Entrada al restaurante');
     await p.goto(`${BASE}/restaurants/pruebas`);
+    const menu = p.getByRole('tablist', { name: 'Apartados de la ficha' });
+    await p.locator('#ficha-panel-overview').getByRole('link', { name: /^Carta/ }).waitFor();
+    check('se entra por el resumen, con el menú de apartados agrupado', (await menu.getByRole('tab', { name: 'Resumen' }).getAttribute('aria-selected')) === 'true'
+      && state.j(await menu.locator('p').allInnerTexts()) === state.j(['TU RESTAURANTE', 'CONTENIDO DE LA WEB', 'PARA QUE TE ENCUENTREN']), await menu.locator('p').allInnerTexts());
+    await audit(p, 'resumen del restaurante');
+    await p.locator('#ficha-panel-overview').getByRole('button', { name: /^Espacios/ }).click();
+    check('las tarjetas del resumen llevan a su apartado', /tab=spaces/.test(p.url()) && await p.getByRole('button', { name: 'Añadir espacio' }).isVisible(), p.url());
+    await menu.getByRole('tab', { name: /^Sobre nosotros/ }).click();
+    check('cada bloque de contenido tiene su apartado', await p.locator('#ficha-panel-about').getByRole('heading', { name: 'Sobre nosotros' }).isVisible() && !(await p.locator('#ficha-panel-faq').isVisible()));
+    await audit(p, 'apartado sobre nosotros');
+    await pause(5000);
+
+    console.log('— Espacios');
+    await p.goto(`${BASE}/restaurants/pruebas?tab=spaces`);
     await spaces.getByRole('button', { name: 'Añadir espacio' }).waitFor();
     check('con un solo espacio no se ofrece ordenar, hacer principal ni eliminar', (await spaces.getByRole('button', { name: /^(Subir|Bajar|Hacer principal|Eliminar)/ }).count()) === 0 && await row('Comedor principal').getByRole('link', { name: 'Editar Comedor principal' }).isVisible());
     check('cada espacio enlaza a su carta', (await row('Comedor principal').getByRole('link', { name: 'Carta de Comedor principal' }).getAttribute('href')) === `/dishes?r=pruebas&e=${SP}`);
@@ -76,8 +90,9 @@ const cleanup = async (original) => {
     const created = list.find(s => s.name === 'Terraza de prueba');
     check('lo crea sin publicar, con su dirección propia, y abre su página', !!created && created.slug === 'terraza-de-prueba' && created.type === 'terraza' && created.descriptor === 'Con vistas' && !created.isDefault && created.state !== 'published', created);
 
-    await p.goto(`${BASE}/restaurants/pruebas`);
+    await p.locator('a[href="/restaurants/pruebas?tab=spaces"]').click();
     await row('Terraza de prueba').waitFor();
+    check('desde un espacio se vuelve a la lista de espacios', /tab=spaces/.test(p.url()), p.url());
     check('la lista enseña tipo y descripción, y cuál es el principal', /Terraza · Con vistas/.test(await row('Terraza de prueba').innerText()) && /Principal/.test(await row('Comedor principal').innerText()));
     await audit(p, 'ficha con dos espacios');
     await spaces.getByRole('button', { name: 'Subir: Terraza de prueba' }).click();
@@ -101,8 +116,8 @@ const cleanup = async (original) => {
     await pause(15000);
 
     console.log('— Idiomas de la web');
-    const aside = p.getByRole('complementary', { name: /Publicación/ });
-    await p.goto(`${BASE}/restaurants/pruebas`);
+    const aside = p.locator('#ficha-panel-languages');
+    await p.goto(`${BASE}/restaurants/pruebas?tab=languages`);
     await aside.getByRole('button', { name: 'Cambiar idiomas' }).click();
     await dialog.getByRole('heading', { name: 'Idiomas de la web' }).waitFor();
     check('sin cambios no se puede guardar', await dialog.getByRole('button', { name: 'Guardar idiomas' }).isDisabled());
@@ -125,13 +140,15 @@ const cleanup = async (original) => {
     await dialog.getByRole('button', { name: 'Guardar idiomas' }).click();
     check('no deja la web sin idiomas', await dialog.getByRole('alert').filter({ hasText: 'al menos un idioma' }).isVisible());
     await dialog.getByRole('button', { name: 'Cancelar' }).click();
+    await menu.getByRole('tab', { name: /^Datos/ }).click();
     await p.locator('#r-founded').fill('1990');
+    await menu.getByRole('tab', { name: /^Idiomas/ }).click();
     check('con cambios sin guardar en la ficha no deja cambiar los idiomas, y dice por qué', await aside.getByRole('button', { name: 'Cambiar idiomas' }).isDisabled() && await aside.getByText('Guarda o descarta antes los cambios de la ficha.').isVisible());
     await api('PATCH', '/restaurants/pruebas', { activeLocaleCodes: original.locales, defaultLocaleCode: original.defaultLocale });
     await pause(10000);
 
     console.log('— Dirección de la web');
-    await p.goto(`${BASE}/restaurants/pruebas`);
+    await p.goto(`${BASE}/restaurants/pruebas?tab=data`);
     await p.locator('#r-domain').waitFor();
     await p.locator('#r-domain').fill('no es una web');
     await p.getByRole('button', { name: 'Guardar', exact: true }).click();
@@ -143,9 +160,13 @@ const cleanup = async (original) => {
     check('la guarda limpia, sin protocolo ni mayúsculas', r.domain === 'www.pruebas-nueva.example', r.domain);
     const ectx = await browser.newContext({ storageState: S + '/editor.json', viewport: { width: 1280, height: 900 } });
     const e = await ectx.newPage();
-    await e.goto(`${BASE}/restaurants/pruebas`);
+    await e.goto(`${BASE}/restaurants/pruebas?tab=data`);
     await e.locator('#r-name').waitFor();
-    check('un editor no ve la dirección de la web, y sí puede cambiar idiomas y añadir espacios', (await e.locator('#r-domain').count()) === 0 && await e.getByRole('button', { name: 'Cambiar idiomas' }).isVisible() && await e.getByRole('button', { name: 'Añadir espacio' }).isVisible());
+    const noDomain = (await e.locator('#r-domain').count()) === 0;
+    await e.getByRole('tab', { name: /^Idiomas/ }).click();
+    const canLanguages = await e.getByRole('button', { name: 'Cambiar idiomas' }).isVisible();
+    await e.getByRole('tab', { name: 'Espacios' }).click();
+    check('un editor no ve la dirección de la web, y sí puede cambiar idiomas y añadir espacios', noDomain && canLanguages && await e.getByRole('button', { name: 'Añadir espacio' }).isVisible());
     await ectx.close();
     await pause(10000);
 
@@ -177,13 +198,19 @@ const cleanup = async (original) => {
     const mctx = await browser.newContext({ storageState: S + '/admin.json', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const m = await mctx.newPage();
     await m.goto(`${BASE}/restaurants/pruebas`);
-    await m.getByRole('tablist', { name: 'Apartados de la ficha' }).waitFor();
+    const picker = m.getByLabel('Apartado', { exact: true });
+    await picker.waitFor();
     const oneRow = (label) => m.getByRole('tablist', { name: label }).getByRole('tab').evaluateAll(t => new Set(t.map(x => Math.round(x.getBoundingClientRect().top))).size === 1);
-    check('las pestañas de la ficha van en una sola fila', await oneRow('Apartados de la ficha'));
-    await audit(m, 'ficha en móvil');
+    check('en móvil los apartados se eligen en un desplegable, con los mismos grupos', !(await m.getByRole('tablist', { name: 'Apartados de la ficha' }).isVisible())
+      && state.j(await picker.locator('optgroup').evaluateAll(g => g.map(x => x.label))) === state.j(['Tu restaurante', 'Contenido de la web', 'Para que te encuentren']));
+    await audit(m, 'resumen en móvil');
+    await picker.selectOption('spaces');
+    check('elegir un apartado lo abre', await m.getByRole('button', { name: 'Añadir espacio' }).isVisible() && /tab=spaces/.test(m.url()));
+    await audit(m, 'espacios en móvil');
     await m.getByRole('button', { name: 'Añadir espacio' }).click();
     await audit(m, 'espacio nuevo en móvil', '[role=dialog]');
     await m.keyboard.press('Escape');
+    await picker.selectOption('languages');
     await m.getByRole('button', { name: 'Cambiar idiomas' }).click();
     await audit(m, 'idiomas en móvil', '[role=dialog]');
     await m.keyboard.press('Escape');
@@ -217,7 +244,10 @@ const cleanup = async (original) => {
     await a.getByRole('heading', { level: 1, name: NEW_RESTAURANT }).waitFor();
     const made = (await api('GET', '/restaurants/zz-prueba-alta')).body.restaurant;
     check('lo crea con su dirección e idiomas y abre su ficha', made.domain === 'www.zz-prueba.example' && state.j([...made.activeLocales].sort()) === '["ca","es"]' && made.defaultLocale === 'es', [made.domain, made.activeLocales, made.defaultLocale]);
-    check('la ficha vacía invita a añadir el primer espacio', await a.getByText('Este restaurante aún no tiene espacios').isVisible() && await a.getByRole('button', { name: 'Añadir espacio' }).isVisible());
+    const firstSpace = a.locator('#ficha-panel-overview').getByRole('button', { name: /^Espacios/ });
+    const invites = /añade el primero/.test(await firstSpace.innerText());
+    await firstSpace.click();
+    check('la ficha vacía invita a añadir el primer espacio', invites && await a.getByText('Este restaurante aún no tiene espacios').isVisible() && await a.getByRole('button', { name: 'Añadir espacio' }).isVisible());
     await audit(a, 'ficha de un restaurante recién creado');
     const ed = await browser.newContext({ storageState: S + '/editor.json', viewport: { width: 1280, height: 900 } });
     const ep = await ed.newPage();
@@ -229,7 +259,7 @@ const cleanup = async (original) => {
     await pause(15000);
 
     console.log('— Herramienta ux-a11y-audit');
-    const out = spawnSync('node', [process.env.HOME + '/.claude/tools/ux-a11y-audit.cjs', `--storage=${S}/admin.json`, `${BASE}/restaurants/pruebas`, `${BASE}/restaurants/pruebas/spaces/${SP}?tab=hours`, `${BASE}/restaurants`], { encoding: 'utf8' });
+    const out = spawnSync('node', [process.env.HOME + '/.claude/tools/ux-a11y-audit.cjs', `--storage=${S}/admin.json`, `${BASE}/dashboard`, `${BASE}/restaurants`, `${BASE}/restaurants/pruebas`, `${BASE}/restaurants/pruebas?tab=spaces`, `${BASE}/restaurants/pruebas?tab=about`, `${BASE}/restaurants/pruebas/spaces/${SP}?tab=hours`], { encoding: 'utf8' });
     console.log((out.stdout + out.stderr).trim().split('\n').filter(l => /══|✗|Total/.test(l)).join('\n'));
     check('herramienta: 0 incidencias', out.status === 0);
   } catch (e) { fail++; console.log('EXCEPCIÓN', e.message.split('\n').slice(0, 4).join(' | ')); }

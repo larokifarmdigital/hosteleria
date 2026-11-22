@@ -14,6 +14,9 @@ const AXE = { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', '
 (async () => {
   const before = await state.read();
   const browser = await chromium.launch();
+  // Lo que la prueba cambia en la carta: se deshace siempre, también si falla a mitad.
+  const undo = [];
+  const restoreMenu = async () => { while (undo.length) { const [m, path, body] = undo.shift(); await api(m, path, body); } };
   const audit = async (p, name) => {
     await p.waitForTimeout(400);
     if (!(await p.evaluate(() => !!window.axe))) await p.addScriptTag({ url: 'https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.10.2/axe.min.js' });
@@ -74,24 +77,28 @@ const AXE = { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', '
       await pause(4000);
 
       await p.goto(`${BASE}/restaurants/pruebas`);
-      const aside = p.getByRole('complementary', { name: /Publicación/ });
+      const aside = p.locator('#ficha-panel-overview');
       await aside.getByRole('heading', { name: 'Pendiente' }).waitFor();
       const links = aside.locator('section', { has: p.getByRole('heading', { name: 'Pendiente' }) }).getByRole('link');
+      await links.first().waitFor();
       check('la ficha enseña lo pendiente fuera de ella (espacio y carta), no lo suyo', (await links.count()) === 3 && !(await aside.getByText('La ficha del restaurante aún no se ha publicado').count()), await links.allInnerTexts());
       await audit(p, 'ficha con pendientes');
 
       // Se arregla lo de los platos por el api y se guarda algo en la ficha: la lista se pone al día sola.
       const dishes = (await api('GET', '/dishes?restaurantSlug=pruebas')).body.dishes;
       const cats = (await api('GET', `/dishes/categories?spaceId=${state.SPACE}`)).body.categories;
-      const undo = [];
       for (const d of dishes) { undo.push(['PATCH', `/dishes/${d.id}`, { name: d.name, note: d.note }]); await api('PATCH', `/dishes/${d.id}`, { name: { es: 'x', ca: 'x', en: 'x' }, note: {} }); }
       for (const c of cats) { undo.push(['PATCH', `/dishes/categories/${c.id}`, { name: c.name }]); await api('PATCH', `/dishes/categories/${c.id}`, { name: { es: 'x', ca: 'x', en: 'x' } }); }
+      // En escritorio los apartados son un menú; en móvil, un desplegable.
+      const open = (id, tab) => vpName === 'móvil' ? p.locator('#ficha-picker').selectOption(id) : p.getByRole('tab', { name: tab }).click();
+      await open('data', /^Datos/);
       await p.locator('#r-founded').fill('1999');
       await p.getByRole('button', { name: 'Guardar', exact: true }).click();
       await p.getByText('Cambios guardados', { exact: true }).first().waitFor();
+      await open('overview', 'Resumen');
       await p.waitForFunction(() => !document.body.innerText.includes('en los platos de'), null, { timeout: 8000 }).catch(() => {});
       check('tras guardar, lo ya resuelto desaparece de la lista', (await aside.getByText(/en los platos de/).count()) === 0 && (await links.count()) === 2, await links.allInnerTexts());
-      for (const [m, path, body] of undo) await api(m, path, body);
+      await restoreMenu();
       await api('PATCH', '/restaurants/pruebas', { foundedYear: before.r.founded_year, state: 'draft' });
       await ctx.close();
       await pause(15000);
@@ -101,7 +108,7 @@ const AXE = { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', '
     const ctx = await browser.newContext({ storageState: S + '/editor.json', viewport: { width: 1280, height: 900 } });
     const p = await ctx.newPage();
     await p.goto(`${BASE}/restaurants/pruebas`);
-    await p.getByRole('complementary', { name: /Publicación/ }).getByRole('heading', { name: 'Pendiente' }).waitFor();
+    await p.locator('#ficha-panel-overview').getByRole('heading', { name: 'Pendiente' }).waitFor();
     check('el editor ve lo pendiente en la ficha de su restaurante', true);
     await ctx.close();
     await pause(15000);
@@ -113,6 +120,7 @@ const AXE = { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', '
   } catch (e) { fail++; console.log('EXCEPCIÓN', e.message.split('\n').slice(0, 4).join(' | ')); }
   finally {
     await browser.close();
+    await restoreMenu();
     const diff = await state.restore(before);
     const dishes = (await api('GET', '/dishes?restaurantSlug=pruebas')).body.dishes.map(d => d.name.es).sort();
     console.log('«pruebas» restaurado; diferencias:', JSON.stringify(diff), '· platos:', dishes.join(', '));

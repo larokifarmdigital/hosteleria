@@ -70,7 +70,7 @@ pasan una auditoría de accesibilidad (axe) a cada pantalla y diálogo que tocan
 | `menu-order-photos` | Reordenar platos, vinos y categorías; marcar varias fotos a la vez. |
 | `images` | Subir, describir, asignar y borrar fotos (portada y plato). Deja fotos: pasa `pnpm e2e reset` después. |
 | `translations` | Avisos de traducción por idioma y sección, y bloqueo al publicar con textos a medias. |
-| `spaces-languages` | Entrar a editar: añadir, ordenar y eliminar espacios, idiomas de la web, dirección de la web, pestañas del espacio y alta de restaurantes. |
+| `spaces-languages` | Entrar a editar: resumen y menú de apartados del restaurante (desplegable en móvil), añadir, ordenar y eliminar espacios, idiomas de la web, dirección de la web, pestañas del espacio y alta de restaurantes. |
 | `users-languages` | Ajustes: alta de usuario con enlace, elegir contraseña, suspender, idiomas. |
 
 ## A tener en cuenta
