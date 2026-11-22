@@ -13,6 +13,7 @@ import { Button } from '@/components/shared/Button';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { QueryBoundary } from '@/components/shared/QueryBoundary';
+import { SiteStatusNote } from '@/components/site/SiteStatusNote';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Field } from '@/components/ui/Field';
 import { Select, TextInput } from '@/components/ui/inputs';
@@ -161,6 +162,9 @@ export function DishesPageClient() {
           <EmptyState title="Todavía no tienes ningún restaurante asignado">Pide a un administrador que te dé acceso al tuyo.</EmptyState>
         ) : (
           <>
+            {/* La carta no tiene botón de publicar: aquí se ve si la web ya recogió lo guardado. */}
+            <SiteStatusNote restaurantSlug={slug} />
+
             {(restaurants.length > 1 || spaces.length > 1) && (
               <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:max-w-[640px]">
                 {restaurants.length > 1 && (

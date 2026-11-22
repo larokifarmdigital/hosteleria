@@ -11,6 +11,7 @@ import { PublishPanel } from '@/components/editor/PublishPanel';
 import { SaveBar } from '@/components/editor/SaveBar';
 import { LangList } from '@/components/restaurant/LangList';
 import { Section } from '@/components/shared/Section';
+import { SiteStatusCard } from '@/components/site/SiteStatusCard';
 import { LocaleTabs } from '@/components/space/LocaleTabs';
 import { PendingElsewhere } from '@/components/tasks/PendingElsewhere';
 import { TabList, TabPanel } from '@/components/ui/Tabs';
@@ -131,6 +132,8 @@ export function RestaurantForm({ restaurant, localeNames }: Props) {
               onPublish={() => publish.mutateAsync().then(() => showSuccessToast('Publicado', 'La web se actualizará en un par de minutos.'))}
               onDiscard={() => discard.mutateAsync().then(r => { reset(toForm(r)); showSuccessToast('Has vuelto a lo publicado'); })}
             />
+
+            <SiteStatusCard restaurant={restaurant} />
 
             <PendingElsewhere restaurant={restaurant} localeNames={localeNames} />
 

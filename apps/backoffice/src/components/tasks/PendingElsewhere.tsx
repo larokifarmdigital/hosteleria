@@ -1,17 +1,10 @@
 'use client';
 
-import { useRef } from 'react';
 import type { Restaurant } from '@hosteleria/api-client';
 import { Section } from '@/components/shared/Section';
 import { usePendingTasks } from '@/lib/query/hooks';
+import { useChangeCount } from '@/lib/useChangeCount';
 import { PendingTaskList } from './PendingTaskList';
-
-/** Sube cada vez que cambia el objeto: sirve para volver a preguntar tras guardar o publicar. */
-function useChangeCount(value: unknown): number {
-  const ref = useRef({ value, count: 0 });
-  if (ref.current.value !== value) ref.current = { value, count: ref.current.count + 1 };
-  return ref.current.count;
-}
 
 interface Props {
   restaurant: Restaurant;

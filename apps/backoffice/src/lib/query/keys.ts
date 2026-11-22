@@ -23,6 +23,10 @@ export const qk = {
     all: ['pendingTasks'] as const,
     byRestaurant: (restaurantSlug: string, stamp: number = 0) => [...qk.pendingTasks.all, restaurantSlug, stamp] as const
   },
+  siteStatus: {
+    all: ['siteStatus'] as const,
+    byRestaurant: (restaurantSlug: string) => [...qk.siteStatus.all, restaurantSlug] as const
+  },
   legalPages: {
     all: ['legalPages'] as const,
     byRestaurant: (restaurantSlug: string) => [...qk.legalPages.all, restaurantSlug] as const
