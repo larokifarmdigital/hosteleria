@@ -1,9 +1,12 @@
 import { crearRestaurantQueries } from '@hosteleria/sanity-client';
-import { sanity } from './sanity';
+import { createContentQueries } from '@hosteleria/content-client';
+import { contentApiUrl, sanity } from './sanity';
 
 const RESTAURANT_SLUG = import.meta.env.RESTAURANT_SLUG || 'la-principal';
 
-const queries = crearRestaurantQueries(sanity, RESTAURANT_SLUG);
+const queries = sanity
+  ? crearRestaurantQueries(sanity, RESTAURANT_SLUG)
+  : createContentQueries({ apiUrl: contentApiUrl!, slug: RESTAURANT_SLUG });
 
 export const fetchRestaurantData = queries.fetchRestaurantData;
 export const fetchLegalPages = queries.fetchLegalPages;
