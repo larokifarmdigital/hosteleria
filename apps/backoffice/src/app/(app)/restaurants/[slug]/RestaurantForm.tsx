@@ -12,6 +12,7 @@ import { SaveBar } from '@/components/editor/SaveBar';
 import { LangList } from '@/components/restaurant/LangList';
 import { Section } from '@/components/shared/Section';
 import { LocaleTabs } from '@/components/space/LocaleTabs';
+import { PendingElsewhere } from '@/components/tasks/PendingElsewhere';
 import { TabList, TabPanel } from '@/components/ui/Tabs';
 import { showSuccessToast } from '@/lib/api';
 import { countErrors, firstErrorPath } from '@/lib/forms/errors';
@@ -130,6 +131,8 @@ export function RestaurantForm({ restaurant, localeNames }: Props) {
               onPublish={() => publish.mutateAsync().then(() => showSuccessToast('Publicado', 'La web se actualizará en un par de minutos.'))}
               onDiscard={() => discard.mutateAsync().then(r => { reset(toForm(r)); showSuccessToast('Has vuelto a lo publicado'); })}
             />
+
+            <PendingElsewhere restaurant={restaurant} localeNames={localeNames} />
 
             <Section title="Idiomas de la web">
               <LangList restaurant={restaurant} />

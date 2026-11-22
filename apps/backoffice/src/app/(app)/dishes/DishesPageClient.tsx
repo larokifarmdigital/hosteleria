@@ -64,7 +64,8 @@ export function DishesPageClient() {
   const deleteWineCategory = useDeleteWineCategory();
 
   const [search, setSearch] = useState('');
-  const [visibility, setVisibility] = useState<Visibility>('all');
+  // Desde «Pendiente» se llega con la lista ya filtrada por lo que falta traducir.
+  const [visibility, setVisibility] = useState<Visibility>(() => (params.get('ver') === 'sin-traducir' ? 'missing' : 'all'));
   const [editing, setEditing] = useState<Editing>(null);
   const [deleting, setDeleting] = useState<MenuCategory | null>(null);
 

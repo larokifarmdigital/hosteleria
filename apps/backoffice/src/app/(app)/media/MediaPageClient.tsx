@@ -35,7 +35,8 @@ export function MediaPageClient() {
   const mediaQuery = useMediaList({ restaurantSlug: slug });
   const { data: languages = [] } = useLanguages();
 
-  const [show, setShow] = useState<Show>('all');
+  // Desde «Pendiente» se llega con la lista ya filtrada por las que no tienen descripción.
+  const [show, setShow] = useState<Show>(() => (params.get('ver') === 'sin-descripcion' ? 'missing' : 'all'));
   // Fotos cuyo archivo no carga: subidas que no llegaron a terminar.
   const [broken, setBroken] = useState<Set<string>>(new Set());
   const [action, setAction] = useState<Action>(null);
