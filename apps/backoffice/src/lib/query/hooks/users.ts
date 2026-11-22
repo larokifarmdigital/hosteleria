@@ -33,6 +33,23 @@ export function usePatchUser(id: string) {
   });
 }
 
+/** Como `usePatchUser`, para pantallas que editan a cualquiera de la lista. */
+export function useUpdateUser() {
+  const qc = useQueryClient();
+  const toastError = useErrorToast();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: PatchInput }) => api.users.patch(id, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.users.all }),
+    onError: toastError
+  });
+}
+
+/** Enlace nuevo para que el usuario elija su contraseña. */
+export function useInviteUser() {
+  const toastError = useErrorToast();
+  return useMutation({ mutationFn: (id: string) => api.users.invite(id), onError: toastError });
+}
+
 export function useDeleteUser() {
   const qc = useQueryClient();
   const toastError = useErrorToast();

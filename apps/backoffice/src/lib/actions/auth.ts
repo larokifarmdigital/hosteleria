@@ -12,11 +12,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8787';
 export async function loginAction(
   _prev: unknown,
   formData: FormData
-): Promise<{ error: string | null }> {
+): Promise<{ error: string | null; email?: string }> {
   const email = String(formData.get('email') ?? '').trim();
   const password = String(formData.get('password') ?? '');
   const next = safeNext(String(formData.get('next') ?? ''));
-  if (!email || !password) return { error: 'Introduce email y contraseña.' };
+  // El email vuelve con el error: el formulario se vacía tras enviarse y así no hay que reescribirlo.
+  if (!email || !password) return { error: 'Introduce email y contraseña.', email };
 
   const res = await fetch(`${API_URL}/auth/login`, {
     method: 'POST',
@@ -27,7 +28,7 @@ export async function loginAction(
 
   if (!res.ok) {
     const body = await res.json().catch(() => null) as { code?: string; message?: string } | null;
-    return { error: body?.message ?? 'Error inesperado. Inténtalo de nuevo.' };
+    return { error: body?.message ?? 'Error inesperado. Inténtalo de nuevo.', email };
   }
 
   const setCookie = res.headers.get('set-cookie');

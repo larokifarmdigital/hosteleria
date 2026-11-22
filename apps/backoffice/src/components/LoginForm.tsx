@@ -7,7 +7,7 @@ const INPUT =
   'w-full rounded-[10px] border border-[color:var(--color-border-strong)] bg-white px-3.5 py-3 text-[16px] text-[color:var(--color-ink)] focus:border-[color:var(--color-accent)] focus:outline-none focus:ring-[3px] focus:ring-[color:var(--accent-ring)]';
 
 export function LoginForm({ next }: { next: string }) {
-  const [state, formAction, isPending] = useActionState(loginAction, { error: null as string | null });
+  const [state, formAction, isPending] = useActionState(loginAction, { error: null as string | null, email: '' as string | undefined });
 
   return (
     <form className="w-full max-w-[360px]" action={formAction} aria-describedby={state.error ? 'lg-error' : undefined}>
@@ -18,7 +18,7 @@ export function LoginForm({ next }: { next: string }) {
 
       <div className="mb-4">
         <label htmlFor="lg-email" className="mb-2 block cursor-pointer text-[13px] font-semibold">Email</label>
-        <input id="lg-email" name="email" type="email" autoComplete="username" required className={INPUT} />
+        <input id="lg-email" name="email" type="email" autoComplete="username" required defaultValue={state.email ?? ''} className={INPUT} />
       </div>
       <div className="mb-5">
         <label htmlFor="lg-pwd" className="mb-2 block cursor-pointer text-[13px] font-semibold">Contraseña</label>
