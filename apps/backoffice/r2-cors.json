@@ -1,0 +1,8 @@
+[
+  {
+    "AllowedOrigins": ["http://localhost:4400", "https://studio.hosteleria.cat"],
+    "AllowedMethods": ["PUT"],
+    "AllowedHeaders": ["content-type"],
+    "MaxAgeSeconds": 3600
+  }
+]

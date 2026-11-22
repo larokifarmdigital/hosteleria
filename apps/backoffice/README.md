@@ -1,74 +1,56 @@
 # @hosteleria/backoffice
 
-CMS propio para editar el contenido de las 6 landings del grupo. **Next.js 15 + Tailwind 4 + shadcn tokens + @hosteleria/api-client**.
+Gestor de contenido de las landings del grupo. Una sola app **Next 15** con su api
+dentro (`/api/*`: Hono, Drizzle sobre Neon, Lucia, fotos en Cloudflare R2).
 
-## Local
+- Cómo está organizado: [`ARCHITECTURE.md`](./ARCHITECTURE.md)
+- Despliegue en Vercel: [`DEPLOY.md`](./DEPLOY.md)
+- Pruebas de navegador: [`e2e/README.md`](./e2e/README.md)
 
-Necesitas `apps/api` corriendo primero (`pnpm --filter @hosteleria/api dev`).
+## En local
 
 ```bash
-# apps/backoffice/.env.local ya está creado con:
-#   NEXT_PUBLIC_API_URL=http://localhost:8787
-
+cp .env.example .env.local   # y rellenarlo
 pnpm --filter @hosteleria/backoffice dev
-# → http://localhost:4400
+# → http://localhost:4400 (el api, en http://localhost:4400/api)
 ```
 
-Login con las credenciales del admin del seed (`ADMIN_EMAIL` / `ADMIN_PASSWORD` de `apps/api/.env.local`).
+No hay nada más que arrancar. **La base de datos de `.env.local` es la de
+producción**: las pruebas se hacen sobre el restaurante «pruebas» y se restaura lo
+que se toque. Las cuentas están en `CUENTAS.md` (no va al repositorio).
 
-## Deploy Vercel
-
-Se despliega como un proyecto independiente del `apps/api`.
-
-### 1) Crear proyecto Vercel
+Para verificar algo, siempre sobre el build de producción (en `next dev` el
+indicador de Next tapa botones):
 
 ```bash
-cd apps/backoffice
-vercel link
-# proyecto nuevo: "hosteleria-backoffice"
+NEXT_DIST_DIR=.next-verify pnpm build
+NEXT_DIST_DIR=.next-verify pnpm exec next start -p 4410
+# al acabar: rm -rf .next-verify && git checkout next-env.d.ts tsconfig.json
 ```
 
-Web: **New Project** → repo → **Root Directory** = `apps/backoffice`.
+## Pantallas
 
-### 2) Env vars en Vercel
+- `/login`, `/set-password`
+- `/dashboard`: tareas pendientes y restaurantes
+- `/restaurants/[slug]`: ficha por apartados, con sus espacios e idiomas
+- `/restaurants/[slug]/spaces/[spaceId]`: portada, fotos, horarios y contacto del espacio
+- `/restaurants/[slug]/legal`: páginas legales
+- `/dishes`: carta (platos, bebidas y vinos)
+- `/media`: fotos
+- `/settings`: usuarios e idiomas
 
-Añade en **Project Settings → Environment Variables** (Production + Preview):
+Las pantallas leen y escriben por `packages/api-client` contra `/api`, en el mismo
+origen: la cookie de sesión viaja sola.
 
-- `NEXT_PUBLIC_API_URL=https://api.hosteleria.cat` (producción)
-- `NEXT_PUBLIC_API_URL=https://api-preview.hosteleria.cat` (preview, si existe)
+## Scripts
 
-En preview puede apuntar al api de producción con Auth Preview Protection habilitada, para no necesitar 2 APIs.
-
-### 3) Deploy
-
-```bash
-vercel               # preview URL: hosteleria-backoffice-xxx.vercel.app
-vercel --prod        # production
-```
-
-### 4) Dominio
-
-Añade `studio.hosteleria.cat` en **Domains** con CNAME en tu registrar.
-
-### 5) CORS del API
-
-En el proyecto `hosteleria-api` de Vercel, actualiza `ALLOWED_ORIGIN` con el dominio real del backoffice:
-
-```
-ALLOWED_ORIGIN=https://studio.hosteleria.cat
-```
-
-Y redeploya el api para que tome el cambio (`vercel --prod` desde `apps/api`).
-
-## Estructura
-
-- `/login` — form conectado a `loginAction` server action
-- `/dashboard` — KPIs + grid de restaurantes + tareas + estado sistema
-- `/restaurants` — tabla
-- `/restaurants/[slug]` — hub (ficha + grid espacios + aside idiomas)
-- `/restaurants/[slug]/spaces/[spaceId]` — editor de espacio con hero/manifesto/horarios
-- `/dishes` — carta con filtros
-- `/media` — grid con filtros laterales
-- `/settings` — idiomas + usuarios
-
-Todos los datos vienen de `@hosteleria/api` vía `getApi()` en Server Components (RSC). Cookies se forwardean automáticamente para preservar la sesión del usuario.
+| Comando | Para qué |
+|---|---|
+| `pnpm dev` / `pnpm build` / `pnpm start` | Next en el puerto 4400 |
+| `pnpm check` | Tipos |
+| `pnpm test` | Pruebas unitarias (vitest) |
+| `pnpm e2e [nombre]` | Pruebas de navegador |
+| `pnpm db:generate` / `pnpm db:migrate` | Migraciones (la segunda escribe en producción) |
+| `pnpm db:inspect` | Estado de la base de datos, solo lectura |
+| `pnpm db:seed` | Datos iniciales para una base de datos nueva |
+| `pnpm import:sanity <slug>` | Volcado desde Sanity; sin `--apply` no escribe |
