@@ -1,9 +1,8 @@
 import { and, eq, lt, sql } from 'drizzle-orm';
 import { createMiddleware } from 'hono/factory';
 import { HTTPException } from 'hono/http-exception';
-import { getDb } from '../infrastructure/persistence/drizzle/client.js';
-import { rateLimits } from '../infrastructure/persistence/drizzle/schema/rate_limits.js';
-import type { Env } from '../env.js';
+import { getDb, type Env } from '@/core/shared';
+import { rateLimits } from '@/core/shared/infrastructure/drizzle/schema';
 
 // Fixed window sobre Postgres: 1 upsert a Neon por request (~15-30ms).
 

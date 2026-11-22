@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/cloudflare';
 import { createMiddleware } from 'hono/factory';
 import { HTTPException } from 'hono/http-exception';
-import type { Env } from '../env.js';
+import type { Env } from '@/core/shared';
 
 // Los 4xx no se reportan: son errores del cliente, no del server.
 export function sentryMiddleware() {

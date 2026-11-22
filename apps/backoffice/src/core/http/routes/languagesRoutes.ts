@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
-import { validate } from '../validate.js';
+import { validate } from '../validate';
 import { z } from 'zod';
-import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
-import { cacheHeaders } from '../../../middleware/cache.js';
-import type { AppBindings } from '../types.js';
+import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
+import { cacheHeaders } from '../middleware/cache';
+import type { AppBindings } from '../types';
 
 export function createLanguagesRoutes() {
   const app = new Hono<AppBindings>();

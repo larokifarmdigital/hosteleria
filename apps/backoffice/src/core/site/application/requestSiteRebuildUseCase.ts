@@ -1,7 +1,6 @@
-import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
-import type { SpaceRepository } from '../../domain/repositories/spaceRepository.js';
-import type { RebuildHookCaller } from '../../domain/services/rebuildHookCaller.js';
-import type { Restaurant } from '../../domain/models/restaurant.js';
+import type { RestaurantRepository, Restaurant } from '@/core/restaurants';
+import type { SpaceRepository } from '@/core/spaces';
+import type { RebuildHookCaller } from '../domain/services/rebuildHookCaller';
 
 /**
  * Pide regenerar la landing de un restaurante cuando cambia algo que la web

@@ -1,14 +1,13 @@
 import { Lucia } from 'lucia';
 import { DrizzlePostgreSQLAdapter } from '@lucia-auth/adapter-drizzle';
 import { eq, asc, gte } from 'drizzle-orm';
-import { getDb } from '../persistence/drizzle/client.js';
-import { users, sessions } from '../persistence/drizzle/schema/auth.js';
-import { rowToSession } from '../persistence/drizzle/mappers/sessionMapper.js';
-import { toSessionUser } from '../../domain/models/user.js';
-import type { Session, SessionMetadata } from '../../domain/models/session.js';
-import type { SessionUser } from '../../domain/models/user.js';
-import type { SessionRepository } from '../../domain/repositories/sessionRepository.js';
-import type { Env } from '../../env.js';
+import { getDb, type Env } from '@/core/shared';
+import { users, sessions } from '@/core/shared/infrastructure/drizzle/schema';
+import { rowToSession } from './sessionMapper';
+import { toSessionUser } from '../domain/models/user';
+import type { Session, SessionMetadata } from '../domain/models/session';
+import type { SessionUser } from '../domain/models/user';
+import type { SessionRepository } from '../domain/repositories/sessionRepository';
 
 // Sin caché por isolate: el adapter guarda la conexión, y en Workers una
 // conexión no puede pasar de una petición a otra (ver `client.ts`).

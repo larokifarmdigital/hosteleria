@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { assertSameGroup, InvalidReorderError } from '../src/domain/models/menuOrder.js';
+import { assertSameGroup, InvalidReorderError } from '@/core/menu/domain';
 
 const item = (group: string) => ({ group });
 const groupOf = (x: { group: string }) => x.group;

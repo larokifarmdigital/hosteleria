@@ -1,4 +1,4 @@
-import { DomainError } from './errors.js';
+import { DomainError } from '@/core/shared/domain';
 
 export type UserRole = 'admin' | 'editor';
 

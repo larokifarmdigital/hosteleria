@@ -1,6 +1,5 @@
-import type { I18nValue } from './i18n.js';
-import type { PublishState, Address } from './restaurant.js';
-import { DomainError } from './errors.js';
+import { type I18nValue, DomainError } from '@/core/shared/domain';
+import type { PublishState, Address } from '@/core/restaurants/domain';
 
 export type SpaceType =
   | 'restaurant' | 'cafe' | 'coctel' | 'club' | 'terraza' | 'live_music' | 'otro';

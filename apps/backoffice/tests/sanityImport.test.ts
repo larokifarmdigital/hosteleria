@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   canonical, domainOf, i18n, mapDish, mapLegalPage, mapRestaurant, mapSpace, mapWine,
   portableToMarkdown, portableToPlain
-} from '../scripts/sanity-import/map.js';
+} from '../scripts/sanity-import/map';
 
 const s = (es: string, en?: string) => [
   { _key: 'es', value: es },

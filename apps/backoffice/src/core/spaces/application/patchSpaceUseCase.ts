@@ -1,6 +1,6 @@
-import type { SpaceRepository } from '../../domain/repositories/spaceRepository.js';
-import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
-import { assertTranslationsComplete } from '../../domain/models/i18n.js';
+import type { SpaceRepository } from '../domain/repositories/spaceRepository';
+import type { RestaurantRepository, PublishState } from '@/core/restaurants';
+import { assertTranslationsComplete, DomainError } from '@/core/shared';
 import {
   SPACE_CONTENT_KEYS,
   SpaceNotFoundError,
@@ -10,9 +10,7 @@ import {
   type SpaceContent,
   type SpaceSnapshot,
   type SpaceType
-} from '../../domain/models/space.js';
-import type { PublishState } from '../../domain/models/restaurant.js';
-import { DomainError } from '../../domain/models/errors.js';
+} from '../domain/models/space';
 
 export class MustHaveDefaultSpaceError extends DomainError {
   readonly code = 'MUST_HAVE_DEFAULT_SPACE';

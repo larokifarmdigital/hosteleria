@@ -3,7 +3,7 @@
 // sale como 500 genérico.
 import { HTTPException } from 'hono/http-exception';
 import type { Context } from 'hono';
-import { DomainError } from '../../domain/models/errors.js';
+import { DomainError } from '@/core/shared';
 
 const HTTP_EXCEPTION_MESSAGES: Record<string, string> = {
   UNAUTHORIZED: 'Debes iniciar sesión para hacer esto.',

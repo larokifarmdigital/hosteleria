@@ -1,5 +1,5 @@
-import type { WineRepository } from '../../domain/repositories/wineRepository.js';
-import { WineCategoryNotFoundError, type Wine } from '../../domain/models/wine.js';
+import type { WineRepository } from '../../domain/repositories/wineRepository';
+import { WineCategoryNotFoundError, type Wine } from '../../domain/models/wine';
 
 export class CreateWineUseCase {
   constructor(private readonly wines: WineRepository) {}

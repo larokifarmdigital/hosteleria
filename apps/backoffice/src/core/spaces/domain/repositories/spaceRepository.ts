@@ -1,4 +1,4 @@
-import type { Space, SpaceSnapshot, ScheduleDay } from '../models/space.js';
+import type { Space, SpaceSnapshot, ScheduleDay } from '../models/space';
 
 /** `replaceSchedule` sustituye el schedule entero en una transaction para no
  *  dejar estados intermedios. */

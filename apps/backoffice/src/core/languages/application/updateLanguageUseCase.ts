@@ -1,5 +1,5 @@
-import type { LanguageRepository } from '../../domain/repositories/languageRepository.js';
-import { LanguageNotFoundError } from '../../domain/models/language.js';
+import type { LanguageRepository } from '../domain/repositories/languageRepository';
+import { LanguageNotFoundError } from '../domain/models/language';
 
 export class UpdateLanguageUseCase {
   constructor(private readonly languages: LanguageRepository) {}

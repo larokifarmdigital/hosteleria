@@ -1,6 +1,6 @@
-import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
-import type { Restaurant } from '../../domain/models/restaurant.js';
-import { RestaurantNotFoundError } from '../../domain/models/restaurant.js';
+import type { RestaurantRepository } from '../domain/repositories/restaurantRepository';
+import type { Restaurant } from '../domain/models/restaurant';
+import { RestaurantNotFoundError } from '../domain/models/restaurant';
 
 export class GetRestaurantUseCase {
   constructor(private readonly restaurants: RestaurantRepository) {}

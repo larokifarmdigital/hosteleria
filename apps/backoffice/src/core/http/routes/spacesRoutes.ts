@@ -1,13 +1,13 @@
 import { Hono } from 'hono';
-import { validate } from '../validate.js';
+import { validate } from '../validate';
 import { z } from 'zod';
 import { HTTPException } from 'hono/http-exception';
-import { requireAuth, requireRestaurant } from '../middleware/authMiddleware.js';
-import { assertMediaInRestaurant } from '../accessControl.js';
-import { spaceToDto } from '../dto/spaceDto.js';
-import { spaceMediaIds } from '../../../domain/models/space.js';
-import { addressSchema, i18nSchema, assetIdSchema } from '../schemas.js';
-import type { AppBindings } from '../types.js';
+import { requireAuth, requireRestaurant } from '../middleware/authMiddleware';
+import { assertMediaInRestaurant } from '../accessControl';
+import { spaceToDto } from '../dto/spaceDto';
+import { spaceMediaIds } from '@/core/spaces';
+import { addressSchema, i18nSchema, assetIdSchema } from '../schemas';
+import type { AppBindings } from '../types';
 
 export function createSpacesRoutes() {
   const app = new Hono<AppBindings>();

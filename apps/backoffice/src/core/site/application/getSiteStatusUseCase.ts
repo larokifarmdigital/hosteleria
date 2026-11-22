@@ -1,8 +1,7 @@
-import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
-import type { SiteProbe } from '../../domain/services/siteProbe.js';
-import { RestaurantNotFoundError } from '../../domain/models/restaurant.js';
-import { resolveSiteState, siteUrlOf, siteVersion, type SiteStatus } from '../../domain/models/siteStatus.js';
-import type { GetPublishedSiteUseCase } from './getPublishedSiteUseCase.js';
+import { type RestaurantRepository, RestaurantNotFoundError } from '@/core/restaurants';
+import type { SiteProbe } from '../domain/services/siteProbe';
+import { resolveSiteState, siteUrlOf, siteVersion, type SiteStatus } from '../domain/models/siteStatus';
+import type { GetPublishedSiteUseCase } from './getPublishedSiteUseCase';
 
 /** ¿Enseña la web lo último publicado? Compara lo publicado con lo que la landing dice haber construido. */
 export class GetSiteStatusUseCase {

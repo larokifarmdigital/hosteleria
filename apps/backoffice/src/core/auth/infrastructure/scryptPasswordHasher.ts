@@ -1,6 +1,6 @@
 import { scryptAsync } from '@noble/hashes/scrypt.js';
 import { randomBytes } from '@noble/hashes/utils.js';
-import type { PasswordHasher } from '../../domain/services/passwordHasher.js';
+import type { PasswordHasher } from '../domain/services/passwordHasher';
 
 /**
  * scrypt pure JS. En Workers no vale argon2 (bloquean WASM dinámico) ni

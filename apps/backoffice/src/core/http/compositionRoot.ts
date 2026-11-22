@@ -1,90 +1,108 @@
 // Único lugar donde los puertos se cablean a sus adapters. Se construye uno
 // por request: los adapters solo guardan `env`; lo caro (Drizzle, aws4fetch,
 // Lucia) está cacheado por isolate.
-import type { Env } from '../../env.js';
+import { type Env, ConsoleEmailSender, ResendEmailSender } from '@/core/shared';
 
-import { DrizzleRestaurantRepository } from '../../infrastructure/persistence/drizzle/drizzleRestaurantRepository.js';
-import { DrizzleUserRepository } from '../../infrastructure/persistence/drizzle/drizzleUserRepository.js';
-import { DrizzleLanguageRepository } from '../../infrastructure/persistence/drizzle/drizzleLanguageRepository.js';
-import { DrizzleSpaceRepository } from '../../infrastructure/persistence/drizzle/drizzleSpaceRepository.js';
-import { DrizzleDishRepository } from '../../infrastructure/persistence/drizzle/drizzleDishRepository.js';
-import { DrizzleWineRepository } from '../../infrastructure/persistence/drizzle/drizzleWineRepository.js';
-import { DrizzleLegalPageRepository } from '../../infrastructure/persistence/drizzle/drizzleLegalPageRepository.js';
-import { DrizzleMediaRepository } from '../../infrastructure/persistence/drizzle/drizzleMediaRepository.js';
-import { DrizzleTokenGenerator } from '../../infrastructure/persistence/drizzle/drizzleTokenGenerator.js';
-import { LuciaSessionRepository } from '../../infrastructure/auth/luciaSessionRepository.js';
-import { ScryptPasswordHasher } from '../../infrastructure/auth/scryptPasswordHasher.js';
-import { ConsoleEmailSender } from '../../infrastructure/email/consoleEmailSender.js';
-import { ResendEmailSender } from '../../infrastructure/email/resendEmailSender.js';
-import { R2MediaStorage } from '../../infrastructure/storage/r2MediaStorage.js';
-import { FetchRebuildHookCaller } from '../../infrastructure/integrations/fetchRebuildHookCaller.js';
+import {
+  DrizzleRestaurantRepository,
+  CreateRestaurantUseCase,
+  ListRestaurantsUseCase,
+  GetRestaurantUseCase,
+  PatchRestaurantUseCase,
+  DiscardChangesUseCase,
+  DeleteRestaurantUseCase
+} from '@/core/restaurants';
+import {
+  DrizzleUserRepository,
+  DrizzleTokenGenerator,
+  LuciaSessionRepository,
+  ScryptPasswordHasher,
+  LoginUseCase,
+  LogoutUseCase,
+  ListUserSessionsUseCase,
+  RevokeSessionUseCase,
+  RevokeOtherSessionsUseCase,
+  RequestPasswordResetUseCase,
+  ApplyPasswordChangeUseCase
+} from '@/core/auth';
+import {
+  DrizzleLanguageRepository,
+  ListLanguagesUseCase,
+  CreateLanguageUseCase,
+  UpdateLanguageUseCase,
+  DeleteLanguageUseCase
+} from '@/core/languages';
+import {
+  DrizzleSpaceRepository,
+  ListSpacesUseCase,
+  GetSpaceUseCase,
+  CreateSpaceUseCase,
+  PatchSpaceUseCase,
+  DiscardSpaceChangesUseCase,
+  DeleteSpaceUseCase
+} from '@/core/spaces';
+import {
+  DrizzleDishRepository,
+  DrizzleWineRepository,
+  ListDishesUseCase,
+  GetDishUseCase,
+  CreateDishUseCase,
+  UpdateDishUseCase,
+  DeleteDishUseCase,
+  ListDishCategoriesUseCase,
+  CreateDishCategoryUseCase,
+  UpdateDishCategoryUseCase,
+  DeleteDishCategoryUseCase,
+  ListWinesUseCase,
+  GetWineUseCase,
+  CreateWineUseCase,
+  UpdateWineUseCase,
+  DeleteWineUseCase,
+  ListWineCategoriesUseCase,
+  CreateWineCategoryUseCase,
+  DeleteWineCategoryUseCase,
+  UpdateWineCategoryUseCase
+} from '@/core/menu';
+import {
+  DrizzleLegalPageRepository,
+  ListLegalPagesUseCase,
+  SaveLegalPageUseCase,
+  DeleteLegalPageUseCase
+} from '@/core/legal';
+import {
+  DrizzleMediaRepository,
+  R2MediaStorage,
+  ListMediaUseCase,
+  RequestMediaUploadUseCase,
+  ConfirmMediaUploadUseCase,
+  UpdateMediaUseCase,
+  GetMediaReferencesUseCase,
+  DeleteMediaUseCase
+} from '@/core/media';
+import {
+  FetchRebuildHookCaller,
+  GetPendingTasksUseCase,
+  GetPublishedSiteUseCase,
+  RequestSiteRebuildUseCase,
+  GetSiteStatusUseCase,
+  FetchSiteProbe
+} from '@/core/site';
 
-import { CreateRestaurantUseCase } from '../../application/restaurants/createRestaurantUseCase.js';
-import { ListRestaurantsUseCase } from '../../application/restaurants/listRestaurantsUseCase.js';
-import { GetRestaurantUseCase } from '../../application/restaurants/getRestaurantUseCase.js';
-import { PatchRestaurantUseCase } from '../../application/restaurants/patchRestaurantUseCase.js';
-import { DiscardChangesUseCase } from '../../application/restaurants/discardChangesUseCase.js';
-import { DeleteRestaurantUseCase } from '../../application/restaurants/deleteRestaurantUseCase.js';
-import { GetPendingTasksUseCase } from '../../application/restaurants/getPendingTasksUseCase.js';
 
-import { LoginUseCase } from '../../application/auth/loginUseCase.js';
-import { LogoutUseCase } from '../../application/auth/logoutUseCase.js';
-import { ListUserSessionsUseCase } from '../../application/auth/listUserSessionsUseCase.js';
-import { RevokeSessionUseCase } from '../../application/auth/revokeSessionUseCase.js';
-import { RevokeOtherSessionsUseCase } from '../../application/auth/revokeOtherSessionsUseCase.js';
-import { RequestPasswordResetUseCase } from '../../application/auth/requestPasswordResetUseCase.js';
-import { ApplyPasswordChangeUseCase } from '../../application/auth/applyPasswordChangeUseCase.js';
 
-import { ListUsersUseCase } from '../../application/users/listUsersUseCase.js';
-import { CreateUserUseCase } from '../../application/users/createUserUseCase.js';
-import { UpdateUserUseCase } from '../../application/users/updateUserUseCase.js';
-import { InviteUserUseCase } from '../../application/users/inviteUserUseCase.js';
-import { DeleteUserUseCase } from '../../application/users/deleteUserUseCase.js';
+import {
+  ListUsersUseCase,
+  CreateUserUseCase,
+  UpdateUserUseCase,
+  InviteUserUseCase,
+  DeleteUserUseCase
+} from '@/core/users';
 
-import { ListLanguagesUseCase } from '../../application/languages/listLanguagesUseCase.js';
-import { CreateLanguageUseCase } from '../../application/languages/createLanguageUseCase.js';
-import { UpdateLanguageUseCase } from '../../application/languages/updateLanguageUseCase.js';
-import { DeleteLanguageUseCase } from '../../application/languages/deleteLanguageUseCase.js';
 
-import { ListSpacesUseCase } from '../../application/spaces/listSpacesUseCase.js';
-import { GetSpaceUseCase } from '../../application/spaces/getSpaceUseCase.js';
-import { CreateSpaceUseCase } from '../../application/spaces/createSpaceUseCase.js';
-import { PatchSpaceUseCase } from '../../application/spaces/patchSpaceUseCase.js';
-import { DiscardSpaceChangesUseCase } from '../../application/spaces/discardSpaceChangesUseCase.js';
-import { DeleteSpaceUseCase } from '../../application/spaces/deleteSpaceUseCase.js';
 
-import { ListDishesUseCase } from '../../application/dishes/listDishesUseCase.js';
-import { GetDishUseCase } from '../../application/dishes/getDishUseCase.js';
-import { CreateDishUseCase } from '../../application/dishes/createDishUseCase.js';
-import { UpdateDishUseCase } from '../../application/dishes/updateDishUseCase.js';
-import { DeleteDishUseCase } from '../../application/dishes/deleteDishUseCase.js';
-import { ListDishCategoriesUseCase } from '../../application/dishes/listDishCategoriesUseCase.js';
-import { CreateDishCategoryUseCase } from '../../application/dishes/createDishCategoryUseCase.js';
-import { UpdateDishCategoryUseCase } from '../../application/dishes/updateDishCategoryUseCase.js';
-import { DeleteDishCategoryUseCase } from '../../application/dishes/deleteDishCategoryUseCase.js';
 
-import { ListWinesUseCase } from '../../application/wines/listWinesUseCase.js';
-import { GetWineUseCase } from '../../application/wines/getWineUseCase.js';
-import { CreateWineUseCase } from '../../application/wines/createWineUseCase.js';
-import { UpdateWineUseCase } from '../../application/wines/updateWineUseCase.js';
-import { DeleteWineUseCase } from '../../application/wines/deleteWineUseCase.js';
-import { ListWineCategoriesUseCase } from '../../application/wines/listWineCategoriesUseCase.js';
-import { CreateWineCategoryUseCase } from '../../application/wines/createWineCategoryUseCase.js';
-import { DeleteWineCategoryUseCase } from '../../application/wines/deleteWineCategoryUseCase.js';
-import { UpdateWineCategoryUseCase } from '../../application/wines/updateWineCategoryUseCase.js';
 
-import { ListMediaUseCase } from '../../application/media/listMediaUseCase.js';
-import { RequestMediaUploadUseCase } from '../../application/media/requestMediaUploadUseCase.js';
-import { ConfirmMediaUploadUseCase } from '../../application/media/confirmMediaUploadUseCase.js';
-import { UpdateMediaUseCase } from '../../application/media/updateMediaUseCase.js';
-import { GetMediaReferencesUseCase } from '../../application/media/getMediaReferencesUseCase.js';
-import { DeleteMediaUseCase } from '../../application/media/deleteMediaUseCase.js';
 
-import { ListLegalPagesUseCase, SaveLegalPageUseCase, DeleteLegalPageUseCase } from '../../application/legalPages/legalPagesUseCases.js';
-import { GetPublishedSiteUseCase } from '../../application/public/getPublishedSiteUseCase.js';
-import { RequestSiteRebuildUseCase } from '../../application/public/requestSiteRebuildUseCase.js';
-import { GetSiteStatusUseCase } from '../../application/public/getSiteStatusUseCase.js';
-import { FetchSiteProbe } from '../../infrastructure/integrations/fetchSiteProbe.js';
 
 export type Container = ReturnType<typeof buildContainer>;
 

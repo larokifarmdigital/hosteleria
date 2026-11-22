@@ -1,8 +1,8 @@
-import type { SpaceRepository } from '../../domain/repositories/spaceRepository.js';
+import type { SpaceRepository } from '../domain/repositories/spaceRepository';
 import {
   SpaceNotFoundError,
   CannotDeleteLastSpaceError
-} from '../../domain/models/space.js';
+} from '../domain/models/space';
 
 export class DeleteSpaceUseCase {
   constructor(private readonly spaces: SpaceRepository) {}

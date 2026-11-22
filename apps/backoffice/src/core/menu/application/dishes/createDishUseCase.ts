@@ -1,5 +1,5 @@
-import type { DishRepository } from '../../domain/repositories/dishRepository.js';
-import { DishCategoryNotFoundError, type Dish } from '../../domain/models/dish.js';
+import type { DishRepository } from '../../domain/repositories/dishRepository';
+import { DishCategoryNotFoundError, type Dish } from '../../domain/models/dish';
 
 export class CreateDishUseCase {
   constructor(private readonly dishes: DishRepository) {}

@@ -1,12 +1,11 @@
 import { sql, eq } from 'drizzle-orm';
-import { getDb } from './client.js';
-import { restaurants, restaurantLocales, languages } from './schema/content.js';
-import type { Restaurant, RestaurantSnapshot } from '../../../domain/models/restaurant.js';
-import { UnknownLocaleError, RESTAURANT_CONTENT_KEYS } from '../../../domain/models/restaurant.js';
-import { SlugTakenError } from '../../../domain/models/restaurant.js';
-import type { RestaurantRepository } from '../../../domain/repositories/restaurantRepository.js';
-import type { Env } from '../../../env.js';
-import { rowToRestaurant, type RestaurantRow } from './mappers/restaurantMapper.js';
+import { getDb, type Env } from '@/core/shared';
+import { restaurants, restaurantLocales, languages } from '@/core/shared/infrastructure/drizzle/schema';
+import type { Restaurant, RestaurantSnapshot } from '../domain/models/restaurant';
+import { UnknownLocaleError, RESTAURANT_CONTENT_KEYS } from '../domain/models/restaurant';
+import { SlugTakenError } from '../domain/models/restaurant';
+import type { RestaurantRepository } from '../domain/repositories/restaurantRepository';
+import { rowToRestaurant, type RestaurantRow } from './restaurantMapper';
 
 /**
  * `findBySlug` / `findById` / `listAccessibleBy` comparten una SQL cruda

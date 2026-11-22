@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
-import type { UserRepository } from '../../domain/repositories/userRepository.js';
-import type { SessionRepository } from '../../domain/repositories/sessionRepository.js';
-import type { PasswordHasher } from '../../domain/services/passwordHasher.js';
-import { AccountSuspendedError, InvalidCredentialsError, toSessionUser } from '../../domain/models/user.js';
-import type { SessionUser } from '../../domain/models/user.js';
+import type { UserRepository } from '../domain/repositories/userRepository';
+import type { SessionRepository } from '../domain/repositories/sessionRepository';
+import type { PasswordHasher } from '../domain/services/passwordHasher';
+import { AccountSuspendedError, InvalidCredentialsError, toSessionUser } from '../domain/models/user';
+import type { SessionUser } from '../domain/models/user';
 
 export interface LoginMetadata {
   ip: string;

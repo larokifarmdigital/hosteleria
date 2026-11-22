@@ -96,12 +96,27 @@ importers:
 
   apps/backoffice:
     dependencies:
+      '@hono/zod-validator':
+        specifier: ^0.4.2
+        version: 0.4.3(hono@4.13.12)(zod@3.25.76)
       '@hookform/resolvers':
         specifier: ^7.0.7
         version: 7.0.7(ajv@8.20.0)(react-hook-form@7.92.0(@types/react@19.3.0)(react@19.3.0))(zod@3.25.76)
       '@hosteleria/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@lucia-auth/adapter-drizzle':
+        specifier: ^1.1.0
+        version: 1.1.0(drizzle-orm@0.36.4(@cloudflare/workers-types@5.20261005.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.1)(@types/pg@8.11.6)(@types/react@19.3.0)(react@19.3.0))(lucia@3.2.2)
+      '@neondatabase/serverless':
+        specifier: ^0.10.4
+        version: 0.10.4
+      '@noble/hashes':
+        specifier: ^2.4.0
+        version: 2.4.0
+      '@paralleldrive/cuid2':
+        specifier: ^2.2.2
+        version: 2.3.1
       '@radix-ui/react-avatar':
         specifier: ^1.1.2
         version: 1.2.6(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -123,6 +138,12 @@ importers:
       '@radix-ui/react-tabs':
         specifier: ^1.1.2
         version: 1.1.21(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@scalar/hono-api-reference':
+        specifier: ^0.5.0
+        version: 0.5.184(hono@4.13.12)
+      '@sentry/cloudflare':
+        specifier: ^11.4.0
+        version: 11.4.0(@cloudflare/workers-types@5.20261005.1)(wrangler@4.147.0(@cloudflare/workers-types@5.20261005.1)(@types/node@22.20.4))
       '@tailwindcss/postcss':
         specifier: ^4.0.0
         version: 4.3.3
@@ -132,12 +153,33 @@ importers:
       '@tanstack/react-query-devtools':
         specifier: ^5.104.0
         version: 5.104.0(@tanstack/react-query@5.104.0(react@19.3.0))(@types/react@19.3.0)(csstype@3.2.3)(react@19.3.0)
+      '@zxcvbn-ts/core':
+        specifier: ^3.0.4
+        version: 3.0.4
+      '@zxcvbn-ts/language-common':
+        specifier: ^3.0.4
+        version: 3.0.4
+      '@zxcvbn-ts/language-en':
+        specifier: ^3.0.2
+        version: 3.0.2
+      aws4fetch:
+        specifier: ^1.0.20
+        version: 1.0.20
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      drizzle-orm:
+        specifier: 0.36.4
+        version: 0.36.4(@cloudflare/workers-types@5.20261005.1)(@neondatabase/serverless@0.10.4)(@opentelemetry/api@1.9.1)(@types/pg@8.11.6)(@types/react@19.3.0)(react@19.3.0)
+      hono:
+        specifier: ^4.6.14
+        version: 4.13.12
+      lucia:
+        specifier: ^3.2.2
+        version: 3.2.2
       lucide-react:
         specifier: ^0.469.0
         version: 0.469.0(react@19.3.0)
@@ -166,6 +208,9 @@ importers:
         specifier: ^3.25.76
         version: 3.25.76
     devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^5.20261005.1
+        version: 5.20261005.1
       '@types/node':
         specifier: ^22.10.5
         version: 22.20.4
@@ -175,12 +220,24 @@ importers:
       '@types/react-dom':
         specifier: ^19.0.2
         version: 19.3.0(@types/react@19.3.0)
+      dotenv:
+        specifier: ^18.0.5
+        version: 18.0.5
+      drizzle-kit:
+        specifier: ^0.29.1
+        version: 0.29.1
       playwright:
         specifier: 1.63.0
         version: 1.63.0
+      tsx:
+        specifier: ^4.19.2
+        version: 4.23.15
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@edge-runtime/vm@3.2.0)(@types/node@22.20.4)(jsdom@28.1.0(@noble/hashes@2.4.0))(lightningcss@1.32.0)
 
   apps/casabella:
     dependencies:

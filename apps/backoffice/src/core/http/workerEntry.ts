@@ -1,10 +1,9 @@
 import * as Sentry from '@sentry/cloudflare';
 import type { ExecutionContext, ScheduledEvent } from '@cloudflare/workers-types';
-import { createApp } from './app.js';
-import { runCleanup } from './scheduled/cleanup.js';
-import { runBackup } from './scheduled/backup.js';
-import { assertEnv, type Env } from './env.js';
-import { runWithRequestDb } from './infrastructure/persistence/drizzle/client.js';
+import { createApp } from './app';
+import { runCleanup } from './scheduled/cleanup';
+import { runBackup } from './scheduled/backup';
+import { assertEnv, type Env, runWithRequestDb } from '@/core/shared';
 
 // La app se crea una vez por isolate, no por request.
 const app = createApp();

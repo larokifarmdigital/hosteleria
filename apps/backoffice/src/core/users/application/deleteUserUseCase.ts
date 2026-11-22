@@ -1,6 +1,5 @@
-import type { UserRepository } from '../../domain/repositories/userRepository.js';
-import { UserNotFoundError } from '../../domain/models/user.js';
-import { DomainError } from '../../domain/models/errors.js';
+import { type UserRepository, UserNotFoundError } from '@/core/auth';
+import { DomainError } from '@/core/shared';
 
 export class CannotDeleteSelfError extends DomainError {
   readonly code = 'CANNOT_DELETE_SELF';

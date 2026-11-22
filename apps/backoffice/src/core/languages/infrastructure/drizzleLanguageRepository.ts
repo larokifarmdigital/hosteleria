@@ -1,11 +1,10 @@
 import { eq, count, inArray } from 'drizzle-orm';
-import { getDb } from './client.js';
-import { languages, restaurantLocales } from './schema/content.js';
-import type { Language } from '../../../domain/models/language.js';
-import { LanguageNotFoundError } from '../../../domain/models/language.js';
-import type { LanguageRepository } from '../../../domain/repositories/languageRepository.js';
-import type { Env } from '../../../env.js';
-import { rowToLanguage } from './mappers/languageMapper.js';
+import { getDb, type Env } from '@/core/shared';
+import { languages, restaurantLocales } from '@/core/shared/infrastructure/drizzle/schema';
+import type { Language } from '../domain/models/language';
+import { LanguageNotFoundError } from '../domain/models/language';
+import type { LanguageRepository } from '../domain/repositories/languageRepository';
+import { rowToLanguage } from './languageMapper';
 
 export class DrizzleLanguageRepository implements LanguageRepository {
   constructor(private env: Env) {}

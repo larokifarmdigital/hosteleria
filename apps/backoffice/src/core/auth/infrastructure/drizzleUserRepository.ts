@@ -1,10 +1,9 @@
 import { eq, asc } from 'drizzle-orm';
-import { getDb } from './client.js';
-import { users, userRestaurants } from './schema/auth.js';
-import type { User, UserRole } from '../../../domain/models/user.js';
-import type { UserRepository } from '../../../domain/repositories/userRepository.js';
-import type { Env } from '../../../env.js';
-import { rowToUser } from './mappers/userMapper.js';
+import { getDb, type Env } from '@/core/shared';
+import { users, userRestaurants } from '@/core/shared/infrastructure/drizzle/schema';
+import type { User, UserRole } from '../domain/models/user';
+import type { UserRepository } from '../domain/repositories/userRepository';
+import { rowToUser } from './userMapper';
 
 export class DrizzleUserRepository implements UserRepository {
   constructor(private env: Env) {}

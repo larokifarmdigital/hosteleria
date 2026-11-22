@@ -2,8 +2,8 @@
 // TEST_DATABASE_URL (una branch Neon aparte) y nunca contra DATABASE_URL.
 // Sin TEST_DATABASE_URL se salta.
 import { describe, it, expect, beforeAll } from 'vitest';
-import { createApp } from '../src/app.js';
-import type { Env } from '../src/env.js';
+import { createApp } from '@/core/http/app';
+import type { Env } from '@/core/shared';
 
 const testDbUrl = process.env.TEST_DATABASE_URL;
 if (testDbUrl && testDbUrl === process.env.DATABASE_URL) {

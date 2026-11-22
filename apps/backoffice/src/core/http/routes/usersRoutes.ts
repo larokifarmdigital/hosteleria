@@ -1,10 +1,10 @@
-import type { Invitation } from '../../../application/users/createUserUseCase.js';
+import type { Invitation } from '@/core/users';
 import { Hono } from 'hono';
-import { validate } from '../validate.js';
+import { validate } from '../validate';
 import { z } from 'zod';
-import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
-import { userToDto } from '../dto/userDto.js';
-import type { AppBindings } from '../types.js';
+import { requireAuth, requireAdmin } from '../middleware/authMiddleware';
+import { userToDto } from '../dto/userDto';
+import type { AppBindings } from '../types';
 
 export function createUsersRoutes() {
   const app = new Hono<AppBindings>();

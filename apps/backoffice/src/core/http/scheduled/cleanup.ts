@@ -1,11 +1,8 @@
 import { lt } from 'drizzle-orm';
-import { getDb } from '../infrastructure/persistence/drizzle/client.js';
-import { sessions } from '../infrastructure/persistence/drizzle/schema/auth.js';
-import { cleanupStaleRateLimits } from '../middleware/rate-limit.js';
-import { DrizzleMediaRepository } from '../infrastructure/persistence/drizzle/drizzleMediaRepository.js';
-import { R2MediaStorage } from '../infrastructure/storage/r2MediaStorage.js';
-import { CleanupUnconfirmedMediaUseCase } from '../application/media/cleanupUnconfirmedMediaUseCase.js';
-import type { Env } from '../env.js';
+import { getDb, type Env } from '@/core/shared';
+import { sessions } from '@/core/shared/infrastructure/drizzle/schema';
+import { cleanupStaleRateLimits } from '../middleware/rate-limit';
+import { DrizzleMediaRepository, R2MediaStorage, CleanupUnconfirmedMediaUseCase } from '@/core/media';
 
 export async function runCleanup(env: Env) {
   const db = getDb(env.DATABASE_URL);

@@ -1,6 +1,6 @@
 import { AwsClient } from 'aws4fetch';
-import type { MediaStorage } from '../../domain/services/mediaStorage.js';
-import type { Env } from '../../env.js';
+import type { MediaStorage } from '../domain/services/mediaStorage';
+import type { Env } from '@/core/shared';
 
 // `env.MEDIA` (R2 binding) para head/delete; aws4fetch para firmar PUT URLs
 // (el binding nativo no las soporta). El cliente se cachea por isolate.

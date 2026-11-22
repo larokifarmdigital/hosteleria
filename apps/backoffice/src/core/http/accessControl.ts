@@ -1,7 +1,7 @@
 import { HTTPException } from 'hono/http-exception';
-import { MediaNotFoundError, MediaNotInRestaurantError } from '../../domain/models/media.js';
+import { MediaNotFoundError, MediaNotInRestaurantError } from '@/core/media';
 import type { Context } from 'hono';
-import type { AppBindings } from './types.js';
+import type { AppBindings } from './types';
 
 /** Para rutas sin `:slug` en la URL (dishes/wines/media). `null` = admin. */
 export async function allowedSpaceIds(c: Context<AppBindings>): Promise<Set<string> | null> {

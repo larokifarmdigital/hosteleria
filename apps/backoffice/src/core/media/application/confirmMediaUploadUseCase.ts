@@ -1,12 +1,12 @@
-import type { MediaRepository } from '../../domain/repositories/mediaRepository.js';
-import type { MediaStorage } from '../../domain/services/mediaStorage.js';
+import type { MediaRepository } from '../domain/repositories/mediaRepository';
+import type { MediaStorage } from '../domain/services/mediaStorage';
 import {
   MediaNotFoundError,
   MediaUploadMissingError,
   MediaUploadSizeMismatchError,
   type MediaAsset
-} from '../../domain/models/media.js';
-import type { I18nValue } from '../../domain/models/i18n.js';
+} from '../domain/models/media';
+import type { I18nValue } from '@/core/shared';
 
 export interface ConfirmMediaUploadInput {
   width?: number;

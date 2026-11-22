@@ -1,15 +1,15 @@
-import type { UserRepository } from '../../domain/repositories/userRepository.js';
-import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
-import type { PasswordHasher } from '../../domain/services/passwordHasher.js';
-import type { SessionRepository } from '../../domain/repositories/sessionRepository.js';
 import {
+  type UserRepository,
+  type PasswordHasher,
+  type SessionRepository,
   CannotLockSelfOutError,
   UserNotFoundError,
   WeakPasswordError,
   type User,
-  type UserRole
-} from '../../domain/models/user.js';
-import { checkPasswordStrength } from '../auth/passwordStrength.js';
+  type UserRole,
+  checkPasswordStrength
+} from '@/core/auth';
+import type { RestaurantRepository } from '@/core/restaurants';
 
 export interface UpdateUserInput {
   name?: string;

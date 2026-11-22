@@ -4,9 +4,9 @@ config({ path: '.env.local' });
 config({ path: '.env', override: false });
 
 import { eq } from 'drizzle-orm';
-import { getDb } from './client.js';
-import * as schema from './schema/index.js';
-import { ScryptPasswordHasher } from '../../auth/scryptPasswordHasher.js';
+import { getDb } from '../../../../../backoffice/src/core/shared';
+import * as schema from '../../../../../backoffice/src/core/shared/infrastructure/drizzle/schema';
+import { ScryptPasswordHasher } from '../../../../../backoffice/src/core/auth';
 
 const hasher = new ScryptPasswordHasher();
 const hashPassword = (p: string) => hasher.hash(p);

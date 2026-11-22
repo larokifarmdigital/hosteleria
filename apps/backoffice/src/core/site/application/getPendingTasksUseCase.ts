@@ -1,11 +1,9 @@
-import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
-import type { SpaceRepository } from '../../domain/repositories/spaceRepository.js';
-import type { DishRepository } from '../../domain/repositories/dishRepository.js';
-import type { WineRepository } from '../../domain/repositories/wineRepository.js';
-import type { LegalPageRepository } from '../../domain/repositories/legalPageRepository.js';
-import type { MediaRepository } from '../../domain/repositories/mediaRepository.js';
-import { RestaurantNotFoundError } from '../../domain/models/restaurant.js';
-import { buildPendingTasks, type PendingTask } from '../../domain/models/pendingTasks.js';
+import { type RestaurantRepository, RestaurantNotFoundError } from '@/core/restaurants';
+import type { SpaceRepository } from '@/core/spaces';
+import type { DishRepository, WineRepository } from '@/core/menu';
+import type { LegalPageRepository } from '@/core/legal';
+import type { MediaRepository } from '@/core/media';
+import { buildPendingTasks, type PendingTask } from '../domain/models/pendingTasks';
 
 export class GetPendingTasksUseCase {
   constructor(

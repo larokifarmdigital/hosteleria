@@ -1,5 +1,4 @@
-import type { UserRepository } from '../../domain/repositories/userRepository.js';
-import type { User } from '../../domain/models/user.js';
+import type { UserRepository, User } from '@/core/auth';
 
 export interface UserWithRestaurants {
   user: User;

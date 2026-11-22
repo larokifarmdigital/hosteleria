@@ -1,6 +1,6 @@
-import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
-import type { LanguageRepository } from '../../domain/repositories/languageRepository.js';
-import type { Restaurant } from '../../domain/models/restaurant.js';
+import type { RestaurantRepository } from '../domain/repositories/restaurantRepository';
+import type { LanguageRepository } from '@/core/languages';
+import type { Restaurant } from '../domain/models/restaurant';
 
 export interface CreateRestaurantInput {
   slug: string;

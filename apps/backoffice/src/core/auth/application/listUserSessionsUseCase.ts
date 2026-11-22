@@ -1,5 +1,5 @@
-import type { SessionRepository } from '../../domain/repositories/sessionRepository.js';
-import type { Session } from '../../domain/models/session.js';
+import type { SessionRepository } from '../domain/repositories/sessionRepository';
+import type { Session } from '../domain/models/session';
 
 export class ListUserSessionsUseCase {
   constructor(private readonly sessionsRepo: SessionRepository) {}

@@ -1,4 +1,4 @@
-import type { User, UserRole } from '../models/user.js';
+import type { User, UserRole } from '../models/user';
 
 export interface UserRepository {
   /** `email` se busca lowercased. */

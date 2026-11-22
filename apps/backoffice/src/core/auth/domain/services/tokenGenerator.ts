@@ -3,7 +3,7 @@
  * SHA-256; el token en claro existe en memoria lo justo para meterlo en
  * el email, luego es irrecuperable.
  */
-import { DomainError } from '../models/errors.js';
+import { DomainError } from '@/core/shared/domain';
 
 export type TokenKind = 'password_setup' | 'password_reset';
 

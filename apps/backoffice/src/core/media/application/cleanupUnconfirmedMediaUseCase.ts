@@ -1,5 +1,5 @@
-import type { MediaRepository } from '../../domain/repositories/mediaRepository.js';
-import type { MediaStorage } from '../../domain/services/mediaStorage.js';
+import type { MediaRepository } from '../domain/repositories/mediaRepository';
+import type { MediaStorage } from '../domain/services/mediaStorage';
 
 // La URL firmada caduca a los 5 minutos; un día de margen descarta cualquier
 // subida que aún pudiera confirmarse.

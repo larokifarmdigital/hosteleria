@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { markdownToBlocks } from '../../../packages/content-client/src/markdown.js';
 import { toGroupData, toLegalPages, toRestaurantData, toSpaceData } from '../../../packages/content-client/src/fromApi.js';
 import { createContentQueries, createImageBuilder } from '../../../packages/content-client/src/index.js';
-import { mapLegalPage, mapRestaurant, mapSpace, portableToMarkdown } from '../scripts/sanity-import/map.js';
+import { mapLegalPage, mapRestaurant, mapSpace, portableToMarkdown } from '../scripts/sanity-import/map';
 
 const s = (es: string, en: string) => [{ _key: 'es', value: es }, { _key: 'en', value: en }];
 

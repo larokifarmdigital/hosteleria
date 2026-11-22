@@ -1,5 +1,5 @@
-import type { WineRepository } from '../../domain/repositories/wineRepository.js';
-import type { WineCategory } from '../../domain/models/wine.js';
+import type { WineRepository } from '../../domain/repositories/wineRepository';
+import type { WineCategory } from '../../domain/models/wine';
 
 export class ListWineCategoriesUseCase {
   constructor(private readonly wines: WineRepository) {}

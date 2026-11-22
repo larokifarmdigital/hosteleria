@@ -1,6 +1,6 @@
-import type { MediaRepository } from '../../domain/repositories/mediaRepository.js';
-import type { MediaStorage } from '../../domain/services/mediaStorage.js';
-import { MediaNotFoundError, MediaHasReferencesError } from '../../domain/models/media.js';
+import type { MediaRepository } from '../domain/repositories/mediaRepository';
+import type { MediaStorage } from '../domain/services/mediaStorage';
+import { MediaNotFoundError, MediaHasReferencesError } from '../domain/models/media';
 
 export class DeleteMediaUseCase {
   constructor(

@@ -1,6 +1,6 @@
-import type { MediaAsset } from '../../../../domain/models/media.js';
-import type { I18nValue } from '../../../../domain/models/i18n.js';
-import type { mediaAssets } from '../schema/media.js';
+import type { MediaAsset } from '../domain/models/media';
+import type { I18nValue } from '@/core/shared';
+import type { mediaAssets } from '@/core/shared/infrastructure/drizzle/schema';
 
 export function rowToMedia(row: typeof mediaAssets.$inferSelect): MediaAsset {
   return {

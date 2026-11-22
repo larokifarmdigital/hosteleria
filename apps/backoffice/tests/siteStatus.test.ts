@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { REBUILD_GRACE_MS, resolveSiteState, siteUrlOf, siteVersion } from '../src/domain/models/siteStatus.js';
+import { REBUILD_GRACE_MS, resolveSiteState, siteUrlOf, siteVersion } from '@/core/site/domain';
 
 const now = new Date('2026-11-22T12:00:00Z');
 const ago = (ms: number) => new Date(now.getTime() - ms);

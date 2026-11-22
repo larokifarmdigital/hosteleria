@@ -1,5 +1,5 @@
-import type { SessionRepository } from '../../domain/repositories/sessionRepository.js';
-import { SessionNotFoundError } from '../../domain/models/session.js';
+import type { SessionRepository } from '../domain/repositories/sessionRepository';
+import { SessionNotFoundError } from '../domain/models/session';
 
 export class RevokeSessionUseCase {
   constructor(private readonly sessionsRepo: SessionRepository) {}

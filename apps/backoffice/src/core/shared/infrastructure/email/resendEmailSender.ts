@@ -1,4 +1,4 @@
-import type { EmailSender, SendEmailInput } from '../../domain/services/emailSender.js';
+import type { EmailSender, SendEmailInput } from '../../domain/services/emailSender';
 
 export class ResendEmailSender implements EmailSender {
   constructor(private apiKey: string, private from: string) {}

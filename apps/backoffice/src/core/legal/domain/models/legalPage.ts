@@ -1,4 +1,4 @@
-import type { I18nValue } from './i18n.js';
+import type { I18nValue } from '@/core/shared/domain';
 
 export const LEGAL_PAGE_TYPES = ['legal-notice', 'privacy', 'cookies'] as const;
 export type LegalPageType = (typeof LEGAL_PAGE_TYPES)[number];

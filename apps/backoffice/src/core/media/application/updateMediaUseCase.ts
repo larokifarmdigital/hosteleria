@@ -1,6 +1,6 @@
-import type { MediaRepository } from '../../domain/repositories/mediaRepository.js';
-import { MediaNotFoundError, type MediaAsset, type MediaUsage } from '../../domain/models/media.js';
-import type { I18nValue } from '../../domain/models/i18n.js';
+import type { MediaRepository } from '../domain/repositories/mediaRepository';
+import { MediaNotFoundError, type MediaAsset, type MediaUsage } from '../domain/models/media';
+import type { I18nValue } from '@/core/shared';
 
 export interface UpdateMediaInput {
   usage?: MediaUsage;

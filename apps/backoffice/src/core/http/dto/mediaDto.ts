@@ -1,5 +1,5 @@
-import type { MediaAsset } from '../../../domain/models/media.js';
-import type { Restaurant } from '../../../domain/models/restaurant.js';
+import type { MediaAsset } from '@/core/media';
+import type { Restaurant } from '@/core/restaurants';
 
 export function mediaToDto(m: MediaAsset, r2PublicUrl: string, restaurant: Restaurant | null) {
   return {

@@ -1,7 +1,6 @@
-import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
-import type { UserRepository } from '../../domain/repositories/userRepository.js';
-import type { Restaurant } from '../../domain/models/restaurant.js';
-import type { SessionUser } from '../../domain/models/user.js';
+import type { RestaurantRepository } from '../domain/repositories/restaurantRepository';
+import type { UserRepository, SessionUser } from '@/core/auth';
+import type { Restaurant } from '../domain/models/restaurant';
 
 export class ListRestaurantsUseCase {
   constructor(

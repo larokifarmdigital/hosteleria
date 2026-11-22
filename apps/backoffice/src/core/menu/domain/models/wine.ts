@@ -1,5 +1,4 @@
-import type { I18nValue } from './i18n.js';
-import { DomainError } from './errors.js';
+import { type I18nValue, DomainError } from '@/core/shared/domain';
 
 // A diferencia de Dish, `wine.name` NO es i18n: los vinos son nombres propios
 // ("Vega Sicilia Único" no se traduce). `note` sí es i18n (maridaje/descripción).

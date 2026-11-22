@@ -1,10 +1,9 @@
-import { i18nMissingLocales, type I18nValue } from './i18n.js';
-import type { Dish, DishCategory } from './dish.js';
-import type { Wine, WineCategory } from './wine.js';
-import type { LegalPage, LegalPageType } from './legalPage.js';
-import type { MediaAsset } from './media.js';
-import { restaurantMediaUses, restaurantTranslatableTexts, type Restaurant } from './restaurant.js';
-import { spaceMediaIds, spaceTranslatableTexts, type Space } from './space.js';
+import { i18nMissingLocales, type I18nValue } from '@/core/shared/domain';
+import type { Dish, DishCategory, Wine, WineCategory } from '@/core/menu/domain';
+import type { LegalPage, LegalPageType } from '@/core/legal/domain';
+import type { MediaAsset } from '@/core/media/domain';
+import { restaurantMediaUses, restaurantTranslatableTexts, type Restaurant } from '@/core/restaurants/domain';
+import { spaceMediaIds, spaceTranslatableTexts, type Space } from '@/core/spaces/domain';
 
 /**
  * Lo que le falta al contenido de un restaurante para estar completo, calculado

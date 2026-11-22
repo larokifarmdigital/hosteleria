@@ -1,6 +1,6 @@
-import type { SpaceRepository } from '../../domain/repositories/spaceRepository.js';
-import { SPACE_CONTENT_KEYS, SpaceNotFoundError, type Space } from '../../domain/models/space.js';
-import { NoSnapshotError } from '../../domain/models/restaurant.js';
+import type { SpaceRepository } from '../domain/repositories/spaceRepository';
+import { SPACE_CONTENT_KEYS, SpaceNotFoundError, type Space } from '../domain/models/space';
+import { NoSnapshotError } from '@/core/restaurants';
 
 export class DiscardSpaceChangesUseCase {
   constructor(private readonly spaces: SpaceRepository) {}

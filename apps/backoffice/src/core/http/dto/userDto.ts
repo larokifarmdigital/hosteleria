@@ -1,4 +1,4 @@
-import type { User } from '../../../domain/models/user.js';
+import type { User } from '@/core/auth';
 
 function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/);

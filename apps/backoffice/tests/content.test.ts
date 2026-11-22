@@ -4,9 +4,9 @@ import {
   UI_TEXT_KEYS,
   restaurantMediaUses,
   restaurantTranslatableTexts
-} from '../src/domain/models/restaurant.js';
-import { SPACE_CONTENT_KEYS, spaceMediaIds, spaceTranslatableTexts } from '../src/domain/models/space.js';
-import { assertTranslationsComplete, TranslationsIncompleteError } from '../src/domain/models/i18n.js';
+} from '@/core/restaurants/domain';
+import { SPACE_CONTENT_KEYS, spaceMediaIds, spaceTranslatableTexts } from '@/core/spaces/domain';
+import { assertTranslationsComplete, TranslationsIncompleteError } from '@/core/shared/domain';
 
 const active = ['es', 'ca'];
 const full = { es: 'a', ca: 'b' };

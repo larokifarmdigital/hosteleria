@@ -1,4 +1,4 @@
-import type { SessionRepository } from '../../domain/repositories/sessionRepository.js';
+import type { SessionRepository } from '../domain/repositories/sessionRepository';
 
 export class RevokeOtherSessionsUseCase {
   constructor(private readonly sessionsRepo: SessionRepository) {}

@@ -1,9 +1,9 @@
-import type { UserRepository } from '../../domain/repositories/userRepository.js';
-import type { SessionRepository } from '../../domain/repositories/sessionRepository.js';
-import { InvalidTokenError, type TokenGenerator, type TokenKind } from '../../domain/services/tokenGenerator.js';
-import type { PasswordHasher } from '../../domain/services/passwordHasher.js';
-import { WeakPasswordError } from '../../domain/models/user.js';
-import { checkPasswordStrength } from './passwordStrength.js';
+import type { UserRepository } from '../domain/repositories/userRepository';
+import type { SessionRepository } from '../domain/repositories/sessionRepository';
+import { InvalidTokenError, type TokenGenerator, type TokenKind } from '../domain/services/tokenGenerator';
+import type { PasswordHasher } from '../domain/services/passwordHasher';
+import { WeakPasswordError } from '../domain/models/user';
+import { checkPasswordStrength } from './passwordStrength';
 
 export class ApplyPasswordChangeUseCase {
   constructor(

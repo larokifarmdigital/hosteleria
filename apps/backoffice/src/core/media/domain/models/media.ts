@@ -1,5 +1,4 @@
-import type { I18nValue } from './i18n.js';
-import { DomainError } from './errors.js';
+import { type I18nValue, DomainError } from '@/core/shared/domain';
 
 export type MediaUsage = 'hero' | 'gallery' | 'dish' | 'unused';
 
@@ -80,5 +79,5 @@ export class MediaNotInRestaurantError extends DomainError {
 export interface MediaReference {
   kind: 'hero' | 'gallery' | 'dish' | 'restaurant';
   refId: string;
-  use?: import('./restaurant.js').RestaurantMediaUse;
+  use?: import('@/core/restaurants/domain').RestaurantMediaUse;
 }

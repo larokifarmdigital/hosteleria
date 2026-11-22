@@ -1,7 +1,6 @@
-import type { UserRepository } from '../../domain/repositories/userRepository.js';
-import type { TokenGenerator } from '../../domain/services/tokenGenerator.js';
-import type { EmailSender } from '../../domain/services/emailSender.js';
-import { passwordResetTemplate } from '../../email/templates.js';
+import type { UserRepository } from '../domain/repositories/userRepository';
+import type { TokenGenerator } from '../domain/services/tokenGenerator';
+import { type EmailSender, passwordResetTemplate } from '@/core/shared';
 
 /** Siempre resuelve sin lanzar, para no filtrar si el email está en BD.
  *  Al emitir un token nuevo se invalidan los previos. */

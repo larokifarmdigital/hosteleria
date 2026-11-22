@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { i18nHasAny, i18nLocalesFilled } from '../src/domain/models/i18n.js';
+import {
+  i18nHasAny,
+  i18nLocalesFilled,
+  i18nMissingLocales,
+  assertTranslationsComplete,
+  TranslationsIncompleteError
+} from '@/core/shared/domain';
 
 describe('i18nHasAny', () => {
   it('null / undefined / vacío → false', () => {
@@ -29,7 +35,6 @@ describe('i18nLocalesFilled', () => {
   });
 });
 
-import { i18nMissingLocales, assertTranslationsComplete, TranslationsIncompleteError } from '../src/domain/models/i18n.js';
 
 describe('regla «todos los idiomas activos o ninguno»', () => {
   const active = ['es', 'ca', 'en'];

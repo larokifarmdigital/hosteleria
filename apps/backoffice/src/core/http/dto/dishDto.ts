@@ -1,6 +1,6 @@
-import type { Dish, DishCategory } from '../../../domain/models/dish.js';
-import type { Space } from '../../../domain/models/space.js';
-import type { Restaurant } from '../../../domain/models/restaurant.js';
+import type { Dish, DishCategory } from '@/core/menu';
+import type { Space } from '@/core/spaces';
+import type { Restaurant } from '@/core/restaurants';
 
 // Enriquecido con lookups que la ruta compone a mano (restaurantSlug/Name
 // y la variante `es` de la categoría), para que la tabla del backoffice

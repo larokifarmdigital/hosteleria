@@ -1,6 +1,6 @@
-import type { Wine, WineCategory } from '../../../../domain/models/wine.js';
-import type { I18nValue } from '../../../../domain/models/i18n.js';
-import type { wines, wineCategories } from '../schema/content.js';
+import type { Wine, WineCategory } from '../domain/models/wine';
+import type { I18nValue } from '@/core/shared';
+import type { wines, wineCategories } from '@/core/shared/infrastructure/drizzle/schema';
 
 export function rowToWine(row: typeof wines.$inferSelect): Wine {
   return {

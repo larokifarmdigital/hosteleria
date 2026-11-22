@@ -1,11 +1,11 @@
-import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
-import type { LanguageRepository } from '../../domain/repositories/languageRepository.js';
+import type { RestaurantRepository } from '../domain/repositories/restaurantRepository';
+import type { LanguageRepository } from '@/core/languages';
 import {
   RESTAURANT_CONTENT_KEYS,
   RestaurantNotFoundError,
   NoSnapshotError,
   type Restaurant
-} from '../../domain/models/restaurant.js';
+} from '../domain/models/restaurant';
 
 export class DiscardChangesUseCase {
   constructor(

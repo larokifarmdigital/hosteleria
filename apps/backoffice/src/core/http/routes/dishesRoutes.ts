@@ -1,20 +1,20 @@
 import { Hono } from 'hono';
-import { validate } from '../validate.js';
+import { validate } from '../validate';
 import { z } from 'zod';
 import type { Context } from 'hono';
-import { requireAuth } from '../middleware/authMiddleware.js';
-import { allowedSpaceIds, assertMediaInRestaurant, assertSpaceAccess } from '../accessControl.js';
-import { dishToDto } from '../dto/dishDto.js';
-import { assertSameGroup } from '../../../domain/models/menuOrder.js';
+import { requireAuth } from '../middleware/authMiddleware';
+import { allowedSpaceIds, assertMediaInRestaurant, assertSpaceAccess } from '../accessControl';
+import { dishToDto } from '../dto/dishDto';
 import {
+  assertSameGroup,
   DISH_KINDS,
   DishCategoryNotFoundError,
   type Dish,
   type DishKind
-} from '../../../domain/models/dish.js';
-import { SpaceNotFoundError } from '../../../domain/models/space.js';
-import { RestaurantNotFoundError } from '../../../domain/models/restaurant.js';
-import type { AppBindings } from '../types.js';
+} from '@/core/menu';
+import { SpaceNotFoundError } from '@/core/spaces';
+import { RestaurantNotFoundError } from '@/core/restaurants';
+import type { AppBindings } from '../types';
 
 export function createDishesRoutes() {
   const app = new Hono<AppBindings>();

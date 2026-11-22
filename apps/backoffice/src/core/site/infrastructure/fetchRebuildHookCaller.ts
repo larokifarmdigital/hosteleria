@@ -1,4 +1,4 @@
-import type { RebuildHookCaller } from '../../domain/services/rebuildHookCaller.js';
+import type { RebuildHookCaller } from '../domain/services/rebuildHookCaller';
 
 export class FetchRebuildHookCaller implements RebuildHookCaller {
   async call(url: string, meta?: { restaurantSlug?: string }): Promise<boolean> {

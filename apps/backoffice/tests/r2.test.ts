@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { R2MediaStorage } from '../src/infrastructure/storage/r2MediaStorage.js';
-import type { Env } from '../src/env.js';
+import { R2MediaStorage } from '@/core/media';
+import type { Env } from '@/core/shared';
 
 // normalizeFilename no lee el env.
 const { normalizeFilename } = new R2MediaStorage({} as Env);

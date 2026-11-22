@@ -17,7 +17,7 @@ import { config } from 'dotenv';
 import {
   canonical, mapCategory, mapDish, mapLegalPage, mapRestaurant, mapSpace, mapWine,
   type CategoryImport, type DishImport, type LegalPageImport, type SpaceImport, type WineImport
-} from './sanity-import/map.js';
+} from '../../backoffice/scripts/sanity-import/map';
 
 config({ path: new URL('../../studio/.env', import.meta.url).pathname });
 

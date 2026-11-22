@@ -1,5 +1,5 @@
-import type { SpaceRepository } from '../../domain/repositories/spaceRepository.js';
-import { SpaceSlugTakenError, type Space, type SpaceType } from '../../domain/models/space.js';
+import type { SpaceRepository } from '../domain/repositories/spaceRepository';
+import { SpaceSlugTakenError, type Space, type SpaceType } from '../domain/models/space';
 
 export interface CreateSpaceInput {
   slug: string;

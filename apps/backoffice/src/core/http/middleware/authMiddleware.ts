@@ -1,7 +1,7 @@
 import { createMiddleware } from 'hono/factory';
 import { HTTPException } from 'hono/http-exception';
 import { getCookie } from 'hono/cookie';
-import type { AppBindings } from '../types.js';
+import type { AppBindings } from '../types';
 
 const COOKIE_NAME = 'hs_session';
 

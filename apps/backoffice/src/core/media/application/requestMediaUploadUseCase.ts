@@ -1,6 +1,6 @@
 import { createId } from '@paralleldrive/cuid2';
-import type { MediaRepository } from '../../domain/repositories/mediaRepository.js';
-import type { MediaStorage } from '../../domain/services/mediaStorage.js';
+import type { MediaRepository } from '../domain/repositories/mediaRepository';
+import type { MediaStorage } from '../domain/services/mediaStorage';
 
 export interface RequestMediaUploadInput {
   restaurantId: string;

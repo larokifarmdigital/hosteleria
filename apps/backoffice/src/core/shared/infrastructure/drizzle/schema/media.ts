@@ -1,10 +1,10 @@
 import { pgTable, text, timestamp, boolean, integer } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
-import { mediaUsageEnum } from './enums.js';
-import { i18nString } from './i18n.js';
-import { restaurants } from './content.js';
-import { users } from './auth.js';
+import { mediaUsageEnum } from './enums';
+import { i18nString } from './i18n';
+import { restaurants } from './content';
+import { users } from './auth';
 
 /** 1 fila = 1 objeto en R2. `usage` arranca en `unused` y cambia al asignarse
  *  el asset a un campo. La fila nace al pedir la URL de subida, antes de que

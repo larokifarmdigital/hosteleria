@@ -1,13 +1,10 @@
 import { eq, and, desc, sql, isNull, isNotNull, lt, inArray } from 'drizzle-orm';
-import { getDb } from './client.js';
-import { mediaAssets } from './schema/media.js';
-import { dishes, restaurants } from './schema/content.js';
-import type { MediaAsset, MediaReference, MediaUsage } from '../../../domain/models/media.js';
-import { restaurantMediaUses, type RestaurantContent, type RestaurantSnapshot } from '../../../domain/models/restaurant.js';
-import type { I18nValue } from '../../../domain/models/i18n.js';
-import type { MediaRepository } from '../../../domain/repositories/mediaRepository.js';
-import type { Env } from '../../../env.js';
-import { rowToMedia } from './mappers/mediaMapper.js';
+import { getDb, type I18nValue, type Env } from '@/core/shared';
+import { mediaAssets, dishes, restaurants } from '@/core/shared/infrastructure/drizzle/schema';
+import type { MediaAsset, MediaReference, MediaUsage } from '../domain/models/media';
+import { restaurantMediaUses, type RestaurantContent, type RestaurantSnapshot } from '@/core/restaurants';
+import type { MediaRepository } from '../domain/repositories/mediaRepository';
+import { rowToMedia } from './mediaMapper';
 
 export class DrizzleMediaRepository implements MediaRepository {
   constructor(private env: Env) {}

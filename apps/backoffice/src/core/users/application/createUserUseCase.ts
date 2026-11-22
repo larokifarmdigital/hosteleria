@@ -1,11 +1,15 @@
-import type { UserRepository } from '../../domain/repositories/userRepository.js';
-import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
-import type { PasswordHasher } from '../../domain/services/passwordHasher.js';
-import type { TokenGenerator } from '../../domain/services/tokenGenerator.js';
-import type { EmailSender } from '../../domain/services/emailSender.js';
-import { EmailTakenError, WeakPasswordError, type User, type UserRole } from '../../domain/models/user.js';
-import { checkPasswordStrength } from '../auth/passwordStrength.js';
-import { welcomeTemplate } from '../../email/templates.js';
+import {
+  type UserRepository,
+  type PasswordHasher,
+  type TokenGenerator,
+  EmailTakenError,
+  WeakPasswordError,
+  type User,
+  type UserRole,
+  checkPasswordStrength
+} from '@/core/auth';
+import type { RestaurantRepository } from '@/core/restaurants';
+import { type EmailSender, welcomeTemplate } from '@/core/shared';
 
 export const INVITATION_TTL_SECONDS = 60 * 60 * 48;
 

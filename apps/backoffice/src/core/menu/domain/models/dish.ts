@@ -1,5 +1,4 @@
-import type { I18nValue } from './i18n.js';
-import { DomainError } from './errors.js';
+import { type I18nValue, DomainError } from '@/core/shared/domain';
 
 export const DISH_KINDS = ['dish', 'drink'] as const;
 /** Platos y bebidas tienen la misma forma; la categoría dice a qué carta pertenece. */

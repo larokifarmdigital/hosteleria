@@ -1,6 +1,5 @@
-import { getDb } from '../infrastructure/persistence/drizzle/client.js';
-import * as schema from '../infrastructure/persistence/drizzle/schema/index.js';
-import type { Env } from '../env.js';
+import { getDb, type Env } from '@/core/shared';
+import * as schema from '@/core/shared/infrastructure/drizzle/schema';
 
 // Dump a R2 además de los snapshots de Neon: otro proveedor, por si el
 // incidente es de Neon. Sin `passwordHash`: si el backup se filtra no hay

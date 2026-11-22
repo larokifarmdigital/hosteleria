@@ -1,10 +1,10 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { validate } from '../validate.js';
-import { requireAuth, requireRestaurant } from '../middleware/authMiddleware.js';
-import { i18nSchema } from '../schemas.js';
-import { LEGAL_PAGE_TYPES, type LegalPage } from '../../../domain/models/legalPage.js';
-import type { AppBindings } from '../types.js';
+import { validate } from '../validate';
+import { requireAuth, requireRestaurant } from '../middleware/authMiddleware';
+import { i18nSchema } from '../schemas';
+import { LEGAL_PAGE_TYPES, type LegalPage } from '@/core/legal';
+import type { AppBindings } from '../types';
 
 function legalPageToDto(p: LegalPage) {
   return {

@@ -1,9 +1,8 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { eq, and, gte, isNull } from 'drizzle-orm';
-import { getDb } from './client.js';
-import { userTokens } from './schema/auth.js';
-import type { Env } from '../../../env.js';
-import type { TokenGenerator, TokenKind } from '../../../domain/services/tokenGenerator.js';
+import { getDb, type Env } from '@/core/shared';
+import { userTokens } from '@/core/shared/infrastructure/drizzle/schema';
+import type { TokenGenerator, TokenKind } from '../domain/services/tokenGenerator';
 
 /**
  * Token = 32 bytes random en base64url; en BD solo su SHA-256. `consume`

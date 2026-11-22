@@ -1,4 +1,4 @@
-import { DomainError } from './errors.js';
+import { DomainError } from '@/core/shared/domain';
 
 /** La lista para reordenar no es de un mismo sitio, repite elementos o nombra alguno que no existe. */
 export class InvalidReorderError extends DomainError {

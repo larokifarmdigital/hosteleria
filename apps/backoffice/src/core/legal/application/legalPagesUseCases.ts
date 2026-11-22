@@ -1,7 +1,6 @@
-import type { LegalPageRepository } from '../../domain/repositories/legalPageRepository.js';
-import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
-import type { LegalPage, LegalPageType } from '../../domain/models/legalPage.js';
-import { RestaurantNotFoundError } from '../../domain/models/restaurant.js';
+import type { LegalPageRepository } from '../domain/repositories/legalPageRepository';
+import { type RestaurantRepository, RestaurantNotFoundError } from '@/core/restaurants';
+import type { LegalPage, LegalPageType } from '../domain/models/legalPage';
 
 async function restaurantIdOf(restaurants: RestaurantRepository, slug: string): Promise<string> {
   const r = await restaurants.findBySlug(slug);

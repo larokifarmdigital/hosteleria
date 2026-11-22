@@ -1,6 +1,6 @@
-import type { Dish, DishCategory } from '../../../../domain/models/dish.js';
-import type { I18nValue } from '../../../../domain/models/i18n.js';
-import type { dishes, dishCategories } from '../schema/content.js';
+import type { Dish, DishCategory } from '../domain/models/dish';
+import type { I18nValue } from '@/core/shared';
+import type { dishes, dishCategories } from '@/core/shared/infrastructure/drizzle/schema';
 
 export function rowToDish(row: typeof dishes.$inferSelect): Dish {
   return {

@@ -1,4 +1,4 @@
-import type { Language } from '../models/language.js';
+import type { Language } from '../models/language';
 
 export interface LanguageRepository {
   list(): Promise<Language[]>;

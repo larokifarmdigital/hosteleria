@@ -1,5 +1,5 @@
-import type { DishRepository } from '../../domain/repositories/dishRepository.js';
-import type { Dish, DishKind } from '../../domain/models/dish.js';
+import type { DishRepository } from '../../domain/repositories/dishRepository';
+import type { Dish, DishKind } from '../../domain/models/dish';
 
 export interface ListDishesFilters {
   restaurantSlug?: string;

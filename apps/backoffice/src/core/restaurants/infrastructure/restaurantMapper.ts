@@ -1,4 +1,4 @@
-import type { Restaurant, RestaurantSnapshot } from '../../../../domain/models/restaurant.js';
+import type { Restaurant, RestaurantSnapshot } from '../domain/models/restaurant';
 
 /**
  * Tipo manual (no `$inferSelect`) para que admita tanto el row del SELECT

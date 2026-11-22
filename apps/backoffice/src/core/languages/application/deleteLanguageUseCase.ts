@@ -1,5 +1,5 @@
-import type { LanguageRepository } from '../../domain/repositories/languageRepository.js';
-import { LanguageInUseError } from '../../domain/models/language.js';
+import type { LanguageRepository } from '../domain/repositories/languageRepository';
+import { LanguageInUseError } from '../domain/models/language';
 
 /** Restrict: lanza `LanguageInUseError` si algún restaurant lo tiene activo. */
 export class DeleteLanguageUseCase {

@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { buildPendingTasks, type PendingTaskSources } from '../src/domain/models/pendingTasks.js';
-import type { Restaurant } from '../src/domain/models/restaurant.js';
-import type { Space } from '../src/domain/models/space.js';
-import type { MediaAsset } from '../src/domain/models/media.js';
+import { buildPendingTasks, type PendingTaskSources } from '@/core/site/domain';
+import type { Restaurant } from '@/core/restaurants/domain';
+import type { Space } from '@/core/spaces/domain';
+import type { MediaAsset } from '@/core/media/domain';
 
 const full = { es: 'a', ca: 'b' };
 const half = { es: 'a' };

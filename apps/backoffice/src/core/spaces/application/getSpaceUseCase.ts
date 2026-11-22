@@ -1,5 +1,5 @@
-import type { SpaceRepository } from '../../domain/repositories/spaceRepository.js';
-import { SpaceNotFoundError, type Space } from '../../domain/models/space.js';
+import type { SpaceRepository } from '../domain/repositories/spaceRepository';
+import { SpaceNotFoundError, type Space } from '../domain/models/space';
 
 export class GetSpaceUseCase {
   constructor(private readonly spaces: SpaceRepository) {}

@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import * as schema from './schema/index.js';
+import * as schema from './schema';
 
 // `neon-serverless` (WebSocket) y no `neon-http`: hacen falta transacciones
 // para las operaciones multi-write. Sin polyfill `ws`: `WebSocket` es global

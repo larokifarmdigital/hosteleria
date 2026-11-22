@@ -1,4 +1,4 @@
-import { DomainError } from './errors.js';
+import { DomainError } from '@/core/shared/domain';
 
 export interface Session {
   readonly id: string;

@@ -1,5 +1,5 @@
-import type { MediaRepository } from '../../domain/repositories/mediaRepository.js';
-import type { MediaAsset, MediaUsage } from '../../domain/models/media.js';
+import type { MediaRepository } from '../domain/repositories/mediaRepository';
+import type { MediaAsset, MediaUsage } from '../domain/models/media';
 
 export interface ListMediaFilters {
   restaurantSlug?: string;

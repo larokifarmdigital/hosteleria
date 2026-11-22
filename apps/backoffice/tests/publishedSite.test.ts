@@ -1,10 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { buildPublishedSite, publishedSiteMediaIds } from '../src/domain/models/publishedSite.js';
-import type { Restaurant } from '../src/domain/models/restaurant.js';
-import type { Space } from '../src/domain/models/space.js';
-import type { Dish, DishCategory } from '../src/domain/models/dish.js';
-import type { Wine, WineCategory } from '../src/domain/models/wine.js';
-import type { MediaAsset } from '../src/domain/models/media.js';
+import { buildPublishedSite, publishedSiteMediaIds } from '@/core/site/domain';
+import type { Restaurant } from '@/core/restaurants/domain';
+import type { Space } from '@/core/spaces/domain';
+import type { Dish, DishCategory, Wine, WineCategory } from '@/core/menu/domain';
+import type { MediaAsset } from '@/core/media/domain';
 
 const t = (s: string) => ({ es: s, ca: s + ' (ca)' });
 

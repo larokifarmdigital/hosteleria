@@ -1,5 +1,5 @@
-import type { Session } from '../../../../domain/models/session.js';
-import type { sessions } from '../schema/auth.js';
+import type { Session } from '../domain/models/session';
+import type { sessions } from '@/core/shared/infrastructure/drizzle/schema';
 
 export function rowToSession(row: typeof sessions.$inferSelect): Session {
   return {

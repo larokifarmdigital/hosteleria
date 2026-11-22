@@ -1,4 +1,4 @@
-import type { Space, SpaceSnapshot, Hero, Manifesto, ScheduleDay } from '../../../../domain/models/space.js';
+import type { Space, SpaceSnapshot, Hero, Manifesto, ScheduleDay } from '../domain/models/space';
 
 export interface SpaceRow {
   id: string;

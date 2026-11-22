@@ -6,8 +6,8 @@ import {
   PAYMENT_METHODS,
   UI_TEXT_KEYS,
   type UiTextGroup
-} from '../../src/domain/models/restaurant.js';
-import type { LegalPageType } from '../../src/domain/models/legalPage.js';
+} from '../../src/core/restaurants/domain';
+import type { LegalPageType } from '../../src/core/legal/domain';
 
 type I18n = Record<string, string>;
 type Doc = Record<string, any>;

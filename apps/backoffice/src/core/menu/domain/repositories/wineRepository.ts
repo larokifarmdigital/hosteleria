@@ -1,5 +1,5 @@
-import type { Wine, WineCategory } from '../models/wine.js';
-import type { I18nValue } from '../models/i18n.js';
+import type { Wine, WineCategory } from '../models/wine';
+import type { I18nValue } from '@/core/shared/domain';
 
 export interface WineRepository {
   findById(id: string): Promise<Wine | null>;

@@ -1,7 +1,6 @@
-import type { Env } from '../../env.js';
-import type { Container } from './compositionRoot.js';
-import type { SessionUser } from '../../domain/models/user.js';
-import type { Session } from '../../domain/models/session.js';
+import type { Env } from '@/core/shared';
+import type { Container } from './compositionRoot';
+import type { SessionUser, Session } from '@/core/auth';
 
 export interface AppVars {
   env: Env;

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import type { PublishedSite } from './publishedSite.js';
-import type { SiteBuildInfo } from '../services/siteProbe.js';
+import type { PublishedSite } from './publishedSite';
+import type { SiteBuildInfo } from '../services/siteProbe';
 
 /**
  * Versión del contenido publicado: cambia con cualquier cosa que la web enseña.

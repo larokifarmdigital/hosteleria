@@ -1,5 +1,5 @@
-import type { LanguageRepository } from '../../domain/repositories/languageRepository.js';
-import { LanguageCodeTakenError, type Language } from '../../domain/models/language.js';
+import type { LanguageRepository } from '../domain/repositories/languageRepository';
+import { LanguageCodeTakenError, type Language } from '../domain/models/language';
 
 export class CreateLanguageUseCase {
   constructor(private readonly languages: LanguageRepository) {}

@@ -1,12 +1,10 @@
 import { eq, and, asc, inArray, count } from 'drizzle-orm';
-import { getDb } from './client.js';
-import { dishes, dishCategories, spaces, restaurants } from './schema/content.js';
-import type { Dish, DishCategory, DishKind } from '../../../domain/models/dish.js';
-import { CategoryHasDishesError } from '../../../domain/models/dish.js';
-import type { I18nValue } from '../../../domain/models/i18n.js';
-import type { DishRepository } from '../../../domain/repositories/dishRepository.js';
-import type { Env } from '../../../env.js';
-import { rowToDish, rowToDishCategory } from './mappers/dishMapper.js';
+import { getDb, type I18nValue, type Env } from '@/core/shared';
+import { dishes, dishCategories, spaces, restaurants } from '@/core/shared/infrastructure/drizzle/schema';
+import type { Dish, DishCategory, DishKind } from '../domain/models/dish';
+import { CategoryHasDishesError } from '../domain/models/dish';
+import type { DishRepository } from '../domain/repositories/dishRepository';
+import { rowToDish, rowToDishCategory } from './dishMapper';
 
 export class DrizzleDishRepository implements DishRepository {
   constructor(private env: Env) {}

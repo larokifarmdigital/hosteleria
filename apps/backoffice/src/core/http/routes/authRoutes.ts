@@ -1,12 +1,12 @@
 import { Hono } from 'hono';
-import { validate } from '../validate.js';
+import { validate } from '../validate';
 import { z } from 'zod';
-import { requireAuth } from '../middleware/authMiddleware.js';
-import { rateLimit } from '../../../middleware/rate-limit.js';
-import { noCache } from '../../../middleware/cache.js';
-import { parseDeviceHint } from '../deviceHint.js';
-import { extractIp } from '../httpUtils.js';
-import type { AppBindings } from '../types.js';
+import { requireAuth } from '../middleware/authMiddleware';
+import { rateLimit } from '../middleware/rate-limit';
+import { noCache } from '../middleware/cache';
+import { parseDeviceHint } from '../deviceHint';
+import { extractIp } from '../httpUtils';
+import type { AppBindings } from '../types';
 
 export function createAuthRoutes() {
   const app = new Hono<AppBindings>();

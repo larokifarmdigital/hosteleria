@@ -1,4 +1,4 @@
-import type { Restaurant } from '../../../domain/models/restaurant.js';
+import type { Restaurant } from '@/core/restaurants';
 
 // La UI espera `activeLocales` / `defaultLocale` (sin sufijo `Code`) y
 // fechas en ISO. `completePercent` va fijo en 0: la métrica real necesita

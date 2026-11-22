@@ -1,4 +1,4 @@
-import { DomainError } from './errors.js';
+import { DomainError } from './errors';
 
 /**
  * `{ es?: '...', ca?: '...', en?: '...' }`. Si un locale está vacío,

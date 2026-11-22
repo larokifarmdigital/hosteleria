@@ -1,8 +1,6 @@
-import type { UserRepository } from '../../domain/repositories/userRepository.js';
-import type { TokenGenerator } from '../../domain/services/tokenGenerator.js';
-import type { EmailSender } from '../../domain/services/emailSender.js';
-import { UserNotFoundError } from '../../domain/models/user.js';
-import { issueInvitation, type Invitation } from './createUserUseCase.js';
+import { type UserRepository, type TokenGenerator, UserNotFoundError } from '@/core/auth';
+import type { EmailSender } from '@/core/shared';
+import { issueInvitation, type Invitation } from './createUserUseCase';
 
 /** Enlace nuevo para que un usuario elija (o vuelva a elegir) su contraseña. */
 export class InviteUserUseCase {

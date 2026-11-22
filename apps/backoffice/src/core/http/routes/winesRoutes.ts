@@ -1,18 +1,14 @@
 import { Hono } from 'hono';
-import { validate } from '../validate.js';
+import { validate } from '../validate';
 import { z } from 'zod';
 import type { Context } from 'hono';
-import { requireAuth } from '../middleware/authMiddleware.js';
-import { allowedSpaceIds, assertSpaceAccess } from '../accessControl.js';
-import { wineToDto } from '../dto/wineDto.js';
-import { assertSameGroup } from '../../../domain/models/menuOrder.js';
-import {
-  WineCategoryNotFoundError,
-  type Wine
-} from '../../../domain/models/wine.js';
-import { SpaceNotFoundError } from '../../../domain/models/space.js';
-import { RestaurantNotFoundError } from '../../../domain/models/restaurant.js';
-import type { AppBindings } from '../types.js';
+import { requireAuth } from '../middleware/authMiddleware';
+import { allowedSpaceIds, assertSpaceAccess } from '../accessControl';
+import { wineToDto } from '../dto/wineDto';
+import { assertSameGroup, WineCategoryNotFoundError, type Wine } from '@/core/menu';
+import { SpaceNotFoundError } from '@/core/spaces';
+import { RestaurantNotFoundError } from '@/core/restaurants';
+import type { AppBindings } from '../types';
 
 export function createWinesRoutes() {
   const app = new Hono<AppBindings>();

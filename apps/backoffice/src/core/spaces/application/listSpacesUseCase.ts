@@ -1,5 +1,5 @@
-import type { SpaceRepository } from '../../domain/repositories/spaceRepository.js';
-import type { Space } from '../../domain/models/space.js';
+import type { SpaceRepository } from '../domain/repositories/spaceRepository';
+import type { Space } from '../domain/models/space';
 
 export class ListSpacesUseCase {
   constructor(private readonly spaces: SpaceRepository) {}

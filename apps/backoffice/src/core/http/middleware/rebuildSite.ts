@@ -1,7 +1,7 @@
 import { createMiddleware } from 'hono/factory';
 import type { Context } from 'hono';
-import { runWithRequestDb } from '../../../infrastructure/persistence/drizzle/client.js';
-import type { AppBindings } from '../types.js';
+import { runWithRequestDb } from '@/core/shared';
+import type { AppBindings } from '../types';
 
 /**
  * Pide regenerar la landing. La petición queda apuntada antes de responder; el

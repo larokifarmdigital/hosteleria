@@ -1,4 +1,4 @@
-import type { EmailSender, SendEmailInput } from '../../domain/services/emailSender.js';
+import type { EmailSender, SendEmailInput } from '../../domain/services/emailSender';
 
 export class ConsoleEmailSender implements EmailSender {
   async send(input: SendEmailInput): Promise<{ id: string }> {

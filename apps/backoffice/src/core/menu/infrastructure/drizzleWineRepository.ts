@@ -1,12 +1,10 @@
 import { eq, and, asc, inArray, count } from 'drizzle-orm';
-import { getDb } from './client.js';
-import { wines, wineCategories, spaces, restaurants } from './schema/content.js';
-import type { Wine, WineCategory } from '../../../domain/models/wine.js';
-import { CategoryHasWinesError } from '../../../domain/models/wine.js';
-import type { I18nValue } from '../../../domain/models/i18n.js';
-import type { WineRepository } from '../../../domain/repositories/wineRepository.js';
-import type { Env } from '../../../env.js';
-import { rowToWine, rowToWineCategory } from './mappers/wineMapper.js';
+import { getDb, type I18nValue, type Env } from '@/core/shared';
+import { wines, wineCategories, spaces, restaurants } from '@/core/shared/infrastructure/drizzle/schema';
+import type { Wine, WineCategory } from '../domain/models/wine';
+import { CategoryHasWinesError } from '../domain/models/wine';
+import type { WineRepository } from '../domain/repositories/wineRepository';
+import { rowToWine, rowToWineCategory } from './wineMapper';
 
 export class DrizzleWineRepository implements WineRepository {
   constructor(private env: Env) {}

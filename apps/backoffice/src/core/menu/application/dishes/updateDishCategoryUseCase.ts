@@ -1,6 +1,6 @@
-import type { DishRepository } from '../../domain/repositories/dishRepository.js';
-import { DishCategoryNotFoundError } from '../../domain/models/dish.js';
-import type { I18nValue } from '../../domain/models/i18n.js';
+import type { DishRepository } from '../../domain/repositories/dishRepository';
+import { DishCategoryNotFoundError } from '../../domain/models/dish';
+import type { I18nValue } from '@/core/shared';
 
 export class UpdateDishCategoryUseCase {
   constructor(private readonly dishes: DishRepository) {}

@@ -1,5 +1,5 @@
-import type { User } from '../../../../domain/models/user.js';
-import type { users } from '../schema/auth.js';
+import type { User } from '../domain/models/user';
+import type { users } from '@/core/shared/infrastructure/drizzle/schema';
 
 export function rowToUser(row: typeof users.$inferSelect): User {
   return {

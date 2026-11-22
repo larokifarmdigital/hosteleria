@@ -1,5 +1,5 @@
-import type { Session, SessionMetadata } from '../models/session.js';
-import type { SessionUser } from '../models/user.js';
+import type { Session, SessionMetadata } from '../models/session';
+import type { SessionUser } from '../models/user';
 
 /** `cookieHeader` va ya serializado para `Set-Cookie`: así nada fuera del
  *  adapter importa tipos de Lucia. */

@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
-import { cacheHeaders } from '../../../middleware/cache.js';
-import type { AppBindings } from '../types.js';
+import { cacheHeaders } from '../middleware/cache';
+import type { AppBindings } from '../types';
 
 /**
  * Lectura pública, sin sesión: lo que una landing necesita para construirse.

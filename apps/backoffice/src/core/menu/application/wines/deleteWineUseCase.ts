@@ -1,5 +1,5 @@
-import type { WineRepository } from '../../domain/repositories/wineRepository.js';
-import { WineNotFoundError } from '../../domain/models/wine.js';
+import type { WineRepository } from '../../domain/repositories/wineRepository';
+import { WineNotFoundError } from '../../domain/models/wine';
 
 export class DeleteWineUseCase {
   constructor(private readonly wines: WineRepository) {}

@@ -1,5 +1,5 @@
-import type { MediaAsset, MediaReference, MediaUsage } from '../models/media.js';
-import type { I18nValue } from '../models/i18n.js';
+import type { MediaAsset, MediaReference, MediaUsage } from '../models/media';
+import type { I18nValue } from '@/core/shared/domain';
 
 /**
  * Metadata del asset. El binario vive en R2 y se maneja aparte vía

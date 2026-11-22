@@ -1,11 +1,11 @@
 import { HTTPException } from 'hono/http-exception';
 import { Hono } from 'hono';
-import { validate } from '../validate.js';
+import { validate } from '../validate';
 import { z } from 'zod';
-import { requireAuth, requireAdmin, requireRestaurant } from '../middleware/authMiddleware.js';
-import { requestSiteRebuild } from '../middleware/rebuildSite.js';
-import { cacheHeaders } from '../../../middleware/cache.js';
-import { restaurantToDto } from '../dto/restaurantDto.js';
+import { requireAuth, requireAdmin, requireRestaurant } from '../middleware/authMiddleware';
+import { requestSiteRebuild } from '../middleware/rebuildSite';
+import { cacheHeaders } from '../middleware/cache';
+import { restaurantToDto } from '../dto/restaurantDto';
 import {
   RestaurantNotFoundError,
   restaurantMediaUses,
@@ -13,12 +13,12 @@ import {
   PAYMENT_METHODS,
   EXTRA_SERVICES,
   UI_TEXT_KEYS,
-  type RestaurantContent
-} from '../../../domain/models/restaurant.js';
-import type { PatchRestaurantInput } from '../../../application/restaurants/patchRestaurantUseCase.js';
-import { assertMediaInRestaurant } from '../accessControl.js';
-import { addressSchema, i18nSchema, assetIdSchema } from '../schemas.js';
-import type { AppBindings } from '../types.js';
+  type RestaurantContent,
+  type PatchRestaurantInput
+} from '@/core/restaurants';
+import { assertMediaInRestaurant } from '../accessControl';
+import { addressSchema, i18nSchema, assetIdSchema } from '../schemas';
+import type { AppBindings } from '../types';
 
 export function createRestaurantsRoutes() {
   const app = new Hono<AppBindings>();

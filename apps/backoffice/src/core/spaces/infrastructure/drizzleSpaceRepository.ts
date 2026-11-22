@@ -1,10 +1,9 @@
 import { eq, and, ne, asc, count } from 'drizzle-orm';
-import { getDb } from './client.js';
-import { spaces, spaceSchedule, restaurants } from './schema/content.js';
-import { SPACE_CONTENT_KEYS, type Space, type SpaceSnapshot, type ScheduleDay } from '../../../domain/models/space.js';
-import type { SpaceRepository } from '../../../domain/repositories/spaceRepository.js';
-import type { Env } from '../../../env.js';
-import { rowToSpace } from './mappers/spaceMapper.js';
+import { getDb, type Env } from '@/core/shared';
+import { spaces, spaceSchedule, restaurants } from '@/core/shared/infrastructure/drizzle/schema';
+import { SPACE_CONTENT_KEYS, type Space, type SpaceSnapshot, type ScheduleDay } from '../domain/models/space';
+import type { SpaceRepository } from '../domain/repositories/spaceRepository';
+import { rowToSpace } from './spaceMapper';
 
 export class DrizzleSpaceRepository implements SpaceRepository {
   constructor(private env: Env) {}

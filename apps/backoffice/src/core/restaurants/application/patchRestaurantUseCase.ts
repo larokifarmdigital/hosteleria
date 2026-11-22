@@ -1,5 +1,5 @@
-import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
-import type { LanguageRepository } from '../../domain/repositories/languageRepository.js';
+import type { RestaurantRepository } from '../domain/repositories/restaurantRepository';
+import type { LanguageRepository } from '@/core/languages';
 import {
   RESTAURANT_CONTENT_KEYS,
   RestaurantNotFoundError,
@@ -8,8 +8,8 @@ import {
   type Restaurant,
   type RestaurantContent,
   type RestaurantSnapshot
-} from '../../domain/models/restaurant.js';
-import { assertTranslationsComplete } from '../../domain/models/i18n.js';
+} from '../domain/models/restaurant';
+import { assertTranslationsComplete } from '@/core/shared';
 
 export interface PatchRestaurantInput extends Partial<RestaurantContent> {
   state?: PublishState;

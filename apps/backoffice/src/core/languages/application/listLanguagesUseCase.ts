@@ -1,5 +1,5 @@
-import type { LanguageRepository } from '../../domain/repositories/languageRepository.js';
-import type { Language } from '../../domain/models/language.js';
+import type { LanguageRepository } from '../domain/repositories/languageRepository';
+import type { Language } from '../domain/models/language';
 
 export interface LanguageWithUsage {
   language: Language;

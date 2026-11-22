@@ -1,4 +1,4 @@
-import type { Restaurant, RestaurantSnapshot } from '../models/restaurant.js';
+import type { Restaurant, RestaurantSnapshot } from '../models/restaurant';
 
 export interface RestaurantRepository {
   findBySlug(slug: string): Promise<Restaurant | null>;

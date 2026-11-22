@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { CleanupUnconfirmedMediaUseCase } from '../src/application/media/cleanupUnconfirmedMediaUseCase.js';
-import type { MediaRepository } from '../src/domain/repositories/mediaRepository.js';
-import type { MediaStorage } from '../src/domain/services/mediaStorage.js';
-import type { MediaAsset } from '../src/domain/models/media.js';
+import { CleanupUnconfirmedMediaUseCase } from '@/core/media';
+import type { MediaRepository, MediaStorage, MediaAsset } from '@/core/media/domain';
 
 const asset = (id: string): MediaAsset => ({ id, r2Key: `ocana/2026/${id}.webp` }) as MediaAsset;
 

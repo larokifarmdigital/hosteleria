@@ -1,5 +1,5 @@
-import type { Dish, DishCategory, DishKind } from '../models/dish.js';
-import type { I18nValue } from '../models/i18n.js';
+import type { Dish, DishCategory, DishKind } from '../models/dish';
+import type { I18nValue } from '@/core/shared/domain';
 
 export interface DishRepository {
   findById(id: string): Promise<Dish | null>;

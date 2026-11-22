@@ -1,10 +1,8 @@
 import { and, eq } from 'drizzle-orm';
-import { getDb } from './client.js';
-import { legalPages } from './schema/content.js';
-import { LEGAL_PAGE_TYPES, type LegalPage, type LegalPageType } from '../../../domain/models/legalPage.js';
-import type { LegalPageRepository } from '../../../domain/repositories/legalPageRepository.js';
-import type { I18nValue } from '../../../domain/models/i18n.js';
-import type { Env } from '../../../env.js';
+import { getDb, type I18nValue, type Env } from '@/core/shared';
+import { legalPages } from '@/core/shared/infrastructure/drizzle/schema';
+import { LEGAL_PAGE_TYPES, type LegalPage, type LegalPageType } from '../domain/models/legalPage';
+import type { LegalPageRepository } from '../domain/repositories/legalPageRepository';
 
 function rowToLegalPage(row: typeof legalPages.$inferSelect): LegalPage {
   return {

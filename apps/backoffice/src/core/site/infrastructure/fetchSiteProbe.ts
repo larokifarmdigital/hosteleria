@@ -1,4 +1,4 @@
-import type { SiteBuildInfo, SiteProbe } from '../../domain/services/siteProbe.js';
+import type { SiteBuildInfo, SiteProbe } from '../domain/services/siteProbe';
 
 export class FetchSiteProbe implements SiteProbe {
   async read(siteUrl: string): Promise<SiteBuildInfo | null> {

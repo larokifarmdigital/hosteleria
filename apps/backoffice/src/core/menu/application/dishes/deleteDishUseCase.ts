@@ -1,5 +1,5 @@
-import type { DishRepository } from '../../domain/repositories/dishRepository.js';
-import { DishNotFoundError } from '../../domain/models/dish.js';
+import type { DishRepository } from '../../domain/repositories/dishRepository';
+import { DishNotFoundError } from '../../domain/models/dish';
 
 export class DeleteDishUseCase {
   constructor(private readonly dishes: DishRepository) {}

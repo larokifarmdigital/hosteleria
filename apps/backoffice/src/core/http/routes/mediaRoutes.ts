@@ -1,13 +1,13 @@
 import { Hono } from 'hono';
-import { validate } from '../validate.js';
+import { validate } from '../validate';
 import { z } from 'zod';
 import { HTTPException } from 'hono/http-exception';
 import type { Context } from 'hono';
-import { requireAuth } from '../middleware/authMiddleware.js';
-import { mediaToDto } from '../dto/mediaDto.js';
-import { MediaNotFoundError, type MediaAsset } from '../../../domain/models/media.js';
-import { RestaurantNotFoundError } from '../../../domain/models/restaurant.js';
-import type { AppBindings } from '../types.js';
+import { requireAuth } from '../middleware/authMiddleware';
+import { mediaToDto } from '../dto/mediaDto';
+import { MediaNotFoundError, type MediaAsset } from '@/core/media';
+import { RestaurantNotFoundError } from '@/core/restaurants';
+import type { AppBindings } from '../types';
 
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'];
 const MAX_SIZE_KB = 10_000;

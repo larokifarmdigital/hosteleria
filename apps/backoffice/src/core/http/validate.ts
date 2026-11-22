@@ -2,7 +2,7 @@
 // validación salgan con el mismo shape `{ code, message }` que el resto.
 import { zValidator } from '@hono/zod-validator';
 import type { ZodSchema, ZodIssue } from 'zod';
-import { ValidationError } from '../../domain/models/errors.js';
+import { ValidationError } from '@/core/shared';
 
 type Target = 'json' | 'query' | 'param' | 'form' | 'header' | 'cookie';
 

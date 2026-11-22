@@ -1,14 +1,13 @@
-import type { I18nValue } from './i18n.js';
-import type { Dish, DishCategory, DishKind } from './dish.js';
-import type { Wine, WineCategory } from './wine.js';
-import type { LegalPage, LegalPageType } from './legalPage.js';
-import type { MediaAsset } from './media.js';
+import type { I18nValue } from '@/core/shared/domain';
+import type { Dish, DishCategory, DishKind, Wine, WineCategory } from '@/core/menu/domain';
+import type { LegalPage, LegalPageType } from '@/core/legal/domain';
+import type { MediaAsset } from '@/core/media/domain';
 import {
   RESTAURANT_CONTENT_KEYS,
   restaurantMediaUses,
   type Restaurant,
   type RestaurantContent
-} from './restaurant.js';
+} from '@/core/restaurants/domain';
 import {
   SPACE_CONTENT_KEYS,
   spaceMediaIds,
@@ -17,7 +16,7 @@ import {
   type SpaceContent,
   type SpaceType,
   type WeekDay
-} from './space.js';
+} from '@/core/spaces/domain';
 
 /**
  * Lo que una landing necesita para construirse: solo lo publicado. El borrador

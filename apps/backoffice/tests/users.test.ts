@@ -1,12 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { UpdateUserUseCase } from '../src/application/users/updateUserUseCase.js';
-import { LoginUseCase } from '../src/application/auth/loginUseCase.js';
-import { InviteUserUseCase } from '../src/application/users/inviteUserUseCase.js';
-import { CreateUserUseCase } from '../src/application/users/createUserUseCase.js';
-import { ApplyPasswordChangeUseCase } from '../src/application/auth/applyPasswordChangeUseCase.js';
-import { InvalidTokenError } from '../src/domain/services/tokenGenerator.js';
-import { WeakPasswordError } from '../src/domain/models/user.js';
-import { AccountSuspendedError, CannotLockSelfOutError, InvalidCredentialsError, type User } from '../src/domain/models/user.js';
+import { UpdateUserUseCase, InviteUserUseCase, CreateUserUseCase } from '@/core/users';
+import { LoginUseCase, ApplyPasswordChangeUseCase } from '@/core/auth';
+import {
+  InvalidTokenError,
+  WeakPasswordError,
+  AccountSuspendedError,
+  CannotLockSelfOutError,
+  InvalidCredentialsError,
+  type User
+} from '@/core/auth/domain';
 
 function world() {
   const users = new Map<string, User>();

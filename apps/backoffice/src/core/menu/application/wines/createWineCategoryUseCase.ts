@@ -1,6 +1,6 @@
-import type { WineRepository } from '../../domain/repositories/wineRepository.js';
-import type { I18nValue } from '../../domain/models/i18n.js';
-import type { WineCategory } from '../../domain/models/wine.js';
+import type { WineRepository } from '../../domain/repositories/wineRepository';
+import type { I18nValue } from '@/core/shared';
+import type { WineCategory } from '../../domain/models/wine';
 
 export class CreateWineCategoryUseCase {
   constructor(private readonly wines: WineRepository) {}

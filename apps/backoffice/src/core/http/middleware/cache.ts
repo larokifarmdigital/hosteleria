@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { createMiddleware } from 'hono/factory';
-import type { Env } from '../env.js';
+import type { Env } from '@/core/shared';
 
 export interface CacheOpts {
   maxAge: number;

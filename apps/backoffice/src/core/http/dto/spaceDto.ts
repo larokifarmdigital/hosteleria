@@ -1,4 +1,4 @@
-import type { Space } from '../../../domain/models/space.js';
+import type { Space } from '@/core/spaces';
 
 // `schedule` se expande a los 7 días (vacíos si no hay turnos) porque la
 // UI del backoffice itera siempre la semana completa. Los counts van fijos

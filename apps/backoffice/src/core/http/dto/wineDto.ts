@@ -1,6 +1,6 @@
-import type { Wine, WineCategory } from '../../../domain/models/wine.js';
-import type { Space } from '../../../domain/models/space.js';
-import type { Restaurant } from '../../../domain/models/restaurant.js';
+import type { Wine, WineCategory } from '@/core/menu';
+import type { Space } from '@/core/spaces';
+import type { Restaurant } from '@/core/restaurants';
 
 // Sin `localesFilled`: `wine.name` es nombre propio, no i18n (ver Wine).
 export function wineToDto(wine: Wine, category: WineCategory, _space: Space, restaurant: Restaurant) {

@@ -1,4 +1,4 @@
-import type { LegalPage, LegalPageType } from '../models/legalPage.js';
+import type { LegalPage, LegalPageType } from '../models/legalPage';
 
 export interface LegalPageRepository {
   listByRestaurantId(restaurantId: string): Promise<LegalPage[]>;
