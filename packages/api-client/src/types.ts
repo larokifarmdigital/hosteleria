@@ -344,6 +344,27 @@ export interface LegalPage {
   updatedAt: string;
 }
 
+// ─── Tareas pendientes ───────────────────────────────────────────
+/** Parte de la ficha del restaurante donde está el texto. */
+export type RestaurantArea = 'content' | 'uiTexts' | 'search';
+type SpaceRef = { spaceId: string; spaceName: string };
+export type TaskTarget =
+  | { kind: 'restaurant'; area?: RestaurantArea }
+  | ({ kind: 'space' } & SpaceRef)
+  | ({ kind: 'menu'; menu: 'dishes' | 'drinks' | 'wines' } & SpaceRef)
+  | { kind: 'legal'; legalType: LegalPageType }
+  | { kind: 'media' };
+/** Lo que le falta al contenido guardado de un restaurante. */
+export type PendingTask =
+  /** Textos que están en unos idiomas activos y en otros no. */
+  | { type: 'translations'; target: TaskTarget; count: number; locales: LocaleCode[]; examples: string[] }
+  /** Fotos en uso sin descripción en algún idioma activo. */
+  | { type: 'image_descriptions'; target: { kind: 'media' }; count: number; locales: LocaleCode[] }
+  /** Espacio sin ningún turno: la web lo enseña como cerrado toda la semana. */
+  | { type: 'no_schedule'; target: { kind: 'space' } & SpaceRef }
+  /** Nunca publicado, o con cambios guardados que la web aún no enseña. */
+  | { type: 'unpublished'; target: { kind: 'restaurant' } | ({ kind: 'space' } & SpaceRef); neverPublished: boolean };
+
 // ─── Sitio publicado (lectura pública, sin sesión) ───────────────
 export interface PublishedMedia {
   url: string;

@@ -33,6 +33,12 @@ export function createRestaurantsRoutes() {
     return c.json({ restaurant: restaurantToDto(r) });
   });
 
+  // Lo que le falta al contenido: traducciones, horarios, descripciones de fotos y publicación.
+  app.get('/:slug/pending', requireAuth, requireRestaurant('slug'), async (c) => {
+    const tasks = await c.get('container').restaurants.pendingTasks.execute(c.req.param('slug'));
+    return c.json({ tasks });
+  });
+
   app.post('/', requireAdmin, validate('json', createSchema), async (c) => {
     const r = await c.get('container').restaurants.create.execute(c.req.valid('json'));
     return c.json({ restaurant: restaurantToDto(r) }, 201);

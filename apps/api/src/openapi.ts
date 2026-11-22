@@ -763,6 +763,27 @@ const paths: Record<string, any> = {
     }
   },
 
+  '/restaurants/{slug}/pending': {
+    parameters: [{ name: 'slug', in: 'path', required: true, schema: { type: 'string' } }],
+    get: {
+      tags: ['Restaurants'], summary: 'Tareas pendientes del contenido',
+      description: [
+        'Lo que le falta al contenido guardado (el borrador): ficha o espacios sin publicar o con cambios sin publicar (`unpublished`),',
+        'espacios sin horario (`no_schedule`), textos que están en unos idiomas activos y en otros no (`translations`, por zona de la ficha,',
+        'espacio, carta, bebidas, vinos y páginas legales) y fotos en uso sin descripción en algún idioma activo (`image_descriptions`).',
+        'Cada tarea lleva `target`, que dice dónde se arregla.'
+      ].join(' '),
+      responses: {
+        200: ok({ type: 'object', properties: { tasks: { type: 'array', items: { type: 'object', properties: {
+          type: { type: 'string', enum: ['unpublished', 'no_schedule', 'translations', 'image_descriptions'] },
+          target: { type: 'object' }, count: { type: 'integer' },
+          locales: { type: 'array', items: { type: 'string' } }, examples: { type: 'array', items: { type: 'string' } },
+          neverPublished: { type: 'boolean' }
+        }, required: ['type', 'target'] } } }, required: ['tasks'] }),
+        401: err401, 403: err403Rest, 404: errRef('404 Not Found — `RESTAURANT_NOT_FOUND`'), 500: err500
+      }
+    }
+  },
   '/restaurants/{slug}/legal-pages': {
     parameters: [{ name: 'slug', in: 'path', required: true, schema: { type: 'string' } }],
     get: {

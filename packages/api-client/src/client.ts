@@ -13,6 +13,7 @@ import type {
   MediaReferences,
   LegalPage,
   LegalPageType,
+  PendingTask,
   PublishedSite,
   UploadUrlResponse,
   I18nString
@@ -192,6 +193,11 @@ export function createApiClient(opts: ApiClientOpts) {
       /** Sin sesión. 404 si el restaurante no existe o no se ha publicado nunca. */
       site: (restaurantSlug: string) => req<PublishedSite>(`/public/restaurants/${restaurantSlug}`)
     },
+
+    // ─── Tareas pendientes ──────────────────────────────────────
+    /** Lo que le falta al contenido de un restaurante: publicación, horarios, traducciones y fotos. */
+    pendingTasks: (restaurantSlug: string) =>
+      req<{ tasks: PendingTask[] }>(`/restaurants/${restaurantSlug}/pending`).then(r => r.tasks),
 
     // ─── Legal pages ────────────────────────────────────────────
     legalPages: {

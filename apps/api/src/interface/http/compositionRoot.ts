@@ -25,6 +25,7 @@ import { GetRestaurantUseCase } from '../../application/restaurants/getRestauran
 import { PatchRestaurantUseCase } from '../../application/restaurants/patchRestaurantUseCase.js';
 import { DiscardChangesUseCase } from '../../application/restaurants/discardChangesUseCase.js';
 import { DeleteRestaurantUseCase } from '../../application/restaurants/deleteRestaurantUseCase.js';
+import { GetPendingTasksUseCase } from '../../application/restaurants/getPendingTasksUseCase.js';
 
 import { LoginUseCase } from '../../application/auth/loginUseCase.js';
 import { LogoutUseCase } from '../../application/auth/logoutUseCase.js';
@@ -117,7 +118,8 @@ export function buildContainer(env: Env) {
       get: new GetRestaurantUseCase(restaurantsRepo),
       patch: new PatchRestaurantUseCase(restaurantsRepo, languagesRepo),
       discard: new DiscardChangesUseCase(restaurantsRepo, languagesRepo),
-      delete: new DeleteRestaurantUseCase(restaurantsRepo)
+      delete: new DeleteRestaurantUseCase(restaurantsRepo),
+      pendingTasks: new GetPendingTasksUseCase(restaurantsRepo, spacesRepo, dishesRepo, winesRepo, legalPagesRepo, mediaRepo)
     },
 
     auth: {
