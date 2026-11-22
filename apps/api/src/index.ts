@@ -2,7 +2,6 @@ import * as Sentry from '@sentry/cloudflare';
 import type { ExecutionContext, ScheduledEvent } from '@cloudflare/workers-types';
 import { createApp } from './app.js';
 import { runCleanup } from './scheduled/cleanup.js';
-import { runBackup } from './scheduled/backup.js';
 import { assertEnv, type Env } from './env.js';
 import { runWithRequestDb } from './infrastructure/persistence/drizzle/client.js';
 
@@ -20,11 +19,8 @@ const handler = {
     assertEnv(env);
     ctx.waitUntil(
       runWithRequestDb(env.DATABASE_URL, (p) => ctx.waitUntil(p), async () => {
-        if (event.cron === '0 4 * * *') {
-          await runCleanup(env);
-        } else if (event.cron === '0 3 * * *') {
-          await runBackup(env);
-        }
+        // La copia diaria está desactivada (ver wrangler.toml): iba a un bucket público.
+        if (event.cron === '0 4 * * *') await runCleanup(env);
       })
     );
   }

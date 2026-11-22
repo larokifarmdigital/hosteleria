@@ -31,7 +31,8 @@ remote = true
 
 # `scheduled` en src/index.ts compara `event.cron` con estas cadenas exactas.
 [triggers]
+# La copia diaria (03:00) está desactivada: escribía en el bucket de las fotos, que es
+# público, y cualquiera podía descargarla. Vuelve con el api en Vercel, a un bucket privado.
 crons = [
-  "0 4 * * *",  # Cleanup sesiones expiradas + rate_limits viejos + subidas sin confirmar
-  "0 3 * * *"   # Backup diario de BD a R2
+  "0 4 * * *"   # Cleanup sesiones expiradas + rate_limits viejos + subidas sin confirmar
 ]
