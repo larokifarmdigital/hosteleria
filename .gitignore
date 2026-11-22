@@ -9,7 +9,6 @@ dist
 .DS_Store
 *.log
 .vercel
-.wrangler
 .sanity
 sanity-dev.config.ts
 .playwright-mcp
