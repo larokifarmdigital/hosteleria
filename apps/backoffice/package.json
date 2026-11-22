@@ -9,6 +9,7 @@
     "start": "next start -p 4400",
     "preview": "next start -p 4400",
     "check": "tsc --noEmit",
+    "e2e": "node e2e/run.cjs",
     "clean": "rm -rf .next .turbo node_modules"
   },
   "dependencies": {
@@ -40,6 +41,7 @@
     "@types/node": "^22.10.5",
     "@types/react": "^19.0.4",
     "@types/react-dom": "^19.0.2",
+    "playwright": "1.63.0",
     "typescript": "^5.7.3"
   }
 }
