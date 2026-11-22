@@ -1,12 +1,12 @@
 // Vuelca el contenido de un restaurante de Sanity al api (pista M3).
 //
-//   pnpm exec tsx scripts/import-from-sanity.ts <slug> [--apply] [--publish] [--prune] [--locales=es,en]
+//   pnpm import:sanity <slug> [--apply] [--publish] [--prune] [--locales=es,en]
 //
 // Sin `--apply` no escribe nada: enseña qué cambiaría. Se puede repetir: lo que
 // ya está igual no se toca. Escribe por el api, con las mismas validaciones que
 // el backoffice, así que hace falta una sesión de administrador:
 //
-//   API_URL      base del api (por defecto http://localhost:8788)
+//   API_URL      base del api (por defecto http://localhost:4400/api)
 //   API_COOKIE   cookie de sesión, `hs_session=…` (cópiala del navegador con el backoffice abierto)
 //   SANITY_PROJECT_ID / SANITY_DATASET   por defecto, los de apps/studio/.env
 //
@@ -17,7 +17,7 @@ import { config } from 'dotenv';
 import {
   canonical, mapCategory, mapDish, mapLegalPage, mapRestaurant, mapSpace, mapWine,
   type CategoryImport, type DishImport, type LegalPageImport, type SpaceImport, type WineImport
-} from '../../backoffice/scripts/sanity-import/map';
+} from './sanity-import/map';
 
 config({ path: new URL('../../studio/.env', import.meta.url).pathname });
 
@@ -29,7 +29,7 @@ const APPLY = args.includes('--apply');
 const PUBLISH = args.includes('--publish');
 const PRUNE = args.includes('--prune');
 const ONLY_LOCALES = args.find(a => a.startsWith('--locales='))?.slice('--locales='.length).split(',').map(s => s.trim()).filter(Boolean);
-const API_URL = (process.env.API_URL ?? 'http://localhost:8788').replace(/\/$/, '');
+const API_URL = (process.env.API_URL ?? 'http://localhost:4400/api').replace(/\/$/, '');
 const API_COOKIE = process.env.API_COOKIE ?? '';
 const PROJECT = process.env.SANITY_PROJECT_ID ?? process.env.SANITY_STUDIO_PROJECT_ID;
 const DATASET = process.env.SANITY_DATASET ?? process.env.SANITY_STUDIO_DATASET ?? 'production';
@@ -39,7 +39,7 @@ function fail(message: string): never {
   process.exit(1);
 }
 
-if (!slug) fail('Falta el slug del restaurante. Uso: import-from-sanity.ts <slug> [--apply] [--publish] [--prune]');
+if (!slug) fail('Falta el slug del restaurante. Uso: pnpm import:sanity <slug> [--apply] [--publish] [--prune]');
 if (!PROJECT) fail('Falta SANITY_PROJECT_ID (o SANITY_STUDIO_PROJECT_ID en apps/studio/.env).');
 if (!API_COOKIE) fail('Falta API_COOKIE con la cookie de sesión de un administrador (`hs_session=…`).');
 if (PUBLISH && !APPLY) fail('`--publish` necesita `--apply`.');

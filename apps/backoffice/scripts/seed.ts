@@ -1,12 +1,13 @@
-// Idempotente. El admin sale de ADMIN_EMAIL / ADMIN_PASSWORD del env.
+// Para una base de datos nueva: idiomas, administrador y los restaurantes vacíos.
+// Idempotente: lo que ya existe no se toca. El admin sale de ADMIN_EMAIL / ADMIN_PASSWORD del env.
 import { config } from 'dotenv';
 config({ path: '.env.local' });
 config({ path: '.env', override: false });
 
 import { eq } from 'drizzle-orm';
-import { getDb } from '../../../../../backoffice/src/core/shared';
-import * as schema from '../../../../../backoffice/src/core/shared/infrastructure/drizzle/schema';
-import { ScryptPasswordHasher } from '../../../../../backoffice/src/core/auth';
+import { getDb } from '../src/core/shared';
+import * as schema from '../src/core/shared/infrastructure/drizzle/schema';
+import { ScryptPasswordHasher } from '../src/core/auth';
 
 const hasher = new ScryptPasswordHasher();
 const hashPassword = (p: string) => hasher.hash(p);
@@ -35,7 +36,7 @@ async function main() {
 
   if (!databaseUrl) throw new Error('DATABASE_URL no está en el entorno');
   if (!adminEmail || !adminPassword) {
-    throw new Error('ADMIN_EMAIL y ADMIN_PASSWORD deben estar en .env.local para el seed');
+    throw new Error('ADMIN_EMAIL y ADMIN_PASSWORD deben estar en apps/backoffice/.env.local para el seed');
   }
   if (adminPassword.length < 8) throw new Error('ADMIN_PASSWORD mínimo 8 chars');
 
@@ -79,34 +80,28 @@ async function main() {
       where: eq(schema.restaurants.slug, r.slug)
     });
 
-    let restaurantId: string;
     if (existing) {
-      restaurantId = existing.id;
+      // Sus idiomas se gestionan desde el backoffice: volver a ponerlos aquí reactivaría
+      // los que se quitaron a propósito.
       console.log(`   · ${r.slug} ya existía`);
-    } else {
-      const [row] = await db.insert(schema.restaurants).values({
-        slug: r.slug,
-        name: r.name,
-        domain: r.domain,
-        logoInitial: r.logoInitial,
-        defaultLocaleId,
-        state: 'draft',
-        acceptsBookings: true,
-        showSocials: false
-      }).returning({ id: schema.restaurants.id });
-      restaurantId = row.id;
-      console.log(`   ✓ ${r.slug} creado`);
+      continue;
     }
 
-    const currentLocales = await db.query.restaurantLocales.findMany({
-      where: eq(schema.restaurantLocales.restaurantId, restaurantId)
-    });
-    const currentSet = new Set(currentLocales.map(l => l.languageId));
+    const [row] = await db.insert(schema.restaurants).values({
+      slug: r.slug,
+      name: r.name,
+      domain: r.domain,
+      logoInitial: r.logoInitial,
+      defaultLocaleId,
+      state: 'draft',
+      acceptsBookings: true,
+      showSocials: false
+    }).returning({ id: schema.restaurants.id });
+    console.log(`   ✓ ${r.slug} creado`);
+
     for (const code of r.activeLocales) {
       const langId = langByCode.get(code);
-      if (!langId) continue;
-      if (currentSet.has(langId)) continue;
-      await db.insert(schema.restaurantLocales).values({ restaurantId, languageId: langId });
+      if (langId) await db.insert(schema.restaurantLocales).values({ restaurantId: row.id, languageId: langId });
     }
   }
 

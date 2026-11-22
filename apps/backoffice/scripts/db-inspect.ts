@@ -10,7 +10,7 @@ import { sql } from 'drizzle-orm';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
-  console.error('✗ DATABASE_URL no está seteado en apps/api/.env.local');
+  console.error('✗ DATABASE_URL no está en apps/backoffice/.env.local');
   process.exit(1);
 }
 
@@ -19,7 +19,7 @@ const db = drizzle(pool);
 
 async function main() {
   console.log('\n═══════════════════════════════════════════');
-  console.log(' Inspección de BD — Neon dev branch');
+  console.log(' Inspección de la base de datos (producción)');
   console.log('═══════════════════════════════════════════\n');
 
   const tables = await db.execute<{ table_name: string }>(sql`
@@ -33,7 +33,7 @@ async function main() {
 
   if (tables.rows.length === 0) {
     console.log('\n⚠ BD vacía — hay que correr migrations primero:');
-    console.log('  pnpm --filter @hosteleria/api db:migrate');
+    console.log('  pnpm --filter @hosteleria/backoffice db:migrate');
     await pool.end();
     return;
   }
