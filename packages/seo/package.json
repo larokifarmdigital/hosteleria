@@ -9,7 +9,8 @@
     "./sitemap": "./src/sitemap.ts",
     "./robots": "./src/robots.ts",
     "./manifest": "./src/manifest.ts",
-    "./llms": "./src/llms.ts"
+    "./llms": "./src/llms.ts",
+    "./buildInfo": "./src/buildInfo.ts"
   },
   "dependencies": {
     "@hosteleria/i18n-utils": "workspace:*",

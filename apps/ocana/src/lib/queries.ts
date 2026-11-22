@@ -4,14 +4,15 @@ import { contentApiUrl, sanity } from './sanity';
 
 const RESTAURANT_SLUG = import.meta.env.RESTAURANT_SLUG || 'ocana';
 
-const queries = sanity
-  ? crearRestaurantQueries(sanity, RESTAURANT_SLUG)
-  : createContentQueries({ apiUrl: contentApiUrl!, slug: RESTAURANT_SLUG });
+const content = sanity ? null : createContentQueries({ apiUrl: contentApiUrl!, slug: RESTAURANT_SLUG });
+const queries = content ?? crearRestaurantQueries(sanity!, RESTAURANT_SLUG);
 
 // Fetchers mono-espacio (compatibles con las 5 apps hermanas) — usados por
 // site.webmanifest, robots y las páginas legales.
 export const fetchRestaurantData = queries.fetchRestaurantData;
 export const fetchLegalPages = queries.fetchLegalPages;
+/** Versión del contenido con el que se construye la web; `null` mientras se lea de Sanity. */
+export const fetchContentVersion = async (): Promise<string | null> => (content ? content.fetchContentVersion() : null);
 
 // Fetchers multi-espacio (específicos de Ocaña — grupo con 3 espacios).
 export const fetchGrupoData = queries.fetchGrupoData;
