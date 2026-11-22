@@ -5,6 +5,7 @@ import type { Context } from 'hono';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { allowedSpaceIds, assertMediaInRestaurant, assertSpaceAccess } from '../accessControl.js';
 import { dishToDto } from '../dto/dishDto.js';
+import { assertSameGroup } from '../../../domain/models/menuOrder.js';
 import {
   DISH_KINDS,
   DishCategoryNotFoundError,
@@ -36,6 +37,19 @@ export function createDishesRoutes() {
     c.set('rebuild', { spaceId: body.spaceId });
     const row = await c.get('container').dishes.createCategory.execute(body);
     return c.json({ category: row }, 201);
+  });
+
+  // Orden de las categorías de una carta (platos o bebidas) de un espacio.
+  cats.post('/reorder', validate('json', reorderSchema), async (c) => {
+    const { ids } = c.req.valid('json');
+    const repo = c.get('container').repos.dishesRepo;
+    const found = await Promise.all(ids.map(id => repo.findCategoryById(id)));
+    const group = assertSameGroup(ids, found, cat => `${cat.spaceId}|${cat.kind}`);
+    const spaceId = group.split('|')[0];
+    await assertSpaceAccess(c, spaceId);
+    c.set('rebuild', { spaceId });
+    await repo.reorderCategories(ids);
+    return c.json({ ok: true });
   });
 
   cats.patch('/:id', validate('json', categoryPatchSchema), async (c) => {
@@ -101,6 +115,19 @@ export function createDishesRoutes() {
     return c.json({ dish: await enrichDish(c, d) }, 201);
   });
 
+  // Orden de los platos dentro de una categoría.
+  app.post('/reorder', validate('json', reorderSchema), async (c) => {
+    const { ids } = c.req.valid('json');
+    const repo = c.get('container').repos.dishesRepo;
+    const found = await Promise.all(ids.map(id => repo.findById(id)));
+    assertSameGroup(ids, found, dish => dish.categoryId);
+    const spaceId = found[0]!.spaceId;
+    await assertSpaceAccess(c, spaceId);
+    c.set('rebuild', { spaceId });
+    await repo.reorder(ids);
+    return c.json({ ok: true });
+  });
+
   app.patch('/:id', validate('json', dishPatchSchema), async (c) => {
     const user = c.get('user')!;
     const id = c.req.param('id');
@@ -150,6 +177,10 @@ async function enrichDish(c: Context<AppBindings>, dish: Dish) {
 }
 
 const i18nSchema = z.record(z.string());
+
+
+/** Los ids en el orden nuevo. */
+const reorderSchema = z.object({ ids: z.array(z.string().min(1)).min(1).max(300) });
 
 const categoryCreateSchema = z.object({
   spaceId: z.string().min(1),

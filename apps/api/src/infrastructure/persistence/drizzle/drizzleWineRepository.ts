@@ -76,6 +76,18 @@ export class DrizzleWineRepository implements WineRepository {
     await this.db.update(wines).set(updates).where(eq(wines.id, id));
   }
 
+  async reorder(ids: string[]): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      for (const [order, id] of ids.entries()) await tx.update(wines).set({ order }).where(eq(wines.id, id));
+    });
+  }
+
+  async reorderCategories(ids: string[]): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      for (const [order, id] of ids.entries()) await tx.update(wineCategories).set({ order }).where(eq(wineCategories.id, id));
+    });
+  }
+
   async deleteById(id: string): Promise<void> {
     await this.db.delete(wines).where(eq(wines.id, id));
   }

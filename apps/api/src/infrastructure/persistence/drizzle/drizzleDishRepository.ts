@@ -95,6 +95,18 @@ export class DrizzleDishRepository implements DishRepository {
     await this.db.update(dishes).set(updates).where(eq(dishes.id, id));
   }
 
+  async reorder(ids: string[]): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      for (const [order, id] of ids.entries()) await tx.update(dishes).set({ order }).where(eq(dishes.id, id));
+    });
+  }
+
+  async reorderCategories(ids: string[]): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      for (const [order, id] of ids.entries()) await tx.update(dishCategories).set({ order }).where(eq(dishCategories.id, id));
+    });
+  }
+
   async deleteById(id: string): Promise<void> {
     await this.db.delete(dishes).where(eq(dishes.id, id));
   }

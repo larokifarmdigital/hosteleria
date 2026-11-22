@@ -233,6 +233,8 @@ export function createApiClient(opts: ApiClientOpts) {
       patch: (id: string, body: Partial<Omit<Dish, 'id' | 'spaceId' | 'restaurantSlug' | 'restaurantName' | 'categoryName' | 'localesFilled'>>) =>
         req<{ dish: Dish }>(`/dishes/${id}`, { method: 'PATCH', body: JSON.stringify(body) }).then(r => r.dish),
       delete: (id: string) => req<{ ok: true }>(`/dishes/${id}`, { method: 'DELETE' }),
+      /** Los ids de una categoría, en su orden nuevo. */
+      reorder: (ids: string[]) => req<{ ok: true }>('/dishes/reorder', { method: 'POST', body: JSON.stringify({ ids }) }),
       categories: {
         list: (spaceId?: string, kind?: DishKind) =>
           req<{ categories: DishCategory[] }>(`/dishes/categories${buildQuery({ spaceId, kind })}`).then(r => r.categories),
@@ -240,7 +242,9 @@ export function createApiClient(opts: ApiClientOpts) {
           req<{ category: DishCategory }>('/dishes/categories', { method: 'POST', body: JSON.stringify(body) }).then(r => r.category),
         patch: (id: string, body: { name?: I18nString; order?: number }) =>
           req<{ category: DishCategory }>(`/dishes/categories/${id}`, { method: 'PATCH', body: JSON.stringify(body) }).then(r => r.category),
-        delete: (id: string) => req<{ ok: true }>(`/dishes/categories/${id}`, { method: 'DELETE' })
+        delete: (id: string) => req<{ ok: true }>(`/dishes/categories/${id}`, { method: 'DELETE' }),
+        /** Las categorías de una carta de un espacio, en su orden nuevo. */
+        reorder: (ids: string[]) => req<{ ok: true }>('/dishes/categories/reorder', { method: 'POST', body: JSON.stringify({ ids }) })
       }
     },
 
@@ -255,6 +259,7 @@ export function createApiClient(opts: ApiClientOpts) {
       patch: (id: string, body: Partial<Omit<Wine, 'id' | 'spaceId' | 'restaurantSlug' | 'restaurantName' | 'categoryName' | 'localesFilled'>>) =>
         req<{ wine: Wine }>(`/wines/${id}`, { method: 'PATCH', body: JSON.stringify(body) }).then(r => r.wine),
       delete: (id: string) => req<{ ok: true }>(`/wines/${id}`, { method: 'DELETE' }),
+      reorder: (ids: string[]) => req<{ ok: true }>('/wines/reorder', { method: 'POST', body: JSON.stringify({ ids }) }),
       categories: {
         list: (spaceId?: string) =>
           req<{ categories: WineCategory[] }>(`/wines/categories${spaceId ? `?spaceId=${spaceId}` : ''}`).then(r => r.categories),
@@ -262,7 +267,8 @@ export function createApiClient(opts: ApiClientOpts) {
           req<{ category: WineCategory }>('/wines/categories', { method: 'POST', body: JSON.stringify(body) }).then(r => r.category),
         patch: (id: string, body: { name?: I18nString; order?: number }) =>
           req<{ category: WineCategory }>(`/wines/categories/${id}`, { method: 'PATCH', body: JSON.stringify(body) }).then(r => r.category),
-        delete: (id: string) => req<{ ok: true }>(`/wines/categories/${id}`, { method: 'DELETE' })
+        delete: (id: string) => req<{ ok: true }>(`/wines/categories/${id}`, { method: 'DELETE' }),
+        reorder: (ids: string[]) => req<{ ok: true }>('/wines/categories/reorder', { method: 'POST', body: JSON.stringify({ ids }) })
       }
     },
 

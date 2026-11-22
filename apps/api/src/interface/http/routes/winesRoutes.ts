@@ -5,6 +5,7 @@ import type { Context } from 'hono';
 import { requireAuth } from '../middleware/authMiddleware.js';
 import { allowedSpaceIds, assertSpaceAccess } from '../accessControl.js';
 import { wineToDto } from '../dto/wineDto.js';
+import { assertSameGroup } from '../../../domain/models/menuOrder.js';
 import {
   WineCategoryNotFoundError,
   type Wine
@@ -34,6 +35,18 @@ export function createWinesRoutes() {
     c.set('rebuild', { spaceId: body.spaceId });
     const row = await c.get('container').wines.createCategory.execute(body);
     return c.json({ category: row }, 201);
+  });
+
+  // Orden de las categorías de vinos de un espacio.
+  cats.post('/reorder', validate('json', reorderSchema), async (c) => {
+    const { ids } = c.req.valid('json');
+    const repo = c.get('container').repos.winesRepo;
+    const found = await Promise.all(ids.map(id => repo.findCategoryById(id)));
+    const spaceId = assertSameGroup(ids, found, cat => cat.spaceId);
+    await assertSpaceAccess(c, spaceId);
+    c.set('rebuild', { spaceId });
+    await repo.reorderCategories(ids);
+    return c.json({ ok: true });
   });
 
   cats.patch('/:id', validate('json', categoryPatchSchema), async (c) => {
@@ -95,6 +108,19 @@ export function createWinesRoutes() {
     return c.json({ wine: await enrichWine(c, w) }, 201);
   });
 
+  // Orden de los vinos dentro de una categoría.
+  app.post('/reorder', validate('json', reorderSchema), async (c) => {
+    const { ids } = c.req.valid('json');
+    const repo = c.get('container').repos.winesRepo;
+    const found = await Promise.all(ids.map(id => repo.findById(id)));
+    assertSameGroup(ids, found, wine => wine.categoryId);
+    const spaceId = found[0]!.spaceId;
+    await assertSpaceAccess(c, spaceId);
+    c.set('rebuild', { spaceId });
+    await repo.reorder(ids);
+    return c.json({ ok: true });
+  });
+
   app.patch('/:id', validate('json', winePatchSchema), async (c) => {
     const user = c.get('user')!;
     const id = c.req.param('id');
@@ -131,6 +157,10 @@ async function enrichWine(c: Context<AppBindings>, wine: Wine) {
 }
 
 const i18nSchema = z.record(z.string());
+
+
+/** Los ids en el orden nuevo. */
+const reorderSchema = z.object({ ids: z.array(z.string().min(1)).min(1).max(300) });
 
 const categoryCreateSchema = z.object({
   spaceId: z.string().min(1),

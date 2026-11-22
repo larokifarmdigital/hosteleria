@@ -15,6 +15,9 @@ export interface DishRepository {
   create(input: Omit<Dish, 'id'>): Promise<Dish>;
   update(id: string, patch: Partial<Dish>, actorId: string): Promise<void>;
   deleteById(id: string): Promise<void>;
+  /** Pone `order` = posición en la lista, todo de una vez. */
+  reorder(ids: string[]): Promise<void>;
+  reorderCategories(ids: string[]): Promise<void>;
 
   listCategories(spaceId?: string, kind?: DishKind): Promise<DishCategory[]>;
   findCategoryById(id: string): Promise<DishCategory | null>;

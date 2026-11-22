@@ -8,6 +8,9 @@ export interface WineRepository {
   create(input: Omit<Wine, 'id'>): Promise<Wine>;
   update(id: string, patch: Partial<Wine>, actorId: string): Promise<void>;
   deleteById(id: string): Promise<void>;
+  /** Pone `order` = posición en la lista, todo de una vez. */
+  reorder(ids: string[]): Promise<void>;
+  reorderCategories(ids: string[]): Promise<void>;
 
   listCategories(spaceId?: string): Promise<WineCategory[]>;
   findCategoryById(id: string): Promise<WineCategory | null>;

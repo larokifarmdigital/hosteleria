@@ -996,6 +996,22 @@ const paths: Record<string, any> = {
       }
     }
   },
+  '/dishes/reorder': {
+    post: {
+      tags: ['Dishes'], summary: 'Cambia el orden de los platos (o bebidas) de una categoría',
+      description: 'Recibe los ids en su orden nuevo. Todos deben existir y ser del mismo sitio (la misma categoría, o el mismo espacio y carta); si no, `INVALID_REORDER`.',
+      requestBody: jsonBody({ type: 'object', properties: { ids: { type: 'array', items: { type: 'string' } } }, required: ['ids'] }),
+      responses: { 200: ok({ type: 'object', properties: { ok: { type: 'boolean' } } }), 400: err400, 401: err401, 403: err403Space, 500: err500 }
+    }
+  },
+  '/dishes/categories/reorder': {
+    post: {
+      tags: ['Dishes'], summary: 'Cambia el orden de las categorías de una carta',
+      description: 'Recibe los ids en su orden nuevo. Todos deben existir y ser del mismo sitio (la misma categoría, o el mismo espacio y carta); si no, `INVALID_REORDER`.',
+      requestBody: jsonBody({ type: 'object', properties: { ids: { type: 'array', items: { type: 'string' } } }, required: ['ids'] }),
+      responses: { 200: ok({ type: 'object', properties: { ok: { type: 'boolean' } } }), 400: err400, 401: err401, 403: err403Space, 500: err500 }
+    }
+  },
   '/dishes/{id}': {
     parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
     get: {
@@ -1122,6 +1138,22 @@ const paths: Record<string, any> = {
         404: errRef('404 Not Found — `WINE_CATEGORY_NOT_FOUND`'),
         500: err500
       }
+    }
+  },
+  '/wines/reorder': {
+    post: {
+      tags: ['Wines'], summary: 'Cambia el orden de los vinos de una categoría',
+      description: 'Recibe los ids en su orden nuevo. Todos deben existir y ser del mismo sitio (la misma categoría, o el mismo espacio y carta); si no, `INVALID_REORDER`.',
+      requestBody: jsonBody({ type: 'object', properties: { ids: { type: 'array', items: { type: 'string' } } }, required: ['ids'] }),
+      responses: { 200: ok({ type: 'object', properties: { ok: { type: 'boolean' } } }), 400: err400, 401: err401, 403: err403Space, 500: err500 }
+    }
+  },
+  '/wines/categories/reorder': {
+    post: {
+      tags: ['Wines'], summary: 'Cambia el orden de las categorías de vinos',
+      description: 'Recibe los ids en su orden nuevo. Todos deben existir y ser del mismo sitio (la misma categoría, o el mismo espacio y carta); si no, `INVALID_REORDER`.',
+      requestBody: jsonBody({ type: 'object', properties: { ids: { type: 'array', items: { type: 'string' } } }, required: ['ids'] }),
+      responses: { 200: ok({ type: 'object', properties: { ok: { type: 'boolean' } } }), 400: err400, 401: err401, 403: err403Space, 500: err500 }
     }
   },
   '/wines/{id}': {
