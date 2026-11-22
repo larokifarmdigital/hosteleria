@@ -9,30 +9,29 @@ pasan una auditoría de accesibilidad (axe) a cada pantalla y diálogo que tocan
   **`pruebas`**, y cada prueba restaura lo que cambia. Si una se corta a medias, puede dejar
   restos: `pnpm e2e reset` quita las fotos, y lo demás se ve en el propio backoffice.
 - `users-languages` crea y borra un usuario y un idioma de prueba (`zz`).
-- `images` y `menu-order-photos` suben fotos reales a R2 y las borran.
+- `images` y `menu-order-photos` suben fotos reales a R2 y las borran. Si R2 no responde
+  desde la máquina (pasa a ratos), esas dos no se pueden pasar.
 
 ## Cómo se ejecutan
 
-1. Api en local (lee los secretos de `apps/api/.env.local`):
-
-   ```bash
-   cd apps/api && pnpm exec wrangler dev --port 8788
-   ```
-
-2. Backoffice, **build de producción** contra ese api (en `next dev` el indicador de Next
-   tapa botones y falsea la auditoría). Con `NEXT_DIST_DIR` no se pisa el `.next` de `next dev`:
+1. Backoffice, **build de producción** (en `next dev` el indicador de Next tapa botones y
+   falsea la auditoría). El api va dentro, en `/api`: no hay nada más que arrancar. Lee sus
+   variables de `apps/backoffice/.env.local` (las mismas que usa el lanzador para restaurar
+   «pruebas» por SQL con `DATABASE_URL`). Con `NEXT_DIST_DIR` no se pisa el `.next` de `next dev`:
 
    ```bash
    cd apps/backoffice
-   NEXT_DIST_DIR=.next-verify NEXT_PUBLIC_API_URL=http://localhost:8788 pnpm build
+   NEXT_DIST_DIR=.next-verify pnpm build
    NEXT_DIST_DIR=.next-verify pnpm exec next start -p 4400
    ```
 
    Al acabar: `rm -rf .next-verify && git checkout next-env.d.ts tsconfig.json` (Next los reescribe).
    Las subidas a R2 solo funcionan desde el puerto 4400 (CORS del bucket).
-   Si el 4400 está ocupado (por `next dev`), usa otro: arranca el api con
-   `--var "ALLOWED_ORIGIN:http://localhost:4400,http://localhost:4410"`, el backoffice con `-p 4410`
-   y las pruebas con `BASE=http://localhost:4410 pnpm e2e <nombre>`.
+   Si el 4400 está ocupado (por `next dev`), usa otro: `-p 4410` y las pruebas con
+   `BASE=http://localhost:4410 pnpm e2e <nombre>`.
+
+2. Las pruebas llaman al api en `${BASE}/api`. Para apuntarlas a otro sitio, `API=<url>`.
+   Hace falta Node 22 o superior (el acceso a la base de datos usa el WebSocket global).
 
 3. Sesiones (una vez; se guardan en `e2e/.work/` y se reutilizan). El login admite
    5 intentos por hora y email. Las cuentas están en `CUENTAS.md`:

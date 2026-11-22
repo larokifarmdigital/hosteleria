@@ -12,6 +12,9 @@ const { spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+// Las pruebas restauran «pruebas» por SQL: `DATABASE_URL` sale del entorno del backoffice.
+require('dotenv').config({ path: path.join(__dirname, '..', '.env.local'), quiet: true });
+
 const WORK = path.join(__dirname, '.work');
 const TOOLS = ['login', 'fixtures', 'reset'];
 const HELPERS = ['api', 'pruebas-state', 'upload', 'run'];
@@ -40,14 +43,15 @@ if (name === 'login') {
   process.exit(1);
 }
 
+const BASE = (process.env.BASE || 'http://localhost:4400').replace(/\/$/, '');
 const result = spawnSync('node', [path.join(__dirname, `${name}.cjs`), ...args], {
   stdio: 'inherit',
   env: {
     ...process.env,
     S: WORK,
     PW: require.resolve('playwright'),
-    BASE: process.env.BASE || 'http://localhost:4400',
-    API: process.env.API || 'http://localhost:8788'
+    BASE,
+    API: process.env.API || `${BASE}/api`
   }
 });
 process.exit(result.status ?? 1);

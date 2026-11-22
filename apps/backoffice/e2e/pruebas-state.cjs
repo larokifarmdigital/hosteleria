@@ -1,9 +1,8 @@
 // Foto del estado de «pruebas» en la BD y vuelta a ese estado por SQL (el api no sabe «despublicar»).
-const API_DIR = require('path').resolve(__dirname, '../../api');
-const req = (m) => require(require.resolve(m, { paths: [API_DIR] }));
-req('dotenv').config({ path: API_DIR + '/.env.local' });
-const { Pool, neonConfig } = req('@neondatabase/serverless');
-neonConfig.webSocketConstructor = globalThis.WebSocket ?? req('ws');
+const { Pool, neonConfig } = require('@neondatabase/serverless');
+if (!process.env.DATABASE_URL) throw new Error('Falta DATABASE_URL: ponla en apps/backoffice/.env.local y lanza la prueba con `pnpm e2e`.');
+// Node 22 o superior: Neon usa el WebSocket global.
+neonConfig.webSocketConstructor = globalThis.WebSocket;
 const SPACE = 'fnnv25hq7v7k4gvs04wqsk3x';
 const R_COLS = ['name', 'domain', 'logo_initial', 'cover_gradient', 'timezone', 'address', 'contact', 'socials', 'seo', 'accepts_bookings', 'show_socials', 'founded_year', 'branding', 'home_blocks', 'about', 'groups', 'map_url', 'show_reviews', 'ui_texts', 'faq', 'ai_summary', 'analytics_token', 'business', 'state', 'published_snapshot', 'last_published_at', 'default_locale_id'];
 const S_COLS = ['name', 'hero', 'manifesto', 'descriptor', 'cover_gradient', 'gallery', 'schedule_texts', 'address', 'map_url', 'booking_contact', 'state', 'published_snapshot'];

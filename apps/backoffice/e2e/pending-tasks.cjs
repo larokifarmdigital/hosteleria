@@ -1,5 +1,5 @@
-// Fase 6: tareas pendientes en el panel de inicio y en la ficha (build de producción contra
-// wrangler dev), sobre «pruebas». Restaura al acabar.
+// Fase 6: tareas pendientes en el panel de inicio y en la ficha (build de producción),
+// sobre «pruebas». Restaura al acabar.
 const { chromium } = require(process.env.PW);
 const { spawnSync } = require('child_process');
 const S = process.env.S, BASE = process.env.BASE;

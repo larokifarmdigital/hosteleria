@@ -1,5 +1,5 @@
 // M5: el api pide regenerar la landing cuando cambia algo que la web enseña.
-// Contra wrangler dev, sobre «pruebas», con un servidor local que hace de hook. Restaura al acabar.
+// Contra el backoffice en local, sobre «pruebas», con un servidor local que hace de hook. Restaura al acabar.
 const fs = require('fs'), http = require('http');
 const S = process.env.S, API = process.env.API;
 const cookieOf = (f) => JSON.parse(fs.readFileSync(`${S}/${f}`, 'utf8')).cookies.map(c => `${c.name}=${c.value}`).join('; ');

@@ -1,4 +1,4 @@
-// M2: lectura pública contra el api en local (wrangler dev), sobre «pruebas». Restaura al acabar.
+// M2: lectura pública contra el api del backoffice en local, sobre «pruebas». Restaura al acabar.
 const fs = require('fs');
 const S = process.env.S, API = process.env.API;
 const cookie = JSON.parse(fs.readFileSync(S + '/admin.json', 'utf8')).cookies.map(c => `${c.name}=${c.value}`).join('; ');

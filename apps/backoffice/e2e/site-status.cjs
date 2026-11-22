@@ -1,4 +1,4 @@
-// Fase 6: estado de la web. Api real (wrangler dev) con un servidor local que hace de hook,
+// Fase 6: estado de la web. Api real (el del backoffice en local) con un servidor local que hace de hook,
 // y cada estado de la tarjeta simulando la respuesta en el navegador. Sobre «pruebas»; restaura al acabar.
 const { chromium } = require(process.env.PW);
 const { spawnSync } = require('child_process');

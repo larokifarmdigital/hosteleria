@@ -1,5 +1,5 @@
-// Fase 6: usuarios e idiomas en Ajustes, y la página de elegir contraseña (build de producción
-// contra wrangler dev). Crea un usuario y un idioma de prueba y los borra al acabar.
+// Fase 6: usuarios e idiomas en Ajustes, y la página de elegir contraseña (build de producción).
+// Crea un usuario y un idioma de prueba y los borra al acabar.
 const { chromium } = require(process.env.PW);
 const { spawnSync } = require('child_process');
 const S = process.env.S, BASE = process.env.BASE;
