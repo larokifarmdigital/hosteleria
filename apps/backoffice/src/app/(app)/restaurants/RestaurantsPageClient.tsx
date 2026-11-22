@@ -1,7 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Plus } from 'lucide-react';
+import { AddRestaurantDialog } from '@/components/restaurant/AddRestaurantDialog';
+import { Button } from '@/components/shared/Button';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { LocaleChips } from '@/components/shared/LocaleChip';
 import { QueryBoundary } from '@/components/shared/QueryBoundary';
@@ -9,7 +12,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { StatePill } from '@/components/shared/StatePill';
 import { Table, Td } from '@/components/shared/Table';
 import { formatDate } from '@/lib/utils';
-import { useRestaurants } from '@/lib/query/hooks';
+import { useRestaurants, useSession } from '@/lib/query/hooks';
 
 const COLUMNS = [
   { label: 'Restaurante' },
@@ -25,10 +28,21 @@ const COLUMNS = [
 export function RestaurantsPageClient() {
   const restaurantsQuery = useRestaurants();
   const restaurants = restaurantsQuery.data ?? [];
+  const { data: user } = useSession();
+  const [adding, setAdding] = useState(false);
 
   return (
     <>
       <PageHeader title="Restaurantes">Cada restaurante tiene su propia web.</PageHeader>
+      {user?.role === 'admin' && (
+        <div className="-mt-2 mb-5">
+          <Button onClick={() => setAdding(true)}>
+            <Plus aria-hidden className="h-4 w-4" />
+            Añadir restaurante
+          </Button>
+        </div>
+      )}
+      {adding && <AddRestaurantDialog takenSlugs={restaurants.map(r => r.slug)} onClose={() => setAdding(false)} />}
 
       <QueryBoundary queries={[restaurantsQuery]}>
       {restaurants.length === 0 ? (

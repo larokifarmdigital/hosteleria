@@ -36,10 +36,12 @@ export function TabList({ idPrefix, label, tabs, value, onChange }: TabListProps
     e.preventDefault();
     onChange(target.id);
     refs.current[target.id]?.focus();
+    refs.current[target.id]?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   };
 
   return (
-    <div role="tablist" aria-label={label} className="mb-6 flex flex-wrap gap-1 border-b border-[color:var(--color-border-strong)]">
+    // En pantallas estrechas las pestañas no caben: se desplazan en horizontal en vez de partirse en dos filas.
+    <div role="tablist" aria-label={label} className="-mx-1 mb-6 flex gap-1 overflow-x-auto border-b border-[color:var(--color-border-strong)] px-1 pt-1">
       {tabs.map((tab, index) => {
         const selected = tab.id === value;
         return (
@@ -55,7 +57,7 @@ export function TabList({ idPrefix, label, tabs, value, onChange }: TabListProps
             onClick={() => onChange(tab.id)}
             onKeyDown={e => onKeyDown(e, index)}
             className={cn(
-              '-mb-px inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-t-[10px] border-0 border-b-[3px] bg-transparent px-4 text-[14px] font-semibold leading-none transition-colors',
+              '-mb-px inline-flex min-h-11 flex-shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-t-[10px] border-0 border-b-[3px] bg-transparent px-4 text-[14px] font-semibold leading-none transition-colors',
               selected
                 ? 'border-[color:var(--color-accent)] text-[color:var(--color-accent-fg)]'
                 : 'border-transparent text-[color:var(--color-ink-soft)] hover:text-[color:var(--color-ink)]'

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { useSearchParams } from 'next/navigation';
+import { FormProvider, useForm, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Restaurant, Space } from '@hosteleria/api-client';
@@ -15,9 +16,10 @@ import { ImageListField } from '@/components/media/ImageListField';
 import { Section } from '@/components/shared/Section';
 import { LocaleTabs } from '@/components/space/LocaleTabs';
 import { Field } from '@/components/ui/Field';
+import { TabList, TabPanel } from '@/components/ui/Tabs';
 import { TextArea, TextInput } from '@/components/ui/inputs';
 import { showSuccessToast } from '@/lib/api';
-import { countErrors } from '@/lib/forms/errors';
+import { countErrors, firstErrorPath } from '@/lib/forms/errors';
 import { compact, i18nFromForm, i18nToForm, sameContent } from '@/lib/forms/i18n';
 import { i18nValues, optionalEmail, optionalMap, optionalText, requiredText } from '@/lib/forms/rules';
 import { scheduleForCompare, scheduleSchema } from '@/lib/forms/schedule';
@@ -31,6 +33,24 @@ const MANIFESTO_FIELDS = ['eyebrow', 'text'] as const;
 const SCHEDULE_TEXT_FIELDS = ['title', 'text', 'open', 'nextOpening', 'closed'] as const;
 const ADDRESS_FIELDS = ['street', 'postalCode', 'city', 'district', 'province', 'country'] as const;
 const BOOKING_FIELDS = ['phone', 'whatsapp', 'email'] as const;
+
+// Apartados del espacio; el activo va en la URL (`?tab=hours`).
+const TABS = [
+  { id: 'cover', label: 'Portada' },
+  { id: 'photos', label: 'Fotos' },
+  { id: 'hours', label: 'Horarios' },
+  { id: 'contact', label: 'Contacto' }
+] as const;
+type TabId = (typeof TABS)[number]['id'];
+const TABS_ID = 'espacio';
+/** Pestaña en la que se edita cada campo de primer nivel del formulario. */
+const TAB_OF: Record<string, TabId> = {
+  name: 'cover', descriptor: 'cover', hero: 'cover', manifesto: 'cover',
+  gallery: 'photos',
+  schedule: 'hours', scheduleTexts: 'hours',
+  address: 'contact', mapUrl: 'contact', bookingContact: 'contact'
+};
+const tabOfField = (path: string): TabId => TAB_OF[path.split('.')[0]] ?? 'cover';
 
 const COVER = 'Portada';
 const INTRO = 'Texto de presentación';
@@ -131,7 +151,17 @@ interface Props {
 export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
   const locales = restaurant.activeLocales as string[];
   const [locale, setLocale] = useState(restaurant.defaultLocale as string);
-  const form = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: toForm(space, locales) });
+  const requestedTab = useSearchParams().get('tab');
+  const [tab, setTabState] = useState<TabId>(TABS.find(t => t.id === requestedTab)?.id ?? 'cover');
+  const setTab = (id: TabId) => {
+    setTabState(id);
+    const url = new URL(window.location.href);
+    if (id === 'cover') url.searchParams.delete('tab');
+    else url.searchParams.set('tab', id);
+    window.history.replaceState(null, '', url);
+  };
+  // El foco en el primer error lo pone `onInvalid`: el campo puede estar en otra pestaña.
+  const form = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: toForm(space, locales), shouldFocusError: false });
   const { register, handleSubmit, reset, setError, setFocus, setValue, watch, control, formState: { errors, isDirty, isSubmitted } } = form;
 
   const patch = usePatchSpace(restaurant.slug, space.id);
@@ -151,6 +181,7 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
     locales,
     localeNames,
     onGo: (fieldName, code) => {
+      setTab(tabOfField(fieldName));
       setLocale(code);
       // El campo de ese idioma está oculto hasta el siguiente render.
       setTimeout(() => setFocus(`${fieldName}.${code}` as Parameters<typeof setFocus>[0]), 0);
@@ -161,6 +192,7 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
     // Una portada con foto no se guarda sin su descripción en todos los idiomas.
     const missingAlt = values.hero.imageAssetId ? locales.find(code => !values.hero.imageAlt[code]?.trim()) : undefined;
     if (missingAlt) {
+      setTab('cover');
       setLocale(missingAlt);
       setError(`hero.imageAlt.${missingAlt}`, { message: `Describe la foto en ${localeNames[missingAlt] ?? missingAlt.toUpperCase()}.` });
       setTimeout(() => setFocus(`hero.imageAlt.${missingAlt}`), 0);
@@ -200,7 +232,21 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
     } catch {
       // El hook ya muestra el error; el formulario conserva lo escrito.
     }
+  }, invalid => {
+    const path = firstErrorPath(invalid);
+    if (!path) return;
+    setTab(tabOfField(path));
+    setTimeout(() => setFocus(path as Parameters<typeof setFocus>[0]), 0);
   });
+
+  const tabs = TABS.map(t => ({
+    ...t,
+    pending: translations.gaps.filter(gap => tabOfField(gap.field.name) === t.id).length,
+    errors: isSubmitted
+      ? Object.entries(errors).reduce((n, [key, node]) => (tabOfField(key) === t.id ? n + countErrors({ [key]: node } as FieldErrors) : n), 0)
+      : 0
+  }));
+  const localeTabs = <LocaleTabs locales={locales} value={locale} onChange={setLocale} names={localeNames} missing={translations.byLocale} />;
 
   const i18n = { locales, activeLocale: locale, localeNames, defaultLocale: restaurant.defaultLocale as string };
   const mediaScope = { restaurantSlug: restaurant.slug, locales, defaultLocale: restaurant.defaultLocale as string, localeNames };
@@ -209,7 +255,10 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
     <FormProvider {...form}>
       <form onSubmit={onSave} noValidate className={isDirty ? 'pb-24' : undefined}>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <div className="flex min-w-0 flex-col gap-6">
+          <div className="min-w-0">
+            <TabList idPrefix={TABS_ID} label="Apartados del espacio" tabs={tabs} value={tab} onChange={id => setTab(id as TabId)} />
+
+            <TabPanel idPrefix={TABS_ID} id="cover" active={tab === 'cover'} className="flex flex-col gap-6">
             <Section title="Datos del espacio">
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <Field id="s-name" label="Nombre" error={errors.name?.message} required>
@@ -222,7 +271,7 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
             </Section>
 
             <div>
-              <LocaleTabs locales={locales} value={locale} onChange={setLocale} names={localeNames} missing={translations.byLocale} />
+              {localeTabs}
 
               <div className="flex flex-col gap-6">
                 <Section title={COVER} description="Lo primero que ve quien entra en la web." badge={<TranslationBadge count={translations.inSection(COVER)} />}>
@@ -269,18 +318,11 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
                   </div>
                 </Section>
 
-                <Section title={SCHEDULE_TEXTS} description="Lo que acompaña al horario en la web. Si los dejas vacíos, la web usa sus textos de siempre." badge={<TranslationBadge count={translations.inSection(SCHEDULE_TEXTS)} />}>
-                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                    <I18nField className="md:col-span-2" reference="side" name="scheduleTexts.title" label="Título" hint="Por ejemplo, «Cuándo venir»." {...i18n} />
-                    <I18nField className="md:col-span-2" reference="side" name="scheduleTexts.text" label="Texto" multiline rows={3} {...i18n} />
-                    <I18nField name="scheduleTexts.open" label="Aviso de abierto" hint="Escribe {hora} donde va la hora de cierre: «Abierto hasta las {hora}»." {...i18n} />
-                    <I18nField name="scheduleTexts.nextOpening" label="Aviso de próxima apertura" hint="Escribe {hora} donde va la hora de apertura: «Hoy abrimos a las {hora}»." {...i18n} />
-                    <I18nField name="scheduleTexts.closed" label="Aviso de cerrado" hint="Por ejemplo, «Hoy cerramos»." {...i18n} />
-                  </div>
-                </Section>
               </div>
             </div>
+            </TabPanel>
 
+            <TabPanel idPrefix={TABS_ID} id="photos" active={tab === 'photos'}>
             <Section title="Galería" description="Las fotos del espacio, en el orden en que se ven en la web.">
               <ImageListField
                 label="Fotos de la galería"
@@ -292,11 +334,27 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
                 onChange={ids => setValue('gallery', ids, { shouldDirty: true })}
               />
             </Section>
+            </TabPanel>
 
+            <TabPanel idPrefix={TABS_ID} id="hours" active={tab === 'hours'} className="flex flex-col gap-6">
             <Section title="Horarios" description="Un día sin turnos se muestra en la web como cerrado.">
               <ScheduleEditor />
             </Section>
+            <div>
+              {localeTabs}
+                <Section title={SCHEDULE_TEXTS} description="Lo que acompaña al horario en la web. Si los dejas vacíos, la web usa sus textos de siempre." badge={<TranslationBadge count={translations.inSection(SCHEDULE_TEXTS)} />}>
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  <I18nField className="md:col-span-2" reference="side" name="scheduleTexts.title" label="Título" hint="Por ejemplo, «Cuándo venir»." {...i18n} />
+                  <I18nField className="md:col-span-2" reference="side" name="scheduleTexts.text" label="Texto" multiline rows={3} {...i18n} />
+                  <I18nField name="scheduleTexts.open" label="Aviso de abierto" hint="Escribe {hora} donde va la hora de cierre: «Abierto hasta las {hora}»." {...i18n} />
+                  <I18nField name="scheduleTexts.nextOpening" label="Aviso de próxima apertura" hint="Escribe {hora} donde va la hora de apertura: «Hoy abrimos a las {hora}»." {...i18n} />
+                  <I18nField name="scheduleTexts.closed" label="Aviso de cerrado" hint="Por ejemplo, «Hoy cerramos»." {...i18n} />
+                </div>
+              </Section>
+            </div>
+            </TabPanel>
 
+            <TabPanel idPrefix={TABS_ID} id="contact" active={tab === 'contact'}>
             <Section title="Dirección y contacto propios" description="Solo si este espacio tiene una dirección o un contacto distintos de los del restaurante. Lo que dejes vacío sale de la ficha del restaurante.">
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <Field id="s-street" className="md:col-span-2" label="Calle y número" error={errors.address?.street?.message}>
@@ -331,6 +389,7 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
                 </Field>
               </div>
             </Section>
+            </TabPanel>
           </div>
 
           <aside aria-label="Publicación y otros espacios" className="flex flex-col gap-5 self-start lg:sticky lg:top-20">

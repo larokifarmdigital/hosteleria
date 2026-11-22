@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Pill } from '@/components/shared/Pill';
 import { Section } from '@/components/shared/Section';
 import { StatePill } from '@/components/shared/StatePill';
@@ -46,12 +46,21 @@ export function SpaceEditorPageClient({ slug, spaceId }: Props) {
 
       <SpaceForm
         // Otro espacio = otro formulario: sin la key, React reutilizaría los valores del anterior.
-        key={space.id}
+        key={`${space.id}:${restaurant.activeLocales.join(',')}`}
         restaurant={restaurant}
         space={space}
         localeNames={localeNames}
-        aside={
-          siblingSpaces.length > 0 && (
+        aside={<>
+          <Section title="Carta de este espacio">
+            <Link
+              href={`/dishes?r=${restaurant.slug}&e=${space.id}`}
+              className="flex min-h-11 items-center justify-between gap-2.5 rounded-lg border border-[color:var(--color-border)] bg-white px-3 text-[13.5px] font-semibold text-[color:var(--color-ink)] transition-colors hover:border-[color:var(--color-copper-300)]"
+            >
+              Platos, vinos y bebidas
+              <ArrowRight aria-hidden className="h-4 w-4 flex-shrink-0 text-[color:var(--color-muted)]" />
+            </Link>
+          </Section>
+          {siblingSpaces.length > 0 && (
             <Section title="Otros espacios">
               <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
                 {siblingSpaces.map(s => (
@@ -67,8 +76,8 @@ export function SpaceEditorPageClient({ slug, spaceId }: Props) {
                 ))}
               </ul>
             </Section>
-          )
-        }
+          )}
+        </>}
       />
     </>
   );

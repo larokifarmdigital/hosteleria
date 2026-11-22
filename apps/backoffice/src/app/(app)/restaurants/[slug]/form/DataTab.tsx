@@ -10,7 +10,7 @@ import type { TabProps } from './types';
 
 type InputOptions = { hint?: string; type?: string; autoComplete?: string; inputMode?: 'tel' | 'email' | 'url' | 'numeric'; required?: boolean };
 
-export function DataTab({ mediaScope }: Pick<TabProps, 'mediaScope'>) {
+export function DataTab({ mediaScope, isAdmin }: Pick<TabProps, 'mediaScope'> & { isAdmin: boolean }) {
   const { register, formState: { errors } } = useFormContext<FormValues>();
 
   const text = (id: string, label: string, name: Parameters<typeof register>[0], error?: string, opts?: InputOptions) => (
@@ -27,6 +27,12 @@ export function DataTab({ mediaScope }: Pick<TabProps, 'mediaScope'>) {
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {text('r-name', 'Nombre del restaurante', 'name', errors.name?.message, { required: true })}
           {text('r-founded', 'Año de apertura', 'foundedYear', errors.foundedYear?.message, { inputMode: 'numeric', hint: 'El año en que abrió el restaurante, si quieres contarlo.' })}
+          {/* De la dirección dependen los enlaces que ve Google y la comprobación de la web: solo administradores. */}
+          {isAdmin && (
+            <div className="md:col-span-2">
+              {text('r-domain', 'Dirección de la web', 'domain', errors.domain?.message, { inputMode: 'url', required: true, hint: 'Donde se ve la web, sin «https://»: por ejemplo «www.mirestaurante.com». Es la dirección que se le da a Google como oficial.' })}
+            </div>
+          )}
         </div>
       </Section>
 

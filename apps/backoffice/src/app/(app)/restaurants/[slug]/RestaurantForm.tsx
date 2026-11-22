@@ -10,6 +10,8 @@ import type { Restaurant } from '@hosteleria/api-client';
 import { PublishPanel } from '@/components/editor/PublishPanel';
 import { SaveBar } from '@/components/editor/SaveBar';
 import { LangList } from '@/components/restaurant/LangList';
+import { LanguagesDialog } from '@/components/restaurant/LanguagesDialog';
+import { Button } from '@/components/shared/Button';
 import { Section } from '@/components/shared/Section';
 import { SiteStatusCard } from '@/components/site/SiteStatusCard';
 import { LocaleTabs } from '@/components/space/LocaleTabs';
@@ -51,6 +53,7 @@ export function RestaurantForm({ restaurant, localeNames }: Props) {
   const form = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: toForm(restaurant), shouldFocusError: false });
   const { handleSubmit, reset, setFocus, control, formState: { errors, isDirty, isSubmitted } } = form;
   const { data: user } = useSession();
+  const [editingLanguages, setEditingLanguages] = useState(false);
 
   const patch = usePatchRestaurant(restaurant.slug);
   const publish = usePublishRestaurant(restaurant.slug);
@@ -112,7 +115,7 @@ export function RestaurantForm({ restaurant, localeNames }: Props) {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
           <div className="min-w-0">
             <TabList idPrefix={TABS_ID} label="Apartados de la ficha" tabs={tabs} value={tab} onChange={id => setTab(id as TabId)} />
-            <TabPanel idPrefix={TABS_ID} id="data" active={tab === 'data'}><DataTab mediaScope={tabProps.mediaScope} /></TabPanel>
+            <TabPanel idPrefix={TABS_ID} id="data" active={tab === 'data'}><DataTab mediaScope={tabProps.mediaScope} isAdmin={user?.role === 'admin'} /></TabPanel>
             <TabPanel idPrefix={TABS_ID} id="content" active={tab === 'content'}><ContentTab {...tabProps} /></TabPanel>
             <TabPanel idPrefix={TABS_ID} id="texts" active={tab === 'texts'}><TextsTab {...tabProps} /></TabPanel>
             <TabPanel idPrefix={TABS_ID} id="search" active={tab === 'search'}><SearchTab {...tabProps} isAdmin={user?.role === 'admin'} /></TabPanel>
@@ -139,6 +142,11 @@ export function RestaurantForm({ restaurant, localeNames }: Props) {
 
             <Section title="Idiomas de la web">
               <LangList restaurant={restaurant} />
+              <div className="mt-4">
+                {/* Cambiar los idiomas recarga el formulario: con cambios sin guardar se perderían. */}
+                <Button size="sm" disabled={isDirty} aria-describedby={isDirty ? 'idiomas-aviso' : undefined} onClick={() => setEditingLanguages(true)}>Cambiar idiomas</Button>
+                {isDirty && <p id="idiomas-aviso" className="m-0 mt-2 text-[12.5px] leading-[1.5] text-[color:var(--color-muted)]">Guarda o descarta antes los cambios de la ficha.</p>}
+              </div>
             </Section>
 
             <Section title="Páginas legales">
@@ -155,6 +163,7 @@ export function RestaurantForm({ restaurant, localeNames }: Props) {
 
         <SaveBar dirty={isDirty} saving={patch.isPending} errorCount={isSubmitted ? countErrors(errors) : 0} onDiscard={() => reset()} />
       </form>
+      {editingLanguages && <LanguagesDialog restaurant={restaurant} isAdmin={user?.role === 'admin'} onClose={() => setEditingLanguages(false)} />}
     </FormProvider>
   );
 }

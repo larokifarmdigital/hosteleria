@@ -101,3 +101,17 @@ export function useDeleteSpace(restaurantSlug: string) {
     onError: toastError
   });
 }
+
+/** Como `usePatchSpace`, para pantallas que tocan cualquiera de los espacios de la lista. */
+export function useUpdateSpace(restaurantSlug: string) {
+  const qc = useQueryClient();
+  const toastError = useErrorToast();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: Parameters<typeof api.spaces.patch>[2] }) => api.spaces.patch(restaurantSlug, id, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.spaces.all });
+      qc.invalidateQueries({ queryKey: qk.restaurants.detail(restaurantSlug) });
+    },
+    onError: toastError
+  });
+}

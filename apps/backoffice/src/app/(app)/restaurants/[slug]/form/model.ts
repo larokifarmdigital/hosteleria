@@ -17,7 +17,7 @@ export const TABS: { id: TabId; label: string }[] = [
 
 /** Pestaña en la que se edita cada campo de primer nivel del formulario. */
 const TAB_OF: Record<string, TabId> = {
-  name: 'data', foundedYear: 'data', branding: 'data', address: 'data', mapUrl: 'data', contact: 'data',
+  name: 'data', domain: 'data', foundedYear: 'data', branding: 'data', address: 'data', mapUrl: 'data', contact: 'data',
   socials: 'data', showSocials: 'data', acceptsBookings: 'data',
   about: 'content', groups: 'content', faq: 'content', homeBlocks: 'content',
   uiTexts: 'texts',
@@ -153,6 +153,10 @@ const thisYear = new Date().getFullYear();
 
 export const schema = z.object({
   name: requiredText(120),
+  // Sin protocolo: `www.mirestaurante.com`. Solo la cambia un administrador.
+  domain: z.string().trim().toLowerCase()
+    .transform(v => v.replace(/^https?:\/\//, '').replace(/\/+$/, ''))
+    .pipe(z.string().regex(/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/, 'Escribe la dirección de la web, por ejemplo «www.mirestaurante.com».')),
   foundedYear: z
     .string()
     .trim()
@@ -239,6 +243,7 @@ export function toForm(r: Restaurant): FormValues {
 
   return {
     name: r.name,
+    domain: r.domain,
     foundedYear: r.foundedYear ? String(r.foundedYear) : '',
     branding: {
       logoAssetId: r.branding.logoAssetId ?? '',
@@ -334,6 +339,7 @@ export function toPatch(values: FormValues, r: Restaurant): PatchInput {
 
   return {
     name: values.name,
+    domain: values.domain,
     foundedYear: values.foundedYear ? Number(values.foundedYear) : null,
     branding: compact(values.branding),
     address: compact(values.address),
@@ -412,7 +418,8 @@ export function changedBlocks(r: Restaurant): string[] {
     ['Redes sociales', r.socials, snap.socials],
     [GOOGLE, r.seo, snap.seo],
     ['Reservas online', r.acceptsBookings, snap.acceptsBookings],
-    ['Mostrar redes en la web', r.showSocials, snap.showSocials]
+    ['Mostrar redes en la web', r.showSocials, snap.showSocials],
+    ['Dirección de la web', r.domain, snap.domain]
   ];
   // Lo publicado antes de que existieran estos campos no los trae: sin
   // referencia no se puede decir que hayan cambiado.
@@ -430,6 +437,9 @@ export function changedBlocks(r: Restaurant): string[] {
     ['Analítica', r.analyticsToken, snap.analyticsToken]
   ];
   blocks.push(...later.filter(([, , before]) => before !== undefined));
+  // Los idiomas llegan a la web al publicar, como el resto.
+  if (snap.activeLocaleCodes) blocks.push(['Idiomas de la web', [...r.activeLocales].sort(), [...snap.activeLocaleCodes].sort()]);
+  if (snap.defaultLocaleCode) blocks.push(['Idioma principal', r.defaultLocale, snap.defaultLocaleCode]);
   return blocks.filter(([, now, before]) => !sameContent(now, before)).map(([label]) => label);
 }
 

@@ -1,8 +1,8 @@
 'use client';
 
-import { EmptyState } from '@/components/shared/EmptyState';
+import { LinkButton } from '@/components/shared/Button';
 import { StatePill } from '@/components/shared/StatePill';
-import { SpaceCard } from '@/components/restaurant/SpaceCard';
+import { SpacesSection } from '@/components/restaurant/SpacesSection';
 import { useLanguages, useRestaurant, useSpaces } from '@/lib/query/hooks';
 import { RestaurantForm } from './RestaurantForm';
 
@@ -31,29 +31,18 @@ export function RestaurantHubPageClient({ slug }: { slug: string }) {
           <p className="slug m-0 mt-0.5">{restaurant.domain}</p>
         </div>
         <StatePill state={restaurant.state} />
+        {/* Atajos a lo demás que se edita de este restaurante. */}
+        <div className="flex flex-wrap gap-2 sm:ml-auto">
+          <LinkButton href={`/dishes?r=${restaurant.slug}`}>Carta</LinkButton>
+          <LinkButton href={`/media?r=${restaurant.slug}`}>Imágenes</LinkButton>
+        </div>
       </div>
 
-      <section aria-labelledby="espacios-titulo" className="mb-8">
-        <h2 id="espacios-titulo" className="mb-1 text-[15px] font-bold tracking-[-0.005em]">
-          Espacios
-        </h2>
-        <p className="mb-3.5 mt-0 text-[13px] text-[color:var(--color-muted)]">
-          Cada espacio (sala, terraza, barra…) tiene su propia portada, horarios y carta.
-        </p>
-        {spaces.length === 0 ? (
-          <EmptyState title="Este restaurante aún no tiene espacios" />
-        ) : (
-          <ul className="m-0 grid list-none grid-cols-1 gap-[18px] p-0 sm:grid-cols-2 xl:grid-cols-3">
-            {spaces.map(s => (
-              <li key={s.id}>
-                <SpaceCard space={s} restaurantSlug={restaurant.slug} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <SpacesSection restaurant={restaurant} spaces={spaces} />
 
-      <RestaurantForm key={restaurant.slug} restaurant={restaurant} localeNames={localeNames} />
+      <h2 className="mb-3.5 text-[15px] font-bold tracking-[-0.005em]">Ficha del restaurante</h2>
+      {/* Otros idiomas = otros campos: el formulario se monta de nuevo. */}
+      <RestaurantForm key={`${restaurant.slug}:${restaurant.activeLocales.join(',')}:${restaurant.defaultLocale}`} restaurant={restaurant} localeNames={localeNames} />
     </>
   );
 }

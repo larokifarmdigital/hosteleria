@@ -47,7 +47,7 @@ export function describeTask(task: PendingTask, slug: string, localeNames: Recor
       id: `no_schedule:${task.target.spaceId}`,
       text: `El espacio «${task.target.spaceName}» no tiene horario`,
       detail: 'La web lo enseña como cerrado toda la semana.',
-      href: spaceHref(task.target.spaceId)
+      href: `${spaceHref(task.target.spaceId)}?tab=hours`
     };
   }
 
