@@ -42,6 +42,7 @@ export interface RestaurantRow {
   publishedSnapshot: unknown;
   spacesCount: number;
   dishesCount: number;
+  drinksCount: number;
   winesCount: number;
 }
 
@@ -82,6 +83,7 @@ export function rowToRestaurant(row: RestaurantRow): Restaurant {
     publishedSnapshot: (row.publishedSnapshot as RestaurantSnapshot | null) ?? null,
     spacesCount: row.spacesCount,
     dishesCount: row.dishesCount,
+    drinksCount: row.drinksCount,
     winesCount: row.winesCount
   };
 }

@@ -165,7 +165,9 @@ export interface Restaurant {
   publishedSnapshot: RestaurantSnapshot | null;
   // Derivados: los calcula el repo con subqueries, no se persisten.
   spacesCount: number;
+  /** Solo platos; las bebidas van en `drinksCount`. */
   dishesCount: number;
+  drinksCount: number;
   winesCount: number;
 }
 

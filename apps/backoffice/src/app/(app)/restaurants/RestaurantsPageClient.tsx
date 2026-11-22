@@ -49,7 +49,7 @@ export function RestaurantsPageClient() {
               <Td><LocaleChips codes={r.activeLocales} /></Td>
               <Td className="tabular text-[color:var(--color-ink-soft)]">{r.spacesCount}</Td>
               <Td className="whitespace-nowrap text-[color:var(--color-ink-soft)]">
-                {r.dishesCount} platos · {r.winesCount} vinos
+                {r.dishesCount} platos · {r.winesCount} vinos{r.drinksCount > 0 ? ` · ${r.drinksCount} bebidas` : ''}
               </Td>
               <Td><StatePill state={r.state} /></Td>
               <Td className="slug">{r.lastPublishedAt ? formatDate(r.lastPublishedAt) : 'Sin publicar'}</Td>

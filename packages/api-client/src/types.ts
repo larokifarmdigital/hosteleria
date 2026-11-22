@@ -185,7 +185,9 @@ export interface Restaurant {
   publishedSnapshot: (Partial<Pick<Restaurant, RestaurantContentKey>> & { activeLocaleCodes?: LocaleCode[]; defaultLocaleCode?: LocaleCode }) | null;
   completePercent: number;
   spacesCount: number;
+  /** Solo platos; las bebidas van en `drinksCount`. */
   dishesCount: number;
+  drinksCount: number;
   winesCount: number;
 }
 

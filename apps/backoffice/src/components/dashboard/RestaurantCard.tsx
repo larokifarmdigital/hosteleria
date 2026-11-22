@@ -34,7 +34,7 @@ export function RestaurantCard({ restaurant, href }: Props) {
 
         <p className="m-0 text-[12.5px] text-[color:var(--color-muted)]">
           {restaurant.spacesCount} {restaurant.spacesCount === 1 ? 'espacio' : 'espacios'} · {restaurant.dishesCount} platos ·{' '}
-          {restaurant.winesCount} vinos
+          {restaurant.winesCount} vinos{restaurant.drinksCount > 0 ? ` · ${restaurant.drinksCount} bebidas` : ''}
         </p>
 
         <div className="mt-auto flex items-center justify-between gap-2 border-t border-[color:var(--color-border)] pt-2.5">

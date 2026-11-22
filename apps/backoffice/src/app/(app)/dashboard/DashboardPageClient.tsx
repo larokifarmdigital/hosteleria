@@ -18,6 +18,7 @@ export function DashboardPageClient() {
   const spaces = restaurants.reduce((n, r) => n + r.spacesCount, 0);
   const dishes = restaurants.reduce((n, r) => n + r.dishesCount, 0);
   const wines = restaurants.reduce((n, r) => n + r.winesCount, 0);
+  const drinks = restaurants.reduce((n, r) => n + r.drinksCount, 0);
   const firstName = user?.name.split(' ')[0];
 
   const { data: languages = [] } = useLanguages();
@@ -47,7 +48,7 @@ export function DashboardPageClient() {
             <KpiTile label="Restaurantes" value={restaurants.length} hint={`${published} publicados`} />
             <KpiTile label="Espacios" value={spaces} />
             <KpiTile label="Platos" value={dishes} />
-            <KpiTile label="Vinos" value={wines} />
+            <KpiTile label="Vinos" value={wines} hint={drinks > 0 ? `y ${drinks} bebidas` : undefined} />
           </div>
 
           <section aria-labelledby="pendiente-titulo" className="mb-8">

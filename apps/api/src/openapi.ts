@@ -153,7 +153,8 @@ const schemas = {
       publishedSnapshot: { type: 'object', nullable: true, description: 'Lo último publicado, con los idiomas activos de ese momento.' },
       completePercent: { type: 'integer', minimum: 0, maximum: 100 },
       spacesCount: { type: 'integer' },
-      dishesCount: { type: 'integer' },
+      dishesCount: { type: 'integer', description: 'Solo platos.' },
+      drinksCount: { type: 'integer' },
       winesCount: { type: 'integer' }
     },
     required: ['id', 'slug', 'name', 'domain', 'state', 'activeLocales', 'defaultLocale']

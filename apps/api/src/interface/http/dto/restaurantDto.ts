@@ -41,6 +41,7 @@ export function restaurantToDto(r: Restaurant) {
     completePercent: 0,
     spacesCount: r.spacesCount,
     dishesCount: r.dishesCount,
+    drinksCount: r.drinksCount,
     winesCount: r.winesCount
   };
 }
