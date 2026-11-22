@@ -49,6 +49,8 @@ export function createSpacesRoutes() {
       restaurantId, c.req.param('spaceId'), body, user.id
     );
     if (body.state === 'published') c.set('rebuild', { spaceId: s.id });
+    // El orden y cuál es el principal no tienen borrador: se ven en la web al momento.
+    else if (body.order !== undefined || body.isDefault !== undefined) c.set('rebuild', { restaurantSlug: c.req.param('slug')! });
     return c.json({ space: spaceToDto(s) });
   });
 
@@ -62,6 +64,7 @@ export function createSpacesRoutes() {
   app.delete('/:spaceId', async (c) => {
     const user = c.get('user')!;
     const restaurantId = await resolveRestaurantId(c);
+    c.set('rebuild', { restaurantSlug: c.req.param('slug')! });
     await c.get('container').spaces.delete.execute(restaurantId, c.req.param('spaceId'), user.id);
     return c.json({ ok: true });
   });
