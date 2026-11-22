@@ -42,10 +42,11 @@ export function CategoryDialog({ kind, scope, category, nextOrder, onClose }: Pr
     const name = i18nFromForm(category?.name, values);
     try {
       if (category) {
-        await (kind === 'dishes' ? patchDish : patchWine).mutateAsync({ id: category.id, body: { name } });
+        await (kind === 'wines' ? patchWine : patchDish).mutateAsync({ id: category.id, body: { name } });
         showSuccessToast('Categoría guardada');
       } else {
-        await (kind === 'dishes' ? createDish : createWine).mutateAsync({ spaceId: scope.spaceId, name, order: nextOrder });
+        if (kind === 'wines') await createWine.mutateAsync({ spaceId: scope.spaceId, name, order: nextOrder });
+        else await createDish.mutateAsync({ spaceId: scope.spaceId, name, order: nextOrder, kind: kind === 'drinks' ? 'drink' : 'dish' });
         showSuccessToast('Categoría añadida');
       }
       onClose();
@@ -63,7 +64,7 @@ export function CategoryDialog({ kind, scope, category, nextOrder, onClose }: Pr
             {category ? 'Cambiar nombre de la categoría' : 'Nueva categoría'}
           </Dialog.Title>
           <Dialog.Description className="m-0 mt-1.5 text-[13.5px] text-[color:var(--color-muted)]">
-            {kind === 'dishes' ? 'Por ejemplo: Entrantes, Arroces, Postres.' : 'Por ejemplo: Tintos, Blancos, Espumosos.'}
+            {kind === 'dishes' ? 'Por ejemplo: Entrantes, Arroces, Postres.' : kind === 'wines' ? 'Por ejemplo: Tintos, Blancos, Espumosos.' : 'Por ejemplo: Cafés, Cervezas, Refrescos.'}
           </Dialog.Description>
           <form onSubmit={onSubmit} noValidate className="mt-5 flex flex-col gap-4">
             {scope.locales.map(code => (

@@ -28,7 +28,7 @@ export const qk = {
     list: (filters?: { restaurantSlug?: string; categoryId?: string; missingLocale?: string }) =>
       [...qk.dishes.all, 'list', filters ?? {}] as const,
     detail: (id: string) => [...qk.dishes.all, 'detail', id] as const,
-    categories: (spaceId?: string) => [...qk.dishes.all, 'categories', spaceId ?? null] as const
+    categories: (spaceId?: string, kind?: string) => [...qk.dishes.all, 'categories', spaceId ?? null, kind ?? 'dish'] as const
   },
   wines: {
     all: ['wines'] as const,

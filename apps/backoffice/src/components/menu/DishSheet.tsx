@@ -29,10 +29,17 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
-const DISH_TEXTS = [
-  { name: 'name', label: 'Nombre del plato', section: '' },
-  { name: 'note', label: 'Descripción', section: '' }
-];
+// Las bebidas usan este mismo formulario: cambian los textos y no llevan foto.
+const WORDS = {
+  dish: {
+    nameLabel: 'Nombre del plato', edit: 'Editar plato', create: 'Nuevo plato', saved: 'Plato guardado', added: 'Plato añadido',
+    remove: 'Eliminar plato', removed: 'Plato eliminado', fallback: 'este plato'
+  },
+  drink: {
+    nameLabel: 'Nombre de la bebida', edit: 'Editar bebida', create: 'Nueva bebida', saved: 'Bebida guardada', added: 'Bebida añadida',
+    remove: 'Eliminar bebida', removed: 'Bebida eliminada', fallback: 'esta bebida'
+  }
+};
 
 interface Props {
   scope: MenuScope;
@@ -43,10 +50,17 @@ interface Props {
   initialCategoryId?: string;
   /** Posición del nuevo plato dentro de su categoría. */
   nextOrder: number;
+  /** Es una bebida: mismos campos, sin foto. */
+  drink?: boolean;
   onClose: () => void;
 }
 
-export function DishSheet({ scope, categories, dish, initialCategoryId, nextOrder, onClose }: Props) {
+export function DishSheet({ scope, categories, dish, initialCategoryId, nextOrder, drink = false, onClose }: Props) {
+  const words = drink ? WORDS.drink : WORDS.dish;
+  const texts = [
+    { name: 'name', label: words.nameLabel, section: '' },
+    { name: 'note', label: 'Descripción', section: '' }
+  ];
   const [locale, setLocale] = useState(scope.defaultLocale);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -81,14 +95,14 @@ export function DishSheet({ scope, categories, dish, initialCategoryId, nextOrde
     try {
       if (dish) {
         await update.mutateAsync({ id: dish.id, body: { categoryId: values.categoryId, name, note, price, active: values.active, imageAssetId: values.imageAssetId } });
-        showSuccessToast('Plato guardado');
+        showSuccessToast(words.saved);
       } else {
         await create.mutateAsync({
           spaceId: scope.spaceId, categoryId: values.categoryId, name, note,
           price: price ?? undefined, active: values.active, order: nextOrder,
           imageAssetId: values.imageAssetId ?? undefined
         });
-        showSuccessToast('Plato añadido');
+        showSuccessToast(words.added);
       }
       onClose();
     } catch {
@@ -97,20 +111,20 @@ export function DishSheet({ scope, categories, dish, initialCategoryId, nextOrde
   });
 
   const i18n = { locales: scope.locales, activeLocale: locale, localeNames: scope.localeNames, defaultLocale: scope.defaultLocale };
-  const pending = gapsByLocale(translationGaps(DISH_TEXTS, { name: watch('name'), note: watch('note') }, scope.locales));
+  const pending = gapsByLocale(translationGaps(texts, { name: watch('name'), note: watch('note') }, scope.locales));
 
   return (
     <ItemSheetShell
-      title={dish ? 'Editar plato' : 'Nuevo plato'}
+      title={dish ? words.edit : words.create}
       dirty={isDirty}
       saving={saving}
       onSubmit={onSubmit}
       onClose={onClose}
       deletion={dish ? {
-        label: 'Eliminar plato',
-        name: dish.name[scope.defaultLocale] ?? 'este plato',
+        label: words.remove,
+        name: dish.name[scope.defaultLocale] ?? words.fallback,
         pending: remove.isPending,
-        onConfirm: () => remove.mutateAsync(dish.id).then(() => { showSuccessToast('Plato eliminado'); onClose(); })
+        onConfirm: () => remove.mutateAsync(dish.id).then(() => { showSuccessToast(words.removed); onClose(); })
       } : undefined}
     >
       <FormProvider {...form}>
@@ -130,7 +144,7 @@ export function DishSheet({ scope, categories, dish, initialCategoryId, nextOrde
               <LocaleTabs locales={scope.locales} value={locale} onChange={setLocale} names={scope.localeNames} missing={pending} />
             )}
             <div className="flex flex-col gap-5">
-              <I18nField name="name" label="Nombre del plato" errorFor={scope.defaultLocale} error={errors.name?.[scope.defaultLocale]?.message} {...i18n} />
+              <I18nField name="name" label={words.nameLabel} errorFor={scope.defaultLocale} error={errors.name?.[scope.defaultLocale]?.message} {...i18n} />
               <I18nField name="note" label="Descripción" hint="Ingredientes o una frase breve. Opcional." multiline {...i18n} />
             </div>
           </div>
@@ -139,7 +153,7 @@ export function DishSheet({ scope, categories, dish, initialCategoryId, nextOrde
             {control => <TextInput {...control} inputMode="decimal" autoComplete="off" placeholder="0,00" {...register('price')} />}
           </Field>
 
-          <ImageField
+          {!drink && <ImageField
             label="Foto del plato"
             hint="Opcional. Mejor una foto del plato tal como llega a la mesa."
             scope={scope}
@@ -147,7 +161,7 @@ export function DishSheet({ scope, categories, dish, initialCategoryId, nextOrde
             assetId={watch('imageAssetId')}
             onChange={asset => setValue('imageAssetId', asset?.id ?? null, { shouldDirty: true })}
             showDescription
-          />
+          />}
 
           <Checkbox id="d-active" label="Visible en la carta" hint="Desmárcalo para ocultarlo sin borrarlo, por ejemplo fuera de temporada." {...register('active')} />
         </div>

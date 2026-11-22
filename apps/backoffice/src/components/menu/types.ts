@@ -1,6 +1,7 @@
 import type { DishCategory, WineCategory } from '@hosteleria/api-client';
 
-export type MenuKind = 'dishes' | 'wines';
+/** Las bebidas son platos de otra carta: mismas tablas y mismas rutas, con `kind: 'drink'`. */
+export type MenuKind = 'dishes' | 'wines' | 'drinks';
 export type MenuCategory = DishCategory | WineCategory;
 
 /** Lo que el formulario necesita saber del sitio donde se edita la carta. */

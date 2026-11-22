@@ -63,7 +63,9 @@ export const EXTRA_SERVICES: { value: ExtraService; label: string }[] = [
   { value: 'familiar', label: 'Para ir con niños' },
   { value: 'pet_friendly', label: 'Admite mascotas' },
   { value: 'accesible', label: 'Accesible en silla de ruedas' },
-  { value: 'aparcamiento', label: 'Aparcamiento cerca' }
+  { value: 'aparcamiento', label: 'Aparcamiento cerca' },
+  { value: 'coctel', label: 'Coctelería' },
+  { value: 'live_music', label: 'Música en directo' }
 ];
 
 // ─── Textos fijos de la web ──────────────────────────────────────

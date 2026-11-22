@@ -45,11 +45,14 @@ export function DishesPageClient() {
   const space = spaces.find(s => s.id === params.get('e')) ?? spaces.find(s => s.isDefault) ?? spaces[0];
   const spaceId = space?.id ?? '';
 
-  const kind: MenuKind = params.get('tipo') === 'vinos' ? 'wines' : 'dishes';
+  const tipoParam = params.get('tipo');
+  const kind: MenuKind = tipoParam === 'vinos' ? 'wines' : tipoParam === 'bebidas' ? 'drinks' : 'dishes';
 
   const dishesQuery = useDishes({ restaurantSlug: slug });
   const winesQuery = useWines({ restaurantSlug: slug });
   const dishCategoriesQuery = useDishCategories(spaceId || undefined);
+  const drinksQuery = useDishes({ restaurantSlug: slug, kind: 'drink' });
+  const drinkCategoriesQuery = useDishCategories(spaceId || undefined, 'drink');
   const wineCategoriesQuery = useWineCategories(spaceId || undefined);
   const { data: languages = [] } = useLanguages();
   // Solo para las miniaturas de la lista: si falla, la carta se ve igual sin ellas.
@@ -72,18 +75,26 @@ export function DishesPageClient() {
 
   const dishes = useMemo(() => (dishesQuery.data ?? []).filter(d => d.spaceId === spaceId), [dishesQuery.data, spaceId]);
   const wines = useMemo(() => (winesQuery.data ?? []).filter(w => w.spaceId === spaceId), [winesQuery.data, spaceId]);
+  const drinks = useMemo(() => (drinksQuery.data ?? []).filter(d => d.spaceId === spaceId), [drinksQuery.data, spaceId]);
+  // La carta de bebidas solo se ofrece donde ya se usa: la mayoría de las webs no la enseñan.
+  const hasDrinks = kind === 'drinks' || (drinksQuery.data ?? []).length > 0 || (drinkCategoriesQuery.data ?? []).length > 0;
+  const menu = kind === 'wines'
+    ? { queries: [winesQuery, wineCategoriesQuery], categories: wineCategoriesQuery.data }
+    : kind === 'drinks'
+      ? { queries: [drinksQuery, drinkCategoriesQuery], categories: drinkCategoriesQuery.data }
+      : { queries: [dishesQuery, dishCategoriesQuery], categories: dishCategoriesQuery.data };
 
   const categories: MenuCategory[] = useMemo(
-    () => [...((kind === 'dishes' ? dishCategoriesQuery.data : wineCategoriesQuery.data) ?? [])].sort((a, b) => a.order - b.order),
-    [kind, dishCategoriesQuery.data, wineCategoriesQuery.data]
+    () => [...(menu.categories ?? [])].sort((a, b) => a.order - b.order),
+    [menu.categories]
   );
 
   const allRows: MenuRow[] = useMemo(() => {
     // Idiomas en los que falta algún texto del elemento (nombre o descripción).
     const missingOf = (...texts: (Record<string, string | undefined> | null | undefined)[]) =>
       locales.filter(code => texts.some(text => missingLocales(text, locales).includes(code)));
-    if (kind === 'dishes') {
-      return [...dishes].sort((a, b) => a.order - b.order).map(d => ({
+    if (kind !== 'wines') {
+      return [...(kind === 'drinks' ? drinks : dishes)].sort((a, b) => a.order - b.order).map(d => ({
         id: d.id,
         categoryId: d.categoryId,
         name: d.name[defaultLocale] ?? Object.values(d.name).find(Boolean) ?? 'Sin nombre',
@@ -105,7 +116,7 @@ export function DishesPageClient() {
       // El nombre de un vino no se traduce; su nota, sí.
       missing: missingOf(w.note)
     }));
-  }, [kind, dishes, wines, locales, defaultLocale, media]);
+  }, [kind, dishes, drinks, wines, locales, defaultLocale, media]);
 
   const totals = useMemo(() => {
     const out: Record<string, number> = {};
@@ -130,18 +141,19 @@ export function DishesPageClient() {
   };
   const tabHref = (tipo: MenuKind) => {
     const next = new URLSearchParams(params.toString());
-    if (tipo === 'wines') next.set('tipo', 'vinos'); else next.delete('tipo');
+    if (tipo === 'wines') next.set('tipo', 'vinos'); else if (tipo === 'drinks') next.set('tipo', 'bebidas'); else next.delete('tipo');
     const qs = next.toString();
     return qs ? `${pathname}?${qs}` : pathname;
   };
 
-  const itemNoun = kind === 'dishes' ? 'plato' : 'vino';
+  const itemNoun = kind === 'dishes' ? 'plato' : kind === 'wines' ? 'vino' : 'bebida';
+  const itemPlural = kind === 'dishes' ? 'platos' : kind === 'wines' ? 'vinos' : 'bebidas';
   const editingItem = editing?.type === 'item' ? editing : null;
   const nextItemOrder = (categoryId?: string) => allRows.filter(r => r.categoryId === categoryId).length;
 
   return (
     <>
-      <PageHeader title="Carta">Los platos y vinos de cada espacio, agrupados por categoría.</PageHeader>
+      <PageHeader title="Carta">{hasDrinks ? 'Los platos, vinos y bebidas' : 'Los platos y vinos'} de cada espacio, agrupados por categoría.</PageHeader>
 
       <QueryBoundary queries={[restaurantsQuery, spacesQuery]}>
         {!restaurant ? (
@@ -179,7 +191,7 @@ export function DishesPageClient() {
               <>
                 <nav aria-label="Tipo de carta" className="mb-5 border-b border-[color:var(--color-border)]">
                   <ul className="m-0 flex list-none gap-1 p-0">
-                    {([['dishes', 'Platos', dishes.length], ['wines', 'Vinos', wines.length]] as const).map(([tipo, label, count]) => (
+                    {([['dishes', 'Platos', dishes.length], ['wines', 'Vinos', wines.length], ...(hasDrinks ? [['drinks', 'Bebidas', drinks.length] as const] : [])] as const).map(([tipo, label, count]) => (
                       <li key={tipo}>
                         <Link
                           href={tabHref(tipo)}
@@ -201,12 +213,12 @@ export function DishesPageClient() {
                   </ul>
                 </nav>
 
-                <QueryBoundary queries={kind === 'dishes' ? [dishesQuery, dishCategoriesQuery] : [winesQuery, wineCategoriesQuery]}>
+                <QueryBoundary queries={menu.queries}>
                   {categories.length === 0 ? (
                     <div className="flex flex-col items-center gap-4">
                       <div className="w-full">
-                        <EmptyState title={kind === 'dishes' ? 'Esta carta aún no tiene categorías' : 'Esta carta de vinos aún no tiene categorías'}>
-                          Empieza creando una, por ejemplo {kind === 'dishes' ? '«Entrantes»' : '«Tintos»'}. Después podrás añadir {kind === 'dishes' ? 'platos' : 'vinos'} dentro.
+                        <EmptyState title={kind === 'dishes' ? 'Esta carta aún no tiene categorías' : `Esta carta de ${itemPlural} aún no tiene categorías`}>
+                          Empieza creando una, por ejemplo {kind === 'dishes' ? '«Entrantes»' : kind === 'wines' ? '«Tintos»' : '«Cafés»'}. Después podrás añadir {itemPlural} dentro.
                         </EmptyState>
                       </div>
                       <Button variant="primary" onClick={() => setEditing({ type: 'category', category: null })}>
@@ -259,7 +271,7 @@ export function DishesPageClient() {
                           itemNoun={itemNoun}
                           onAdd={categoryId => setEditing({ type: 'item', id: null, categoryId })}
                           onEdit={id => setEditing({ type: 'item', id })}
-                          onToggle={(id, active) => (kind === 'dishes' ? setDishActive : setWineActive).mutate({ id, active })}
+                          onToggle={(id, active) => (kind === 'wines' ? setWineActive : setDishActive).mutate({ id, active })}
                           onRenameCategory={category => setEditing({ type: 'category', category })}
                           onDeleteCategory={setDeleting}
                         />
@@ -268,12 +280,13 @@ export function DishesPageClient() {
                   )}
                 </QueryBoundary>
 
-                {editingItem && kind === 'dishes' && (
+                {editingItem && kind !== 'wines' && (
                   <DishSheet
                     key={editingItem.id ?? 'nuevo'}
                     scope={scope}
-                    categories={dishCategoriesQuery.data ?? []}
-                    dish={editingItem.id ? dishes.find(d => d.id === editingItem.id) ?? null : null}
+                    drink={kind === 'drinks'}
+                    categories={(kind === 'drinks' ? drinkCategoriesQuery.data : dishCategoriesQuery.data) ?? []}
+                    dish={editingItem.id ? (kind === 'drinks' ? drinks : dishes).find(d => d.id === editingItem.id) ?? null : null}
                     initialCategoryId={editingItem.categoryId}
                     nextOrder={nextItemOrder(editingItem.categoryId ?? categories[0]?.id)}
                     onClose={() => setEditing(null)}
@@ -302,12 +315,12 @@ export function DishesPageClient() {
                   pending={deleteDishCategory.isPending || deleteWineCategory.isPending}
                   onConfirm={() => {
                     if (!deleting) return;
-                    (kind === 'dishes' ? deleteDishCategory : deleteWineCategory)
+                    (kind === 'wines' ? deleteWineCategory : deleteDishCategory)
                       .mutateAsync(deleting.id)
                       .then(() => { showSuccessToast('Categoría eliminada'); setDeleting(null); }, () => {});
                   }}
                 >
-                  <p className="m-0">Está vacía, así que no se pierde ningún {itemNoun}. No se puede deshacer.</p>
+                  <p className="m-0">Está vacía, así que no se pierde {kind === 'drinks' ? 'ninguna' : 'ningún'} {itemNoun}. No se puede deshacer.</p>
                 </ConfirmDialog>
               </>
             )}

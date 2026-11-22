@@ -1,12 +1,12 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Dish, ApiClient, I18nString } from '@hosteleria/api-client';
+import type { Dish, DishKind, ApiClient, I18nString } from '@hosteleria/api-client';
 import { api } from '../../api/browser';
 import { useErrorToast } from '../../api/errorHandling';
 import { qk } from '../keys';
 
-type ListFilters = { restaurantSlug?: string; categoryId?: string; missingLocale?: string };
+type ListFilters = { restaurantSlug?: string; categoryId?: string; missingLocale?: string; kind?: DishKind };
 type CreateInput = Parameters<ApiClient['dishes']['create']>[0];
 type PatchInput = Parameters<ApiClient['dishes']['patch']>[1];
 
@@ -66,17 +66,18 @@ export function useDeleteDish() {
   });
 }
 
-export function useDishCategories(spaceId?: string) {
-  return useQuery({ queryKey: qk.dishes.categories(spaceId), queryFn: () => api.dishes.categories.list(spaceId) });
+/** Con `kind: 'drink'`, las categorías de la carta de bebidas. */
+export function useDishCategories(spaceId?: string, kind?: DishKind) {
+  return useQuery({ queryKey: qk.dishes.categories(spaceId, kind), queryFn: () => api.dishes.categories.list(spaceId, kind) });
 }
 
 export function useCreateDishCategory() {
   const qc = useQueryClient();
   const toastError = useErrorToast();
   return useMutation({
-    mutationFn: (body: { spaceId: string; name: I18nString; order?: number }) =>
+    mutationFn: (body: { spaceId: string; name: I18nString; order?: number; kind?: DishKind }) =>
       api.dishes.categories.create(body),
-    onSuccess: (_c, vars) => qc.invalidateQueries({ queryKey: qk.dishes.categories(vars.spaceId) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.dishes.all }),
     onError: toastError
   });
 }
