@@ -26,12 +26,13 @@ es `src/core/shared/infrastructure/env.ts`; `.env.example` la resume.
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | sí | API S3 de R2 |
 | `R2_BUCKET` | sí | `hostelery` |
 | `R2_PUBLIC_URL` | sí | Dirección pública del bucket |
+| `R2_BACKUP_BUCKET` | para la copia | Bucket **privado** aparte para la copia diaria. Nunca el de las fotos: ese se sirve entero en público. Sin esta variable la copia falla a propósito |
 | `CRON_SECRET` | sí | Sin él los crons no se ejecutan (se rechazan todas las llamadas) |
 | `APP_URL` | sí | `https://<backoffice>`: con él se montan los enlaces de invitación |
 | `RESEND_API_KEY`, `EMAIL_FROM` | no | Correo. Sin clave, las invitaciones van por enlace copiado a mano |
 | `COOKIE_DOMAIN` | no | Vacío: la cookie vale para el host que responde |
 
-`APP_ENV` no se define en producción (por defecto `production`: cookie `Secure`).
+`APP_ENV` no se define en producción: solo `development` quita `Secure` de la cookie.
 `ADMIN_EMAIL` / `ADMIN_PASSWORD` solo los usa `pnpm db:seed`, en local.
 
 ## 3. Crons
@@ -41,7 +42,7 @@ Declarados en `vercel.json`; Vercel los registra al desplegar y los llama con
 
 | Ruta | Hora (UTC) | Qué hace |
 |---|---|---|
-| `/api/cron/backup` | 03:00 | Copia de la base de datos a R2 (`backups/`), 30 días |
+| `/api/cron/backup` | 03:00 | Copia de la base de datos al bucket privado `R2_BACKUP_BUCKET` (`backups/`), 30 días. Sin contraseñas ni deploy hooks |
 | `/api/cron/cleanup` | 04:00 | Sesiones caducadas, límites de peticiones viejos y subidas de fotos sin confirmar |
 
 Para lanzar uno a mano:

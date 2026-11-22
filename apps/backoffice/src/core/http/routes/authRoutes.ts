@@ -17,6 +17,17 @@ export function createAuthRoutes() {
     windowSeconds: 3600,
     keyFn: async (c: any) => keyByIpAndBodyEmail(c)
   });
+  // Tope por cuenta, venga de donde venga: cambiando de IP el límite anterior no frena
+  // a quien prueba contraseñas. Más alto, para que no sea fácil dejar a alguien sin entrar.
+  const loginAccountRateLimit = rateLimit({
+    bucket: 'auth-login-account',
+    limit: 20,
+    windowSeconds: 3600,
+    keyFn: async (c: any) => {
+      try { return `email:${String((await c.req.raw.clone().json()).email ?? '').toLowerCase()}`; }
+      catch { return 'email:'; }
+    }
+  });
   const forgotRateLimit = rateLimit({
     bucket: 'auth-forgot',
     limit: 3,
@@ -26,6 +37,7 @@ export function createAuthRoutes() {
 
   app.post('/login',
     loginRateLimit,
+    loginAccountRateLimit,
     validate('json', z.object({ email: z.string().email(), password: z.string().min(1) })),
     async (c) => {
       const { login } = c.get('container').auth;

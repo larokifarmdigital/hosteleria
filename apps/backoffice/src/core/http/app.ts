@@ -19,6 +19,7 @@ import { createMediaRoutes } from './routes/mediaRoutes';
 import { createPublicRoutes } from './routes/publicRoutes';
 import { openApiSpec } from './openapi';
 import { getClientIp, rateLimit } from './middleware/rate-limit';
+import { requireSameOrigin } from './middleware/sameOrigin';
 import type { AppBindings, Defer } from './types';
 
 export interface AppOptions {
@@ -41,6 +42,7 @@ export function createApp(options: AppOptions = {}) {
     await next();
   });
 
+  app.use('*', requireSameOrigin);
   app.use('*', withContainer);
   app.use('*', rebuildSiteAfterWrite);
   // `/public` no mira la sesión: su respuesta es la misma para todo el mundo
@@ -77,39 +79,40 @@ export function createApp(options: AppOptions = {}) {
   });
 
   app.get('/', (c) => c.json({
-    name: '@hosteleria/api',
-    version: '0.0.1',
-    docs: `${options.publicBasePath ?? ''}/docs`,
-    openapi: `${options.publicBasePath ?? ''}/openapi.json`
+    name: 'hosteleria-backoffice-api',
+    version: '0.0.1'
   }));
 
   app.get('/health', async (c) => {
     const start = Date.now();
     let dbOk = false;
-    let dbError: string | null = null;
     try {
       const db = getDb(getEnv().DATABASE_URL);
       await db.execute(sql`select 1`);
       dbOk = true;
     } catch (err) {
-      dbError = err instanceof Error ? err.message : 'unknown';
+      // El mensaje del driver puede llevar el host de la base de datos: va al log, no a la respuesta.
+      console.error('[health] db error:', err instanceof Error ? err.message : err);
     }
     return c.json({
       ok: dbOk,
       db: dbOk ? 'connected' : 'error',
-      dbError,
       latencyMs: Date.now() - start,
       version: '0.0.1'
     }, dbOk ? 200 : 503);
   });
 
-  app.get('/openapi.json', (c) => c.json(openApiSpec));
-  app.get('/docs', apiReference({
-    theme: 'default',
-    layout: 'modern',
-    spec: { url: `${options.publicBasePath ?? ''}/openapi.json` },
-    metaData: { title: '@hosteleria/api — Reference' }
-  }));
+  // La página de documentación carga un script de terceros: en producción correría en
+  // el mismo origen que la sesión. Solo existe en local.
+  if (getEnv().APP_ENV === 'development') {
+    app.get('/openapi.json', (c) => c.json(openApiSpec));
+    app.get('/docs', apiReference({
+      theme: 'default',
+      layout: 'modern',
+      spec: { url: `${options.publicBasePath ?? ''}/openapi.json` },
+      metaData: { title: '@hosteleria/api — Reference' }
+    }));
+  }
 
   app.route('/public', createPublicRoutes());
   app.route('/auth', createAuthRoutes());

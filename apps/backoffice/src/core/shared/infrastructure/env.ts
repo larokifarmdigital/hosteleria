@@ -9,7 +9,9 @@ const EnvSchema = z.object({
   R2_SECRET_ACCESS_KEY: z.string().min(1),
   R2_BUCKET: z.string().min(1),
   R2_PUBLIC_URL: z.string().url(),
-  /** `production` marca la cookie de sesión como `Secure; SameSite=None`; cualquier otro valor, `Lax` sin `Secure` (http en local). */
+  /** Bucket PRIVADO para la copia diaria. Sin él la copia no se hace: nunca va al bucket de las fotos, que es público. */
+  R2_BACKUP_BUCKET: z.string().min(1).optional(),
+  /** Solo `development` quita `Secure` de la cookie de sesión (http en local); cualquier otro valor la deja segura. */
   APP_ENV: z.string().default('production'),
   /** Domain de la cookie de sesión (ej. `.hosteleria.cat`). Vacío = el host que responde. */
   COOKIE_DOMAIN: z.string().optional(),

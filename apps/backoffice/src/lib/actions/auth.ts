@@ -1,6 +1,7 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
+import { extractIp } from '@/core/http/httpUtils';
 import { redirect } from 'next/navigation';
 import { apiFetch, getServerApi } from '../api/server';
 import { SESSION_COOKIE, safeNext } from '../auth/paths';
@@ -17,9 +18,12 @@ export async function loginAction(
   // El email vuelve con el error: el formulario se vacía tras enviarse y así no hay que reescribirlo.
   if (!email || !password) return { error: 'Introduce email y contraseña.', email };
 
+  // El api corre en este mismo proceso y no ve la conexión: sin esto, todos los
+  // intentos contarían como una sola IP y cinco fallos bloquearían la cuenta a cualquiera.
+  const clientIp = extractIp(await headers());
   const res = await apiFetch('/auth/login', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-real-ip': clientIp },
     body: JSON.stringify({ email, password })
   });
 

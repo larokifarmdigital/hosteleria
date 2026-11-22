@@ -9,9 +9,10 @@ import type { Session, SessionMetadata } from '../domain/models/session';
 import type { SessionUser } from '../domain/models/user';
 import type { SessionRepository } from '../domain/repositories/sessionRepository';
 
-// Nombre y atributos de la cookie no se tocan: cambiarlos cierra las sesiones abiertas.
+// El nombre de la cookie no se toca: cambiarlo cierra las sesiones abiertas.
 function buildLucia(env: Env): Lucia {
-  const production = env.APP_ENV === 'production';
+  // Al revés sería frágil: una errata en APP_ENV dejaría la cookie sin `Secure` en producción.
+  const secure = env.APP_ENV !== 'development';
   const db = getDb(env.DATABASE_URL) as any;
   const adapter = new DrizzlePostgreSQLAdapter(db, sessions, users);
   return new Lucia(adapter, {
@@ -19,8 +20,9 @@ function buildLucia(env: Env): Lucia {
       name: 'hs_session',
       expires: false, // rolling — Lucia refresca cuando faltan < N días
       attributes: {
-        secure: production,
-        sameSite: production ? 'none' : 'lax', // 'none' requiere Secure
+        secure,
+        // El api y el backoffice comparten origen: la cookie no tiene que viajar desde otras webs.
+        sameSite: 'lax',
         domain: env.COOKIE_DOMAIN || undefined
       }
     },

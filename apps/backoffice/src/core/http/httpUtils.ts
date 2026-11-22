@@ -1,12 +1,14 @@
 /**
- * `x-forwarded-for[0]` > `x-real-ip` > `'unknown'`. Las dos las fija la plataforma
- * (Vercel pisa lo que mande el cliente). `cf-connecting-ip` ya no se mira: sin
- * Cloudflare delante la escribe quien quiera, y con ella se saltaría el límite de peticiones.
+ * IP del cliente, de la cabecera más fiable a la menos: `x-vercel-forwarded-for`
+ * y `x-real-ip` las fija Vercel; `x-forwarded-for` puede traer delante lo que
+ * mande el cliente si hay otro proxy. `cf-connecting-ip` no se mira: sin
+ * Cloudflare delante la escribe quien quiera.
  */
 export function extractIp(headers: Headers): string {
   return (
-    headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || headers.get('x-real-ip')
+    headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim()
+    || headers.get('x-real-ip')?.trim()
+    || headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     || 'unknown'
   );
 }
