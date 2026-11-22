@@ -6,11 +6,9 @@ const BASE_INFO = {
   description: 'Backend HTTP del backoffice del grupo hosteleria. Autenticación por cookie de sesión (Lucia). Multi-idioma en jsonb, R2 para media.'
 };
 
-// Prod primero: Scalar usa el primer servidor en "Try it".
+// Relativo: el api cuelga de `/api` en el mismo origen que el backoffice.
 const SERVERS = [
-  { url: 'https://hostelery-api.larokifarmdigital.workers.dev', description: 'Producción (Cloudflare Workers)' },
-  { url: 'https://api.hosteleria.cat', description: 'Producción con dominio custom (si lo configurás)' },
-  { url: 'http://localhost:8787', description: 'Local dev (wrangler dev)' }
+  { url: '/api', description: 'Este backoffice' }
 ];
 
 const schemas = {

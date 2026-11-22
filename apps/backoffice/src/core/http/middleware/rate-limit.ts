@@ -1,8 +1,9 @@
-import { and, eq, lt, sql } from 'drizzle-orm';
+import { lt, sql } from 'drizzle-orm';
 import { createMiddleware } from 'hono/factory';
 import { HTTPException } from 'hono/http-exception';
-import { getDb, type Env } from '@/core/shared';
+import { getDb, getEnv } from '@/core/shared';
 import { rateLimits } from '@/core/shared/infrastructure/drizzle/schema';
+import { extractIp } from '../httpUtils';
 
 // Fixed window sobre Postgres: 1 upsert a Neon por request (~15-30ms).
 
@@ -15,21 +16,16 @@ export interface RateLimitOpts {
 }
 
 export function getClientIp(c: any): string {
-  const h = c.req.header('cf-connecting-ip')
-    ?? c.req.header('x-forwarded-for')
-    ?? c.req.header('x-real-ip')
-    ?? 'unknown';
-  return h.split(',')[0].trim();
+  return extractIp(c.req.raw.headers);
 }
 
 /** 429 + `Retry-After` al superar el límite; siempre emite `X-RateLimit-*`. */
 export function rateLimit(opts: RateLimitOpts) {
   const { bucket, limit, windowSeconds, keyFn = getClientIp } = opts;
 
-  return createMiddleware<{ Bindings: Env; Variables: Record<string, unknown> }>(async (c, next) => {
-    const env = c.env;
+  return createMiddleware<{ Variables: Record<string, unknown> }>(async (c, next) => {
     const key = await keyFn(c);
-    const db = getDb(env.DATABASE_URL);
+    const db = getDb(getEnv().DATABASE_URL);
     const now = new Date();
     const windowStartCutoff = new Date(now.getTime() - windowSeconds * 1000);
 
@@ -71,8 +67,8 @@ export function rateLimit(opts: RateLimitOpts) {
 }
 
 /** Borra filas cuya ventana cerró hace >7 días; devuelve cuántas. */
-export async function cleanupStaleRateLimits(env: Env): Promise<number> {
-  const db = getDb(env.DATABASE_URL);
+export async function cleanupStaleRateLimits(): Promise<number> {
+  const db = getDb(getEnv().DATABASE_URL);
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const deleted = await db
     .delete(rateLimits)

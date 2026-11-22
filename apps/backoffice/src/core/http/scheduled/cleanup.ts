@@ -1,10 +1,11 @@
 import { lt } from 'drizzle-orm';
-import { getDb, type Env } from '@/core/shared';
+import { getDb, getEnv } from '@/core/shared';
 import { sessions } from '@/core/shared/infrastructure/drizzle/schema';
 import { cleanupStaleRateLimits } from '../middleware/rate-limit';
 import { DrizzleMediaRepository, R2MediaStorage, CleanupUnconfirmedMediaUseCase } from '@/core/media';
 
-export async function runCleanup(env: Env) {
+export async function runCleanup() {
+  const env = getEnv();
   const db = getDb(env.DATABASE_URL);
   const now = new Date();
 
@@ -13,7 +14,7 @@ export async function runCleanup(env: Env) {
     .where(lt(sessions.expiresAt, now))
     .returning({ id: sessions.id });
 
-  const deletedRateLimits = await cleanupStaleRateLimits(env);
+  const deletedRateLimits = await cleanupStaleRateLimits();
 
   const deletedUploads = await new CleanupUnconfirmedMediaUseCase(
     new DrizzleMediaRepository(env),

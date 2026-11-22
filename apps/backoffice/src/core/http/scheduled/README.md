@@ -1,35 +1,25 @@
 # scheduled/
 
-Tareas que corren por **Cloudflare Cron Triggers**, no por HTTP.
+Tareas diarias. Las dispara **Vercel Cron** con un GET a `src/app/api/cron/<tarea>/route.ts`,
+que comprueba `Authorization: Bearer <CRON_SECRET>` (`../cronAuth.ts`) y llama a la función.
 
-El handler `scheduled` del Worker (en `src/index.ts`) recibe los events del
-cron y despacha a estas funciones según el schedule que disparó.
-
-## Archivos
-
-| Archivo | Schedule | Qué hace |
+| Archivo | Horario (`vercel.json`) | Qué hace |
 |---|---|---|
-| `backup.ts` | `0 3 * * *` (03:00 UTC diario) | Dump JSON de toda la BD a R2 bajo `backups/YYYY-MM-DD.json`. Retención 30 días. No incluye `passwordHash` (seguridad del backup si se filtra). |
-| `cleanup.ts` | `0 4 * * *` (04:00 UTC diario) | Borra sesiones Lucia caducadas + filas viejas de `rate_limits` (>7 días). |
+| `backup.ts` | `0 3 * * *` (03:00 UTC) | Vuelca la BD en JSON a R2, en `backups/YYYY-MM-DD.json`. Conserva 30 días. Sin `passwordHash`. |
+| `cleanup.ts` | `0 4 * * *` (04:00 UTC) | Borra sesiones caducadas, filas viejas de `rate_limits` (más de 7 días) y subidas sin confirmar. |
 
-## Cómo se disparan
+En el plan Hobby de Vercel un cron diario se lanza en algún momento de la hora indicada, no en el minuto exacto.
 
-Los schedules están declarados en `apps/api/wrangler.toml#triggers.crons`.
-Cloudflare invoca el handler `scheduled` del Worker con `event.cron =
-"0 3 * * *"` o `"0 4 * * *"` según cuál disparó.
+## Probar en local
 
-`src/index.ts` branche a `runBackup(env)` o `runCleanup(env)` según.
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:4400/api/cron/cleanup
+```
 
-## Diferencia con endpoints HTTP de cron
+Las dos van contra la base de datos y el bucket de producción.
 
-En Vercel teníamos `/cron/cleanup` y `/cron/backup` HTTP protegidos con
-`Authorization: Bearer CRON_SECRET`. En Workers no hace falta — las tareas
-las invoca el runtime, no se exponen como endpoints.
+## Añadir una tarea
 
-## Añadir una tarea nueva
-
-1. Crear `src/scheduled/mi-tarea.ts` con una función `export async function
-   runMiTarea(env: Env)`.
-2. Añadir el schedule a `wrangler.toml#triggers.crons`.
-3. Añadir un `else if (event.cron === "...")` en `src/index.ts#scheduled`.
-4. `pnpm deploy` → Cloudflare registra el cron automáticamente.
+1. `mi-tarea.ts` aquí, con `export async function runMiTarea()`.
+2. `src/app/api/cron/mi-tarea/route.ts`, copiando una de las existentes.
+3. Su horario en `vercel.json`.

@@ -14,7 +14,8 @@ en ninguna carpeta de recurso.
 |---|---|---|
 | `cache.ts` | `cacheHeaders({ maxAge, swr, scope })` → Cache-Control + ETag + 304 (`scope: 'public'` solo sin sesión; `maxAge: 0` = revalidar siempre). `noCache` → fuerza no cachear | `languages/route.ts`, `restaurants/route.ts` (list + detail), `auth/route.ts` (session endpoints), `publicRoutes.ts` |
 | `rate-limit.ts` | Factory `rateLimit({ bucket, limit, windowSeconds, keyFn? })` + `cleanupStaleRateLimits()` | `app.ts` global (100/min), `auth/route.ts` (login 5/h, forgot 3/h) |
-| `sentry.ts` | `sentryMiddleware()` → captura 500+ a Sentry con context (user, path, method) | `app.ts` global |
+| `rebuildSite.ts` | Tras una escritura que se ve en la web, avisa al proveedor para regenerar la landing; el aviso sale después de responder (`defer`, que en Next es `after()`) | `app.ts` global, `restaurantsRoutes.ts` |
+| `withContainer.ts` | Pone en el contexto el contenedor de casos de uso (uno por proceso) | `app.ts` global |
 
 ## Patterns
 

@@ -1,6 +1,5 @@
 import { createHash } from 'node:crypto';
 import { createMiddleware } from 'hono/factory';
-import type { Env } from '@/core/shared';
 
 export interface CacheOpts {
   maxAge: number;
@@ -15,7 +14,7 @@ export function cacheHeaders(opts: CacheOpts) {
     ? `${scope}, max-age=${maxAge}, stale-while-revalidate=${swr}`
     : maxAge > 0 ? `${scope}, max-age=${maxAge}` : `${scope}, max-age=0, must-revalidate`;
 
-  return createMiddleware<{ Bindings: Env; Variables: Record<string, unknown> }>(async (c, next) => {
+  return createMiddleware<{ Variables: Record<string, unknown> }>(async (c, next) => {
     await next();
     if (c.req.method !== 'GET' || c.res.status !== 200) return;
 
@@ -36,7 +35,7 @@ export function cacheHeaders(opts: CacheOpts) {
 }
 
 /** Para endpoints de estado del user actual: una respuesta vieja = bug. */
-export const noCache = createMiddleware<{ Bindings: Env; Variables: Record<string, unknown> }>(async (c, next) => {
+export const noCache = createMiddleware<{ Variables: Record<string, unknown> }>(async (c, next) => {
   await next();
   c.res.headers.set('Cache-Control', 'no-store, must-revalidate');
   c.res.headers.set('Pragma', 'no-cache');

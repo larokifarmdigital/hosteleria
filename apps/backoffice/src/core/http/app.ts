@@ -1,9 +1,8 @@
 import { Hono } from 'hono';
-import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { sql } from 'drizzle-orm';
 import { apiReference } from '@scalar/hono-api-reference';
-import { getDb } from '@/core/shared';
+import { getDb, getEnv } from '@/core/shared';
 import { validateSession } from './middleware/authMiddleware';
 import { withContainer } from './middleware/withContainer';
 import { rebuildSiteAfterWrite } from './middleware/rebuildSite';
@@ -19,31 +18,28 @@ import { createUsersRoutes } from './routes/usersRoutes';
 import { createMediaRoutes } from './routes/mediaRoutes';
 import { createPublicRoutes } from './routes/publicRoutes';
 import { openApiSpec } from './openapi';
-import { sentryMiddleware } from './middleware/sentry';
 import { getClientIp, rateLimit } from './middleware/rate-limit';
-import type { AppBindings } from './types';
+import type { AppBindings, Defer } from './types';
 
-export function createApp() {
+export interface AppOptions {
+  /** Aplaza trabajo hasta después de responder (`after()` en Next). Sin él, se espera. */
+  defer?: Defer;
+  /** Prefijo público bajo el que se sirve la app; solo lo usa la página de documentación. */
+  publicBasePath?: string;
+}
+
+// Las rutas se declaran sin prefijo (`/restaurants`): quien monta la app decide
+// dónde cuelga. Sin CORS: el backoffice la sirve en su mismo origen y las
+// landings leen `/public` en el build, sin navegador.
+export function createApp(options: AppOptions = {}) {
   const app = new Hono<AppBindings>();
 
   app.use('*', logger());
 
-  // Compat con helpers que leen `c.get('env')` en vez de `c.env`.
   app.use('*', async (c, next) => {
-    c.set('env', c.env);
+    c.set('defer', options.defer);
     await next();
   });
-
-  // ALLOWED_ORIGIN vive en `c.env`, por eso la función `origin` dinámica.
-  app.use('*', cors({
-    origin: (origin, c) => {
-      const allowed = (c.env.ALLOWED_ORIGIN ?? '').split(',').map((s: string) => s.trim());
-      return allowed.includes(origin) ? origin : null;
-    },
-    credentials: true,
-    allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Authorization']
-  }));
 
   app.use('*', withContainer);
   app.use('*', rebuildSiteAfterWrite);
@@ -55,7 +51,6 @@ export function createApp() {
     c.set('session', null);
     return next();
   });
-  app.use('*', sentryMiddleware());
 
   // `auth/*` tiene limiters propios más estrictos; health/docs son públicos.
   // Con sesión se cuenta por usuario y no por IP: las peticiones del backoffice
@@ -84,8 +79,8 @@ export function createApp() {
   app.get('/', (c) => c.json({
     name: '@hosteleria/api',
     version: '0.0.1',
-    docs: '/docs',
-    openapi: '/openapi.json'
+    docs: `${options.publicBasePath ?? ''}/docs`,
+    openapi: `${options.publicBasePath ?? ''}/openapi.json`
   }));
 
   app.get('/health', async (c) => {
@@ -93,7 +88,7 @@ export function createApp() {
     let dbOk = false;
     let dbError: string | null = null;
     try {
-      const db = getDb(c.env.DATABASE_URL);
+      const db = getDb(getEnv().DATABASE_URL);
       await db.execute(sql`select 1`);
       dbOk = true;
     } catch (err) {
@@ -112,7 +107,7 @@ export function createApp() {
   app.get('/docs', apiReference({
     theme: 'default',
     layout: 'modern',
-    spec: { url: '/openapi.json' },
+    spec: { url: `${options.publicBasePath ?? ''}/openapi.json` },
     metaData: { title: '@hosteleria/api — Reference' }
   }));
 

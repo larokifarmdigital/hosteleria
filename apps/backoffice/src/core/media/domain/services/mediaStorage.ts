@@ -1,6 +1,6 @@
 export interface MediaStorage {
-  /** PUT directo browser→bucket: el Worker no proxea el binario (CPU time y
-   *  límites de body size). */
+  /** PUT directo browser→bucket: el servidor no hace de intermediario del binario
+   *  (límite de tamaño del cuerpo de una función). */
   createUploadUrl(input: {
     key: string;
     contentType: string;

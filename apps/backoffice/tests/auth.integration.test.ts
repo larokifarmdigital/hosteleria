@@ -3,7 +3,6 @@
 // Sin TEST_DATABASE_URL se salta.
 import { describe, it, expect, beforeAll } from 'vitest';
 import { createApp } from '@/core/http/app';
-import type { Env } from '@/core/shared';
 
 const testDbUrl = process.env.TEST_DATABASE_URL;
 if (testDbUrl && testDbUrl === process.env.DATABASE_URL) {
@@ -11,18 +10,12 @@ if (testDbUrl && testDbUrl === process.env.DATABASE_URL) {
 }
 const describeIntegration = testDbUrl ? describe : describe.skip;
 
-// En Workers el env llega por `c.env`; aquí hay que pasarlo a mano. Estos
-// tests no tocan R2, por eso el binding MEDIA va vacío.
-const env = {
-  ...process.env,
-  DATABASE_URL: testDbUrl,
-  ALLOWED_ORIGIN: 'http://localhost:4400',
-  MEDIA: {}
-} as unknown as Env;
+// La app lee `process.env` al primer uso: se apunta a la BD de pruebas antes de crearla.
+if (testDbUrl) process.env.DATABASE_URL = testDbUrl;
 
 describeIntegration('auth integration', () => {
   let app: ReturnType<typeof createApp>;
-  const request = (path: string, init?: RequestInit) => app.request(path, init, env);
+  const request = (path: string, init?: RequestInit) => app.request(path, init);
 
   beforeAll(() => {
     app = createApp();

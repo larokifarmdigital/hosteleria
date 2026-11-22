@@ -9,10 +9,9 @@ import type { Session, SessionMetadata } from '../domain/models/session';
 import type { SessionUser } from '../domain/models/user';
 import type { SessionRepository } from '../domain/repositories/sessionRepository';
 
-// Sin caché por isolate: el adapter guarda la conexión, y en Workers una
-// conexión no puede pasar de una petición a otra (ver `client.ts`).
+// Nombre y atributos de la cookie no se tocan: cambiarlos cierra las sesiones abiertas.
 function buildLucia(env: Env): Lucia {
-  const production = env.SENTRY_ENV === 'production';
+  const production = env.APP_ENV === 'production';
   const db = getDb(env.DATABASE_URL) as any;
   const adapter = new DrizzlePostgreSQLAdapter(db, sessions, users);
   return new Lucia(adapter, {

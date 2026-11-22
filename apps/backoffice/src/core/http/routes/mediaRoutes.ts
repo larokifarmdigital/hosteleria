@@ -117,7 +117,7 @@ async function enrichMedia(c: Context<AppBindings>, m: MediaAsset) {
   const restaurant = m.restaurantId
     ? await c.get('container').repos.restaurantsRepo.findById(m.restaurantId)
     : null;
-  return mediaToDto(m, c.env.R2_PUBLIC_URL, restaurant);
+  return mediaToDto(m, c.get('container').config.mediaPublicUrl, restaurant);
 }
 
 /** `null` = admin sin restricción (análogo a `allowedSpaceIds`, pero por restaurant). */

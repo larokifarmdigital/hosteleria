@@ -1,54 +1,35 @@
-import { AsyncLocalStorage } from 'node:async_hooks';
 import { Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import * as schema from './schema';
 
 // `neon-serverless` (WebSocket) y no `neon-http`: hacen falta transacciones
 // para las operaciones multi-write. Sin polyfill `ws`: `WebSocket` es global
-// en Workers y en Node >=22 (scripts tsx locales).
+// en Node >= 22, que es lo mínimo para esta app.
 
 type Db = ReturnType<typeof drizzle<typeof schema>>;
 
-// En Workers una conexión solo vale dentro de la petición que la abrió: si otra
-// petición la reutiliza, su promesa no resuelve nunca y Cloudflare corta con el
-// error 1101. Por eso el Worker abre un pool por petición (`runWithRequestDb`)
-// y `getDb` devuelve ese. El pool de módulo queda solo para scripts y tests,
-// que corren en Node fuera de ese ámbito.
-const requestDb = new AsyncLocalStorage<Db>();
-
-let _db: Db | null = null;
-let _pool: Pool | null = null;
+// En `globalThis` y no en una variable de módulo: en `next dev` el HMR vuelve a
+// evaluar el módulo en cada cambio y cada copia abriría su propio pool.
+const globalForDb = globalThis as typeof globalThis & {
+  __hosteleriaDb?: { url: string; pool: Pool; db: Db };
+};
 
 export function getDb(databaseUrl: string): Db {
-  const scoped = requestDb.getStore();
-  if (scoped) return scoped;
-  if (_db) return _db;
-  _pool = new Pool({ connectionString: databaseUrl });
-  _db = drizzle(_pool, { schema });
-  return _db;
-}
+  const current = globalForDb.__hosteleriaDb;
+  if (current && current.url === databaseUrl) return current.db;
 
-/** `waitUntil` deja cerrar el pool después de enviar la respuesta, sin retrasarla. */
-export async function runWithRequestDb<T>(
-  databaseUrl: string,
-  waitUntil: (p: Promise<unknown>) => void,
-  fn: () => Promise<T>
-): Promise<T> {
   const pool = new Pool({ connectionString: databaseUrl });
-  // Al acabar la petición el runtime corta el WebSocket y el cliente inactivo
-  // emite `error`; sin un listener, eso sube como excepción no capturada.
+  // Neon cierra las conexiones inactivas y el cliente en reposo emite `error`;
+  // sin un listener, eso tumba el proceso. El pool la descarta y abre otra.
   pool.on('error', () => {});
-  try {
-    return await requestDb.run(drizzle(pool, { schema }), fn);
-  } finally {
-    waitUntil(pool.end());
-  }
+  const db = drizzle(pool, { schema });
+  globalForDb.__hosteleriaDb = { url: databaseUrl, pool, db };
+  return db;
 }
 
 export async function closeDb() {
-  if (_pool) {
-    await _pool.end();
-    _pool = null;
-    _db = null;
-  }
+  const current = globalForDb.__hosteleriaDb;
+  if (!current) return;
+  globalForDb.__hosteleriaDb = undefined;
+  await current.pool.end();
 }

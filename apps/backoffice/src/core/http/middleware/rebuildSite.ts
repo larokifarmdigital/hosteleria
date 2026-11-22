@@ -1,12 +1,11 @@
 import { createMiddleware } from 'hono/factory';
 import type { Context } from 'hono';
-import { runWithRequestDb } from '@/core/shared';
 import type { AppBindings } from '../types';
 
 /**
  * Pide regenerar la landing. La petición queda apuntada antes de responder; el
- * aviso al proveedor, que puede tardar segundos, sale después (`waitUntil`) y con
- * su propia conexión: la de esta petición se cierra al responder.
+ * aviso al proveedor, que puede tardar segundos, sale después si la app se montó
+ * con `defer`. Sin él (pruebas) se espera a la llamada.
  */
 export async function requestSiteRebuild(c: Context<AppBindings>, scope: { spaceId?: string; restaurantSlug?: string }): Promise<void> {
   const rebuild = c.get('container').public.requestRebuild;
@@ -15,18 +14,10 @@ export async function requestSiteRebuild(c: Context<AppBindings>, scope: { space
     : scope.restaurantSlug ? await rebuild.prepareForRestaurant(scope.restaurantSlug) : null;
   if (!pending) return;
 
-  // Fuera de Workers (tests) no hay `executionCtx`: se espera a la llamada.
-  let waitUntil: ((p: Promise<unknown>) => void) | null = null;
-  try {
-    const ctx = c.executionCtx;
-    waitUntil = p => ctx.waitUntil(p);
-  } catch {
-    waitUntil = null;
-  }
-  if (!waitUntil) return rebuild.deliver(pending);
-  const later = waitUntil;
-  later(
-    runWithRequestDb(c.env.DATABASE_URL, later, () => rebuild.deliver(pending))
+  const defer = c.get('defer');
+  if (!defer) return rebuild.deliver(pending);
+  defer(() =>
+    rebuild.deliver(pending)
       .catch(err => console.error('[rebuild] no se pudo avisar a la web:', err instanceof Error ? err.message : err))
   );
 }

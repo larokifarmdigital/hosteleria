@@ -1,23 +1,12 @@
-import { AwsClient } from 'aws4fetch';
 import type { MediaStorage } from '../domain/services/mediaStorage';
 import type { Env } from '@/core/shared';
-
-// `env.MEDIA` (R2 binding) para head/delete; aws4fetch para firmar PUT URLs
-// (el binding nativo no las soporta). El cliente se cachea por isolate.
-let _s3Client: AwsClient | null = null;
+import { R2Client } from './r2Client';
 
 export class R2MediaStorage implements MediaStorage {
-  constructor(private env: Env) {}
+  private readonly r2: R2Client;
 
-  private get s3Client(): AwsClient {
-    if (_s3Client) return _s3Client;
-    _s3Client = new AwsClient({
-      accessKeyId: this.env.R2_ACCESS_KEY_ID,
-      secretAccessKey: this.env.R2_SECRET_ACCESS_KEY,
-      service: 's3',
-      region: 'auto'
-    });
-    return _s3Client;
+  constructor(private env: Env) {
+    this.r2 = new R2Client(env);
   }
 
   async createUploadUrl(input: {
@@ -26,34 +15,20 @@ export class R2MediaStorage implements MediaStorage {
     expiresIn?: number;
   }): Promise<{ uploadUrl: string; publicUrl: string; key: string; expiresIn: number }> {
     const expiresIn = input.expiresIn ?? 300;
-    const endpoint = `https://${this.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${this.env.R2_BUCKET}/${input.key}`;
-    const url = new URL(endpoint);
-    url.searchParams.set('X-Amz-Expires', String(expiresIn));
-
-    const signed = await this.s3Client.sign(
-      new Request(url, { method: 'PUT', headers: { 'Content-Type': input.contentType } }),
-      { aws: { signQuery: true } }
-    );
-
     return {
-      uploadUrl: signed.url,
+      uploadUrl: await this.r2.signUploadUrl(input.key, input.contentType, expiresIn),
       publicUrl: `${this.env.R2_PUBLIC_URL.replace(/\/$/, '')}/${input.key}`,
       key: input.key,
       expiresIn
     };
   }
 
-  async head(key: string): Promise<{ sizeBytes: number; contentType?: string } | null> {
-    const obj = await this.env.MEDIA.head(key);
-    if (!obj) return null;
-    return {
-      sizeBytes: obj.size,
-      contentType: obj.httpMetadata?.contentType
-    };
+  head(key: string): Promise<{ sizeBytes: number; contentType?: string } | null> {
+    return this.r2.head(key);
   }
 
-  async delete(key: string): Promise<void> {
-    await this.env.MEDIA.delete(key);
+  delete(key: string): Promise<void> {
+    return this.r2.delete(key);
   }
 
   normalizeFilename(filename: string): { name: string; extension: string } {

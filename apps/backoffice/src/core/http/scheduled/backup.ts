@@ -1,4 +1,5 @@
-import { getDb, type Env } from '@/core/shared';
+import { getDb, getEnv } from '@/core/shared';
+import { R2Client } from '@/core/media';
 import * as schema from '@/core/shared/infrastructure/drizzle/schema';
 
 // Dump a R2 además de los snapshots de Neon: otro proveedor, por si el
@@ -15,8 +16,15 @@ export interface BackupResult {
   purged: number;
 }
 
-export async function runBackup(env: Env): Promise<BackupResult> {
-  const db = getDb(env.DATABASE_URL);
+export interface BackupDump {
+  json: string;
+  exportedAt: string;
+  tables: Record<string, number>;
+}
+
+/** La parte que solo lee: sirve también para medir la copia sin escribir en R2. */
+export async function buildBackupDump(): Promise<BackupDump> {
+  const db = getDb(getEnv().DATABASE_URL);
 
   const [
     languages, restaurants, restaurantLocales, spaces, spaceSchedule,
@@ -55,32 +63,34 @@ export async function runBackup(env: Env): Promise<BackupResult> {
     }
   };
 
-  const json = JSON.stringify(payload);
-  const dateStr = new Date().toISOString().slice(0, 10);
-  const key = `${BACKUP_PREFIX}${dateStr}.json`;
+  return {
+    json: JSON.stringify(payload),
+    exportedAt: payload.exportedAt,
+    tables: Object.fromEntries(Object.entries(payload.tables).map(([t, rows]) => [t, rows.length]))
+  };
+}
 
-  await env.MEDIA.put(key, json, {
-    httpMetadata: { contentType: 'application/json' },
-    customMetadata: {
-      'exported-at': payload.exportedAt,
-      'row-count': String(Object.values(payload.tables).reduce((n, t) => n + t.length, 0))
+export async function runBackup(): Promise<BackupResult> {
+  const r2 = new R2Client(getEnv());
+  const dump = await buildBackupDump();
+  const key = `${BACKUP_PREFIX}${dump.exportedAt.slice(0, 10)}.json`;
+
+  await r2.put(key, dump.json, {
+    contentType: 'application/json',
+    metadata: {
+      'exported-at': dump.exportedAt,
+      'row-count': String(Object.values(dump.tables).reduce((n, rows) => n + rows, 0))
     }
   });
 
-  const list = await env.MEDIA.list({ prefix: BACKUP_PREFIX });
   const cutoff = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
   let purged = 0;
-  for (const obj of list.objects) {
-    if (obj.uploaded.getTime() < cutoff) {
-      await env.MEDIA.delete(obj.key);
+  for (const object of await r2.list(BACKUP_PREFIX)) {
+    if (object.uploadedAt.getTime() < cutoff) {
+      await r2.delete(object.key);
       purged++;
     }
   }
 
-  return {
-    key,
-    sizeKb: Math.round(json.length / 1024),
-    tables: Object.fromEntries(Object.entries(payload.tables).map(([t, rows]) => [t, rows.length])),
-    purged
-  };
+  return { key, sizeKb: Math.round(dump.json.length / 1024), tables: dump.tables, purged };
 }

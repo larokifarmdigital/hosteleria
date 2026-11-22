@@ -1,7 +1,6 @@
-// Único lugar donde los puertos se cablean a sus adapters. Se construye uno
-// por request: los adapters solo guardan `env`; lo caro (Drizzle, aws4fetch,
-// Lucia) está cacheado por isolate.
-import { type Env, ConsoleEmailSender, ResendEmailSender } from '@/core/shared';
+// Único lugar donde los puertos se cablean a sus adapters. Se construye una vez
+// por proceso (`getContainer`): los adapters no guardan estado de la petición.
+import { type Env, getEnv, ConsoleEmailSender, ResendEmailSender } from '@/core/shared';
 
 import {
   DrizzleRestaurantRepository,
@@ -86,11 +85,7 @@ import {
   RequestSiteRebuildUseCase,
   GetSiteStatusUseCase,
   FetchSiteProbe
-} from '@/core/site';
-
-
-
-import {
+} from '@/core/site';import {
   ListUsersUseCase,
   CreateUserUseCase,
   UpdateUserUseCase,
@@ -98,13 +93,13 @@ import {
   DeleteUserUseCase
 } from '@/core/users';
 
-
-
-
-
-
-
 export type Container = ReturnType<typeof buildContainer>;
+
+let container: Container | null = null;
+
+export function getContainer(): Container {
+  return (container ??= buildContainer(getEnv()));
+}
 
 export function buildContainer(env: Env) {
   const restaurantsRepo = new DrizzleRestaurantRepository(env);
@@ -135,6 +130,7 @@ export function buildContainer(env: Env) {
       spacesRepo, dishesRepo, winesRepo, mediaRepo, languagesRepo
     },
     services: { hasher, storage },
+    config: { mediaPublicUrl: env.R2_PUBLIC_URL },
 
     restaurants: {
       create: new CreateRestaurantUseCase(restaurantsRepo, languagesRepo),

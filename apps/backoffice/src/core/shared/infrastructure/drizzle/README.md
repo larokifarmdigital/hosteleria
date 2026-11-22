@@ -6,7 +6,7 @@ Capa de persistencia — cliente Drizzle sobre Neon Postgres + schema.
 
 | Archivo | Qué hace |
 |---|---|
-| `client.ts` | `getDb(databaseUrl)` — Drizzle sobre el pool Neon de la petición en curso (`runWithRequestDb`, un pool por request). Fuera del Worker (scripts, tests) usa un pool de módulo. |
+| `client.ts` | `getDb(databaseUrl)` — Drizzle sobre un pool de Neon por proceso (guardado en `globalThis` para que el HMR de `next dev` no abra uno por recarga). |
 | `seed.ts` | Script `tsx` para poblar la BD inicial: idiomas + admin + 6 restaurantes shell. Correr con `pnpm db:seed`. |
 | `schema/index.ts` | Barrel — re-exporta todas las tablas |
 | `schema/enums.ts` | Postgres enums (publishState, spaceType, mediaUsage, userRole, weekDay) |
