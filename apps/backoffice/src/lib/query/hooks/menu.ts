@@ -77,3 +77,28 @@ export function useSetDishActive() {
 export function useSetWineActive() {
   return useSetActive<Wine>([...qk.wines.all, 'list'], qk.wines.all, (id, active) => api.wines.patch(id, { active }));
 }
+
+/**
+ * Cambia el orden de los elementos de una categoría o de las categorías de una carta.
+ * La lista se recoloca al momento y, si el api lo rechaza, vuelve a como estaba.
+ */
+export function useReorderMenu() {
+  const qc = useQueryClient();
+  const toastError = useErrorToast();
+  return useMutation({
+    mutationFn: ({ menu, level, ids }: { menu: 'dishes' | 'wines'; level: 'items' | 'categories'; ids: string[] }) =>
+      level === 'items' ? api[menu].reorder(ids) : api[menu].categories.reorder(ids),
+    onMutate: async ({ menu, ids }) => {
+      const queryKey = menu === 'dishes' ? qk.dishes.all : qk.wines.all;
+      await qc.cancelQueries({ queryKey });
+      const position = new Map(ids.map((id, index) => [id, index]));
+      qc.setQueriesData<unknown>({ queryKey }, (old: unknown) =>
+        Array.isArray(old)
+          ? old.map((x: { id: string; order: number }) => (position.has(x.id) ? { ...x, order: position.get(x.id)! } : x))
+          : old
+      );
+    },
+    onError: toastError,
+    onSettled: (_data, _err, { menu }) => qc.invalidateQueries({ queryKey: menu === 'dishes' ? qk.dishes.all : qk.wines.all })
+  });
+}

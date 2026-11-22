@@ -1,6 +1,7 @@
 'use client';
 
-import { Pencil, Plus } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowDown, ArrowUp, Pencil, Plus } from 'lucide-react';
 import { Button } from '@/components/shared/Button';
 import { Pill } from '@/components/shared/Pill';
 import { missingLocales } from '@/lib/forms/translations';
@@ -36,12 +37,48 @@ interface Props {
   onToggle: (id: string, active: boolean) => void;
   onRenameCategory: (category: MenuCategory) => void;
   onDeleteCategory: (category: MenuCategory) => void;
+  /** Los ids de la categoría en su orden nuevo. */
+  onReorderItems: (ids: string[]) => void;
+  /** Los ids de las categorías en su orden nuevo. */
+  onReorderCategories: (ids: string[]) => void;
 }
 
-export function MenuList({ categories, locales, rows, totals, filtering, defaultLocale, itemNoun, onAdd, onEdit, onToggle, onRenameCategory, onDeleteCategory }: Props) {
+const ICON_BUTTON =
+  'grid h-11 w-11 flex-shrink-0 cursor-pointer place-items-center rounded-[10px] border border-[color:var(--color-border-strong)] bg-white text-[color:var(--color-ink)] transition-colors hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent-fg)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[color:var(--accent-ring)] disabled:cursor-default disabled:opacity-40 disabled:hover:border-[color:var(--color-border-strong)] disabled:hover:text-[color:var(--color-ink)]';
+
+function moved<T>(list: T[], from: number, to: number): T[] {
+  const next = [...list];
+  next.splice(to, 0, next.splice(from, 1)[0]);
+  return next;
+}
+
+/** Tras mover, el botón pulsado puede haber quedado desactivado (primero o último): el foco pasa al otro. */
+function keepFocus(prefix: string, pressed: 'up' | 'down') {
+  setTimeout(() => {
+    const button = document.getElementById(`${prefix}-${pressed}`) as HTMLButtonElement | null;
+    if (button && !button.disabled) return button.focus();
+    document.getElementById(`${prefix}-${pressed === 'up' ? 'down' : 'up'}`)?.focus();
+  }, 0);
+}
+
+export function MenuList({ categories, locales, rows, totals, filtering, defaultLocale, itemNoun, onAdd, onEdit, onToggle, onRenameCategory, onDeleteCategory, onReorderItems, onReorderCategories }: Props) {
+  const [announcement, setAnnouncement] = useState('');
+
+  const moveCategory = (index: number, to: number, label: string) => {
+    onReorderCategories(moved(categories, index, to).map(c => c.id));
+    setAnnouncement(`La categoría ${label} pasa a la posición ${to + 1} de ${categories.length}.`);
+    keepFocus(`cat-${categories[index].id}`, to < index ? 'up' : 'down');
+  };
+  const moveItem = (items: MenuRow[], index: number, to: number) => {
+    onReorderItems(moved(items, index, to).map(r => r.id));
+    setAnnouncement(`${items[index].name} pasa a la posición ${to + 1} de ${items.length}.`);
+    keepFocus(`row-${items[index].id}`, to < index ? 'up' : 'down');
+  };
+
   return (
     <div className="flex flex-col gap-6">
-      {categories.map(category => {
+      <p role="status" className="sr-only">{announcement}</p>
+      {categories.map((category, categoryIndex) => {
         const label = categoryLabel(category, defaultLocale);
         const items = rows.filter(r => r.categoryId === category.id);
         const total = totals[category.id] ?? 0;
@@ -58,7 +95,18 @@ export function MenuList({ categories, locales, rows, totals, filtering, default
                 </h2>
                 {untranslated.length > 0 && <Pill variant="warn">Falta traducir: {untranslated.map(c => c.toUpperCase()).join(', ')}</Pill>}
               </div>
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap items-center gap-1">
+                {/* Con un filtro activo no se ve la lista entera: mover ahí daría un orden que no se entiende. */}
+                {!filtering && categories.length > 1 && (
+                  <>
+                    <button type="button" id={`cat-${category.id}-up`} className={ICON_BUTTON} disabled={categoryIndex === 0} aria-label={`Subir la categoría ${label}`} onClick={() => moveCategory(categoryIndex, categoryIndex - 1, label)}>
+                      <ArrowUp aria-hidden className="h-4 w-4" />
+                    </button>
+                    <button type="button" id={`cat-${category.id}-down`} className={ICON_BUTTON} disabled={categoryIndex === categories.length - 1} aria-label={`Bajar la categoría ${label}`} onClick={() => moveCategory(categoryIndex, categoryIndex + 1, label)}>
+                      <ArrowDown aria-hidden className="h-4 w-4" />
+                    </button>
+                  </>
+                )}
                 <Button size="sm" variant="ghost" aria-label={`Cambiar nombre de ${label}`} onClick={() => onRenameCategory(category)}>
                   Cambiar nombre
                 </Button>
@@ -72,7 +120,7 @@ export function MenuList({ categories, locales, rows, totals, filtering, default
 
             {items.length > 0 && (
               <ul className="m-0 list-none divide-y divide-[color:var(--color-border)] p-0">
-                {items.map(row => (
+                {items.map((row, rowIndex) => (
                   <li key={row.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-5">
                     {row.imageUrl && (
                       // Decorativa: el nombre del plato va justo al lado.
@@ -90,6 +138,16 @@ export function MenuList({ categories, locales, rows, totals, filtering, default
                     </div>
                     <p className="tabular m-0 min-w-[72px] text-[14px] font-semibold text-[color:var(--color-ink)]">{row.price}</p>
                     <VisibleSwitch name={row.name} active={row.active} onChange={next => onToggle(row.id, next)} />
+                    {!filtering && items.length > 1 && (
+                      <div className="flex gap-1.5">
+                        <button type="button" id={`row-${row.id}-up`} className={ICON_BUTTON} disabled={rowIndex === 0} aria-label={`Subir: ${row.name}`} onClick={() => moveItem(items, rowIndex, rowIndex - 1)}>
+                          <ArrowUp aria-hidden className="h-4 w-4" />
+                        </button>
+                        <button type="button" id={`row-${row.id}-down`} className={ICON_BUTTON} disabled={rowIndex === items.length - 1} aria-label={`Bajar: ${row.name}`} onClick={() => moveItem(items, rowIndex, rowIndex + 1)}>
+                          <ArrowDown aria-hidden className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
                     <Button size="sm" aria-label={`Editar ${row.name}`} onClick={() => onEdit(row.id)}>
                       <Pencil aria-hidden className="h-3.5 w-3.5" />
                       Editar

@@ -23,7 +23,7 @@ import { missingLocales } from '@/lib/forms/translations';
 import { cn } from '@/lib/utils';
 import {
   useDeleteDishCategory, useDeleteWineCategory, useDishCategories, useDishes, useLanguages, useMediaList, useRestaurants,
-  useSetDishActive, useSetWineActive, useSpaces, useWineCategories, useWines
+  useReorderMenu, useSetDishActive, useSetWineActive, useSpaces, useWineCategories, useWines
 } from '@/lib/query/hooks';
 
 type Visibility = 'all' | 'visible' | 'hidden' | 'missing';
@@ -63,6 +63,9 @@ export function DishesPageClient() {
   const setWineActive = useSetWineActive();
   const deleteDishCategory = useDeleteDishCategory();
   const deleteWineCategory = useDeleteWineCategory();
+  const reorder = useReorderMenu();
+  // Las bebidas son platos de otra carta: comparten rutas.
+  const reorderMenu = kind === 'wines' ? 'wines' as const : 'dishes' as const;
 
   const [search, setSearch] = useState('');
   // Desde «Pendiente» se llega con la lista ya filtrada por lo que falta traducir.
@@ -279,6 +282,8 @@ export function DishesPageClient() {
                           onToggle={(id, active) => (kind === 'wines' ? setWineActive : setDishActive).mutate({ id, active })}
                           onRenameCategory={category => setEditing({ type: 'category', category })}
                           onDeleteCategory={setDeleting}
+                          onReorderItems={ids => reorder.mutate({ menu: reorderMenu, level: 'items', ids })}
+                          onReorderCategories={ids => reorder.mutate({ menu: reorderMenu, level: 'categories', ids })}
                         />
                       )}
                     </>

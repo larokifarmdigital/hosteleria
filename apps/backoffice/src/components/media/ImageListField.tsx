@@ -96,7 +96,7 @@ export function ImageListField({ label, hint, scope, purpose, assetIds, onChange
 
       <Button ref={addRef} className="min-h-11" disabled={full} onClick={() => setPicking(true)}>
         <Plus aria-hidden className="h-4 w-4" />
-        Añadir foto
+        Añadir fotos
       </Button>
       {(hint || full) && (
         <p id={`${id}-hint`} className="m-0 mt-2.5 text-[12.5px] leading-[1.5] text-[color:var(--color-muted)]">
@@ -111,7 +111,14 @@ export function ImageListField({ label, hint, scope, purpose, assetIds, onChange
         scope={scope}
         purpose={purpose}
         excludeIds={assetIds}
-        onSelect={picked => { setPicking(false); onChange([...assetIds, picked.id]); setAnnouncement('Foto añadida.'); }}
+        multiple={{
+          max: max - assetIds.length,
+          onSelectMany: picked => {
+            setPicking(false);
+            onChange([...assetIds, ...picked.map(asset => asset.id)]);
+            setAnnouncement(picked.length === 1 ? 'Foto añadida.' : `${picked.length} fotos añadidas.`);
+          }
+        }}
       />
     </div>
   );
