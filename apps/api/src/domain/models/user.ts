@@ -11,6 +11,8 @@ export interface User {
   avatarColor: string;
   readonly createdAt: Date;
   lastAccessAt: Date | null;
+  /** Suspendida: no puede iniciar sesión hasta que un administrador la reactive. */
+  suspendedAt: Date | null;
 }
 
 /** User sin `passwordHash` — lo que viaja al cliente. */
@@ -57,5 +59,25 @@ export class WeakPasswordError extends DomainError {
   constructor(reason: string) {
     super(reason);
     this.name = 'WeakPasswordError';
+  }
+}
+
+/** La contraseña es correcta, pero un administrador ha suspendido la cuenta. */
+export class AccountSuspendedError extends DomainError {
+  readonly code = 'ACCOUNT_SUSPENDED';
+  readonly status = 403;
+  constructor() {
+    super('Tu cuenta está suspendida. Habla con un administrador.');
+    this.name = 'AccountSuspendedError';
+  }
+}
+
+/** Un administrador no puede quitarse a sí mismo el acceso: podría no quedar nadie que lo devuelva. */
+export class CannotLockSelfOutError extends DomainError {
+  readonly code = 'CANNOT_LOCK_SELF_OUT';
+  readonly status = 400;
+  constructor() {
+    super('No puedes suspender tu propia cuenta ni quitarte el rol de administrador. Pídeselo a otro administrador.');
+    this.name = 'CannotLockSelfOutError';
   }
 }

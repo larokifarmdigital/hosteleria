@@ -16,6 +16,8 @@ export interface UserRepository {
 
   update(id: string, patch: Partial<Pick<User, 'name' | 'role' | 'avatarColor'>>): Promise<void>;
   updatePasswordHash(id: string, passwordHash: string): Promise<void>;
+  /** `null` reactiva la cuenta. */
+  setSuspended(id: string, at: Date | null): Promise<void>;
 
   /** Best-effort; nunca lanza (el login no debe romper por esto). */
   touchLastAccess(id: string): Promise<void>;

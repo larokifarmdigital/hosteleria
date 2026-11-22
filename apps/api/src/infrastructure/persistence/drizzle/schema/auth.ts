@@ -13,7 +13,9 @@ export const users = pgTable('users', {
   role: userRoleEnum('role').notNull().default('editor'),
   avatarColor: text('avatar_color').notNull().default('#b4593b'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  lastAccessAt: timestamp('last_access_at', { withTimezone: true })
+  lastAccessAt: timestamp('last_access_at', { withTimezone: true }),
+  // Cuenta suspendida: no puede iniciar sesión. Se conserva para poder reactivarla.
+  suspendedAt: timestamp('suspended_at', { withTimezone: true })
 });
 
 /** Lucia solo lee id/userId/expiresAt; el resto alimenta GET /auth/sessions. */

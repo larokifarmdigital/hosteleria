@@ -16,6 +16,7 @@ export function userToDto(user: User, restaurantSlugs: string[]) {
     avatarColor: user.avatarColor,
     role: user.role,
     restaurants: user.role === 'admin' ? ['*'] : restaurantSlugs,
-    lastAccessAt: user.lastAccessAt?.toISOString() ?? null
+    lastAccessAt: user.lastAccessAt?.toISOString() ?? null,
+    suspended: !!user.suspendedAt
   };
 }

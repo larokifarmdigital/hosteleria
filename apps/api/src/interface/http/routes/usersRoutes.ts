@@ -1,3 +1,4 @@
+import type { Invitation } from '../../../application/users/createUserUseCase.js';
 import { Hono } from 'hono';
 import { validate } from '../validate.js';
 import { z } from 'zod';
@@ -21,20 +22,26 @@ export function createUsersRoutes() {
 
   app.post('/', validate('json', createSchema), async (c) => {
     const inviter = c.get('user')!;
-    const user = await c.get('container').users.create.execute(c.req.valid('json'), inviter.name);
+    const { user, invitation } = await c.get('container').users.create.execute(c.req.valid('json'), inviter.name);
     const slugs = user.role === 'editor'
       ? await resolveSlugs(c, await c.get('container').repos.usersRepo.listRestaurantIds(user.id))
       : [];
-    return c.json({ user: userToDto(user, slugs) }, 201);
+    return c.json({ user: userToDto(user, slugs), invitation: invitationToDto(invitation) }, 201);
   });
 
   app.patch('/:id', validate('json', patchSchema), async (c) => {
     const id = c.req.param('id');
-    const user = await c.get('container').users.update.execute(id, c.req.valid('json'));
+    const user = await c.get('container').users.update.execute(id, c.req.valid('json'), c.get('user')!.id);
     const slugs = user.role === 'editor'
       ? await resolveSlugs(c, await c.get('container').repos.usersRepo.listRestaurantIds(id))
       : [];
     return c.json({ user: userToDto(user, slugs) });
+  });
+
+  // Enlace nuevo para elegir contraseña: invitación que caducó o contraseña olvidada.
+  app.post('/:id/invite', async (c) => {
+    const invitation = await c.get('container').users.invite.execute(c.req.param('id'), c.get('user')!.name);
+    return c.json({ invitation: invitationToDto(invitation) });
   });
 
   app.delete('/:id', async (c) => {
@@ -45,6 +52,10 @@ export function createUsersRoutes() {
   });
 
   return app;
+}
+
+function invitationToDto(invitation: Invitation | null) {
+  return invitation ? { token: invitation.token, expiresAt: invitation.expiresAt.toISOString() } : null;
 }
 
 async function resolveSlugs(c: any, restaurantIds: string[]): Promise<string[]> {
@@ -68,5 +79,6 @@ const patchSchema = z.object({
   role: z.enum(['admin', 'editor']).optional(),
   avatarColor: z.string().optional(),
   restaurantSlugs: z.array(z.string()).optional(),
-  password: z.string().min(8).optional()
+  password: z.string().min(8).optional(),
+  suspended: z.boolean().optional()
 }).partial();

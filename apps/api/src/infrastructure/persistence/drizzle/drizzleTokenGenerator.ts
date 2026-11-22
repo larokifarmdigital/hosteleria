@@ -33,6 +33,18 @@ export class DrizzleTokenGenerator implements TokenGenerator {
     return token;
   }
 
+  async peek(token: string, expectedKind: TokenKind): Promise<string | null> {
+    const row = await this.db.query.userTokens.findFirst({
+      where: and(
+        eq(userTokens.tokenHash, this.hashToken(token)),
+        eq(userTokens.kind, expectedKind),
+        isNull(userTokens.usedAt),
+        gte(userTokens.expiresAt, new Date())
+      )
+    });
+    return row?.userId ?? null;
+  }
+
   async consume(token: string, expectedKind: TokenKind): Promise<string | null> {
     const tokenHash = this.hashToken(token);
     const now = new Date();

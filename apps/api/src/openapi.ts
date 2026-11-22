@@ -1298,6 +1298,17 @@ const paths: Record<string, any> = {
       }
     }
   },
+  '/users/{id}/invite': {
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    post: {
+      tags: ['Users'], summary: 'Enlace nuevo para elegir contraseña (admin only)',
+      description: 'Devuelve el token de un solo uso (48 h) para componer `/set-password?token=`; los anteriores dejan de valer. También lo manda por correo si hay proveedor configurado.',
+      responses: {
+        200: ok({ type: 'object', properties: { invitation: { type: 'object', properties: { token: { type: 'string' }, expiresAt: { type: 'string', format: 'date-time' } } } }, required: ['invitation'] }),
+        401: err401, 403: err403Admin, 404: errRef('404 Not Found — `USER_NOT_FOUND`'), 500: err500
+      }
+    }
+  },
   '/users/{id}': {
     parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
     patch: {

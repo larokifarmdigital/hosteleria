@@ -13,6 +13,7 @@ import type {
   MediaReferences,
   LegalPage,
   LegalPageType,
+  Invitation,
   PendingTask,
   SiteStatus,
   PublishedSite,
@@ -281,11 +282,15 @@ export function createApiClient(opts: ApiClientOpts) {
       create: (body: {
         email: string; password?: string; name: string; role?: 'admin' | 'editor';
         avatarColor?: string; restaurantSlugs?: string[];
-      }) => req<{ user: User }>('/users', { method: 'POST', body: JSON.stringify(body) }).then(r => r.user),
+      /** Sin `password`, `invitation` trae el enlace para que el usuario la elija. */
+      }) => req<{ user: User; invitation: Invitation | null }>('/users', { method: 'POST', body: JSON.stringify(body) }),
       patch: (id: string, body: {
         name?: string; role?: 'admin' | 'editor'; avatarColor?: string;
-        restaurantSlugs?: string[]; password?: string;
+        restaurantSlugs?: string[]; password?: string; suspended?: boolean;
       }) => req<{ user: User }>(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }).then(r => r.user),
+      /** Enlace nuevo para elegir contraseña; los anteriores dejan de valer. */
+      invite: (id: string) =>
+        req<{ invitation: Invitation }>(`/users/${id}/invite`, { method: 'POST' }).then(r => r.invitation),
       delete: (id: string) => req<{ ok: true }>(`/users/${id}`, { method: 'DELETE' })
     },
 

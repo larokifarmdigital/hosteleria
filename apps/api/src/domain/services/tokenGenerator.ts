@@ -24,6 +24,9 @@ export interface TokenGenerator {
     ttlSeconds: number;
   }): Promise<string>;
 
+  /** A quién pertenece un token que sigue siendo válido, sin gastarlo; `null` si no vale. */
+  peek(token: string, expectedKind: TokenKind): Promise<string | null>;
+
   /**
    * Marca el token como usado atómicamente y devuelve `userId`, o `null`
    * si no existe/expiró/ya se usó/kind no coincide. No distinguimos entre

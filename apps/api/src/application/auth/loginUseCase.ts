@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import type { UserRepository } from '../../domain/repositories/userRepository.js';
 import type { SessionRepository } from '../../domain/repositories/sessionRepository.js';
 import type { PasswordHasher } from '../../domain/services/passwordHasher.js';
-import { InvalidCredentialsError, toSessionUser } from '../../domain/models/user.js';
+import { AccountSuspendedError, InvalidCredentialsError, toSessionUser } from '../../domain/models/user.js';
 import type { SessionUser } from '../../domain/models/user.js';
 
 export interface LoginMetadata {
@@ -29,6 +29,8 @@ export class LoginUseCase {
     const hash = user?.passwordHash ?? this.hasher.dummyHash;
     const ok = await this.hasher.verify(input.password, hash).catch(() => false);
     if (!user || !ok) throw new InvalidCredentialsError();
+    // Solo se dice tras acertar la contraseña: así no revela qué cuentas existen.
+    if (user.suspendedAt) throw new AccountSuspendedError();
 
     const { session, cookieHeader } = await this.sessionsRepo.create(user.id);
 

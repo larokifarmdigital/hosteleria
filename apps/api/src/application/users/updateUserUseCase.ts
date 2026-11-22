@@ -1,7 +1,9 @@
 import type { UserRepository } from '../../domain/repositories/userRepository.js';
 import type { RestaurantRepository } from '../../domain/repositories/restaurantRepository.js';
 import type { PasswordHasher } from '../../domain/services/passwordHasher.js';
+import type { SessionRepository } from '../../domain/repositories/sessionRepository.js';
 import {
+  CannotLockSelfOutError,
   UserNotFoundError,
   WeakPasswordError,
   type User,
@@ -15,18 +17,24 @@ export interface UpdateUserInput {
   avatarColor?: string;
   password?: string;
   restaurantSlugs?: string[];
+  /** `true` suspende la cuenta y cierra sus sesiones; `false` la reactiva. */
+  suspended?: boolean;
 }
 
 export class UpdateUserUseCase {
   constructor(
     private readonly users: UserRepository,
     private readonly restaurants: RestaurantRepository,
-    private readonly hasher: PasswordHasher
+    private readonly hasher: PasswordHasher,
+    private readonly sessions: SessionRepository
   ) {}
 
-  async execute(id: string, input: UpdateUserInput): Promise<User> {
+  async execute(id: string, input: UpdateUserInput, actorId: string): Promise<User> {
     const u = await this.users.findById(id);
     if (!u) throw new UserNotFoundError(id);
+    if (id === actorId && (input.suspended === true || (input.role !== undefined && input.role !== 'admin'))) {
+      throw new CannotLockSelfOutError();
+    }
 
     const patch: Partial<Pick<User, 'name' | 'role' | 'avatarColor'>> = {};
     if (input.name !== undefined) patch.name = input.name;
@@ -53,6 +61,12 @@ export class UpdateUserUseCase {
       } else {
         await this.users.setRestaurants(id, []);
       }
+    }
+
+    if (input.suspended !== undefined && input.suspended !== !!u.suspendedAt) {
+      await this.users.setSuspended(id, input.suspended ? new Date() : null);
+      // Quien ya estaba dentro sale en su siguiente petición.
+      if (input.suspended) await this.sessions.invalidateUser(id);
     }
 
     const refreshed = await this.users.findById(id);

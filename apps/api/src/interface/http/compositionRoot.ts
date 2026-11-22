@@ -38,6 +38,7 @@ import { ApplyPasswordChangeUseCase } from '../../application/auth/applyPassword
 import { ListUsersUseCase } from '../../application/users/listUsersUseCase.js';
 import { CreateUserUseCase } from '../../application/users/createUserUseCase.js';
 import { UpdateUserUseCase } from '../../application/users/updateUserUseCase.js';
+import { InviteUserUseCase } from '../../application/users/inviteUserUseCase.js';
 import { DeleteUserUseCase } from '../../application/users/deleteUserUseCase.js';
 
 import { ListLanguagesUseCase } from '../../application/languages/listLanguagesUseCase.js';
@@ -140,7 +141,8 @@ export function buildContainer(env: Env) {
     users: {
       list: new ListUsersUseCase(usersRepo),
       create: new CreateUserUseCase(usersRepo, restaurantsRepo, hasher, tokenGen, email, env.APP_URL),
-      update: new UpdateUserUseCase(usersRepo, restaurantsRepo, hasher),
+      update: new UpdateUserUseCase(usersRepo, restaurantsRepo, hasher, sessionsRepo),
+      invite: new InviteUserUseCase(usersRepo, tokenGen, email, env.APP_URL),
       delete: new DeleteUserUseCase(usersRepo)
     },
 

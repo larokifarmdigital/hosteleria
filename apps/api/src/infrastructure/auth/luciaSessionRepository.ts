@@ -75,7 +75,8 @@ export class LuciaSessionRepository implements SessionRepository {
         avatarColor: (user as any).avatarColor,
         passwordHash: '',
         createdAt: new Date(),
-        lastAccessAt: null
+        lastAccessAt: null,
+        suspendedAt: null
       }),
       session: domainSession,
       cookieHeader

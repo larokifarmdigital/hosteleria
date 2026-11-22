@@ -14,15 +14,19 @@ export class ApplyPasswordChangeUseCase {
   ) {}
 
   async execute(input: { token: string; newPassword: string; kind: TokenKind }): Promise<void> {
-    const userId = await this.tokens.consume(input.token, input.kind);
-    if (!userId) throw new InvalidTokenError();
-
-    const user = await this.users.findById(userId);
+    // La contraseña se comprueba antes de gastar el enlace: si no vale, la
+    // persona puede volver a intentarlo con el mismo enlace.
+    const owner = await this.tokens.peek(input.token, input.kind);
+    if (!owner) throw new InvalidTokenError();
+    const user = await this.users.findById(owner);
     const check = checkPasswordStrength({
       password: input.newPassword,
       userInputs: user ? [user.email, user.name] : []
     });
     if (!check.ok) throw new WeakPasswordError(check.reason ?? 'weak_password');
+
+    const userId = await this.tokens.consume(input.token, input.kind);
+    if (!userId) throw new InvalidTokenError();
 
     const passwordHash = await this.hasher.hash(input.newPassword);
     await this.users.updatePasswordHash(userId, passwordHash);

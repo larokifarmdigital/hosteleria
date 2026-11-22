@@ -31,7 +31,16 @@ export interface User {
   avatarColor: string;
   role: UserRole;
   restaurants: string[];         // slugs; '*' si admin
+  /** `null` = aún no ha entrado nunca. */
   lastAccessAt: string | null;
+  /** Suspendida: no puede iniciar sesión. */
+  suspended: boolean;
+}
+
+/** Enlace de un solo uso para que un usuario elija su contraseña: `/set-password?token=`. */
+export interface Invitation {
+  token: string;
+  expiresAt: string;
 }
 
 export interface SessionUser {

@@ -7,6 +7,27 @@ import { EmailTakenError, WeakPasswordError, type User, type UserRole } from '..
 import { checkPasswordStrength } from '../auth/passwordStrength.js';
 import { welcomeTemplate } from '../../email/templates.js';
 
+export const INVITATION_TTL_SECONDS = 60 * 60 * 48;
+
+export interface Invitation {
+  /** En claro: solo existe en esta respuesta. Con él se compone el enlace `/set-password?token=`. */
+  token: string;
+  expiresAt: Date;
+}
+
+/** Crea el enlace de un solo uso para elegir contraseña y lo manda por correo. Los anteriores dejan de valer. */
+export async function issueInvitation(deps: {
+  user: User; inviterName: string; tokens: TokenGenerator; email: EmailSender; appUrl: string;
+}): Promise<Invitation> {
+  const { user, inviterName, tokens, email, appUrl } = deps;
+  await tokens.invalidateAll(user.id, 'password_setup');
+  const token = await tokens.create({ userId: user.id, kind: 'password_setup', ttlSeconds: INVITATION_TTL_SECONDS });
+  const setupUrl = `${appUrl}/set-password?token=${token}`;
+  const tpl = welcomeTemplate({ name: user.name, setupUrl, invitedBy: inviterName });
+  void email.send({ to: user.email, ...tpl }).catch(err => console.error('[users] welcome email failed:', err));
+  return { token, expiresAt: new Date(Date.now() + INVITATION_TTL_SECONDS * 1000) };
+}
+
 export interface CreateUserInput {
   email: string;
   password?: string;
@@ -26,7 +47,8 @@ export class CreateUserUseCase {
     private readonly appUrl: string
   ) {}
 
-  async execute(input: CreateUserInput, inviterName: string): Promise<User> {
+  /** `invitation` trae el token para que el usuario elija su contraseña; `null` si se dio una. */
+  async execute(input: CreateUserInput, inviterName: string): Promise<{ user: User; invitation: Invitation | null }> {
     const existing = await this.users.findByEmail(input.email);
     if (existing) throw new EmailTakenError(input.email);
 
@@ -57,19 +79,10 @@ export class CreateUserUseCase {
       if (ids.length > 0) await this.users.setRestaurants(user.id, ids);
     }
 
-    if (!input.password) {
-      const token = await this.tokens.create({
-        userId: user.id,
-        kind: 'password_setup',
-        ttlSeconds: 60 * 60 * 48
-      });
-      const setupUrl = `${this.appUrl}/set-password?token=${token}`;
-      const tpl = welcomeTemplate({ name: input.name, setupUrl, invitedBy: inviterName });
-      void this.email.send({ to: input.email, ...tpl })
-        .catch(err => console.error('[users] welcome email failed:', err));
-    }
-
-    return user;
+    const invitation = input.password
+      ? null
+      : await issueInvitation({ user, inviterName, tokens: this.tokens, email: this.email, appUrl: this.appUrl });
+    return { user, invitation };
   }
 
   private async resolveSlugs(slugs: string[]): Promise<string[]> {

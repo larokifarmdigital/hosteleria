@@ -10,6 +10,7 @@ export function rowToUser(row: typeof users.$inferSelect): User {
     role: row.role,
     avatarColor: row.avatarColor,
     createdAt: row.createdAt,
-    lastAccessAt: row.lastAccessAt
+    lastAccessAt: row.lastAccessAt,
+    suspendedAt: row.suspendedAt
   };
 }

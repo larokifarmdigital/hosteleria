@@ -49,6 +49,10 @@ export class DrizzleUserRepository implements UserRepository {
     await this.db.update(users).set({ passwordHash }).where(eq(users.id, id));
   }
 
+  async setSuspended(id: string, at: Date | null): Promise<void> {
+    await this.db.update(users).set({ suspendedAt: at }).where(eq(users.id, id));
+  }
+
   async touchLastAccess(id: string): Promise<void> {
     // Best-effort: nunca lanzamos — un fallo aquí no debe romper el login.
     try {
