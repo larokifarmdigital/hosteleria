@@ -3,7 +3,7 @@
 import { createApiClient, ApiError, type ApiClient } from '@hosteleria/api-client';
 import { reportError } from './errorHandling';
 
-// Mismo origen: el rewrite de next.config.ts lo reenvía al api con la cookie de sesión.
+// Mismo origen: el api lo sirve este mismo backoffice (`app/api/[[...path]]`).
 const API_URL = '/api';
 const IS_DEV = process.env.NODE_ENV === 'development';
 
