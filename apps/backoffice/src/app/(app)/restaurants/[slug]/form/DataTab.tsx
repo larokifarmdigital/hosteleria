@@ -10,7 +10,8 @@ import type { TabProps } from './types';
 
 type InputOptions = { hint?: string; type?: string; autoComplete?: string; inputMode?: 'tel' | 'email' | 'url' | 'numeric'; required?: boolean };
 
-export function DataTab({ mediaScope, isAdmin }: Pick<TabProps, 'mediaScope'> & { isAdmin: boolean }) {
+/** `show`: los datos y el contacto, o el logo y los iconos, cada cosa en su apartado. */
+export function DataTab({ show, mediaScope, isAdmin }: Pick<TabProps, 'mediaScope'> & { show: 'data' | 'brand'; isAdmin: boolean }) {
   const { register, formState: { errors } } = useFormContext<FormValues>();
 
   const text = (id: string, label: string, name: Parameters<typeof register>[0], error?: string, opts?: InputOptions) => (
@@ -20,6 +21,18 @@ export function DataTab({ mediaScope, isAdmin }: Pick<TabProps, 'mediaScope'> & 
       )}
     </Field>
   );
+
+  if (show === 'brand') {
+    return (
+      <Section title="Logo e iconos" description="Mejor en PNG, cuadrados y de al menos 500 px de lado.">
+        <div className="flex flex-col gap-6">
+          <FormImageField name="branding.logoAssetId" label="Logo" hint="Se usa en Google y al compartir la web. Con fondo transparente." scope={mediaScope} purpose="logo" />
+          <FormImageField name="branding.faviconAssetId" label="Icono de la pestaña del navegador" hint="Se ve muy pequeño: usa un símbolo sencillo, como la inicial o el logo sin texto." scope={mediaScope} purpose="logo" />
+          <FormImageField name="branding.appIconAssetId" label="Icono para el móvil" hint="Aparece si alguien guarda la web en la pantalla de inicio. Con color de fondo, nunca transparente." scope={mediaScope} purpose="logo" />
+        </div>
+      </Section>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -33,14 +46,6 @@ export function DataTab({ mediaScope, isAdmin }: Pick<TabProps, 'mediaScope'> & 
               {text('r-domain', 'Dirección de la web', 'domain', errors.domain?.message, { inputMode: 'url', required: true, hint: 'Donde se ve la web, sin «https://»: por ejemplo «www.mirestaurante.com». Es la dirección que se le da a Google como oficial.' })}
             </div>
           )}
-        </div>
-      </Section>
-
-      <Section title="Logo e iconos" description="Mejor en PNG, cuadrados y de al menos 500 px de lado.">
-        <div className="flex flex-col gap-6">
-          <FormImageField name="branding.logoAssetId" label="Logo" hint="Se usa en Google y al compartir la web. Con fondo transparente." scope={mediaScope} purpose="logo" />
-          <FormImageField name="branding.faviconAssetId" label="Icono de la pestaña del navegador" hint="Se ve muy pequeño: usa un símbolo sencillo, como la inicial o el logo sin texto." scope={mediaScope} purpose="logo" />
-          <FormImageField name="branding.appIconAssetId" label="Icono para el móvil" hint="Aparece si alguien guarda la web en la pantalla de inicio. Con color de fondo, nunca transparente." scope={mediaScope} purpose="logo" />
         </div>
       </Section>
 

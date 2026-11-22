@@ -66,7 +66,7 @@ export function SpacesSection({ restaurant, spaces }: Props) {
       .then(() => { showSuccessToast('Espacio principal cambiado', `Ahora es «${space.name}».`); setAnnouncement(`${space.name} es ahora el espacio principal.`); }, () => {});
 
   return (
-    <section aria-labelledby="espacios-titulo" className="mb-8">
+    <section aria-labelledby="espacios-titulo">
       <div className="mb-3.5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 id="espacios-titulo" className="m-0 text-[15px] font-bold tracking-[-0.005em]">Espacios</h2>
@@ -88,7 +88,7 @@ export function SpacesSection({ restaurant, spaces }: Props) {
         <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
           {ordered.map((space, index) => (
             <li key={space.id} className="rounded-[var(--radius)] border border-[color:var(--color-border)] bg-white px-4 py-3 shadow-[var(--shadow-sm)] sm:px-5">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+              <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
                 <div className="min-w-0 flex-[1_1_220px]">
                   <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
                     <Link
@@ -104,22 +104,22 @@ export function SpacesSection({ restaurant, spaces }: Props) {
                   <p className="m-0 mt-0.5 text-[13px] text-[color:var(--color-muted)]">
                     {spaceTypeLabel(space.type)}{space.descriptor ? ` · ${space.descriptor}` : ''}
                   </p>
+                {ordered.length > 1 && (
+                  <div className="-ml-3 mt-1 flex flex-wrap items-center gap-1">
+                    {!space.isDefault && (
+                      <Button size="sm" variant="ghost" disabled={busy} aria-label={`Hacer principal: ${space.name}`} onClick={() => makeDefault(space)}>
+                        Hacer principal
+                      </Button>
+                    )}
+                    <Button size="sm" variant="ghost" disabled={busy} aria-label={`Eliminar el espacio ${space.name}`} onClick={() => setDeleting(space)}>
+                      Eliminar
+                    </Button>
+                  </div>
+                )}
                 </div>
 
                 {/* Lo de todos los días (editar, carta) a la vista; lo ocasional, más discreto. */}
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-                  {ordered.length > 1 && (
-                    <div className="flex flex-wrap items-center gap-1 sm:mr-1">
-                      {!space.isDefault && (
-                        <Button size="sm" variant="ghost" disabled={busy} aria-label={`Hacer principal: ${space.name}`} onClick={() => makeDefault(space)}>
-                          Hacer principal
-                        </Button>
-                      )}
-                      <Button size="sm" variant="ghost" disabled={busy} aria-label={`Eliminar el espacio ${space.name}`} onClick={() => setDeleting(space)}>
-                        Eliminar
-                      </Button>
-                    </div>
-                  )}
                   {ordered.length > 1 && (
                     <>
                       <button type="button" id={`space-${space.id}-up`} className={ICON_BUTTON} disabled={index === 0 || busy} aria-label={`Subir: ${space.name}`} onClick={() => move(index, index - 1)}>

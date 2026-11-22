@@ -16,7 +16,6 @@ import { useRestaurants, useSession } from '@/lib/query/hooks';
 
 const COLUMNS = [
   { label: 'Restaurante' },
-  { label: 'Dominio' },
   { label: 'Idiomas' },
   { label: 'Espacios' },
   { label: 'Carta' },
@@ -56,11 +55,13 @@ export function RestaurantsPageClient() {
               <Td>
                 <div className="flex items-center gap-3">
                   <div aria-hidden className="h-10 w-10 flex-shrink-0 rounded-md" style={{ background: r.coverGradient }} />
-                  <strong className="font-semibold text-[color:var(--color-ink)]">{r.name}</strong>
+                  <div className="min-w-0">
+                    <strong className="block whitespace-nowrap font-semibold text-[color:var(--color-ink)]">{r.name}</strong>
+                    <span className="slug block whitespace-nowrap">{r.domain}</span>
+                  </div>
                 </div>
               </Td>
-              <Td className="slug">{r.domain}</Td>
-              <Td><LocaleChips codes={r.activeLocales} /></Td>
+              <Td><LocaleChips codes={r.activeLocales} nowrap /></Td>
               <Td className="tabular text-[color:var(--color-ink-soft)]">{r.spacesCount}</Td>
               <Td className="whitespace-nowrap text-[color:var(--color-ink-soft)]">
                 {r.dishesCount} platos · {r.winesCount} vinos{r.drinksCount > 0 ? ` · ${r.drinksCount} bebidas` : ''}

@@ -16,18 +16,18 @@ import type { TabProps } from './types';
 const SUBHEADING = 'm-0 mb-1 text-[14px] font-bold text-[color:var(--color-ink)]';
 const SUBTEXT = 'm-0 mb-3.5 text-[13px] leading-[1.5] text-[color:var(--color-muted)]';
 
-export function ContentTab({ restaurant, i18n, mediaScope, localeTabs, pendingIn }: TabProps) {
+/** `show`: qué apartado pinta. Cada uno va en su panel, con su selector de idioma. */
+export function ContentTab({ show, i18n, mediaScope, localeTabs, pendingIn }: TabProps & { show: 'about' | 'groups' | 'faq' | 'home' }) {
   const { register, control, setValue, formState: { errors } } = useFormContext<FormValues>();
   const aboutImages = useWatch({ control, name: 'about.imageAssetIds' });
   const emptyI18n = () => Object.fromEntries(i18n.locales.map(code => [code, '']));
-  // Solo tiene sentido con varios espacios; si ya hay bloques, se enseñan para poder editarlos.
-  const showHomeBlocks = restaurant.spacesCount > 1 || restaurant.homeBlocks.length > 0;
 
   return (
     <div>
       {localeTabs}
 
       <div className="flex flex-col gap-6">
+        {show === 'about' && (
         <Section title={ABOUT} description="La historia del restaurante, con sus fotos." badge={<TranslationBadge count={pendingIn(ABOUT)} />}>
           <div className="flex flex-col gap-5">
             <I18nField reference="side" name="about.eyebrow" label="Antetítulo" hint="Una o dos palabras encima del título." {...i18n} />
@@ -44,7 +44,9 @@ export function ContentTab({ restaurant, i18n, mediaScope, localeTabs, pendingIn
             />
           </div>
         </Section>
+        )}
 
+        {show === 'groups' && (
         <Section title={GROUPS} description="Lo que ofreces a grupos, celebraciones y empresas." badge={<TranslationBadge count={pendingIn(GROUPS)} />}>
           <div className="flex flex-col gap-5">
             <I18nField reference="side" name="groups.eyebrow" label="Antetítulo" hint="Una o dos palabras encima del título." {...i18n} />
@@ -97,7 +99,9 @@ export function ContentTab({ restaurant, i18n, mediaScope, localeTabs, pendingIn
             </div>
           </div>
         </Section>
+        )}
 
+        {show === 'faq' && (
         <Section title={FAQ} description="Las dudas habituales de tus clientes. También ayudan a aparecer en Google." badge={<TranslationBadge count={pendingIn(FAQ)} />}>
           <div className="flex flex-col gap-5">
             <I18nField reference="side" name="faq.eyebrow" label="Antetítulo" hint="Por ejemplo, «Preguntas frecuentes»." {...i18n} />
@@ -124,8 +128,9 @@ export function ContentTab({ restaurant, i18n, mediaScope, localeTabs, pendingIn
             </div>
           </div>
         </Section>
+        )}
 
-        {showHomeBlocks && (
+        {show === 'home' && (
           <Section title={HOME_BLOCKS} description="Las tarjetas de la portada que llevan a cada espacio o a una sección." badge={<TranslationBadge count={pendingIn(HOME_BLOCKS)} />}>
             <ItemList
               name="homeBlocks"

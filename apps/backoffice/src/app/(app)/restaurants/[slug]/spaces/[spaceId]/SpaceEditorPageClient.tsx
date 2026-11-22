@@ -28,7 +28,7 @@ export function SpaceEditorPageClient({ slug, spaceId }: Props) {
   return (
     <>
       <Link
-        href={`/restaurants/${restaurant.slug}`}
+        href={`/restaurants/${restaurant.slug}?tab=spaces`}
         className="-ml-2 mb-3 inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 text-[13px] font-semibold text-[color:var(--color-muted)] hover:text-[color:var(--color-accent)]"
       >
         <ArrowLeft aria-hidden className="h-3.5 w-3.5" />

@@ -6,20 +6,42 @@ import { priceFromForm, priceText, priceToForm } from '@/lib/forms/price';
 import { i18nValues, optionalEmail, optionalMap, optionalText, optionalUrl, requiredText } from '@/lib/forms/rules';
 import type { TranslatableField } from '@/lib/forms/translations';
 
-export type TabId = 'data' | 'content' | 'texts' | 'search';
+export type TabId =
+  | 'overview' | 'spaces' | 'data' | 'brand' | 'languages'
+  | 'about' | 'groups' | 'faq' | 'home' | 'texts'
+  | 'search';
 
+/** Apartados de la ficha, con el nombre que ve el editor. El primero es el de entrada. */
 export const TABS: { id: TabId; label: string }[] = [
-  { id: 'data', label: 'Datos' },
-  { id: 'content', label: 'Contenido' },
+  { id: 'overview', label: 'Resumen' },
+  { id: 'spaces', label: 'Espacios' },
+  { id: 'data', label: 'Datos y contacto' },
+  { id: 'brand', label: 'Logo e iconos' },
+  { id: 'languages', label: 'Idiomas de la web' },
+  { id: 'about', label: 'Sobre nosotros' },
+  { id: 'groups', label: 'Grupos y eventos' },
+  { id: 'faq', label: 'Preguntas frecuentes' },
+  { id: 'home', label: 'Bloques destacados' },
   { id: 'texts', label: 'Textos de la web' },
-  { id: 'search', label: 'Buscadores' }
+  { id: 'search', label: 'Google y buscadores' }
 ];
+
+/** Cómo se agrupan en el menú lateral. */
+export const TAB_GROUPS: { label: string; ids: TabId[] }[] = [
+  { label: 'Tu restaurante', ids: ['overview', 'spaces', 'data', 'brand', 'languages'] },
+  { label: 'Contenido de la web', ids: ['about', 'groups', 'faq', 'home', 'texts'] },
+  { label: 'Para que te encuentren', ids: ['search'] }
+];
+
+/** Direcciones antiguas (`?tab=content`) que siguen funcionando. */
+export const TAB_ALIAS: Record<string, TabId> = { content: 'about' };
 
 /** Pestaña en la que se edita cada campo de primer nivel del formulario. */
 const TAB_OF: Record<string, TabId> = {
-  name: 'data', domain: 'data', foundedYear: 'data', branding: 'data', address: 'data', mapUrl: 'data', contact: 'data',
+  name: 'data', domain: 'data', foundedYear: 'data', address: 'data', mapUrl: 'data', contact: 'data',
   socials: 'data', showSocials: 'data', acceptsBookings: 'data',
-  about: 'content', groups: 'content', faq: 'content', homeBlocks: 'content',
+  branding: 'brand',
+  about: 'about', groups: 'groups', faq: 'faq', homeBlocks: 'home',
   uiTexts: 'texts',
   seo: 'search', business: 'search', aiSummary: 'search', analyticsToken: 'search'
 };

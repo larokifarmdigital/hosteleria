@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { KpiTile } from '@/components/dashboard/KpiTile';
 import { RestaurantCard } from '@/components/dashboard/RestaurantCard';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { QueryBoundary } from '@/components/shared/QueryBoundary';
@@ -30,11 +29,19 @@ export function DashboardPageClient() {
     .map((restaurant, i) => ({ restaurant, tasks: taskQueries[i]?.data ?? [] }))
     .filter(group => group.tasks.length > 0);
   const total = pending.reduce((n, group) => n + group.tasks.length, 0);
+  const pendingBySlug = Object.fromEntries(restaurants.map((r, i) => [r.slug, taskQueries[i]?.data?.length]));
+  const summary = [
+    `${published} de ${restaurants.length} ${restaurants.length === 1 ? 'publicado' : 'publicados'}`,
+    `${spaces} ${spaces === 1 ? 'espacio' : 'espacios'}`,
+    `${dishes} platos`,
+    `${wines} vinos`,
+    ...(drinks > 0 ? [`${drinks} bebidas`] : [])
+  ].join(' · ');
 
   return (
     <>
       <PageHeader title={firstName ? `Hola, ${firstName}` : 'Inicio'}>
-        Elige un restaurante para editar su web.
+        {restaurants.length === 1 ? 'Desde aquí editas la web de tu restaurante.' : 'Elige un restaurante para editar su web.'}
       </PageHeader>
 
       <QueryBoundary queries={[restaurantsQuery]}>
@@ -44,14 +51,19 @@ export function DashboardPageClient() {
         </EmptyState>
       ) : (
         <>
-          <div className="mb-8 grid grid-cols-2 gap-[18px] lg:grid-cols-4">
-            <KpiTile label="Restaurantes" value={restaurants.length} hint={`${published} publicados`} />
-            <KpiTile label="Espacios" value={spaces} />
-            <KpiTile label="Platos" value={dishes} />
-            <KpiTile label="Vinos" value={wines} hint={drinks > 0 ? `y ${drinks} bebidas` : undefined} />
+          <div className="mb-3.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <h2 className="m-0 text-[15px] font-bold tracking-[-0.005em]">Tus restaurantes</h2>
+            <p className="m-0 text-[13px] text-[color:var(--color-muted)]">{summary}</p>
           </div>
+          <ul className="m-0 grid list-none grid-cols-1 gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
+            {restaurants.map(r => (
+              <li key={r.id}>
+                <RestaurantCard restaurant={r} href={`/restaurants/${r.slug}`} pending={pendingBySlug[r.slug]} />
+              </li>
+            ))}
+          </ul>
 
-          <section aria-labelledby="pendiente-titulo" className="mb-8">
+          <section aria-labelledby="pendiente-titulo" className="mt-9">
             <h2 id="pendiente-titulo" className="mb-1 text-[15px] font-bold tracking-[-0.005em]">Pendiente</h2>
             <p role="status" className="m-0 mb-3.5 text-[13.5px] text-[color:var(--color-muted)]">
               {checking
@@ -74,15 +86,6 @@ export function DashboardPageClient() {
               </ul>
             )}
           </section>
-
-          <h2 className="mb-3.5 text-[15px] font-bold tracking-[-0.005em]">Tus restaurantes</h2>
-          <ul className="m-0 grid list-none grid-cols-1 gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
-            {restaurants.map(r => (
-              <li key={r.id}>
-                <RestaurantCard restaurant={r} href={`/restaurants/${r.slug}`} />
-              </li>
-            ))}
-          </ul>
         </>
       )}
       </QueryBoundary>

@@ -6,10 +6,10 @@ export function LocaleChip({ code }: { code: string }) {
   );
 }
 
-export function LocaleChips({ codes }: { codes: string[] }) {
+export function LocaleChips({ codes, nowrap = false }: { codes: string[]; nowrap?: boolean }) {
   if (codes.length === 0) return <span className="text-[12.5px] text-[color:var(--color-muted)]">Sin idiomas</span>;
   return (
-    <span className="inline-flex flex-wrap gap-1">
+    <span className={nowrap ? 'inline-flex gap-1' : 'inline-flex flex-wrap gap-1'}>
       <span className="sr-only">Idiomas: </span>
       {codes.map(c => (
         <LocaleChip key={c} code={c} />

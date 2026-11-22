@@ -1,6 +1,7 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { loginAction } from '@/lib/actions';
 
 const INPUT =
@@ -9,20 +10,33 @@ const INPUT =
 export function LoginForm({ next }: { next: string }) {
   const [state, formAction, isPending] = useActionState(loginAction, { error: null as string | null, email: '' as string | undefined });
 
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <form className="w-full max-w-[360px]" action={formAction} aria-describedby={state.error ? 'lg-error' : undefined}>
       <h1 className="mb-2 text-[22px] font-bold tracking-[-0.015em]">Iniciar sesión</h1>
-      <p className="mb-7 text-[13.5px] text-[color:var(--color-muted)]">Accede con tu email del equipo.</p>
+      <p className="mb-7 text-[14px] leading-[1.55] text-[color:var(--color-muted)]">Entra para editar la web de tu restaurante.</p>
 
       <input type="hidden" name="next" value={next} />
 
       <div className="mb-4">
-        <label htmlFor="lg-email" className="mb-2 block cursor-pointer text-[13px] font-semibold">Email</label>
+        <label htmlFor="lg-email" className="mb-2 block cursor-pointer text-[13px] font-semibold">Correo electrónico</label>
         <input id="lg-email" name="email" type="email" autoComplete="username" required defaultValue={state.email ?? ''} className={INPUT} />
       </div>
       <div className="mb-5">
         <label htmlFor="lg-pwd" className="mb-2 block cursor-pointer text-[13px] font-semibold">Contraseña</label>
-        <input id="lg-pwd" name="password" type="password" autoComplete="current-password" required className={INPUT} />
+        <div className="relative">
+          <input id="lg-pwd" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" required className={`${INPUT} pr-12`} />
+          <button
+            type="button"
+            aria-label={showPassword ? 'Ocultar la contraseña' : 'Mostrar la contraseña'}
+            aria-pressed={showPassword}
+            onClick={() => setShowPassword(v => !v)}
+            className="absolute right-1 top-1/2 grid h-11 w-11 -translate-y-1/2 cursor-pointer place-items-center rounded-[8px] border-0 bg-transparent text-[color:var(--color-muted)] hover:text-[color:var(--color-ink)] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[color:var(--color-accent)]"
+          >
+            {showPassword ? <EyeOff aria-hidden className="h-[18px] w-[18px]" /> : <Eye aria-hidden className="h-[18px] w-[18px]" />}
+          </button>
+        </div>
       </div>
 
       <p
@@ -48,6 +62,10 @@ export function LoginForm({ next }: { next: string }) {
       >
         {isPending ? 'Entrando…' : 'Entrar'}
       </button>
+
+      <p className="m-0 mt-6 text-[13px] leading-[1.55] text-[color:var(--color-muted)]">
+        ¿No recuerdas la contraseña? Pídele a un administrador un enlace para elegir una nueva.
+      </p>
     </form>
   );
 }

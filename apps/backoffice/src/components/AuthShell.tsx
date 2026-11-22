@@ -43,7 +43,20 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         <p className="relative m-0 text-[12px] text-[#d4c3a8]">© 2026 · Grupo Hosteleria</p>
       </div>
 
-      <div className="grid place-items-center p-6 sm:p-10">{children}</div>
+      <div className="flex flex-col p-6 sm:p-10">
+        {/* En pantallas estrechas el panel de la izquierda no se ve: la marca va encima del formulario. */}
+        <div className="flex items-center gap-3 lg:hidden">
+          <div
+            aria-hidden
+            className="grid h-9 w-9 place-items-center rounded-[10px] text-[14px] font-extrabold text-white"
+            style={{ background: 'var(--gradient-copper)' }}
+          >
+            HS
+          </div>
+          <strong className="text-[16px] font-bold tracking-[-0.01em]">Hosteleria Studio</strong>
+        </div>
+        <div className="grid flex-1 place-items-center py-8">{children}</div>
+      </div>
     </main>
   );
 }

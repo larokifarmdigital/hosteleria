@@ -11,9 +11,9 @@ export interface TaskLine {
 }
 
 const AREA = {
-  content: { label: 'la pestaña «Contenido»', tab: 'content' },
-  uiTexts: { label: 'la pestaña «Textos de la web»', tab: 'texts' },
-  search: { label: 'la pestaña «Buscadores»', tab: 'search' }
+  content: { label: 'el contenido de la web', tab: 'about' },
+  uiTexts: { label: 'los textos de la web', tab: 'texts' },
+  search: { label: '«Google y buscadores»', tab: 'search' }
 } as const;
 
 const MENU = {
