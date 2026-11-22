@@ -30,6 +30,9 @@ pasan una auditoría de accesibilidad (axe) a cada pantalla y diálogo que tocan
 
    Al acabar: `rm -rf .next-verify && git checkout next-env.d.ts tsconfig.json` (Next los reescribe).
    Las subidas a R2 solo funcionan desde el puerto 4400 (CORS del bucket).
+   Si el 4400 está ocupado (por `next dev`), usa otro: arranca el api con
+   `--var "ALLOWED_ORIGIN:http://localhost:4400,http://localhost:4410"`, el backoffice con `-p 4410`
+   y las pruebas con `BASE=http://localhost:4410 pnpm e2e <nombre>`.
 
 3. Sesiones (una vez; se guardan en `e2e/.work/` y se reutilizan). El login admite
    5 intentos por hora y email. Las cuentas están en `CUENTAS.md`:
@@ -67,6 +70,7 @@ pasan una auditoría de accesibilidad (axe) a cada pantalla y diálogo que tocan
 | `menu-order-photos` | Reordenar platos, vinos y categorías; marcar varias fotos a la vez. |
 | `images` | Subir, describir, asignar y borrar fotos (portada y plato). Deja fotos: pasa `pnpm e2e reset` después. |
 | `translations` | Avisos de traducción por idioma y sección, y bloqueo al publicar con textos a medias. |
+| `spaces-languages` | Entrar a editar: añadir, ordenar y eliminar espacios, idiomas de la web, dirección de la web, pestañas del espacio y alta de restaurantes. |
 | `users-languages` | Ajustes: alta de usuario con enlace, elegir contraseña, suspender, idiomas. |
 
 ## A tener en cuenta

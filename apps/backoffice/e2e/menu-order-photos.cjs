@@ -111,7 +111,7 @@ const SP = state.SPACE;
     const p = await ctx.newPage();
     const dialog = p.getByRole('dialog');
     const mark = (n) => dialog.getByRole('button', { name: new RegExp(`^Marcar la foto: Foto ${n}`) });
-    await p.goto(`${BASE}/restaurants/pruebas/spaces/${SP}`);
+    await p.goto(`${BASE}/restaurants/pruebas/spaces/${SP}?tab=photos`);
     await p.getByRole('heading', { level: 1 }).waitFor();
     const gallery = p.getByRole('group', { name: 'Fotos de la galería' });
     await gallery.getByRole('button', { name: 'Añadir fotos' }).click();
@@ -166,7 +166,7 @@ const SP = state.SPACE;
     await pause(15000);
 
     console.log('— Herramienta ux-a11y-audit');
-    const out = spawnSync('node', [process.env.HOME + '/.claude/tools/ux-a11y-audit.cjs', `--storage=${S}/admin.json`, `${BASE}/dishes?r=pruebas`, `${BASE}/restaurants/pruebas/spaces/${SP}`], { encoding: 'utf8' });
+    const out = spawnSync('node', [process.env.HOME + '/.claude/tools/ux-a11y-audit.cjs', `--storage=${S}/admin.json`, `${BASE}/dishes?r=pruebas`, `${BASE}/restaurants/pruebas/spaces/${SP}?tab=photos`], { encoding: 'utf8' });
     console.log((out.stdout + out.stderr).trim().split('\n').filter(l => /══|✗|Total/.test(l)).join('\n'));
     check('herramienta: 0 incidencias', out.status === 0);
   } catch (e) { fail++; console.log('EXCEPCIÓN', e.message.split('\n').slice(0, 4).join(' | ')); }
