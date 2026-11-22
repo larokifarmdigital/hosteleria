@@ -1,5 +1,5 @@
 import type { I18nValue } from './i18n.js';
-import type { Dish, DishCategory } from './dish.js';
+import type { Dish, DishCategory, DishKind } from './dish.js';
 import type { Wine, WineCategory } from './wine.js';
 import type { LegalPage, LegalPageType } from './legalPage.js';
 import type { MediaAsset } from './media.js';
@@ -58,6 +58,8 @@ export interface PublishedSpace extends SpaceContent {
   /** Los siete días, de lunes a domingo; sin turnos = cerrado. */
   schedule: ScheduleDay[];
   dishCategories: { id: string; name: I18nValue; dishes: PublishedDish[] }[];
+  /** Carta de bebidas: misma forma que la de platos. */
+  drinkCategories: { id: string; name: I18nValue; drinks: PublishedDish[] }[];
   wineCategories: { id: string; name: I18nValue; wines: PublishedWine[] }[];
 }
 
@@ -164,18 +166,20 @@ export function buildPublishedSite(
     if (!spaceContent) continue;
     const schedule = s.publishedSnapshot?.schedule ?? s.schedule;
 
-    const dishCategories = src.dishCategories
-      .filter(c => c.spaceId === s.id)
+    const menu = (kind: DishKind) => src.dishCategories
+      .filter(c => c.spaceId === s.id && c.kind === kind)
       .sort(byOrder)
       .map(c => ({
         id: c.id,
         name: c.name ?? {},
-        dishes: src.dishes
+        items: src.dishes
           .filter(d => d.categoryId === c.id && d.active)
           .sort(byOrder)
           .map(d => ({ id: d.id, name: d.name ?? {}, note: d.note ?? {}, price: d.price, imageAssetId: d.imageAssetId }))
       }))
-      .filter(c => c.dishes.length > 0);
+      .filter(c => c.items.length > 0);
+    const dishCategories = menu('dish').map(({ items, ...c }) => ({ ...c, dishes: items }));
+    const drinkCategories = menu('drink').map(({ items, ...c }) => ({ ...c, drinks: items }));
 
     const wineCategories = src.wineCategories
       .filter(c => c.spaceId === s.id)
@@ -201,6 +205,7 @@ export function buildPublishedSite(
       ...spaceContent,
       schedule: WEEK.map(day => ({ day, shifts: schedule.find(d => d.day === day)?.shifts ?? [] })),
       dishCategories,
+      drinkCategories,
       wineCategories
     });
   }

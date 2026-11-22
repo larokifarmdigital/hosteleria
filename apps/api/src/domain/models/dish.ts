@@ -1,11 +1,16 @@
 import type { I18nValue } from './i18n.js';
 import { DomainError } from './errors.js';
 
+export const DISH_KINDS = ['dish', 'drink'] as const;
+/** Platos y bebidas tienen la misma forma; la categoría dice a qué carta pertenece. */
+export type DishKind = (typeof DISH_KINDS)[number];
+
 export interface DishCategory {
   readonly id: string;
   readonly spaceId: string;
   name: I18nValue;
   order: number;
+  readonly kind: DishKind;
 }
 
 export interface Dish {

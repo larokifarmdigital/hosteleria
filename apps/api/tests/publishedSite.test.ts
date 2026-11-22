@@ -49,7 +49,7 @@ const asset = (id: string, over: Partial<MediaAsset> = {}): MediaAsset => ({
   usage: 'unused', hasAltText: true, altText: t(id), createdAt: new Date(), confirmedAt: new Date(), uploadedBy: null, ...over
 });
 
-const cat = (id: string, spaceId: string, order: number): DishCategory => ({ id, spaceId, name: t(id), order });
+const cat = (id: string, spaceId: string, order: number, kind: DishCategory['kind'] = 'dish'): DishCategory => ({ id, spaceId, name: t(id), order, kind });
 const dish = (id: string, categoryId: string, over: Partial<Dish> = {}): Dish => ({
   id, spaceId: 's1', categoryId, name: t(id), price: 10, order: 0, active: true, imageAssetId: null, imageGradient: 'g', ...over
 });
@@ -144,6 +144,18 @@ describe('sitio publicado', () => {
     ]);
     expect(site.spaces[0].wineCategories.map(c => [c.id, c.wines.map(w => w.id)])).toEqual([['tintos', ['rioja']]]);
     expect(JSON.stringify(site)).not.toContain('otro');
+  });
+
+  it('las bebidas van en su propia carta, con la misma forma', () => {
+    const site = buildPublishedSite({
+      restaurant: restaurant(), spaces: [space()],
+      dishCategories: [cat('entrantes', 's1', 0), cat('cafes', 's1', 1, 'drink'), cat('cocteles', 's1', 0, 'drink')],
+      dishes: [dish('a', 'entrantes'), dish('espresso', 'cafes', { price: 2.2 }), dish('negroni', 'cocteles'), dish('agotado', 'cocteles', { active: false })],
+      wineCategories: [], wines: [], legalPages: []
+    }, [], 'https://m')!;
+    expect(site.spaces[0].dishCategories.map(c => c.id)).toEqual(['entrantes']);
+    expect(site.spaces[0].drinkCategories.map(c => [c.id, c.drinks.map(d => d.id)])).toEqual([['cocteles', ['negroni']], ['cafes', ['espresso']]]);
+    expect(site.spaces[0].drinkCategories[1].drinks[0].price).toBe(2.2);
   });
 
   it('imágenes: solo las publicadas, confirmadas y del restaurante', () => {

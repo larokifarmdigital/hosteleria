@@ -6,6 +6,7 @@ import type {
   Space,
   DishCategory,
   Dish,
+  DishKind,
   WineCategory,
   Wine,
   MediaAsset,
@@ -205,7 +206,8 @@ export function createApiClient(opts: ApiClientOpts) {
 
     // ─── Dishes ─────────────────────────────────────────────────
     dishes: {
-      list: (filters?: { restaurantSlug?: string; categoryId?: string; missingLocale?: string }) =>
+      /** Sin `kind` devuelve platos; con `kind: 'drink'`, bebidas. */
+      list: (filters?: { restaurantSlug?: string; categoryId?: string; missingLocale?: string; kind?: DishKind }) =>
         req<{ dishes: Dish[] }>(`/dishes${buildQuery(filters)}`).then(r => r.dishes),
       get: (id: string) => req<{ dish: Dish }>(`/dishes/${id}`).then(r => r.dish),
       create: (body: {
@@ -216,9 +218,9 @@ export function createApiClient(opts: ApiClientOpts) {
         req<{ dish: Dish }>(`/dishes/${id}`, { method: 'PATCH', body: JSON.stringify(body) }).then(r => r.dish),
       delete: (id: string) => req<{ ok: true }>(`/dishes/${id}`, { method: 'DELETE' }),
       categories: {
-        list: (spaceId?: string) =>
-          req<{ categories: DishCategory[] }>(`/dishes/categories${spaceId ? `?spaceId=${spaceId}` : ''}`).then(r => r.categories),
-        create: (body: { spaceId: string; name: I18nString; order?: number }) =>
+        list: (spaceId?: string, kind?: DishKind) =>
+          req<{ categories: DishCategory[] }>(`/dishes/categories${buildQuery({ spaceId, kind })}`).then(r => r.categories),
+        create: (body: { spaceId: string; name: I18nString; order?: number; kind?: DishKind }) =>
           req<{ category: DishCategory }>('/dishes/categories', { method: 'POST', body: JSON.stringify(body) }).then(r => r.category),
         patch: (id: string, body: { name?: I18nString; order?: number }) =>
           req<{ category: DishCategory }>(`/dishes/categories/${id}`, { method: 'PATCH', body: JSON.stringify(body) }).then(r => r.category),

@@ -95,7 +95,8 @@ export interface Faq {
 export const PAYMENT_METHODS = ['cash', 'credit_card', 'debit_card', 'contactless', 'apple_pay', 'google_pay', 'bizum'] as const;
 export const EXTRA_SERVICES = [
   'terraza', 'grupos', 'sala_privada', 'vegetariano', 'vegano', 'sin_gluten', 'menu_dia',
-  'menu_degustacion', 'carta_vinos', 'bar', 'familiar', 'pet_friendly', 'accesible', 'aparcamiento'
+  'menu_degustacion', 'carta_vinos', 'bar', 'familiar', 'pet_friendly', 'accesible', 'aparcamiento',
+  'coctel', 'live_music'
 ] as const;
 
 /** Datos del negocio para buscadores (JSON-LD). */

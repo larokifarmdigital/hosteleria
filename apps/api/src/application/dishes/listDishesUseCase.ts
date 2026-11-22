@@ -1,10 +1,11 @@
 import type { DishRepository } from '../../domain/repositories/dishRepository.js';
-import type { Dish } from '../../domain/models/dish.js';
+import type { Dish, DishKind } from '../../domain/models/dish.js';
 
 export interface ListDishesFilters {
   restaurantSlug?: string;
   categoryId?: string;
   missingLocale?: string;
+  kind?: DishKind;
 }
 
 export class ListDishesUseCase {

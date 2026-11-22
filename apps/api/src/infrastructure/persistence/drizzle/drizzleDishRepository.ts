@@ -1,7 +1,7 @@
 import { eq, and, asc, inArray, count } from 'drizzle-orm';
 import { getDb } from './client.js';
 import { dishes, dishCategories, spaces, restaurants } from './schema/content.js';
-import type { Dish, DishCategory } from '../../../domain/models/dish.js';
+import type { Dish, DishCategory, DishKind } from '../../../domain/models/dish.js';
 import { CategoryHasDishesError } from '../../../domain/models/dish.js';
 import type { I18nValue } from '../../../domain/models/i18n.js';
 import type { DishRepository } from '../../../domain/repositories/dishRepository.js';
@@ -21,6 +21,7 @@ export class DrizzleDishRepository implements DishRepository {
     restaurantSlug?: string;
     categoryId?: string;
     missingLocale?: string;
+    kind?: DishKind;
   }): Promise<Dish[]> {
     // El filtro público es por slug, pero `dishes` solo guarda `spaceId` —
     // resolvemos slug → spaceIds primero (bail-out si el restaurant no existe).
@@ -41,6 +42,12 @@ export class DrizzleDishRepository implements DishRepository {
     const conds = [];
     if (spaceIdsFilter) conds.push(inArray(dishes.spaceId, spaceIdsFilter));
     if (filters?.categoryId) conds.push(eq(dishes.categoryId, filters.categoryId));
+    if (filters?.kind) {
+      conds.push(inArray(
+        dishes.categoryId,
+        this.db.select({ id: dishCategories.id }).from(dishCategories).where(eq(dishCategories.kind, filters.kind))
+      ));
+    }
 
     const rows = await this.db.query.dishes.findMany({
       where: conds.length > 0 ? and(...conds) : undefined,
@@ -92,9 +99,12 @@ export class DrizzleDishRepository implements DishRepository {
     await this.db.delete(dishes).where(eq(dishes.id, id));
   }
 
-  async listCategories(spaceId?: string): Promise<DishCategory[]> {
+  async listCategories(spaceId?: string, kind?: DishKind): Promise<DishCategory[]> {
+    const conds = [];
+    if (spaceId) conds.push(eq(dishCategories.spaceId, spaceId));
+    if (kind) conds.push(eq(dishCategories.kind, kind));
     const rows = await this.db.query.dishCategories.findMany({
-      where: spaceId ? eq(dishCategories.spaceId, spaceId) : undefined,
+      where: conds.length > 0 ? and(...conds) : undefined,
       orderBy: [asc(dishCategories.order)]
     });
     return rows.map(rowToDishCategory);
@@ -105,7 +115,7 @@ export class DrizzleDishRepository implements DishRepository {
     return row ? rowToDishCategory(row) : null;
   }
 
-  async createCategory(input: { spaceId: string; name: I18nValue; order: number }): Promise<DishCategory> {
+  async createCategory(input: { spaceId: string; name: I18nValue; order: number; kind?: DishKind }): Promise<DishCategory> {
     const [row] = await this.db.insert(dishCategories).values(input).returning();
     return rowToDishCategory(row);
   }

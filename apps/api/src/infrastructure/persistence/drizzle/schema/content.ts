@@ -182,7 +182,9 @@ export const dishCategories = pgTable('dish_categories', {
     .notNull()
     .references(() => spaces.id, { onDelete: 'cascade' }),
   name: i18nString('name').notNull(),
-  order: integer('order').notNull().default(0)
+  order: integer('order').notNull().default(0),
+  // Platos y bebidas comparten tablas: la categoría dice de qué carta es.
+  kind: text('kind', { enum: ['dish', 'drink'] }).notNull().default('dish')
 });
 
 export const dishes = pgTable('dishes', {

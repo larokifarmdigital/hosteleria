@@ -6,8 +6,10 @@ import { requireAuth } from '../middleware/authMiddleware.js';
 import { allowedSpaceIds, assertMediaInRestaurant, assertSpaceAccess } from '../accessControl.js';
 import { dishToDto } from '../dto/dishDto.js';
 import {
+  DISH_KINDS,
   DishCategoryNotFoundError,
-  type Dish
+  type Dish,
+  type DishKind
 } from '../../../domain/models/dish.js';
 import { SpaceNotFoundError } from '../../../domain/models/space.js';
 import { RestaurantNotFoundError } from '../../../domain/models/restaurant.js';
@@ -23,7 +25,7 @@ export function createDishesRoutes() {
     const spaceId = c.req.query('spaceId');
     const allowed = await allowedSpaceIds(c);
     if (spaceId && allowed && !allowed.has(spaceId)) return c.json({ categories: [] });
-    const rows = await c.get('container').dishes.listCategories.execute(spaceId ?? undefined);
+    const rows = await c.get('container').dishes.listCategories.execute(spaceId ?? undefined, kindOf(c));
     const filtered = allowed ? rows.filter(r => allowed.has(r.spaceId)) : rows;
     return c.json({ categories: filtered });
   });
@@ -66,7 +68,8 @@ export function createDishesRoutes() {
     const categoryId = c.req.query('categoryId') || undefined;
     const missingLocale = c.req.query('missingLocale') || undefined;
 
-    const list = await container.dishes.list.execute({ restaurantSlug, categoryId, missingLocale });
+    // Con una categoría concreta ya está dicho de qué carta es.
+    const list = await container.dishes.list.execute({ restaurantSlug, categoryId, missingLocale, kind: categoryId ? undefined : kindOf(c) });
     const filtered = allowed ? list.filter(d => allowed.has(d.spaceId)) : list;
 
     const dtos = await Promise.all(filtered.map(d => enrichDish(c, d)));
@@ -122,6 +125,11 @@ export function createDishesRoutes() {
   return app;
 }
 
+/** `?kind=drink` pide la carta de bebidas; sin él, la de platos. */
+function kindOf(c: Context<AppBindings>): DishKind {
+  return c.req.query('kind') === 'drink' ? 'drink' : 'dish';
+}
+
 async function assertDishImage(c: Context<AppBindings>, spaceId: string, mediaId: string) {
   const space = await c.get('container').repos.spacesRepo.findById(spaceId);
   if (!space) throw new SpaceNotFoundError(spaceId);
@@ -146,7 +154,8 @@ const i18nSchema = z.record(z.string());
 const categoryCreateSchema = z.object({
   spaceId: z.string().min(1),
   name: i18nSchema,
-  order: z.number().int().min(0).default(0)
+  order: z.number().int().min(0).default(0),
+  kind: z.enum(DISH_KINDS).default('dish')
 });
 
 const categoryPatchSchema = z.object({

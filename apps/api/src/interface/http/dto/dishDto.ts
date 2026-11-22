@@ -16,6 +16,7 @@ export function dishToDto(dish: Dish, category: DishCategory, _space: Space, res
     restaurantSlug: restaurant.slug,
     restaurantName: restaurant.name,
     categoryName: category.name?.es ?? '',
+    kind: category.kind,
     name: dish.name ?? {},
     note: dish.note ?? {},
     price: dish.price,

@@ -121,7 +121,8 @@ export interface Faq {
 export type PaymentMethod = 'cash' | 'credit_card' | 'debit_card' | 'contactless' | 'apple_pay' | 'google_pay' | 'bizum';
 export type ExtraService =
   | 'terraza' | 'grupos' | 'sala_privada' | 'vegetariano' | 'vegano' | 'sin_gluten' | 'menu_dia'
-  | 'menu_degustacion' | 'carta_vinos' | 'bar' | 'familiar' | 'pet_friendly' | 'accesible' | 'aparcamiento';
+  | 'menu_degustacion' | 'carta_vinos' | 'bar' | 'familiar' | 'pet_friendly' | 'accesible' | 'aparcamiento'
+  | 'coctel' | 'live_music';
 /** Datos del negocio para buscadores (JSON-LD). */
 export interface Business {
   averagePrice?: number;
@@ -247,11 +248,14 @@ export interface Space {
 }
 
 // ─── Menu ────────────────────────────────────────────────────────
+/** Platos y bebidas tienen la misma forma; la categoría dice de qué carta es. */
+export type DishKind = 'dish' | 'drink';
 export interface DishCategory {
   id: string;
   spaceId: string;
   name: I18nString;
   order: number;
+  kind: DishKind;
 }
 export interface Dish {
   id: string;
@@ -260,6 +264,7 @@ export interface Dish {
   restaurantSlug: string;
   restaurantName: string;
   categoryName: string;
+  kind: DishKind;
   name: I18nString;
   note: I18nText;
   price: number | null;
@@ -369,6 +374,8 @@ export interface PublishedSpace extends Pick<Space,
   schedule: ScheduleDay[];
   /** Solo platos activos; las categorías sin ninguno no salen. */
   dishCategories: { id: string; name: I18nString; dishes: PublishedDish[] }[];
+  /** Carta de bebidas: misma forma que la de platos. */
+  drinkCategories: { id: string; name: I18nString; drinks: PublishedDish[] }[];
   wineCategories: { id: string; name: I18nString; wines: PublishedWine[] }[];
 }
 /** Lo que una landing necesita para construirse: solo lo publicado. */

@@ -22,6 +22,7 @@ export function rowToDishCategory(row: typeof dishCategories.$inferSelect): Dish
     id: row.id,
     spaceId: row.spaceId,
     name: (row.name as I18nValue) ?? {},
-    order: row.order
+    order: row.order,
+    kind: row.kind
   };
 }

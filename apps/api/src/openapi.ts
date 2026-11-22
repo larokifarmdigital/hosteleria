@@ -274,6 +274,7 @@ const schemas = {
           description: 'Contenido publicado de `Space` (sin `state` ni contadores), con el horario de los siete días y su carta.',
           allOf: [{ $ref: '#/components/schemas/Space' }],
           properties: {
+            drinkCategories: { type: 'array', description: 'Carta de bebidas: como `dishCategories`, con `drinks` en vez de `dishes`.', items: { type: 'object' } },
             dishCategories: {
               type: 'array',
               items: {
@@ -401,11 +402,20 @@ const schemas = {
       id: { type: 'string' },
       spaceId: { type: 'string' },
       name: { $ref: '#/components/schemas/I18nString' },
-      order: { type: 'integer' }
+      order: { type: 'integer' },
+      kind: { type: 'string', enum: ['dish', 'drink'], description: 'De qué carta es: platos o bebidas.' }
     }
   },
 
-  WineCategory: { allOf: [{ $ref: '#/components/schemas/DishCategory' }] },
+  WineCategory: {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      spaceId: { type: 'string' },
+      name: { $ref: '#/components/schemas/I18nString' },
+      order: { type: 'integer' }
+    }
+  },
 
   Language: {
     type: 'object',
@@ -888,9 +898,10 @@ const paths: Record<string, any> = {
 
   '/dishes': {
     get: {
-      tags: ['Dishes'], summary: 'Lista platos con filtros',
-      description: 'Admin ve todos; editor solo platos de spaces de sus restaurantes.',
+      tags: ['Dishes'], summary: 'Lista platos (o bebidas) con filtros',
+      description: 'Admin ve todos; editor solo platos de spaces de sus restaurantes. Las bebidas son platos de otra carta: se piden con `kind=drink` y se crean en una categoría de ese tipo.',
       parameters: [
+        { name: 'kind', in: 'query', schema: { type: 'string', enum: ['dish', 'drink'], default: 'dish' } },
         { name: 'restaurantSlug', in: 'query', schema: { type: 'string' } },
         { name: 'categoryId', in: 'query', schema: { type: 'string' } },
         { name: 'missingLocale', in: 'query', schema: { type: 'string' }, description: 'Devuelve solo platos sin traducción en ese locale.' }
@@ -967,8 +978,11 @@ const paths: Record<string, any> = {
   },
   '/dishes/categories': {
     get: {
-      tags: ['Dishes'], summary: 'Lista categorías de platos',
-      parameters: [{ name: 'spaceId', in: 'query', schema: { type: 'string' } }],
+      tags: ['Dishes'], summary: 'Lista categorías de platos (o de bebidas con `kind=drink`)',
+      parameters: [
+        { name: 'spaceId', in: 'query', schema: { type: 'string' } },
+        { name: 'kind', in: 'query', schema: { type: 'string', enum: ['dish', 'drink'], default: 'dish' } }
+      ],
       responses: {
         200: ok({ type: 'object', properties: { categories: { type: 'array', items: { $ref: '#/components/schemas/DishCategory' } } }, required: ['categories'] }),
         401: err401, 500: err500
