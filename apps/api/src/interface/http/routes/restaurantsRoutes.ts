@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import { validate } from '../validate.js';
 import { z } from 'zod';
 import { requireAuth, requireAdmin, requireRestaurant } from '../middleware/authMiddleware.js';
+import { requestSiteRebuild } from '../middleware/rebuildSite.js';
 import { cacheHeaders } from '../../../middleware/cache.js';
 import { restaurantToDto } from '../dto/restaurantDto.js';
 import {
@@ -47,7 +48,7 @@ export function createRestaurantsRoutes() {
   // Pide regenerar la web a mano, por si un build falló o se quedó a medias.
   app.post('/:slug/rebuild', requireAuth, requireRestaurant('slug'), async (c) => {
     const slug = c.req.param('slug');
-    await c.get('container').public.requestRebuild.forRestaurant(slug);
+    await requestSiteRebuild(c, { restaurantSlug: slug });
     return c.json({ site: await c.get('container').public.siteStatus.execute(slug) });
   });
 
