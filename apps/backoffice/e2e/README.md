@@ -66,6 +66,7 @@ pasan una auditoría de accesibilidad (axe) a cada pantalla y diálogo que tocan
 | `drinks` | Pestaña de bebidas de la carta. |
 | `menu-order-photos` | Reordenar platos, vinos y categorías; marcar varias fotos a la vez. |
 | `images` | Subir, describir, asignar y borrar fotos (portada y plato). Deja fotos: pasa `pnpm e2e reset` después. |
+| `translations` | Avisos de traducción por idioma y sección, y bloqueo al publicar con textos a medias. |
 | `users-languages` | Ajustes: alta de usuario con enlace, elegir contraseña, suspender, idiomas. |
 
 ## A tener en cuenta
