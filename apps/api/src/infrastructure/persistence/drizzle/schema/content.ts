@@ -74,6 +74,9 @@ export const restaurants = pgTable('restaurants', {
   analyticsToken: text('analytics_token'),
   business: jsonb('business').default({}),
   lastPublishedAt: timestamp('last_published_at', { withTimezone: true }),
+  // Última vez que se pidió regenerar la web, y si el hook la aceptó.
+  lastRebuildAt: timestamp('last_rebuild_at', { withTimezone: true }),
+  lastRebuildOk: boolean('last_rebuild_ok'),
   publishedSnapshot: jsonb('published_snapshot'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

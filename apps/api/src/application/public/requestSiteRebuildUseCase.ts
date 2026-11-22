@@ -27,6 +27,7 @@ export class RequestSiteRebuildUseCase {
 
   private async fire(r: Restaurant | null): Promise<void> {
     if (!r?.rebuildHookUrl || !r.publishedSnapshot) return;
-    await this.hook.call(r.rebuildHookUrl, { restaurantSlug: r.slug });
+    const ok = await this.hook.call(r.rebuildHookUrl, { restaurantSlug: r.slug });
+    await this.restaurants.recordRebuild(r.id, new Date(), ok);
   }
 }

@@ -365,6 +365,29 @@ export type PendingTask =
   /** Nunca publicado, o con cambios guardados que la web aún no enseña. */
   | { type: 'unpublished'; target: { kind: 'restaurant' } | ({ kind: 'space' } & SpaceRef); neverPublished: boolean };
 
+// ─── Estado de la web ────────────────────────────────────────────
+export type SiteState =
+  /** La web enseña lo último publicado. */
+  | 'up_to_date'
+  /** Hay cambios que la web aún no enseña y se pidió regenerarla hace poco. */
+  | 'updating'
+  /** Hay cambios que la web no enseña y ya debería haberse regenerado. */
+  | 'outdated'
+  /** No se ha podido leer la web. */
+  | 'unknown'
+  /** El restaurante no se ha publicado nunca. */
+  | 'unpublished';
+export interface SiteStatus {
+  state: SiteState;
+  siteUrl: string | null;
+  builtAt: string | null;
+  lastRebuildAt: string | null;
+  /** Si la última petición de regenerar fue aceptada; `null` si no se ha pedido nunca. */
+  lastRebuildOk: boolean | null;
+  /** Sin hook, la web no se regenera sola. */
+  canRebuild: boolean;
+}
+
 // ─── Sitio publicado (lectura pública, sin sesión) ───────────────
 export interface PublishedMedia {
   url: string;

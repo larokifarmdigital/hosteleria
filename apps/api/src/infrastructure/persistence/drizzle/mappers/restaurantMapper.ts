@@ -37,6 +37,8 @@ export interface RestaurantRow {
   business: unknown;
   // La SQL cruda del repo devuelve el timestamp como string; `findFirst` lo da como Date.
   lastPublishedAt: Date | string | null;
+  lastRebuildAt: Date | string | null;
+  lastRebuildOk: boolean | null;
   publishedSnapshot: unknown;
   spacesCount: number;
   dishesCount: number;
@@ -75,6 +77,8 @@ export function rowToRestaurant(row: RestaurantRow): Restaurant {
     analyticsToken: row.analyticsToken ?? null,
     business: (row.business as any) ?? {},
     lastPublishedAt: row.lastPublishedAt ? new Date(row.lastPublishedAt) : null,
+    lastRebuildAt: row.lastRebuildAt ? new Date(row.lastRebuildAt) : null,
+    lastRebuildOk: row.lastRebuildOk ?? null,
     publishedSnapshot: (row.publishedSnapshot as RestaurantSnapshot | null) ?? null,
     spacesCount: row.spacesCount,
     dishesCount: row.dishesCount,

@@ -1,4 +1,4 @@
 export interface RebuildHookCaller {
-  /** Fire-and-forget: nunca lanza, timeout corto. `meta` solo entra al log. */
-  call(url: string, meta?: { restaurantSlug?: string }): Promise<void>;
+  /** Nunca lanza, timeout corto. Devuelve si el proveedor aceptó la petición. `meta` solo entra al log. */
+  call(url: string, meta?: { restaurantSlug?: string }): Promise<boolean>;
 }

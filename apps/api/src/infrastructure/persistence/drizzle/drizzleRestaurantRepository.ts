@@ -38,6 +38,8 @@ export class DrizzleRestaurantRepository implements RestaurantRepository {
         r.ai_summary AS "aiSummary",
         r.analytics_token AS "analyticsToken",
         r.last_published_at AS "lastPublishedAt",
+        r.last_rebuild_at AS "lastRebuildAt",
+        r.last_rebuild_ok AS "lastRebuildOk",
         r.published_snapshot AS "publishedSnapshot",
         dl.code AS "defaultLocaleCode",
         COALESCE(
@@ -154,6 +156,10 @@ export class DrizzleRestaurantRepository implements RestaurantRepository {
       publishedSnapshot: snapshot,
       lastPublishedAt: publishedAt
     }).where(eq(restaurants.id, id));
+  }
+
+  async recordRebuild(id: string, at: Date, ok: boolean): Promise<void> {
+    await this.db.update(restaurants).set({ lastRebuildAt: at, lastRebuildOk: ok }).where(eq(restaurants.id, id));
   }
 
   async deleteBySlug(slug: string): Promise<void> {

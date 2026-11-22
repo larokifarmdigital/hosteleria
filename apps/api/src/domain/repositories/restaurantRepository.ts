@@ -24,6 +24,9 @@ export interface RestaurantRepository {
 
   saveSnapshot(id: string, snapshot: RestaurantSnapshot, publishedAt: Date): Promise<void>;
 
+  /** Apunta que se pidió regenerar la web y si el hook aceptó la petición. */
+  recordRebuild(id: string, at: Date, ok: boolean): Promise<void>;
+
   /** Hard delete; FKs encadenan a spaces/dishes/wines. */
   deleteBySlug(slug: string): Promise<void>;
 }

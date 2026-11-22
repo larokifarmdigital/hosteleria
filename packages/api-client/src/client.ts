@@ -14,6 +14,7 @@ import type {
   LegalPage,
   LegalPageType,
   PendingTask,
+  SiteStatus,
   PublishedSite,
   UploadUrlResponse,
   I18nString
@@ -198,6 +199,14 @@ export function createApiClient(opts: ApiClientOpts) {
     /** Lo que le falta al contenido de un restaurante: publicación, horarios, traducciones y fotos. */
     pendingTasks: (restaurantSlug: string) =>
       req<{ tasks: PendingTask[] }>(`/restaurants/${restaurantSlug}/pending`).then(r => r.tasks),
+
+    // ─── Estado de la web ──────────────────────────────────────
+    /** ¿Enseña la web lo último publicado? */
+    siteStatus: (restaurantSlug: string) =>
+      req<{ site: SiteStatus }>(`/restaurants/${restaurantSlug}/site-status`).then(r => r.site),
+    /** Pide regenerar la web a mano. */
+    rebuildSite: (restaurantSlug: string) =>
+      req<{ site: SiteStatus }>(`/restaurants/${restaurantSlug}/rebuild`, { method: 'POST' }).then(r => r.site),
 
     // ─── Legal pages ────────────────────────────────────────────
     legalPages: {

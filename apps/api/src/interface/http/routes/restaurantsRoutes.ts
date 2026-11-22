@@ -39,6 +39,18 @@ export function createRestaurantsRoutes() {
     return c.json({ tasks });
   });
 
+  // ¿Enseña la web lo último publicado?
+  app.get('/:slug/site-status', requireAuth, requireRestaurant('slug'), async (c) => {
+    return c.json({ site: await c.get('container').public.siteStatus.execute(c.req.param('slug')) });
+  });
+
+  // Pide regenerar la web a mano, por si un build falló o se quedó a medias.
+  app.post('/:slug/rebuild', requireAuth, requireRestaurant('slug'), async (c) => {
+    const slug = c.req.param('slug');
+    await c.get('container').public.requestRebuild.forRestaurant(slug);
+    return c.json({ site: await c.get('container').public.siteStatus.execute(slug) });
+  });
+
   app.post('/', requireAdmin, validate('json', createSchema), async (c) => {
     const r = await c.get('container').restaurants.create.execute(c.req.valid('json'));
     return c.json({ restaurant: restaurantToDto(r) }, 201);

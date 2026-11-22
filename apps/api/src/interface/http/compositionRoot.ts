@@ -82,6 +82,8 @@ import { DeleteMediaUseCase } from '../../application/media/deleteMediaUseCase.j
 import { ListLegalPagesUseCase, SaveLegalPageUseCase, DeleteLegalPageUseCase } from '../../application/legalPages/legalPagesUseCases.js';
 import { GetPublishedSiteUseCase } from '../../application/public/getPublishedSiteUseCase.js';
 import { RequestSiteRebuildUseCase } from '../../application/public/requestSiteRebuildUseCase.js';
+import { GetSiteStatusUseCase } from '../../application/public/getSiteStatusUseCase.js';
+import { FetchSiteProbe } from '../../infrastructure/integrations/fetchSiteProbe.js';
 
 export type Container = ReturnType<typeof buildContainer>;
 
@@ -103,6 +105,9 @@ export function buildContainer(env: Env) {
     : new ConsoleEmailSender();
   const storage = new R2MediaStorage(env);
   const rebuildHook = new FetchRebuildHookCaller();
+  const getSite = new GetPublishedSiteUseCase(
+    restaurantsRepo, spacesRepo, dishesRepo, winesRepo, legalPagesRepo, mediaRepo, languagesRepo, env.R2_PUBLIC_URL
+  );
 
   return {
     // Expuestos para middlewares que leen directo sin UC (p.ej. `requireRestaurant`).
@@ -186,10 +191,9 @@ export function buildContainer(env: Env) {
     },
 
     public: {
-      getSite: new GetPublishedSiteUseCase(
-        restaurantsRepo, spacesRepo, dishesRepo, winesRepo, legalPagesRepo, mediaRepo, languagesRepo, env.R2_PUBLIC_URL
-      ),
-      requestRebuild: new RequestSiteRebuildUseCase(restaurantsRepo, spacesRepo, rebuildHook)
+      getSite,
+      requestRebuild: new RequestSiteRebuildUseCase(restaurantsRepo, spacesRepo, rebuildHook),
+      siteStatus: new GetSiteStatusUseCase(restaurantsRepo, getSite, new FetchSiteProbe())
     },
 
     media: {

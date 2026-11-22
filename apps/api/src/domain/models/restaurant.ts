@@ -159,6 +159,9 @@ export interface Restaurant {
   analyticsToken: string | null;
   business: Business;
   lastPublishedAt: Date | null;
+  /** Última petición de regenerar la web, y si el hook la aceptó. */
+  lastRebuildAt: Date | null;
+  lastRebuildOk: boolean | null;
   publishedSnapshot: RestaurantSnapshot | null;
   // Derivados: los calcula el repo con subqueries, no se persisten.
   spacesCount: number;

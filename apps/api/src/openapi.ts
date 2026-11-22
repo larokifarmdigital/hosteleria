@@ -253,6 +253,19 @@ const schemas = {
     required: ['id', 'type', 'title', 'content']
   },
 
+  SiteStatus: {
+    type: 'object',
+    properties: {
+      state: { type: 'string', enum: ['up_to_date', 'updating', 'outdated', 'unknown', 'unpublished'] },
+      siteUrl: { type: 'string', nullable: true },
+      builtAt: { type: 'string', format: 'date-time', nullable: true },
+      lastRebuildAt: { type: 'string', format: 'date-time', nullable: true },
+      lastRebuildOk: { type: 'boolean', nullable: true },
+      canRebuild: { type: 'boolean', description: 'El restaurante está publicado y tiene hook.' }
+    },
+    required: ['state', 'canRebuild']
+  },
+
   PublishedSite: {
     type: 'object',
     properties: {
@@ -781,6 +794,33 @@ const paths: Record<string, any> = {
           neverPublished: { type: 'boolean' }
         }, required: ['type', 'target'] } } }, required: ['tasks'] }),
         401: err401, 403: err403Rest, 404: errRef('404 Not Found — `RESTAURANT_NOT_FOUND`'), 500: err500
+      }
+    }
+  },
+  '/restaurants/{slug}/site-status': {
+    parameters: [{ name: 'slug', in: 'path', required: true, schema: { type: 'string' } }],
+    get: {
+      tags: ['Restaurants'], summary: '¿Enseña la web lo último publicado?',
+      description: [
+        'Compara la versión del contenido publicado (el `ETag` de `GET /public/restaurants/{slug}`) con la que la landing dice haber',
+        'construido en `https://<dominio>/build.json`. `up_to_date`: coinciden. `updating`: no coinciden y se pidió regenerar hace menos de 6 minutos.',
+        '`outdated`: no coinciden y ya debería haber terminado, o el hook falló. `unknown`: la web no responde o no publica su versión.',
+        '`unpublished`: el restaurante no se ha publicado nunca.'
+      ].join(' '),
+      responses: {
+        200: ok({ type: 'object', properties: { site: { $ref: '#/components/schemas/SiteStatus' } }, required: ['site'] }),
+        401: err401, 403: err403Rest, 404: errRef('404 Not Found — `RESTAURANT_NOT_FOUND`'), 500: err500
+      }
+    }
+  },
+  '/restaurants/{slug}/rebuild': {
+    parameters: [{ name: 'slug', in: 'path', required: true, schema: { type: 'string' } }],
+    post: {
+      tags: ['Restaurants'], summary: 'Pide regenerar la web a mano',
+      description: 'Llama al hook del restaurante si está publicado y lo tiene configurado, y devuelve el estado de la web.',
+      responses: {
+        200: ok({ type: 'object', properties: { site: { $ref: '#/components/schemas/SiteStatus' } }, required: ['site'] }),
+        401: err401, 403: err403Rest, 500: err500
       }
     }
   },
