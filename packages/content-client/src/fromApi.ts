@@ -4,7 +4,8 @@
 // simplificar a los del api.
 import type { PublishedMedia, PublishedSite, PublishedSpace } from '@hosteleria/api-client';
 import type {
-  Dish, DishCategory, Espacio, LegalPageDoc, Restaurant, RestaurantData, SanityImg, Wine, WineCategory
+  Dish, DishCategory, Drink, DrinkCategory, Espacio, EspacioData, EspacioMenu, GrupoData, LegalPageDoc, Restaurant,
+  RestaurantData, SanityImg, Wine, WineCategory
 } from '@hosteleria/sanity-client';
 import { markdownToBlocks } from './markdown';
 
@@ -181,12 +182,21 @@ function toRestaurant(site: PublishedSite): Restaurant {
   }) as Restaurant;
 }
 
-function menuOf(space: PublishedSpace | undefined, locales: string[]) {
+function menuOf(space: PublishedSpace | undefined, locales: string[]): EspacioMenu {
   const t = (v: I18n) => i18n(v, locales);
   const dishCategories: DishCategory[] = [];
   const dishes: Dish[] = [];
   const wineCategories: WineCategory[] = [];
   const wines: Wine[] = [];
+  const drinkCategories: DrinkCategory[] = [];
+  const drinks: Drink[] = [];
+  (space?.drinkCategories ?? []).forEach((c, ci) => {
+    const categoria = { _id: c.id, orden: (ci + 1) * 10, nombre: t(c.name) };
+    drinkCategories.push(categoria);
+    c.drinks.forEach((d, di) => drinks.push(compact({
+      _id: d.id, nombre: t(d.name), nota: t(d.note), precio: d.price ?? undefined, orden: (di + 1) * 10, activo: true, categoria
+    }) as Drink));
+  });
   (space?.dishCategories ?? []).forEach((c, ci) => {
     const categoria = { _id: c.id, orden: (ci + 1) * 10, nombre: t(c.name) };
     dishCategories.push(categoria);
@@ -202,7 +212,7 @@ function menuOf(space: PublishedSpace | undefined, locales: string[]) {
       precioBotella: w.priceBottle ?? undefined, orden: (wi + 1) * 10, activo: true, categoria
     }) as Wine));
   });
-  return { dishCategories, dishes, wineCategories, wines, drinkCategories: [], drinks: [] };
+  return { dishCategories, dishes, wineCategories, wines, drinkCategories, drinks };
 }
 
 /** Ficha, espacios y la carta del espacio principal, como `fetchRestaurantData` de Sanity. */
@@ -211,8 +221,23 @@ export function toRestaurantData(site: PublishedSite): RestaurantData {
 }
 
 /** La carta de un espacio concreto, para landings con varios. */
-export function toSpaceMenu(site: PublishedSite, spaceId: string) {
+export function toSpaceMenu(site: PublishedSite, spaceId: string): EspacioMenu {
   return menuOf(site.spaces.find(s => s.id === spaceId), site.restaurant.activeLocales);
+}
+
+/** Ficha y espacios, sin cartas: para la portada de un grupo con varios espacios. */
+export function toGroupData(site: PublishedSite): GrupoData {
+  const restaurant = toRestaurant(site);
+  return { restaurant, espacios: restaurant.espacios ?? [] };
+}
+
+/** Un espacio por su slug, con su carta; `null` si no existe o no está publicado. */
+export function toSpaceData(site: PublishedSite, spaceSlug: string): EspacioData | null {
+  const space = site.spaces.find(s => s.slug === spaceSlug);
+  if (!space) return null;
+  const restaurant = toRestaurant(site);
+  const espacio = restaurant.espacios!.find(e => e.slug?.current === spaceSlug)!;
+  return { restaurant, espacio, ...menuOf(space, site.restaurant.activeLocales) };
 }
 
 export function toLegalPages(site: PublishedSite): LegalPageDoc[] {

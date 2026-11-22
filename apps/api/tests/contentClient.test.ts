@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { markdownToBlocks } from '../../../packages/content-client/src/markdown.js';
-import { toLegalPages, toRestaurantData } from '../../../packages/content-client/src/fromApi.js';
+import { toGroupData, toLegalPages, toRestaurantData, toSpaceData } from '../../../packages/content-client/src/fromApi.js';
 import { createContentQueries, createImageBuilder } from '../../../packages/content-client/src/index.js';
 import { mapLegalPage, mapRestaurant, mapSpace, portableToMarkdown } from '../scripts/sanity-import/map.js';
 
@@ -67,6 +67,7 @@ function site(over: Record<string, unknown> = {}) {
     spaces: [{
       id: 's1', slug: e.slug, type: e.type, isDefault: true, name: e.name, descriptor: '', coverGradient: '', gallery: [],
       ...e.content, schedule: e.schedule,
+      drinkCategories: [{ id: 'k1', name: { es: 'Cafés', en: 'Coffee' }, drinks: [{ id: 'b1', name: { es: 'Espresso', en: 'Espresso' }, note: {}, price: 2.2, imageAssetId: null }] }],
       dishCategories: [{ id: 'c1', name: { es: 'Fríos', en: 'Cold' }, dishes: [{ id: 'd1', name: { es: 'Gildas', en: 'Gildas' }, note: {}, price: 6, imageAssetId: null }] }],
       wineCategories: [{ id: 'w1', name: { es: 'Tintos', en: 'Reds' }, wines: [{ id: 'v1', name: 'Rioja', region: null, note: {}, priceGlass: 4, priceBottle: null }] }]
     }],
@@ -110,7 +111,10 @@ describe('del api a la forma que consume la landing', () => {
     }]);
     expect(data.wines[0]).toMatchObject({ nombre: 'Rioja', precioCopa: 4, categoria: { _id: 'w1' } });
     expect(data.wines[0]).not.toHaveProperty('precioBotella');
-    expect(data.drinks).toEqual([]);
+    expect(data.drinks).toEqual([{
+      _id: 'b1', nombre: s('Espresso', 'Espresso'), precio: 2.2, orden: 10, activo: true,
+      categoria: { _id: 'k1', orden: 10, nombre: s('Cafés', 'Coffee') }
+    }]);
   });
 
   it('las páginas legales vuelven con su tipo y su contenido en bloques', () => {
@@ -129,6 +133,18 @@ describe('del api a la forma que consume la landing', () => {
     expect(img.url(undefined)).toBeUndefined();
     // Una imagen referenciada que ya no existe no rompe nada: no sale.
     expect(toRestaurantData(site({ branding: { logoAssetId: 'no-esta' } })).restaurant).not.toHaveProperty('logo');
+  });
+});
+
+describe('grupos con varios espacios', () => {
+  it('la portada del grupo y cada espacio por su slug', () => {
+    const group = toGroupData(site());
+    expect(group.espacios.map(e => e.slug?.current)).toEqual(['sala']);
+    const data = toSpaceData(site(), 'sala')!;
+    expect(data.espacio.nombre).toBe('Sala');
+    expect(data.dishes).toHaveLength(1);
+    expect(data.drinks).toHaveLength(1);
+    expect(toSpaceData(site(), 'no-existe')).toBeNull();
   });
 });
 

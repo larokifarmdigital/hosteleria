@@ -346,6 +346,9 @@ importers:
       '@hosteleria/booking-form':
         specifier: workspace:*
         version: link:../../packages/booking-form
+      '@hosteleria/content-client':
+        specifier: workspace:*
+        version: link:../../packages/content-client
       '@hosteleria/i18n-utils':
         specifier: workspace:*
         version: link:../../packages/i18n-utils

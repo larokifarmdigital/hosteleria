@@ -1,8 +1,8 @@
 // Contenido de una landing leído del api propio (`GET /public/restaurants/:slug`),
 // con la misma forma y las mismas funciones que `@hosteleria/sanity-client`.
 import type { PublishedSite } from '@hosteleria/api-client';
-import type { ImageBuilder, LegalPageDoc, RestaurantData } from '@hosteleria/sanity-client';
-import { toLegalPages, toRestaurantData, toSpaceMenu } from './fromApi';
+import type { EspacioData, EspacioMenu, GrupoData, ImageBuilder, LegalPageDoc, RestaurantData } from '@hosteleria/sanity-client';
+import { toGroupData, toLegalPages, toRestaurantData, toSpaceData, toSpaceMenu } from './fromApi';
 
 export * from './fromApi';
 export { markdownToBlocks } from './markdown';
@@ -18,7 +18,10 @@ export interface ContentQueries {
   fetchRestaurantData(): Promise<RestaurantData>;
   /** El argumento se ignora: existe para que la firma sea la de Sanity. */
   fetchLegalPages(restaurantId?: string): Promise<LegalPageDoc[]>;
-  fetchEspacioMenu(espacioId: string): Promise<ReturnType<typeof toSpaceMenu>>;
+  fetchEspacioMenu(espacioId: string): Promise<EspacioMenu>;
+  /** Ficha y espacios, sin cartas: para la portada de un grupo. */
+  fetchGrupoData(): Promise<GrupoData>;
+  fetchEspacioBySlug(espacioSlug: string): Promise<EspacioData>;
   /** La respuesta del api tal cual. */
   fetchSite(): Promise<PublishedSite>;
 }
@@ -47,7 +50,16 @@ export function createContentQueries({ apiUrl, slug, fetch: fetchImpl = fetch }:
     fetchSite,
     fetchRestaurantData: async () => toRestaurantData(await fetchSite()),
     fetchLegalPages: async () => toLegalPages(await fetchSite()),
-    fetchEspacioMenu: async (espacioId) => toSpaceMenu(await fetchSite(), espacioId)
+    fetchEspacioMenu: async (espacioId) => toSpaceMenu(await fetchSite(), espacioId),
+    fetchGrupoData: async () => toGroupData(await fetchSite()),
+    fetchEspacioBySlug: async (espacioSlug) => {
+      const site = await fetchSite();
+      const data = toSpaceData(site, espacioSlug);
+      if (!data) {
+        throw new Error(`El espacio «${espacioSlug}» de «${slug}» no existe o no está publicado. Publicados: ${site.spaces.map(s => s.slug).join(', ')}`);
+      }
+      return data;
+    }
   };
 }
 
