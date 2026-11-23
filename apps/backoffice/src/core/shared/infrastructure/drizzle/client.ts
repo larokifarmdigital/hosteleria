@@ -18,7 +18,15 @@ export function getDb(databaseUrl: string): Db {
   const current = globalForDb.__hosteleriaDb;
   if (current && current.url === databaseUrl) return current.db;
 
-  const pool = new Pool({ connectionString: databaseUrl });
+  const pool = new Pool({
+    connectionString: databaseUrl,
+    // Una función serverless se congela entre peticiones y al reanudarse sus conexiones
+    // pueden estar muertas sin saberlo: se sueltan pronto en vez de guardarlas, y ninguna
+    // consulta espera indefinidamente (una se quedó colgada 36 minutos en las pruebas).
+    idleTimeoutMillis: 10_000,
+    connectionTimeoutMillis: 10_000,
+    query_timeout: 20_000
+  });
   // Neon cierra las conexiones inactivas y el cliente en reposo emite `error`;
   // sin un listener, eso tumba el proceso. El pool la descarta y abre otra.
   pool.on('error', () => {});

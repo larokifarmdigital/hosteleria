@@ -101,7 +101,7 @@ const AXE = { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', '
       await restoreMenu();
       await api('PATCH', '/restaurants/pruebas', { foundedYear: before.r.founded_year, state: 'draft' });
       await ctx.close();
-      await pause(15000);
+      await pause(65000);
     }
 
     console.log('— Editor');
