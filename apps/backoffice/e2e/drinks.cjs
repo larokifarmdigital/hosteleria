@@ -1,4 +1,4 @@
-// Carta de bebidas en el backoffice (build de producción contra wrangler dev), sobre «pruebas».
+// Carta de bebidas en el backoffice (build de producción), sobre «pruebas».
 // Borra al acabar todo lo que crea y comprueba que «pruebas» queda como estaba.
 const { chromium } = require(process.env.PW);
 const { spawnSync } = require('child_process');

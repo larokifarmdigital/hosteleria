@@ -1,5 +1,5 @@
 // M5: el api pide regenerar la landing cuando cambia algo que la web enseña.
-// Contra wrangler dev, sobre «pruebas», con un servidor local que hace de hook. Restaura al acabar.
+// Contra el backoffice en local, sobre «pruebas», con un servidor local que hace de hook. Restaura al acabar.
 const fs = require('fs'), http = require('http');
 const S = process.env.S, API = process.env.API;
 const cookieOf = (f) => JSON.parse(fs.readFileSync(`${S}/${f}`, 'utf8')).cookies.map(c => `${c.name}=${c.value}`).join('; ');
@@ -46,6 +46,14 @@ const check = (name, ok, extra = '') => { ok ? pass++ : fail++; console.log(`${o
     check('un editor no puede cambiarlo', e.status === 403 && e.body.code === 'ADMIN_REQUIRED', e);
     const a = await api('PATCH', '/restaurants/pruebas', { rebuildHookUrl: HOOK });
     check('un administrador sí', a.status === 200 && a.body.restaurant.rebuildHookUrl === HOOK, a.status);
+    const seen = await editor('GET', '/restaurants/pruebas');
+    check('un editor no ve la URL del hook', seen.status === 200 && seen.body.restaurant.rebuildHookUrl === null, seen.status);
+
+    console.log('— Quién puede cambiar la dirección de la web');
+    const sameDomain = await editor('PATCH', '/restaurants/pruebas', { domain: before.r.domain, state: 'draft' });
+    check('un editor guarda la ficha con la dirección de siempre', sameDomain.status === 200, sameDomain.status);
+    const otherDomain = await editor('PATCH', '/restaurants/pruebas', { domain: 'otro.example', state: 'draft' });
+    check('un editor no puede cambiarla', otherDomain.status === 403 && otherDomain.body.code === 'ADMIN_REQUIRED', otherDomain);
 
     console.log('— Sin publicar no se regenera nada');
     await step('cambiar un plato', 0, () => api('PATCH', `/dishes/${dish.id}`, { price: dish.price }));

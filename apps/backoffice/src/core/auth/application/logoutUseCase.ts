@@ -1,0 +1,10 @@
+import type { SessionRepository } from '../domain/repositories/sessionRepository';
+
+export class LogoutUseCase {
+  constructor(private readonly sessionsRepo: SessionRepository) {}
+
+  async execute(sessionId: string | null): Promise<{ cookieHeader: string }> {
+    if (sessionId) await this.sessionsRepo.invalidate(sessionId);
+    return { cookieHeader: this.sessionsRepo.blankCookieHeader() };
+  }
+}

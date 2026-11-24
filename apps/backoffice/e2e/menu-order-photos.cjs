@@ -100,7 +100,7 @@ const SP = state.SPACE;
       await api('POST', '/wines/reorder', { ids: created.wines });
       await api('POST', '/wines/categories/reorder', { ids: created.wineCats });
       await ctx.close();
-      await pause(20000);
+      await pause(65000);
     }
 
     console.log('— Varias fotos a la vez (fotos reales en R2)');
@@ -152,7 +152,7 @@ const SP = state.SPACE;
     await photos.getByRole('listitem').nth(2).waitFor();
     check('con la lista llena ya no deja añadir', await photos.getByRole('button', { name: 'Añadir fotos' }).isDisabled());
 
-    await p.getByRole('tab', { name: /^Datos/ }).click();
+    await p.getByRole('tab', { name: /^Logo/ }).click();
     const logo = p.getByRole('group', { name: 'Logo', exact: true });
     await logo.getByRole('button', { name: 'Elegir foto' }).click();
     await dialog.getByRole('button', { name: /^Usar la foto: Foto cuatro/ }).click();

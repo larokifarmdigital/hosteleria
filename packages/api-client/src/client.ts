@@ -304,7 +304,7 @@ export function createApiClient(opts: ApiClientOpts) {
     media: {
       list: (filters?: { restaurantSlug?: string; usage?: string; missingAlt?: boolean }) =>
         req<{ media: MediaAsset[] }>(`/media${buildQuery(filters)}`).then(r => r.media),
-      uploadUrl: (body: { restaurantSlug: string; filename: string; mimeType: string; sizeKb: number }) =>
+      uploadUrl: (body: { restaurantSlug: string; filename: string; mimeType: string; sizeBytes: number }) =>
         req<UploadUrlResponse>('/media/upload-url', { method: 'POST', body: JSON.stringify(body) }),
       confirm: (mediaId: string, body: { width?: number; height?: number; altText?: I18nString }) =>
         req<{ media: MediaAsset }>(`/media/${mediaId}/confirm`, { method: 'POST', body: JSON.stringify(body) }).then(r => r.media),

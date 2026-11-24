@@ -18,7 +18,7 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // Fuera: login, la página de elegir contraseña (se llega sin sesión, desde una invitación),
-  // el proxy del api (debe responder 401, no un redirect a HTML), internos de Next y ficheros estáticos.
-  matcher: ['/((?!login|set-password|api/|_next/|.*\\..*).*)']
+  // Fuera: login, las páginas de elegir contraseña (se llega sin sesión, desde una invitación o «Olvidé mi contraseña»),
+  // el api (responde 401 él mismo, y `/api/public/*` y `/api/cron/*` no llevan sesión), internos de Next y ficheros estáticos.
+  matcher: ['/((?!login|set-password|reset-password|api/|api$|_next/|.*\\..*).*)']
 };

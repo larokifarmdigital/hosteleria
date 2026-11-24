@@ -1,0 +1,165 @@
+import { Hono } from 'hono';
+import { validate } from '../validate';
+import { z } from 'zod';
+import { HTTPException } from 'hono/http-exception';
+import type { Context } from 'hono';
+import { requireAuth } from '../middleware/authMiddleware';
+import { mediaToDto } from '../dto/mediaDto';
+import { MediaNotFoundError, type MediaAsset } from '@/core/media';
+import { RestaurantNotFoundError } from '@/core/restaurants';
+import type { AppBindings } from '../types';
+
+const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'];
+const MAX_SIZE_KB = 10_000;
+
+// El browser sube directo a R2 con la presigned URL (5 min); `confirm` hace
+// HEAD contra R2 y marca listo o hace rollback.
+export function createMediaRoutes() {
+  const app = new Hono<AppBindings>();
+  app.use('*', requireAuth);
+
+  app.post('/upload-url', validate('json', uploadUrlSchema), async (c) => {
+    const user = c.get('user')!;
+    const body = c.req.valid('json');
+    const restaurantId = await assertRestaurantAccess(c, body.restaurantSlug);
+    const result = await c.get('container').media.requestUpload.execute({
+      restaurantId,
+      restaurantSlug: body.restaurantSlug,
+      filename: body.filename,
+      mimeType: body.mimeType,
+      sizeBytes: body.sizeBytes,
+      uploadedBy: user.id
+    });
+    return c.json(result);
+  });
+
+  app.post('/:id/confirm', validate('json', confirmSchema), async (c) => {
+    const id = c.req.param('id');
+    const existing = await c.get('container').repos.mediaRepo.findById(id);
+    if (!existing) throw new MediaNotFoundError(id);
+    await assertMediaAccess(c, existing);
+    const m = await c.get('container').media.confirmUpload.execute(id, c.req.valid('json'));
+    return c.json({ media: await enrichMedia(c, m) });
+  });
+
+  app.get('/', async (c) => {
+    const allowed = await allowedRestaurantIds(c);
+    const restaurantSlug = c.req.query('restaurantSlug') || undefined;
+    const usage = c.req.query('usage') as MediaAsset['usage'] | undefined;
+    const missingAlt = c.req.query('missingAlt') === 'true';
+
+    if (restaurantSlug && allowed) {
+      const r = await c.get('container').repos.restaurantsRepo.findBySlug(restaurantSlug);
+      if (r && !allowed.has(r.id)) throw new HTTPException(403, { message: 'RESTAURANT_FORBIDDEN' });
+    }
+
+    const list = await c.get('container').media.list.execute({ restaurantSlug, usage, missingAlt });
+    const filtered = allowed
+      ? list.filter(m => !m.restaurantId || allowed.has(m.restaurantId))
+      : list;
+    const dtos = await Promise.all(filtered.map(m => enrichMedia(c, m)));
+    return c.json({ media: dtos });
+  });
+
+  app.patch('/:id', validate('json', patchSchema), async (c) => {
+    const id = c.req.param('id');
+    const existing = await c.get('container').repos.mediaRepo.findById(id);
+    if (!existing) throw new MediaNotFoundError(id);
+    await assertMediaAccess(c, existing);
+    const body = c.req.valid('json');
+    const patch = { ...body } as any;
+    if (body.altText !== undefined) {
+      patch.hasAltText = Object.values(body.altText).some(v => typeof v === 'string' && v.trim().length > 0);
+    }
+    const m = await c.get('container').media.update.execute(id, patch);
+    return c.json({ media: await enrichMedia(c, m) });
+  });
+
+  app.get('/:id/references', async (c) => {
+    const id = c.req.param('id');
+    const { mediaRepo, dishesRepo, spacesRepo } = c.get('container').repos;
+    const existing = await mediaRepo.findById(id);
+    if (!existing) throw new MediaNotFoundError(id);
+    await assertMediaAccess(c, existing);
+
+    const refs = await c.get('container').media.references.execute(id);
+    // Con el nombre: el backoffice tiene que poder decir dónde se usa la foto.
+    const spaceRefs = (kind: 'hero' | 'gallery') => Promise.all(refs.filter(r => r.kind === kind).map(async r => {
+      const space = await spacesRepo.findById(r.refId);
+      return { id: r.refId, name: space?.name ?? '' };
+    }));
+    const [dishes, spaces, galleries] = await Promise.all([
+      Promise.all(refs.filter(r => r.kind === 'dish').map(async r => {
+        const dish = await dishesRepo.findById(r.refId);
+        return { id: r.refId, name: dish?.name ?? {} };
+      })),
+      spaceRefs('hero'),
+      spaceRefs('gallery')
+    ]);
+    // `restaurant`: sitios de la ficha donde se usa (logo, sobre nosotros…).
+    const restaurant = refs.filter(r => r.kind === 'restaurant').map(r => r.use!);
+    return c.json({ dishes, spaces, galleries, restaurant });
+  });
+
+  app.delete('/:id', async (c) => {
+    const id = c.req.param('id');
+    const existing = await c.get('container').repos.mediaRepo.findById(id);
+    if (!existing) throw new MediaNotFoundError(id);
+    await assertMediaAccess(c, existing);
+    await c.get('container').media.delete.execute(id);
+    return c.json({ ok: true });
+  });
+
+  return app;
+}
+
+async function enrichMedia(c: Context<AppBindings>, m: MediaAsset) {
+  const restaurant = m.restaurantId
+    ? await c.get('container').repos.restaurantsRepo.findById(m.restaurantId)
+    : null;
+  return mediaToDto(m, c.get('container').config.mediaPublicUrl, restaurant);
+}
+
+/** `null` = admin sin restricción (análogo a `allowedSpaceIds`, pero por restaurant). */
+async function allowedRestaurantIds(c: Context<AppBindings>): Promise<Set<string> | null> {
+  const user = c.get('user')!;
+  if (user.role === 'admin') return null;
+  const ids = await c.get('container').repos.usersRepo.listRestaurantIds(user.id);
+  return new Set(ids);
+}
+
+async function assertRestaurantAccess(c: Context<AppBindings>, slug: string): Promise<string> {
+  const r = await c.get('container').repos.restaurantsRepo.findBySlug(slug);
+  if (!r) throw new RestaurantNotFoundError(slug);
+  const allowed = await allowedRestaurantIds(c);
+  if (allowed && !allowed.has(r.id)) throw new HTTPException(403, { message: 'RESTAURANT_FORBIDDEN' });
+  return r.id;
+}
+
+/** Para un asset ya persistido: si no tiene restaurant (huérfano por SET NULL), pasa libre. */
+async function assertMediaAccess(c: Context<AppBindings>, m: MediaAsset): Promise<void> {
+  if (!m.restaurantId) return;
+  const allowed = await allowedRestaurantIds(c);
+  if (allowed && !allowed.has(m.restaurantId)) {
+    throw new HTTPException(403, { message: 'RESTAURANT_FORBIDDEN' });
+  }
+}
+
+const uploadUrlSchema = z.object({
+  restaurantSlug: z.string().min(1),
+  filename: z.string().min(1),
+  mimeType: z.string().refine(m => ALLOWED_MIME.includes(m), 'mimetype no permitido'),
+  sizeBytes: z.number().int().positive().max(MAX_SIZE_KB * 1024)
+});
+
+const confirmSchema = z.object({
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
+  altText: z.record(z.string()).optional()
+});
+
+const patchSchema = z.object({
+  usage: z.enum(['hero', 'gallery', 'dish', 'unused']).optional(),
+  hasAltText: z.boolean().optional(),
+  altText: z.record(z.string()).optional()
+}).partial();

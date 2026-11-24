@@ -18,10 +18,13 @@
     "ADMIN_EMAIL",
     "ADMIN_PASSWORD",
     "ADMIN_NAME",
-    "ALLOWED_ORIGIN",
-    "PUBLIC_API_URL",
-    "NEXT_PUBLIC_API_URL",
-    "PORT"
+    "APP_ENV",
+    "APP_URL",
+    "COOKIE_DOMAIN",
+    "CRON_SECRET",
+    "RESEND_API_KEY",
+    "EMAIL_FROM",
+    "NEXT_DIST_DIR"
   ],
   "globalDependencies": [".env", "**/.env.local"],
   "tasks": {
@@ -43,9 +46,6 @@
       "dependsOn": ["^build"]
     },
     "clean": {
-      "cache": false
-    },
-    "deploy": {
       "cache": false
     }
   }
