@@ -12,11 +12,12 @@ export class R2MediaStorage implements MediaStorage {
   async createUploadUrl(input: {
     key: string;
     contentType: string;
+    sizeBytes: number;
     expiresIn?: number;
   }): Promise<{ uploadUrl: string; publicUrl: string; key: string; expiresIn: number }> {
     const expiresIn = input.expiresIn ?? 300;
     return {
-      uploadUrl: await this.r2.signUploadUrl(input.key, input.contentType, expiresIn),
+      uploadUrl: await this.r2.signUploadUrl(input.key, { contentType: input.contentType, sizeBytes: input.sizeBytes }, expiresIn),
       publicUrl: `${this.env.R2_PUBLIC_URL.replace(/\/$/, '')}/${input.key}`,
       key: input.key,
       expiresIn

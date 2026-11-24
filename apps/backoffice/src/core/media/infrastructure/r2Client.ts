@@ -38,13 +38,17 @@ export class R2Client {
     return `${this.bucketUrl}/${key.split('/').map(encodeURIComponent).join('/')}`;
   }
 
-  /** URL firmada para que el navegador suba el fichero directo al bucket. */
-  async signUploadUrl(key: string, contentType: string, expiresIn: number): Promise<string> {
+  /**
+   * URL firmada para que el navegador suba el fichero directo al bucket.
+   * Tipo y tamaño van en la firma: R2 rechaza (403) un PUT con otro tipo u otro
+   * número de bytes. aws4fetch no firma esas dos cabeceras salvo con `allHeaders`.
+   */
+  async signUploadUrl(key: string, upload: { contentType: string; sizeBytes: number }, expiresIn: number): Promise<string> {
     const url = new URL(this.objectUrl(key));
     url.searchParams.set('X-Amz-Expires', String(expiresIn));
     const signed = await this.client.sign(
-      new Request(url, { method: 'PUT', headers: { 'Content-Type': contentType } }),
-      { aws: { signQuery: true } }
+      new Request(url, { method: 'PUT', headers: { 'Content-Type': upload.contentType, 'Content-Length': String(upload.sizeBytes) } }),
+      { aws: { signQuery: true, allHeaders: true } }
     );
     return signed.url;
   }

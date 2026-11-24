@@ -88,10 +88,11 @@ describe('R2Client', () => {
     expect(new URL(calls[1].url).searchParams.get('continuation-token')).toBe('tok/1=');
   });
 
-  it('signUploadUrl: URL de PUT firmada en la query, con caducidad', async () => {
-    const url = new URL(await new R2Client(env).signUploadUrl('pruebas/foto.webp', 'image/webp', 300));
+  it('signUploadUrl: URL de PUT firmada en la query, con caducidad, tipo y tamaño', async () => {
+    const url = new URL(await new R2Client(env).signUploadUrl('pruebas/foto.webp', { contentType: 'image/webp', sizeBytes: 1234 }, 300));
     expect(url.origin + url.pathname).toBe(`${BUCKET_URL}/pruebas/foto.webp`);
     expect(url.searchParams.get('X-Amz-Expires')).toBe('300');
+    expect(url.searchParams.get('X-Amz-SignedHeaders')).toBe('content-length;content-type;host');
     expect(url.searchParams.get('X-Amz-Signature')).toMatch(/^[0-9a-f]{64}$/);
   });
 });

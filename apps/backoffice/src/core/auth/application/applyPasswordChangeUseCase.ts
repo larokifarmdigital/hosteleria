@@ -31,9 +31,8 @@ export class ApplyPasswordChangeUseCase {
     const passwordHash = await this.hasher.hash(input.newPassword);
     await this.users.updatePasswordHash(userId, passwordHash);
 
-    // En reset cerramos sesiones activas (seguridad); en setup no hay aún.
-    if (input.kind === 'password_reset') {
-      await this.sessionsRepo.invalidateUser(userId);
-    }
+    // Con la contraseña nueva salen todas las sesiones abiertas, también en
+    // `password_setup`: un administrador puede mandar ese enlace a una cuenta que ya entraba.
+    await this.sessionsRepo.invalidateUser(userId);
   }
 }

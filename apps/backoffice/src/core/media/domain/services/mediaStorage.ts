@@ -4,6 +4,8 @@ export interface MediaStorage {
   createUploadUrl(input: {
     key: string;
     contentType: string;
+    /** Tamaño exacto del archivo: la URL solo admite un cuerpo de este tamaño. */
+    sizeBytes: number;
     /** Default 300s. */
     expiresIn?: number;
   }): Promise<{

@@ -31,10 +31,11 @@ export class ConfirmMediaUploadUseCase {
       throw new MediaUploadMissingError();
     }
 
-    // Tolerancia ±50% por overhead HTTP. Diferencias mayores sugieren truncado.
-    const expectedBytes = asset.sizeKb * 1024;
-    const diff = Math.abs(head.sizeBytes - expectedBytes) / Math.max(expectedBytes, 1);
-    if (diff > 0.5) {
+    // La URL firmada ya ata tipo y tamaño; esto lo vuelve a comprobar por si el objeto
+    // llegó por otra vía. `sizeKb` se guarda redondeado hacia arriba al pedir la URL.
+    const sameSize = Math.ceil(head.sizeBytes / 1024) === asset.sizeKb;
+    const sameType = head.contentType === undefined || head.contentType === asset.mimeType;
+    if (!sameSize || !sameType) {
       await this.media.deleteById(mediaId);
       await this.storage.delete(asset.r2Key).catch(() => void 0);
       throw new MediaUploadSizeMismatchError();

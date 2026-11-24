@@ -27,7 +27,7 @@ export function createMediaRoutes() {
       restaurantSlug: body.restaurantSlug,
       filename: body.filename,
       mimeType: body.mimeType,
-      sizeKb: body.sizeKb,
+      sizeBytes: body.sizeBytes,
       uploadedBy: user.id
     });
     return c.json(result);
@@ -149,7 +149,7 @@ const uploadUrlSchema = z.object({
   restaurantSlug: z.string().min(1),
   filename: z.string().min(1),
   mimeType: z.string().refine(m => ALLOWED_MIME.includes(m), 'mimetype no permitido'),
-  sizeKb: z.number().int().positive().max(MAX_SIZE_KB)
+  sizeBytes: z.number().int().positive().max(MAX_SIZE_KB * 1024)
 });
 
 const confirmSchema = z.object({

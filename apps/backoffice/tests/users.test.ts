@@ -83,6 +83,15 @@ describe('suspender una cuenta', () => {
   });
 });
 
+describe('cambiar la contraseña desde Ajustes', () => {
+  it('cierra las sesiones de esa cuenta', async () => {
+    const w = world();
+    const update = new UpdateUserUseCase(w.usersRepo as never, w.restaurants as never, w.hasher as never, w.sessions as never);
+    await update.execute('ana', { password: 'Cuatro-mesas-junto-al-ventanal-82' }, 'admin');
+    expect(w.log).toContain('sessions:ana');
+  });
+});
+
 describe('invitaciones', () => {
   it('el alta sin contraseña devuelve un enlace de un solo uso y lo manda por correo', async () => {
     const w = world();
@@ -123,8 +132,14 @@ describe('elegir contraseña con un enlace', () => {
     const saved: string[] = [];
     const usersRepo = { ...w.usersRepo, updatePasswordHash: async (_id: string, hash: string) => { saved.push(hash); } };
     const apply = new ApplyPasswordChangeUseCase(usersRepo as never, w.sessions as never, tokens as never, w.hasher as never);
-    return { apply, saved, valid };
+    return { apply, saved, valid, log: w.log };
   }
+
+  it('elegir contraseña cierra las sesiones que la cuenta tuviera abiertas', async () => {
+    const { apply, log } = setup();
+    await apply.execute({ token: 'enlace', newPassword: 'Cuatro-mesas-junto-al-ventanal-82', kind: 'password_setup' });
+    expect(log).toContain('sessions:ana');
+  });
 
   it('una contraseña floja no gasta el enlace: se puede volver a intentar', async () => {
     const { apply, saved, valid } = setup();

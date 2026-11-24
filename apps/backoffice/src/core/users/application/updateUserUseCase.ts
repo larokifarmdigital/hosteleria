@@ -50,6 +50,8 @@ export class UpdateUserUseCase {
       if (!check.ok) throw new WeakPasswordError(check.reason ?? 'weak_password');
       const passwordHash = await this.hasher.hash(input.password);
       await this.users.updatePasswordHash(id, passwordHash);
+      // Quien entraba con la contraseña anterior deja de poder hacerlo.
+      await this.sessions.invalidateUser(id);
     }
 
     const finalRole = input.role ?? u.role;

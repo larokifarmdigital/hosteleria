@@ -1,9 +1,10 @@
 import type { Restaurant } from '@/core/restaurants';
+import type { UserRole } from '@/core/auth/domain';
 
 // La UI espera `activeLocales` / `defaultLocale` (sin sufijo `Code`) y
 // fechas en ISO. `completePercent` va fijo en 0: la métrica real necesita
 // datos del space default, que aquí no se cargan.
-export function restaurantToDto(r: Restaurant) {
+export function restaurantToDto(r: Restaurant, viewer: { role: UserRole }) {
   return {
     id: r.id,
     slug: r.slug,
@@ -17,7 +18,8 @@ export function restaurantToDto(r: Restaurant) {
     acceptsBookings: r.acceptsBookings,
     showSocials: r.showSocials,
     timezone: r.timezone,
-    rebuildHookUrl: r.rebuildHookUrl,
+    // Quien tiene la URL del hook puede regenerar la web sin pasar por el api.
+    rebuildHookUrl: viewer.role === 'admin' ? r.rebuildHookUrl : null,
     address: r.address,
     contact: r.contact,
     socials: r.socials,

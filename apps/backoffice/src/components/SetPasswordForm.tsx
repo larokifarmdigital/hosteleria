@@ -10,8 +10,16 @@ const INPUT =
 
 const LINK = 'inline-flex min-h-11 items-center font-semibold text-[color:var(--color-accent)] underline underline-offset-2';
 
-/** Se llega desde el enlace de una invitación: el token va en la URL y sirve una sola vez. */
-export function SetPasswordForm({ token }: { token: string }) {
+const COPY = {
+  // Desde una invitación: la cuenta aún no tiene contraseña.
+  setup: { title: 'Elige tu contraseña', intro: 'Con ella y tu email entrarás en Hosteleria Studio.', missing: 'Si no lo tienes, pide uno nuevo a un administrador.' },
+  // Desde «Olvidé mi contraseña»: el enlace caduca en una hora.
+  reset: { title: 'Elige una contraseña nueva', intro: 'Al guardarla se cierran las sesiones abiertas con la anterior.', missing: 'Si no lo tienes o ha caducado, pide uno nuevo a un administrador.' }
+} as const;
+
+/** Se llega desde un enlace con el token en la URL, que sirve una sola vez. */
+export function SetPasswordForm({ token, mode = 'setup' }: { token: string; mode?: keyof typeof COPY }) {
+  const copy = COPY[mode];
   const [password, setPassword] = useState('');
   const [repeat, setRepeat] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +31,7 @@ export function SetPasswordForm({ token }: { token: string }) {
       <div className="w-full max-w-[360px]">
         <h1 className="mb-2 text-[22px] font-bold tracking-[-0.015em]">Falta el enlace completo</h1>
         <p className="mb-5 text-[14px] leading-[1.55] text-[color:var(--color-ink-soft)]">
-          Abre esta página desde el enlace que te han enviado, entero. Si no lo tienes, pide uno nuevo a un administrador.
+          Abre esta página desde el enlace que te han enviado, entero. {copy.missing}
         </p>
         <Link href="/login" className={LINK}>Ir a iniciar sesión</Link>
       </div>
@@ -47,7 +55,7 @@ export function SetPasswordForm({ token }: { token: string }) {
     setPending(true);
     setError(null);
     try {
-      await api.auth.setPassword(token, password);
+      await (mode === 'reset' ? api.auth.reset(token, password) : api.auth.setPassword(token, password));
       setDone(true);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'No se ha podido guardar. Inténtalo de nuevo.');
@@ -58,8 +66,8 @@ export function SetPasswordForm({ token }: { token: string }) {
 
   return (
     <form className="w-full max-w-[360px]" onSubmit={onSubmit} noValidate aria-describedby={error ? 'sp-error' : undefined}>
-      <h1 className="mb-2 text-[22px] font-bold tracking-[-0.015em]">Elige tu contraseña</h1>
-      <p className="mb-7 text-[13.5px] leading-[1.5] text-[color:var(--color-muted)]">Con ella y tu email entrarás en Hosteleria Studio.</p>
+      <h1 className="mb-2 text-[22px] font-bold tracking-[-0.015em]">{copy.title}</h1>
+      <p className="mb-7 text-[13.5px] leading-[1.5] text-[color:var(--color-muted)]">{copy.intro}</p>
 
       <div className="mb-4">
         <label htmlFor="sp-pwd" className="mb-2 block cursor-pointer text-[13px] font-semibold">Contraseña nueva</label>

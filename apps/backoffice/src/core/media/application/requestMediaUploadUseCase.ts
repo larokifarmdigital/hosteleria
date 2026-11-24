@@ -7,7 +7,7 @@ export interface RequestMediaUploadInput {
   restaurantSlug: string;
   filename: string;
   mimeType: string;
-  sizeKb: number;
+  sizeBytes: number;
   uploadedBy: string | null;
 }
 
@@ -35,7 +35,7 @@ export class RequestMediaUploadUseCase {
     const asset = await this.media.createPending({
       restaurantId: input.restaurantId,
       name: `${name}.${extension}`,
-      sizeKb: input.sizeKb,
+      sizeKb: Math.ceil(input.sizeBytes / 1024),
       mimeType: input.mimeType,
       r2Key,
       uploadedBy: input.uploadedBy
@@ -44,6 +44,7 @@ export class RequestMediaUploadUseCase {
     const { uploadUrl, publicUrl, expiresIn } = await this.storage.createUploadUrl({
       key: r2Key,
       contentType: input.mimeType,
+      sizeBytes: input.sizeBytes,
       expiresIn: 300
     });
 

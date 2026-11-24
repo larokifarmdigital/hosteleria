@@ -6,7 +6,7 @@ module.exports = function (api, S) {
   const file = path.join(S, 'img', 'pequena.jpg');
   const bytes = fs.readFileSync(file);
   return async function upload(name, altText, size = { width: 1200, height: 900 }) {
-    const u = await api('POST', '/media/upload-url', { restaurantSlug: 'pruebas', filename: name + '.jpg', mimeType: 'image/jpeg', sizeKb: Math.max(1, Math.round(bytes.length / 1024)) });
+    const u = await api('POST', '/media/upload-url', { restaurantSlug: 'pruebas', filename: name + '.jpg', mimeType: 'image/jpeg', sizeBytes: bytes.length });
     if (u.status !== 200) throw new Error('upload-url ' + JSON.stringify(u.body));
     let r;
     try {

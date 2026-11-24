@@ -26,12 +26,12 @@ export function createRestaurantsRoutes() {
   app.get('/', requireAuth, cacheHeaders({ maxAge: 30, swr: 120 }), async (c) => {
     const user = c.get('user')!;
     const list = await c.get('container').restaurants.list.execute(user);
-    return c.json({ restaurants: list.map(restaurantToDto) });
+    return c.json({ restaurants: list.map(r => restaurantToDto(r, user)) });
   });
 
   app.get('/:slug', requireAuth, requireRestaurant('slug'), cacheHeaders({ maxAge: 30, swr: 120 }), async (c) => {
     const r = await c.get('container').restaurants.get.execute(c.req.param('slug'));
-    return c.json({ restaurant: restaurantToDto(r) });
+    return c.json({ restaurant: restaurantToDto(r, c.get('user')!) });
   });
 
   // Lo que le falta al contenido: traducciones, horarios, descripciones de fotos y publicación.
@@ -54,7 +54,7 @@ export function createRestaurantsRoutes() {
 
   app.post('/', requireAdmin, validate('json', createSchema), async (c) => {
     const r = await c.get('container').restaurants.create.execute(c.req.valid('json'));
-    return c.json({ restaurant: restaurantToDto(r) }, 201);
+    return c.json({ restaurant: restaurantToDto(r, c.get('user')!) }, 201);
   });
 
   app.patch('/:slug', requireAuth, requireRestaurant('slug'), validate('json', patchSchema), async (c) => {
@@ -63,15 +63,18 @@ export function createRestaurantsRoutes() {
     const body = c.req.valid('json');
     // El hook es una URL a la que el api llama por su cuenta: solo la fija un administrador.
     if (body.rebuildHookUrl !== undefined && user.role !== 'admin') throw new HTTPException(403, { message: 'ADMIN_REQUIRED' });
+    const current = await c.get('container').restaurants.get.execute(slug);
+    // De la dirección dependen la URL canónica de la web y a dónde llama el api al comprobarla.
+    // El formulario la reenvía sin cambios en cada guardado: solo se rechaza si cambia.
+    if (body.domain !== undefined && body.domain !== current.domain && user.role !== 'admin') {
+      throw new HTTPException(403, { message: 'ADMIN_REQUIRED' });
+    }
     if (body.state === 'published') c.set('rebuild', { restaurantSlug: slug });
     const mediaIds = [...new Set(restaurantMediaUses(body as Partial<RestaurantContent>).map(u => u.assetId))];
-    if (mediaIds.length > 0) {
-      const current = await c.get('container').restaurants.get.execute(slug);
-      for (const id of mediaIds) await assertMediaInRestaurant(c, id, current.id);
-    }
+    for (const id of mediaIds) await assertMediaInRestaurant(c, id, current.id);
     await c.get('container').restaurants.patch.execute(slug, body as PatchRestaurantInput, user.id);
     const r = await c.get('container').restaurants.get.execute(slug);
-    return c.json({ restaurant: restaurantToDto(r) });
+    return c.json({ restaurant: restaurantToDto(r, user) });
   });
 
   app.post('/:slug/discard', requireAuth, requireRestaurant('slug'), async (c) => {
@@ -80,7 +83,7 @@ export function createRestaurantsRoutes() {
     await c.get('container').restaurants.discard.execute(slug, user.id);
     const r = await c.get('container').restaurants.get.execute(slug);
     if (!r) throw new RestaurantNotFoundError(slug);
-    return c.json({ restaurant: restaurantToDto(r) });
+    return c.json({ restaurant: restaurantToDto(r, user) });
   });
 
   app.delete('/:slug', requireAdmin, async (c) => {

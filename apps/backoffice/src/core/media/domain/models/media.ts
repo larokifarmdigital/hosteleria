@@ -61,7 +61,7 @@ export class MediaUploadSizeMismatchError extends DomainError {
   readonly code = 'UPLOAD_SIZE_MISMATCH';
   readonly status = 400;
   constructor() {
-    super('El archivo subido no coincide con el tamaño declarado. Vuelve a intentarlo.');
+    super('El archivo subido no coincide en tamaño o tipo con el que se pidió subir. Vuelve a intentarlo.');
     this.name = 'MediaUploadSizeMismatchError';
   }
 }

@@ -1402,9 +1402,9 @@ const paths: Record<string, any> = {
           restaurantSlug: { type: 'string' },
           filename: { type: 'string' },
           mimeType: { type: 'string', enum: ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'] },
-          sizeKb: { type: 'integer', minimum: 1, maximum: 10000 }
+          sizeBytes: { type: 'integer', minimum: 1, maximum: 10240000, description: 'Tamaño exacto: la URL firmada solo admite un cuerpo de este tamaño y del tipo `mimeType`.' }
         },
-        required: ['restaurantSlug', 'filename', 'mimeType', 'sizeKb']
+        required: ['restaurantSlug', 'filename', 'mimeType', 'sizeBytes']
       }),
       responses: {
         200: ok({ $ref: '#/components/schemas/UploadUrlResponse' }),

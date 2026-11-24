@@ -18,7 +18,7 @@ export async function uploadMedia(restaurantSlug: string, file: File, { size, on
     restaurantSlug,
     filename: file.name,
     mimeType: file.type,
-    sizeKb: Math.ceil(file.size / 1024)
+    sizeBytes: file.size
   });
 
   try {
