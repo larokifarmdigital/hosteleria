@@ -71,7 +71,7 @@ export function WineSheet({ scope, categories, wine, initialCategoryId, nextOrde
           id: wine.id,
           body: { categoryId: values.categoryId, name: values.name, region: values.region || null, note, priceGlass, priceBottle, active: values.active }
         });
-        showSuccessToast('Vino guardado');
+        showSuccessToast('Vino guardado', 'La web se actualiza en un par de minutos.');
       } else {
         await create.mutateAsync({
           spaceId: scope.spaceId, categoryId: values.categoryId, name: values.name,
@@ -79,7 +79,7 @@ export function WineSheet({ scope, categories, wine, initialCategoryId, nextOrde
           priceGlass: priceGlass ?? undefined, priceBottle: priceBottle ?? undefined,
           active: values.active, order: nextOrder
         });
-        showSuccessToast('Vino añadido');
+        showSuccessToast('Vino añadido', 'La web se actualiza en un par de minutos.');
       }
       onClose();
     } catch {

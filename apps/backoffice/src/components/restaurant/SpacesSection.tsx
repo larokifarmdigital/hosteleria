@@ -7,7 +7,7 @@ import type { Restaurant, Space } from '@hosteleria/api-client';
 import { Button, LinkButton } from '@/components/shared/Button';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Pill } from '@/components/shared/Pill';
-import { StatePill } from '@/components/shared/StatePill';
+import { StatePill, spacePublication } from '@/components/shared/StatePill';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { showSuccessToast } from '@/lib/api';
 import { useDeleteSpace, useUpdateSpace } from '@/lib/query/hooks';
@@ -97,7 +97,7 @@ export function SpacesSection({ restaurant, spaces }: Props) {
                     >
                       {space.name}
                     </Link>
-                    <StatePill state={space.state} />
+                    <StatePill publication={spacePublication(space)} />
                     {space.isDefault && <Pill variant="accent">Principal</Pill>}
                     {space.isDefault && ordered.length > 1 && <span className="sr-only">: es el que la web enseña primero</span>}
                   </div>

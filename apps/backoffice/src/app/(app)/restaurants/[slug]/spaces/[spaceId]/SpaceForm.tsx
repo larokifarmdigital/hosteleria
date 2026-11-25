@@ -26,7 +26,8 @@ import { scheduleForCompare, scheduleSchema } from '@/lib/forms/schedule';
 import type { TranslatableField } from '@/lib/forms/translations';
 import { useTranslationStatus } from '@/lib/forms/useTranslationStatus';
 import { useUnsavedChangesWarning } from '@/lib/forms/useUnsavedChangesWarning';
-import { useDiscardSpace, usePatchSpace, usePublishSpace } from '@/lib/query/hooks';
+import { useDiscardSpace, usePatchSpace } from '@/lib/query/hooks';
+import { useChangeCount } from '@/lib/useChangeCount';
 
 const HERO_FIELDS = ['title', 'subtitle', 'note', 'metaLeft', 'metaRight', 'cta', 'imageAlt'] as const;
 const MANIFESTO_FIELDS = ['eyebrow', 'text'] as const;
@@ -165,8 +166,8 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
   const { register, handleSubmit, reset, setError, setFocus, setValue, watch, control, formState: { errors, isDirty, isSubmitted } } = form;
 
   const patch = usePatchSpace(restaurant.slug, space.id);
-  const publish = usePublishSpace(restaurant.slug, space.id);
   const discard = useDiscardSpace(restaurant.slug, space.id);
+  const publishStamp = useChangeCount(space);
 
   useUnsavedChangesWarning(isDirty);
 
@@ -394,15 +395,14 @@ export function SpaceForm({ restaurant, space, localeNames, aside }: Props) {
 
           <aside aria-label="Publicación y otros espacios" className="flex flex-col gap-5 self-start lg:sticky lg:top-20">
             <PublishPanel
-              subject="este espacio"
-              isPublished={space.state === 'published'}
-              hasPublishedVersion={!!space.publishedSnapshot}
+              restaurant={restaurant}
+              localeNames={localeNames}
+              current={{ kind: 'space', spaceId: space.id }}
+              stamp={publishStamp}
               changes={changedBlocks(space)}
               blockers={translations.blockers}
               formDirty={isDirty}
-              publishing={publish.isPending}
               discarding={discard.isPending}
-              onPublish={() => publish.mutateAsync().then(() => showSuccessToast('Publicado', 'La web se actualizará en un par de minutos.'))}
               onDiscard={() => discard.mutateAsync().then(s => { reset(toForm(s, locales)); showSuccessToast('Has vuelto a lo publicado'); })}
             />
             {aside}

@@ -9,7 +9,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { LocaleChips } from '@/components/shared/LocaleChip';
 import { QueryBoundary } from '@/components/shared/QueryBoundary';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { StatePill } from '@/components/shared/StatePill';
+import { StatePill, restaurantPublication } from '@/components/shared/StatePill';
 import { Table, Td } from '@/components/shared/Table';
 import { formatDate } from '@/lib/utils';
 import { useRestaurants, useSession } from '@/lib/query/hooks';
@@ -66,7 +66,7 @@ export function RestaurantsPageClient() {
               <Td className="whitespace-nowrap text-[color:var(--color-ink-soft)]">
                 {r.dishesCount} platos · {r.winesCount} vinos{r.drinksCount > 0 ? ` · ${r.drinksCount} bebidas` : ''}
               </Td>
-              <Td><StatePill state={r.state} /></Td>
+              <Td><StatePill publication={restaurantPublication(r)} /></Td>
               <Td className="slug">{r.lastPublishedAt ? formatDate(r.lastPublishedAt) : 'Sin publicar'}</Td>
               <Td>
                 <Link

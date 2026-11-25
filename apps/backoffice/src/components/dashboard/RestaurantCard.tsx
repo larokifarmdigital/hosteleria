@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Restaurant } from '@/lib/types';
-import { StatePill } from '@/components/shared/StatePill';
+import { StatePill, restaurantPublication } from '@/components/shared/StatePill';
 import { LocaleChips } from '@/components/shared/LocaleChip';
 import { formatDate } from '@/lib/utils';
 
@@ -31,7 +31,7 @@ export function RestaurantCard({ restaurant, href, pending }: Props) {
           </strong>
           <span className="slug mt-0.5 block truncate">{restaurant.domain}</span>
         </div>
-        <StatePill state={restaurant.state} />
+        <StatePill publication={restaurantPublication(restaurant)} />
       </div>
 
       <p className="m-0 text-[13px] text-[color:var(--color-muted)]">

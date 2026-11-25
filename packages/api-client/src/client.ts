@@ -1,4 +1,5 @@
 import type {
+  PublishAllResult,
   Language,
   User,
   SessionUser,
@@ -169,7 +170,10 @@ export function createApiClient(opts: ApiClientOpts) {
         req<{ restaurant: Restaurant }>(`/restaurants/${slug}`, { method: 'PATCH', body: JSON.stringify(body) }).then(r => r.restaurant),
       delete: (slug: string) => req<{ ok: true }>(`/restaurants/${slug}`, { method: 'DELETE' }),
       discard: (slug: string) =>
-        req<{ restaurant: Restaurant }>(`/restaurants/${slug}/discard`, { method: 'POST' }).then(r => r.restaurant)
+        req<{ restaurant: Restaurant }>(`/restaurants/${slug}/discard`, { method: 'POST' }).then(r => r.restaurant),
+      /** Publica la ficha y todos los espacios con cambios, de una vez. */
+      publishAll: (slug: string) =>
+        req<{ published: PublishAllResult; restaurant: Restaurant }>(`/restaurants/${slug}/publish`, { method: 'POST' })
     },
 
     // ─── Spaces ─────────────────────────────────────────────────

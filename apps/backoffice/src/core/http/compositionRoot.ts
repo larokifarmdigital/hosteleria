@@ -84,8 +84,10 @@ import {
   GetPublishedSiteUseCase,
   RequestSiteRebuildUseCase,
   GetSiteStatusUseCase,
+  PublishSiteUseCase,
   FetchSiteProbe
-} from '@/core/site';import {
+} from '@/core/site';
+import {
   ListUsersUseCase,
   CreateUserUseCase,
   UpdateUserUseCase,
@@ -123,6 +125,9 @@ export function buildContainer(env: Env) {
     restaurantsRepo, spacesRepo, dishesRepo, winesRepo, legalPagesRepo, mediaRepo, languagesRepo, env.R2_PUBLIC_URL
   );
 
+  const patchRestaurant = new PatchRestaurantUseCase(restaurantsRepo, languagesRepo);
+  const patchSpace = new PatchSpaceUseCase(spacesRepo, restaurantsRepo);
+
   return {
     // Expuestos para middlewares que leen directo sin UC (p.ej. `requireRestaurant`).
     repos: {
@@ -136,7 +141,8 @@ export function buildContainer(env: Env) {
       create: new CreateRestaurantUseCase(restaurantsRepo, languagesRepo),
       list: new ListRestaurantsUseCase(restaurantsRepo, usersRepo),
       get: new GetRestaurantUseCase(restaurantsRepo),
-      patch: new PatchRestaurantUseCase(restaurantsRepo, languagesRepo),
+      patch: patchRestaurant,
+      publishAll: new PublishSiteUseCase(restaurantsRepo, spacesRepo, patchRestaurant, patchSpace),
       discard: new DiscardChangesUseCase(restaurantsRepo, languagesRepo),
       delete: new DeleteRestaurantUseCase(restaurantsRepo),
       pendingTasks: new GetPendingTasksUseCase(restaurantsRepo, spacesRepo, dishesRepo, winesRepo, legalPagesRepo, mediaRepo)
@@ -171,7 +177,7 @@ export function buildContainer(env: Env) {
       list: new ListSpacesUseCase(spacesRepo),
       get: new GetSpaceUseCase(spacesRepo),
       create: new CreateSpaceUseCase(spacesRepo),
-      patch: new PatchSpaceUseCase(spacesRepo, restaurantsRepo),
+      patch: patchSpace,
       discard: new DiscardSpaceChangesUseCase(spacesRepo),
       delete: new DeleteSpaceUseCase(spacesRepo)
     },

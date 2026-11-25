@@ -1,6 +1,6 @@
 'use client';
 
-import { StatePill } from '@/components/shared/StatePill';
+import { StatePill, restaurantPublication } from '@/components/shared/StatePill';
 import { useLanguages, useRestaurant, useSpaces } from '@/lib/query/hooks';
 import { RestaurantForm } from './RestaurantForm';
 
@@ -28,7 +28,7 @@ export function RestaurantHubPageClient({ slug }: { slug: string }) {
           <h1 className="m-0 text-[22px] font-bold leading-[1.2] tracking-[-0.015em]">{restaurant.name}</h1>
           <p className="slug m-0 mt-0.5">{restaurant.domain}</p>
         </div>
-        <StatePill state={restaurant.state} />
+        <StatePill publication={restaurantPublication(restaurant)} />
       </div>
 
       {/* Otros idiomas = otros campos: el formulario se monta de nuevo. */}

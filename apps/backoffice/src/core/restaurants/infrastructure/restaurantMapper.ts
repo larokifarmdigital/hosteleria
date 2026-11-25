@@ -43,6 +43,7 @@ export interface RestaurantRow {
   spacesCount: number;
   dishesCount: number;
   drinksCount: number;
+  unpublishedSpacesCount: number;
   winesCount: number;
 }
 
@@ -84,6 +85,7 @@ export function rowToRestaurant(row: RestaurantRow): Restaurant {
     spacesCount: row.spacesCount,
     dishesCount: row.dishesCount,
     drinksCount: row.drinksCount,
+    unpublishedSpacesCount: row.unpublishedSpacesCount ?? 0,
     winesCount: row.winesCount
   };
 }

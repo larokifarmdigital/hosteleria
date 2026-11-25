@@ -69,14 +69,19 @@ export function useDeleteRestaurant() {
 }
 
 /** Al pasar a `published`, el backend crea el snapshot y dispara el rebuild. */
-export function usePublishRestaurant(slug: string) {
+/** Publica la ficha y todos los espacios con cambios: la web entera de una vez. */
+export function usePublishAll(slug: string) {
   const qc = useQueryClient();
   const toastError = useErrorToast();
   return useMutation({
-    mutationFn: () => api.restaurants.patch(slug, { state: 'published' }),
-    onSuccess: (restaurant) => {
+    mutationFn: () => api.restaurants.publishAll(slug),
+    onSuccess: ({ restaurant }) => {
       qc.setQueryData(qk.restaurants.detail(slug), restaurant);
       qc.invalidateQueries({ queryKey: qk.restaurants.lists() });
+      // Los espacios publicados cambian de estado y de snapshot, estén o no en pantalla.
+      qc.invalidateQueries({ queryKey: qk.spaces.all });
+      qc.invalidateQueries({ queryKey: qk.pendingTasks.all });
+      qc.invalidateQueries({ queryKey: qk.siteStatus.all });
     },
     onError: toastError
   });

@@ -146,6 +146,12 @@ export type RestaurantContentKey =
   | 'foundedYear' | 'branding' | 'homeBlocks' | 'about' | 'groups' | 'mapUrl'
   | 'showReviews' | 'uiTexts' | 'faq' | 'aiSummary' | 'analyticsToken' | 'business';
 
+/** Lo que publicó `POST /restaurants/:slug/publish`. */
+export interface PublishAllResult {
+  restaurant: boolean;
+  spaces: { id: string; name: string }[];
+}
+
 export interface Restaurant {
   id: string;
   slug: string;
@@ -188,6 +194,8 @@ export interface Restaurant {
   /** Solo platos; las bebidas van en `drinksCount`. */
   dishesCount: number;
   drinksCount: number;
+  /** Espacios con cambios sin publicar o que nunca se publicaron. */
+  unpublishedSpacesCount: number;
   winesCount: number;
 }
 

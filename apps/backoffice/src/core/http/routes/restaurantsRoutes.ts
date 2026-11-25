@@ -52,6 +52,16 @@ export function createRestaurantsRoutes() {
     return c.json({ site: await c.get('container').public.siteStatus.execute(slug) });
   });
 
+  // Publica a la vez la ficha y todos los espacios con cambios: un solo botón para toda la web.
+  app.post('/:slug/publish', requireAuth, requireRestaurant('slug'), async (c) => {
+    const user = c.get('user')!;
+    const slug = c.req.param('slug');
+    const published = await c.get('container').restaurants.publishAll.execute(slug, user.id);
+    if (published.restaurant || published.spaces.length > 0) c.set('rebuild', { restaurantSlug: slug });
+    const r = await c.get('container').restaurants.get.execute(slug);
+    return c.json({ published, restaurant: restaurantToDto(r, user) });
+  });
+
   app.post('/', requireAdmin, validate('json', createSchema), async (c) => {
     const r = await c.get('container').restaurants.create.execute(c.req.valid('json'));
     return c.json({ restaurant: restaurantToDto(r, c.get('user')!) }, 201);

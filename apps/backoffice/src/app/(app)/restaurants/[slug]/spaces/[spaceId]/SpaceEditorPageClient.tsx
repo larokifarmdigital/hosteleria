@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Pill } from '@/components/shared/Pill';
 import { Section } from '@/components/shared/Section';
-import { StatePill } from '@/components/shared/StatePill';
+import { StatePill, spacePublication } from '@/components/shared/StatePill';
 import { useLanguages, useRestaurant, useSpaces, useSpace } from '@/lib/query/hooks';
 import { SpaceForm } from './SpaceForm';
 
@@ -40,7 +40,7 @@ export function SpaceEditorPageClient({ slug, spaceId }: Props) {
           <h1 className="m-0 text-[22px] font-bold leading-[1.2] tracking-[-0.015em]">{space.name}</h1>
           {space.descriptor && <p className="slug m-0 mt-0.5">{space.descriptor}</p>}
         </div>
-        <StatePill state={space.state} />
+        <StatePill publication={spacePublication(space)} />
         {space.isDefault && <Pill variant="accent">Espacio principal</Pill>}
       </div>
 
@@ -70,7 +70,7 @@ export function SpaceEditorPageClient({ slug, spaceId }: Props) {
                       className="flex min-h-11 items-center justify-between gap-2.5 rounded-lg border border-[color:var(--color-border)] bg-white px-3 text-[13.5px] font-semibold text-[color:var(--color-ink)] transition-colors hover:border-[color:var(--color-copper-300)]"
                     >
                       {s.name}
-                      <StatePill state={s.state} />
+                      <StatePill publication={spacePublication(s)} />
                     </Link>
                   </li>
                 ))}

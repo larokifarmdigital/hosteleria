@@ -167,6 +167,8 @@ export interface Restaurant {
   /** Solo platos; las bebidas van en `drinksCount`. */
   dishesCount: number;
   drinksCount: number;
+  /** Espacios con cambios sin publicar o que nunca se publicaron. */
+  unpublishedSpacesCount: number;
   winesCount: number;
 }
 

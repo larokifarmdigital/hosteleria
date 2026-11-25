@@ -49,6 +49,8 @@ export class DrizzleRestaurantRepository implements RestaurantRepository {
           ARRAY[]::text[]
         ) AS "activeLocaleCodes",
         (SELECT COUNT(*)::int FROM spaces s WHERE s.restaurant_id = r.id) AS "spacesCount",
+        (SELECT COUNT(*)::int FROM spaces s WHERE s.restaurant_id = r.id
+          AND (s.state <> 'published' OR s.published_snapshot IS NULL)) AS "unpublishedSpacesCount",
         -- Platos y bebidas comparten tabla: la categoría dice de qué carta son.
         (SELECT COUNT(*)::int FROM dishes d JOIN spaces s ON s.id = d.space_id JOIN dish_categories c ON c.id = d.category_id
           WHERE s.restaurant_id = r.id AND c.kind = 'dish') AS "dishesCount",

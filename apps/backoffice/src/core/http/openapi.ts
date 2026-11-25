@@ -153,6 +153,7 @@ const schemas = {
       spacesCount: { type: 'integer' },
       dishesCount: { type: 'integer', description: 'Solo platos.' },
       drinksCount: { type: 'integer' },
+      unpublishedSpacesCount: { type: 'integer', description: 'Espacios con cambios sin publicar o sin publicar nunca' },
       winesCount: { type: 'integer' }
     },
     required: ['id', 'slug', 'name', 'domain', 'state', 'activeLocales', 'defaultLocale']
@@ -768,6 +769,34 @@ const paths: Record<string, any> = {
       responses: {
         200: ok({ type: 'object', properties: { restaurant: { $ref: '#/components/schemas/Restaurant' } }, required: ['restaurant'] }),
         400: errRef('400 Bad Request — `NO_SNAPSHOT` (nunca se publicó)'),
+        401: err401, 403: err403Rest,
+        404: errRef('404 Not Found — `RESTAURANT_NOT_FOUND`'),
+        500: err500
+      }
+    }
+  },
+
+  '/restaurants/{slug}/publish': {
+    parameters: [{ name: 'slug', in: 'path', required: true, schema: { type: 'string' } }],
+    post: {
+      tags: ['Restaurants'], summary: 'Publica la ficha y todos los espacios con cambios sin publicar, y regenera la web una vez',
+      responses: {
+        200: ok({
+          type: 'object',
+          properties: {
+            published: {
+              type: 'object',
+              properties: {
+                restaurant: { type: 'boolean' },
+                spaces: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' } }, required: ['id', 'name'] } }
+              },
+              required: ['restaurant', 'spaces']
+            },
+            restaurant: { $ref: '#/components/schemas/Restaurant' }
+          },
+          required: ['published', 'restaurant']
+        }),
+        400: errRef('400 Bad Request — `TRANSLATIONS_INCOMPLETE` (no se publica nada; el mensaje dice qué falta, con el nombre del espacio delante)'),
         401: err401, 403: err403Rest,
         404: errRef('404 Not Found — `RESTAURANT_NOT_FOUND`'),
         500: err500

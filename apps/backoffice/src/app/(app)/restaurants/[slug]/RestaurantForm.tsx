@@ -22,7 +22,8 @@ import { showSuccessToast } from '@/lib/api';
 import { countErrors, firstErrorPath } from '@/lib/forms/errors';
 import { useTranslationStatus } from '@/lib/forms/useTranslationStatus';
 import { useUnsavedChangesWarning } from '@/lib/forms/useUnsavedChangesWarning';
-import { useDiscardRestaurant, usePatchRestaurant, usePublishRestaurant, useSession } from '@/lib/query/hooks';
+import { useDiscardRestaurant, usePatchRestaurant, useSession } from '@/lib/query/hooks';
+import { useChangeCount } from '@/lib/useChangeCount';
 import { ContentTab } from './form/ContentTab';
 import { DataTab } from './form/DataTab';
 import { SearchTab } from './form/SearchTab';
@@ -62,8 +63,8 @@ export function RestaurantForm({ restaurant, spaces, localeNames }: Props) {
   const [editingLanguages, setEditingLanguages] = useState(false);
 
   const patch = usePatchRestaurant(restaurant.slug);
-  const publish = usePublishRestaurant(restaurant.slug);
   const discard = useDiscardRestaurant(restaurant.slug);
+  const publishStamp = useChangeCount(restaurant);
 
   useUnsavedChangesWarning(isDirty);
 
@@ -177,16 +178,14 @@ export function RestaurantForm({ restaurant, spaces, localeNames }: Props) {
 
           <aside aria-label="Publicación y estado de la web" className="flex flex-col gap-5 self-start lg:col-start-2 xl:sticky xl:top-20 xl:col-start-3">
             <PublishPanel
-              subject="los datos del restaurante"
-              isPublished={restaurant.state === 'published'}
-              hasPublishedVersion={!!restaurant.publishedSnapshot || !!restaurant.lastPublishedAt}
-              lastPublishedAt={restaurant.lastPublishedAt}
+              restaurant={restaurant}
+              localeNames={localeNames}
+              current={{ kind: 'restaurant' }}
+              stamp={publishStamp}
               changes={changedBlocks(restaurant)}
               blockers={translations.blockers}
               formDirty={isDirty}
-              publishing={publish.isPending}
               discarding={discard.isPending}
-              onPublish={() => publish.mutateAsync().then(() => showSuccessToast('Publicado', 'La web se actualizará en un par de minutos.'))}
               onDiscard={() => discard.mutateAsync().then(r => { reset(toForm(r)); showSuccessToast('Has vuelto a lo publicado'); })}
             />
 

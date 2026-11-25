@@ -158,7 +158,10 @@ export function DishesPageClient() {
 
   return (
     <>
-      <PageHeader title="Carta">{hasDrinks ? 'Los platos, vinos y bebidas' : 'Los platos y vinos'} de cada espacio, agrupados por categoría.</PageHeader>
+      <PageHeader title="Carta">
+        {hasDrinks ? 'Los platos, vinos y bebidas' : 'Los platos y vinos'} de cada espacio, agrupados por categoría.{' '}
+        <strong className="font-semibold text-[color:var(--color-ink)]">La carta no hace falta publicarla:</strong> cada cambio sale en la web un par de minutos después de guardarlo.
+      </PageHeader>
 
       <QueryBoundary queries={[restaurantsQuery, spacesQuery]}>
         {!restaurant ? (

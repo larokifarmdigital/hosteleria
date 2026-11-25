@@ -63,19 +63,6 @@ export function usePatchSpace(restaurantSlug: string, spaceId: string) {
 }
 
 /** Al pasar a `published`, el backend guarda el snapshot del espacio. */
-export function usePublishSpace(restaurantSlug: string, spaceId: string) {
-  const qc = useQueryClient();
-  const toastError = useErrorToast();
-  return useMutation({
-    mutationFn: () => api.spaces.patch(restaurantSlug, spaceId, { state: 'published' }),
-    onSuccess: (space) => {
-      qc.setQueryData(qk.spaces.detail(restaurantSlug, spaceId), space);
-      qc.invalidateQueries({ queryKey: qk.spaces.byRestaurant(restaurantSlug) });
-    },
-    onError: toastError
-  });
-}
-
 export function useDiscardSpace(restaurantSlug: string, spaceId: string) {
   const qc = useQueryClient();
   const toastError = useErrorToast();

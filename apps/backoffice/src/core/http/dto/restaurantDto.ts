@@ -44,6 +44,7 @@ export function restaurantToDto(r: Restaurant, viewer: { role: UserRole }) {
     spacesCount: r.spacesCount,
     dishesCount: r.dishesCount,
     drinksCount: r.drinksCount,
+    unpublishedSpacesCount: r.unpublishedSpacesCount,
     winesCount: r.winesCount
   };
 }
