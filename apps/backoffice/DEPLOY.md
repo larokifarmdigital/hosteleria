@@ -4,8 +4,8 @@ El backoffice es una sola app Next que lleva dentro su api (`/api/*`). Se despli
 como **un proyecto de Vercel**. Fuera de Vercel solo quedan la base de datos (Neon)
 y las fotos (Cloudflare R2).
 
-`<backoffice>` es el dominio de producción del proyecto (por ejemplo
-`studio.hosteleria.cat` o el `*.vercel.app` que asigne Vercel).
+`<backoffice>` es el dominio de producción del proyecto: hoy
+`hosteleria-two.vercel.app`.
 
 ## 1. Proyecto
 

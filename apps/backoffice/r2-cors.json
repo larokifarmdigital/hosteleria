@@ -1,6 +1,6 @@
 [
   {
-    "AllowedOrigins": ["http://localhost:4400", "https://studio.hosteleria.cat"],
+    "AllowedOrigins": ["http://localhost:4400", "https://hosteleria-two.vercel.app"],
     "AllowedMethods": ["PUT"],
     "AllowedHeaders": ["content-type"],
     "MaxAgeSeconds": 3600
