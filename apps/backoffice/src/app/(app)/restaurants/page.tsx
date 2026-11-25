@@ -6,6 +6,7 @@ import { prefetchRestaurants } from '@/lib/query/prefetch';
 import { RestaurantsPageClient } from './RestaurantsPageClient';
 
 export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Restaurantes' };
 
 export default async function RestaurantsPage() {
   await redirectEditorToOwnRestaurant();

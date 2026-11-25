@@ -1,8 +1,18 @@
 'use client';
 
 import { useWatch, type Control, type FieldValues } from 'react-hook-form';
-import type { PublishBlocker } from '@/components/editor/PublishPanel';
 import { gapsByLocale, localeList, translationGaps, type TranslatableField } from './translations';
+
+/** Un texto que falta traducir, con el enlace al campo. */
+export interface PublishBlocker {
+  id: string;
+  /** Sección y campo, p. ej. «Portada · Título». */
+  label: string;
+  /** Idiomas que faltan, ya en texto: «catalán e inglés». */
+  missing: string;
+  /** Lleva al campo, en el primer idioma que falta. */
+  onGo: () => void;
+}
 
 interface Options<T extends FieldValues> {
   control: Control<T>;

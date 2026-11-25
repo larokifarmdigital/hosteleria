@@ -6,50 +6,6 @@ import { priceFromForm, priceText, priceToForm } from '@/lib/forms/price';
 import { i18nValues, optionalEmail, optionalMap, optionalText, optionalUrl, requiredText } from '@/lib/forms/rules';
 import type { TranslatableField } from '@/lib/forms/translations';
 
-export type TabId =
-  | 'overview' | 'spaces' | 'data' | 'brand' | 'languages'
-  | 'about' | 'groups' | 'faq' | 'home' | 'texts'
-  | 'search';
-
-/** Apartados de la ficha, con el nombre que ve el editor. El primero es el de entrada. */
-export const TABS: { id: TabId; label: string }[] = [
-  { id: 'overview', label: 'Resumen' },
-  { id: 'spaces', label: 'Espacios' },
-  { id: 'data', label: 'Datos y contacto' },
-  { id: 'brand', label: 'Logo e iconos' },
-  { id: 'languages', label: 'Idiomas de la web' },
-  { id: 'about', label: 'Sobre nosotros' },
-  { id: 'groups', label: 'Grupos y eventos' },
-  { id: 'faq', label: 'Preguntas frecuentes' },
-  { id: 'home', label: 'Bloques destacados' },
-  { id: 'texts', label: 'Textos de la web' },
-  { id: 'search', label: 'Google y buscadores' }
-];
-
-/** Cómo se agrupan en el menú lateral. */
-export const TAB_GROUPS: { label: string; ids: TabId[] }[] = [
-  { label: 'Tu restaurante', ids: ['overview', 'spaces', 'data', 'brand', 'languages'] },
-  { label: 'Contenido de la web', ids: ['about', 'groups', 'faq', 'home', 'texts'] },
-  { label: 'Para que te encuentren', ids: ['search'] }
-];
-
-/** Direcciones antiguas (`?tab=content`) que siguen funcionando. */
-export const TAB_ALIAS: Record<string, TabId> = { content: 'about' };
-
-/** Pestaña en la que se edita cada campo de primer nivel del formulario. */
-const TAB_OF: Record<string, TabId> = {
-  name: 'data', domain: 'data', foundedYear: 'data', address: 'data', mapUrl: 'data', contact: 'data',
-  socials: 'data', showSocials: 'data', acceptsBookings: 'data',
-  branding: 'brand',
-  about: 'about', groups: 'groups', faq: 'faq', homeBlocks: 'home',
-  uiTexts: 'texts',
-  seo: 'search', business: 'search', aiSummary: 'search', analyticsToken: 'search'
-};
-
-export function tabOfField(path: string): TabId {
-  return TAB_OF[path.split('.')[0]] ?? 'data';
-}
-
 // ─── Opciones cerradas ───────────────────────────────────────────
 
 export const FEATURE_ICONS: { value: GroupFeatureIcon; label: string }[] = [
@@ -90,80 +46,66 @@ export const EXTRA_SERVICES: { value: ExtraService; label: string }[] = [
   { value: 'live_music', label: 'Música en directo' }
 ];
 
-// ─── Textos fijos de la web ──────────────────────────────────────
+// ─── Textos de la plantilla que redacta el restaurante ───────────
+
+// El menú, las etiquetas del formulario y «Contacto» los pone el código
+// (`packages/content-client`); aquí solo van los que cambian de un local a otro,
+// cada bloque en la sección donde se ve.
 
 type UiTextGroup = keyof UiTexts;
 
-interface UiTextField {
+export interface UiTextField {
+  group: UiTextGroup;
   key: string;
   label: string;
   hint?: string;
   multiline?: boolean;
 }
 
-export const UI_TEXT_GROUPS: { group: UiTextGroup; title: string; description: string; fields: UiTextField[] }[] = [
+export const MENU_TITLES = 'Títulos de la carta en la web';
+export const GALLERY_TITLES = 'Título de la galería en la web';
+export const BOOKING_TEXTS = 'Formulario de reserva';
+export const FOOTER_TEXTS = 'Pie de la web';
+
+export const UI_TEXT_BLOCKS: { title: string; fields: UiTextField[] }[] = [
   {
-    group: 'nav',
-    title: 'Menú de la web',
-    description: 'Los enlaces de arriba, que llevan a cada parte de la página.',
+    title: MENU_TITLES,
     fields: [
-      { key: 'place', label: 'Enlace a «Sobre nosotros»', hint: 'Por ejemplo, «Historia».' },
-      { key: 'kitchen', label: 'Enlace a la carta', hint: 'Por ejemplo, «Carta».' },
-      { key: 'wines', label: 'Enlace a los vinos', hint: 'Por ejemplo, «Vinos».' },
-      { key: 'gallery', label: 'Enlace a la galería', hint: 'Por ejemplo, «Galería».' },
-      { key: 'book', label: 'Botón de reservar', hint: 'Por ejemplo, «Reservar».' }
+      { group: 'sections', key: 'dishesEyebrow', label: 'Carta: antetítulo', hint: 'La frase corta sobre el título, por ejemplo «Nuestra cocina».' },
+      { group: 'sections', key: 'dishesTitle', label: 'Carta: título', hint: 'Por ejemplo, «Carta de temporada».' },
+      { group: 'sections', key: 'winesEyebrow', label: 'Vinos: antetítulo', hint: 'Por ejemplo, «Esta noche, por copa».' },
+      { group: 'sections', key: 'winesTitle', label: 'Vinos: título', hint: 'Por ejemplo, «La carta breve».' },
+      { group: 'sections', key: 'winesFootnote', label: 'Vinos: nota al final de la lista', hint: 'Por ejemplo, «Referencias por botella a consultar».', multiline: true },
+      { group: 'sections', key: 'drinksEyebrow', label: 'Bebidas: antetítulo', hint: 'Por ejemplo, «Tras la barra».' },
+      { group: 'sections', key: 'drinksTitle', label: 'Bebidas: título', hint: 'Por ejemplo, «Para beber».' }
     ]
   },
   {
-    group: 'sections',
-    title: 'Títulos de las secciones',
-    description: 'El título de cada sección y su antetítulo, la frase corta que va encima.',
+    title: GALLERY_TITLES,
     fields: [
-      { key: 'dishesEyebrow', label: 'Carta: antetítulo', hint: 'Por ejemplo, «Nuestra cocina».' },
-      { key: 'dishesTitle', label: 'Carta: título', hint: 'Por ejemplo, «Carta de temporada».' },
-      { key: 'winesEyebrow', label: 'Vinos: antetítulo', hint: 'Por ejemplo, «Esta noche, por copa».' },
-      { key: 'winesTitle', label: 'Vinos: título', hint: 'Por ejemplo, «La carta breve».' },
-      { key: 'winesFootnote', label: 'Vinos: nota al final de la lista', hint: 'Por ejemplo, «Referencias por botella a consultar».' },
-      { key: 'galleryEyebrow', label: 'Galería: antetítulo', hint: 'Por ejemplo, «El local».' },
-      { key: 'galleryTitle', label: 'Galería: título', hint: 'Por ejemplo, «Nuestro espacio».' },
-      { key: 'drinksEyebrow', label: 'Bebidas: antetítulo', hint: 'Por ejemplo, «Tras la barra».' },
-      { key: 'drinksTitle', label: 'Bebidas: título', hint: 'Por ejemplo, «Para beber».' }
+      { group: 'sections', key: 'galleryEyebrow', label: 'Antetítulo', hint: 'Por ejemplo, «El local».' },
+      { group: 'sections', key: 'galleryTitle', label: 'Título', hint: 'Por ejemplo, «Nuestro espacio».' }
     ]
   },
   {
-    group: 'form',
-    title: 'Formulario de reserva',
-    description: 'El título, los nombres de los campos y los mensajes del formulario.',
+    title: BOOKING_TEXTS,
     fields: [
-      { key: 'title', label: 'Título', hint: 'Por ejemplo, «Reserva tu mesa».' },
-      { key: 'intro', label: 'Texto de entrada', hint: 'Una frase que invite a reservar.', multiline: true },
-      { key: 'labelName', label: 'Nombre del campo «Nombre»' },
-      { key: 'labelPhone', label: 'Nombre del campo «Teléfono»' },
-      { key: 'labelEmail', label: 'Nombre del campo «Email»' },
-      { key: 'labelGuests', label: 'Nombre del campo «Comensales»' },
-      { key: 'labelDate', label: 'Nombre del campo «Fecha»' },
-      { key: 'labelTime', label: 'Nombre del campo «Hora»' },
-      { key: 'labelNotes', label: 'Nombre del campo «Notas»' },
-      { key: 'submit', label: 'Botón de enviar', hint: 'Por ejemplo, «Enviar reserva».' },
-      { key: 'success', label: 'Mensaje tras enviar', hint: 'Por ejemplo, «Gracias, te contactamos en breve».' }
+      { group: 'form', key: 'title', label: 'Título', hint: 'Por ejemplo, «Reserva tu mesa».' },
+      { group: 'form', key: 'intro', label: 'Texto de entrada', hint: 'Una frase que invite a reservar.', multiline: true }
     ]
   },
   {
-    group: 'footer',
-    title: 'Pie de página',
-    description: 'Los textos del final de la página.',
-    fields: [
-      { key: 'contactColumn', label: 'Título de la columna de contacto', hint: 'Por ejemplo, «Contacto».' },
-      { key: 'byline', label: 'Frase de firma', hint: 'Por ejemplo, «Cocina de mercado en Barcelona».' }
-    ]
+    title: FOOTER_TEXTS,
+    fields: [{ group: 'footer', key: 'byline', label: 'Frase del pie', hint: 'Por ejemplo, «Cocina de mercado en Barcelona».' }]
   }
 ];
 
-/** Las bebidas aún no se editan aquí: sus títulos solo se enseñan si ya tienen texto. */
+const UI_TEXT_FIELDS = UI_TEXT_BLOCKS.flatMap(b => b.fields);
+
+/** Las bebidas solo tienen títulos si el restaurante ya los usa (Ocaña). */
 const DRINKS_KEYS = ['drinksEyebrow', 'drinksTitle'];
 
-export function visibleUiTextFields(group: UiTextGroup, fields: UiTextField[], restaurant: Restaurant): UiTextField[] {
-  if (group !== 'sections') return fields;
+export function visibleUiTextFields(fields: UiTextField[], restaurant: Restaurant): UiTextField[] {
   const sections = (restaurant.uiTexts.sections ?? {}) as Record<string, Record<string, string> | undefined>;
   return fields.filter(f => !DRINKS_KEYS.includes(f.key) || Object.values(sections[f.key] ?? {}).some(Boolean));
 }
@@ -259,8 +201,7 @@ export function toForm(r: Restaurant): FormValues {
   const tx = (value: Record<string, string | undefined> | undefined) => i18nToForm(value, locales);
   const uiGroup = (group: UiTextGroup) => {
     const values = (r.uiTexts[group] ?? {}) as Record<string, Record<string, string> | undefined>;
-    const fields = UI_TEXT_GROUPS.find(g => g.group === group)!.fields;
-    return Object.fromEntries(fields.map(f => [f.key, tx(values[f.key])]));
+    return Object.fromEntries(UI_TEXT_FIELDS.filter(f => f.group === group).map(f => [f.key, tx(values[f.key])]));
   };
 
   return {
@@ -447,13 +388,13 @@ export function changedBlocks(r: Restaurant): string[] {
   // referencia no se puede decir que hayan cambiado.
   const later: [string, unknown, unknown][] = [
     ['Año de apertura', r.foundedYear, snap.foundedYear],
-    ['Logo e iconos', r.branding, snap.branding],
+    [BRAND_ICON, r.branding, snap.branding],
     ['Mapa', r.mapUrl, snap.mapUrl],
     ['Sobre nosotros', r.about, snap.about],
     ['Grupos y eventos', r.groups, snap.groups],
     ['Preguntas frecuentes', r.faq, snap.faq],
     ['Bloques destacados', r.homeBlocks, snap.homeBlocks],
-    ['Textos de la web', r.uiTexts, snap.uiTexts],
+    ['Títulos y textos de la web', r.uiTexts, snap.uiTexts],
     ['Datos del negocio', r.business, snap.business],
     ['Resumen para asistentes de IA', r.aiSummary, snap.aiSummary],
     ['Analítica', r.analyticsToken, snap.analyticsToken]
@@ -472,6 +413,7 @@ export const GROUPS = 'Grupos y eventos';
 export const FAQ = 'Preguntas frecuentes';
 export const HOME_BLOCKS = 'Bloques destacados';
 export const AI = 'Resumen para asistentes de IA';
+export const BRAND_ICON = 'Icono de la web';
 
 /** Textos traducibles del formulario tal como está ahora: las listas cambian de tamaño. */
 export function translatableFields(values: Partial<FormValues>, restaurant: Restaurant): TranslatableField[] {
@@ -502,9 +444,9 @@ export function translatableFields(values: Partial<FormValues>, restaurant: Rest
     fields.push({ name: `homeBlocks.${i}.text`, label: `Bloque ${i + 1}, texto`, section: HOME_BLOCKS });
     fields.push({ name: `homeBlocks.${i}.ctaText`, label: `Bloque ${i + 1}, texto del botón`, section: HOME_BLOCKS });
   });
-  for (const { group, title, fields: groupFields } of UI_TEXT_GROUPS) {
-    for (const f of visibleUiTextFields(group, groupFields, restaurant)) {
-      fields.push({ name: `uiTexts.${group}.${f.key}`, label: f.label, section: title });
+  for (const { title, fields: blockFields } of UI_TEXT_BLOCKS) {
+    for (const f of visibleUiTextFields(blockFields, restaurant)) {
+      fields.push({ name: `uiTexts.${f.group}.${f.key}`, label: f.label, section: title });
     }
   }
   fields.push(

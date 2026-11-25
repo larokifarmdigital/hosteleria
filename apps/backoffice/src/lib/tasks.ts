@@ -12,7 +12,7 @@ export interface TaskLine {
 
 const AREA = {
   content: { label: 'el contenido de la web', tab: 'about' },
-  uiTexts: { label: 'los textos de la web', tab: 'texts' },
+  uiTexts: { label: 'los títulos de la web', tab: 'menu' },
   search: { label: '«Google y buscadores»', tab: 'search' }
 } as const;
 
@@ -26,10 +26,19 @@ const LEGAL: Record<string, string> = {
   'legal-notice': 'el aviso legal', privacy: 'la política de privacidad', cookies: 'la política de cookies'
 };
 
+/** Sección donde se edita un título de la plantilla, por su nombre en el aviso («Galería: título»). */
+function uiTextsTab(label: string | undefined): string {
+  if (label?.startsWith('Galería')) return 'photos';
+  if (label?.startsWith('Reservas') || label?.startsWith('Pie')) return 'contact';
+  return 'menu';
+}
+
 /** Una tarea pendiente dicha con las palabras del editor, con el enlace al sitio donde se arregla. */
 export function describeTask(task: PendingTask, slug: string, localeNames: Record<string, string>): TaskLine {
   const ficha = `/restaurants/${slug}`;
-  const spaceHref = (spaceId: string) => `${ficha}/spaces/${spaceId}`;
+  // Cada aviso abre la sección del editor donde se arregla.
+  const section = (key: string, extra: Record<string, string> = {}) => `${ficha}?${new URLSearchParams({ s: key, ...extra })}`;
+  const spaceHref = (spaceId: string) => section('cover', { e: spaceId });
 
   if (task.type === 'unpublished') {
     const isSpace = task.target.kind === 'space';
@@ -47,7 +56,7 @@ export function describeTask(task: PendingTask, slug: string, localeNames: Recor
       id: `no_schedule:${task.target.spaceId}`,
       text: `El espacio «${task.target.spaceName}» no tiene horario`,
       detail: 'La web lo enseña como cerrado toda la semana.',
-      href: `${spaceHref(task.target.spaceId)}?tab=hours`
+      href: section('hours', { e: task.target.spaceId })
     };
   }
 
@@ -58,7 +67,7 @@ export function describeTask(task: PendingTask, slug: string, localeNames: Recor
       id: 'image_descriptions',
       text: `${task.count === 1 ? 'Hay 1 foto en uso' : `Hay ${task.count} fotos en uso`} sin descripción`,
       detail: `${task.count === 1 ? 'Falta' : 'Faltan'} en ${languages}. La descripción es lo que oye quien no puede ver la foto.`,
-      href: `/media?r=${slug}&ver=sin-descripcion`
+      href: section('media', { ver: 'sin-descripcion' })
     };
   }
 
@@ -71,18 +80,20 @@ export function describeTask(task: PendingTask, slug: string, localeNames: Recor
   const t = task.target;
   if (t.kind === 'restaurant') {
     const area = AREA[t.area ?? 'content'];
-    return { id: `translations:ficha:${area.tab}`, text: `${amount} en ${area.label}`, detail: examples, href: `${ficha}?tab=${area.tab}` };
+    // Los títulos de la plantilla están repartidos: se va a la sección del primero que falta.
+    const tab = t.area === 'uiTexts' ? uiTextsTab(task.examples[0]) : area.tab;
+    return { id: `translations:ficha:${area.tab}`, text: `${amount} en ${area.label}`, detail: examples, href: section(tab) };
   }
   if (t.kind === 'space') {
     return { id: `translations:space:${t.spaceId}`, text: `${amount} en el espacio «${t.spaceName}»`, detail: examples, href: spaceHref(t.spaceId) };
   }
   if (t.kind === 'menu') {
     const menu = MENU[t.menu];
-    const query = new URLSearchParams({ r: slug, e: t.spaceId, ...(menu.tipo ? { tipo: menu.tipo } : {}), ver: 'sin-traducir' });
-    return { id: `translations:${t.menu}:${t.spaceId}`, text: `${amount} en ${menu.label} de «${t.spaceName}»`, detail: examples, href: `/dishes?${query}` };
+    const href = section('menu', { e: t.spaceId, ...(menu.tipo ? { tipo: menu.tipo } : {}), ver: 'sin-traducir' });
+    return { id: `translations:${t.menu}:${t.spaceId}`, text: `${amount} en ${menu.label} de «${t.spaceName}»`, detail: examples, href };
   }
   if (t.kind === 'legal') {
-    return { id: `translations:legal:${t.legalType}`, text: `${amount} en ${LEGAL[t.legalType] ?? 'una página legal'}`, detail: examples, href: `${ficha}/legal/${t.legalType}` };
+    return { id: `translations:legal:${t.legalType}`, text: `${amount} en ${LEGAL[t.legalType] ?? 'una página legal'}`, detail: examples, href: section('legal', { p: t.legalType }) };
   }
   return { id: 'translations:otros', text: amount, detail: examples, href: ficha };
 }

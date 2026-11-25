@@ -2,6 +2,8 @@ import { AuthShell } from '@/components/AuthShell';
 import { LoginForm } from '@/components/LoginForm';
 import { safeNext } from '@/lib/auth/paths';
 
+export const metadata = { title: 'Entrar' };
+
 interface Props {
   searchParams: Promise<{ next?: string }>;
 }

@@ -1,34 +1,20 @@
-import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import { getQueryClient } from '@/lib/query/server';
+import { redirect } from 'next/navigation';
 import { getServerApi } from '@/lib/api/server';
 import { requireUser } from '@/lib/auth/guards';
-import { prefetchDishes, prefetchLanguages, prefetchSpaces } from '@/lib/query/prefetch';
-import { DishesPageClient } from './DishesPageClient';
 
 export const dynamic = 'force-dynamic';
 
 interface Props {
-  searchParams: Promise<{ r?: string }>;
+  searchParams: Promise<{ r?: string; e?: string; tipo?: string; ver?: string }>;
 }
 
+// La carta es una sección del editor de la web: las direcciones de antes siguen llevando a ella.
 export default async function DishesPage({ searchParams }: Props) {
   await requireUser();
-  const { r } = await searchParams;
-  const qc = getQueryClient();
-  const api = await getServerApi();
-
-  // Mismo criterio que el cliente para elegir restaurante: el de la URL o el primero.
-  const restaurants = await api.restaurants.list().catch(() => []);
+  const { r, e, tipo, ver } = await searchParams;
+  const restaurants = await (await getServerApi()).restaurants.list().catch(() => []);
   const slug = (restaurants.find(x => x.slug === r) ?? restaurants[0])?.slug;
-
-  await Promise.all([
-    prefetchLanguages(qc, api),
-    ...(slug ? [prefetchSpaces(qc, api, slug), prefetchDishes(qc, api, { restaurantSlug: slug })] : [])
-  ]);
-
-  return (
-    <HydrationBoundary state={dehydrate(qc)}>
-      <DishesPageClient />
-    </HydrationBoundary>
-  );
+  if (!slug) redirect('/dashboard');
+  const query = new URLSearchParams({ s: 'menu', ...(e ? { e } : {}), ...(tipo ? { tipo } : {}), ...(ver ? { ver } : {}) });
+  redirect(`/restaurants/${slug}?${query}`);
 }

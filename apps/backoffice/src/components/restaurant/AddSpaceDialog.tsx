@@ -37,7 +37,7 @@ export function AddSpaceDialog({ restaurantSlug, spaces, onClose }: Props) {
         descriptor: values.descriptor.trim()
       });
       showSuccessToast('Espacio creado', 'Rellena su portada y su horario, y publícalo cuando esté listo.');
-      router.push(`/restaurants/${restaurantSlug}/spaces/${space.id}`);
+      router.push(`/restaurants/${restaurantSlug}?s=spaces&e=${space.id}`);
     } catch {
       // El hook ya muestra el error; el diálogo sigue abierto con lo escrito.
     }

@@ -71,6 +71,7 @@ export function useDiscardSpace(restaurantSlug: string, spaceId: string) {
     onSuccess: (space) => {
       qc.setQueryData(qk.spaces.detail(restaurantSlug, spaceId), space);
       qc.invalidateQueries({ queryKey: qk.spaces.byRestaurant(restaurantSlug) });
+      qc.invalidateQueries({ queryKey: qk.pendingTasks.all });
     },
     onError: toastError
   });

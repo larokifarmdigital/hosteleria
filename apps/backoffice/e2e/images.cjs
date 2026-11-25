@@ -150,7 +150,7 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
   await new Promise(r => setTimeout(r, 62000)); // el api limita a 100 peticiones por minuto y usuario
   console.log('— B. Portada del espacio');
   await step('B', async () => {
-    await page.goto(`${BASE}/restaurants/pruebas/spaces/${SPACE}`);
+    await page.goto(`${BASE}/restaurants/pruebas?s=cover`);
     const group = page.getByRole('group', { name: 'Foto de portada' });
     await group.getByText('Sin foto').waitFor();
     check('campo de foto de portada, sin foto', await group.getByText('Sin foto').isVisible() && await group.getByRole('button', { name: 'Elegir foto' }).isVisible());
@@ -171,17 +171,20 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
     await picker.waitFor({ state: 'hidden' });
     check('foto con descripción: se asigna y se ve', await group.locator('img').getAttribute('alt') === 'Texto de prueba 3');
     check('la descripción de la foto entra en la portada', await page.locator('#hero-imageAlt-es').inputValue() === 'Texto de prueba 3' && await page.locator('#hero-imageAlt-ca').inputValue() === 'Text de prova 1');
-    check('aparece la barra de guardar', await page.getByRole('button', { name: 'Guardar', exact: true }).isVisible());
+    // Se guarda sola: la foto lleva su descripción en todos los idiomas.
+    await page.getByText('Cambios guardados', { exact: true }).first().waitFor({ timeout: 10000 });
+    check('al elegirla, se guarda sola', true);
 
     await page.locator('#hero-imageAlt-es').fill('');
-    await page.getByRole('button', { name: 'Guardar', exact: true }).click();
-    await page.getByText('Describe la foto en Español.').waitFor();
+    await page.getByText(/Sin guardar: Describe la foto en Español/).first().waitFor({ timeout: 10000 });
     let sp = (await api('GET', `/restaurants/pruebas/spaces/${SPACE}`)).body.space;
-    check('portada con foto sin descripción no se guarda', !sp.hero.imageAssetId);
+    check('portada con foto sin descripción no se guarda (y lo dice arriba)', sp.hero.imageAlt?.es === 'Texto de prueba 3', JSON.stringify(sp.hero.imageAlt));
     await page.locator('#hero-imageAlt-es').fill('Comedor con mesas preparadas');
-    await page.getByRole('button', { name: 'Guardar', exact: true }).click();
-    await page.getByText('Cambios guardados').waitFor();
-    sp = (await api('GET', `/restaurants/pruebas/spaces/${SPACE}`)).body.space;
+    for (let i = 0; i < 12; i++) {
+      await page.waitForTimeout(700);
+      sp = (await api('GET', `/restaurants/pruebas/spaces/${SPACE}`)).body.space;
+      if (sp.hero.imageAlt?.es === 'Comedor con mesas preparadas') break;
+    }
     const plato = (await mediaList()).find(m => m.name === 'plato.jpg');
     check('guardado: foto y descripción en el borrador', sp.hero.imageAssetId === plato.id && sp.hero.imageAlt.es === 'Comedor con mesas preparadas' && sp.hero.title.es === 'Cocina de mercado,' && sp.state === 'draft', JSON.stringify(sp.hero));
     await page.reload();
@@ -275,7 +278,7 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
     check('subir desde el móvil', (await mediaList()).length === before + 1);
     const box = await p.getByRole('button', { name: 'Elegir fotos' }).boundingBox();
     check('botón de elegir con zona táctil de 44 px', box.height >= 44, String(box.height));
-    await p.goto(`${BASE}/restaurants/pruebas/spaces/${SPACE}`);
+    await p.goto(`${BASE}/restaurants/pruebas?s=cover`);
     await p.getByRole('group', { name: 'Foto de portada' }).getByRole('button', { name: 'Cambiar foto' }).click();
     const picker = p.getByRole('dialog', { name: 'Elegir foto' });
     await picker.waitFor();

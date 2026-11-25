@@ -12,7 +12,7 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: 'Hosteleria Studio',
+  title: { template: '%s · Hosteleria Studio', default: 'Hosteleria Studio' },
   description: 'Backoffice del grupo de restauración.',
   robots: { index: false, follow: false }
 };

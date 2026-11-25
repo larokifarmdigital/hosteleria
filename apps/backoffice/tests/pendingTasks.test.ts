@@ -57,12 +57,12 @@ describe('tareas pendientes', () => {
     const tasks = buildPendingTasks(src({
       restaurant: restaurant({
         about: { title: half, body: full }, faq: { items: [{ id: 'q', question: half, answer: half }] },
-        uiTexts: { nav: { book: half } }, seo: { title: half }, aiSummary: full
+        uiTexts: { nav: { book: half }, sections: { galleryTitle: half } }, seo: { title: half }, aiSummary: full
       })
     }));
     expect(tasks).toEqual([
       { type: 'translations', target: { kind: 'restaurant', area: 'content' }, count: 3, locales: ['ca'], examples: ['Sobre nosotros: título', 'Pregunta 1', 'Respuesta 1'] },
-      { type: 'translations', target: { kind: 'restaurant', area: 'uiTexts' }, count: 1, locales: ['ca'], examples: ['Textos de la web: nav.book'] },
+      { type: 'translations', target: { kind: 'restaurant', area: 'uiTexts' }, count: 1, locales: ['ca'], examples: ['Galería: título'] },
       { type: 'translations', target: { kind: 'restaurant', area: 'search' }, count: 1, locales: ['ca'], examples: ['Título en Google'] }
     ]);
   });

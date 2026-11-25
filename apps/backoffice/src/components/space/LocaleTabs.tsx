@@ -10,13 +10,29 @@ interface Props {
   names?: Record<string, string>;
   /** Nº de textos que faltan por traducir en cada idioma. */
   missing?: Record<string, number>;
+  /** Idioma principal: va el primero. */
+  first?: string;
+  /** Dentro de un diálogo: control segmentado en vez de pestañas con línea. */
+  compact?: boolean;
 }
 
 /** Selector de idioma del contenido. Botones con `aria-pressed`: cambian qué se ve, no son pestañas con panel propio. */
-export function LocaleTabs({ locales, value, onChange, names = {}, missing = {} }: Props) {
+export function LocaleTabs({ locales, value, onChange, names = {}, missing = {}, first, compact }: Props) {
+  // Con un solo idioma no hay nada que elegir.
+  if (locales.length < 2) return null;
+  const ordered = first ? [...locales].sort((a, b) => Number(b === first) - Number(a === first)) : locales;
   return (
-    <div role="group" aria-label="Idioma del contenido" className="mb-6 inline-flex flex-wrap gap-1 rounded-[10px] border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)] p-1">
-      {locales.map(code => {
+    <div
+      role="group"
+      aria-label="Idioma del contenido"
+      className={cn(
+        'mb-6 flex',
+        compact
+          ? 'gap-1 overflow-x-auto rounded-[10px] bg-[color:var(--color-surface-2)] p-1'
+          : 'items-end gap-1 overflow-x-auto border-b border-[color:var(--color-border)]'
+      )}
+    >
+      {ordered.map(code => {
         const isActive = code === value;
         const count = missing[code] ?? 0;
         return (
@@ -26,10 +42,10 @@ export function LocaleTabs({ locales, value, onChange, names = {}, missing = {} 
             aria-pressed={isActive}
             onClick={() => onChange(code)}
             className={cn(
-              'inline-flex min-h-9 items-center gap-2 rounded-md px-4 text-[13px] font-semibold leading-none transition-colors',
-              isActive
-                ? 'bg-white text-[color:var(--color-accent)] shadow-[var(--shadow-sm)]'
-                : 'bg-transparent text-[color:var(--color-muted)] hover:text-[color:var(--color-ink)]'
+              'inline-flex flex-shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap text-[14px] leading-none transition-colors',
+              compact
+                ? cn('min-h-11 flex-1 justify-center rounded-[7px] border-0 px-3 sm:min-h-9', isActive ? 'bg-white font-semibold text-[color:var(--color-ink)] shadow-[var(--shadow-sm)]' : 'bg-transparent font-medium text-[color:var(--color-muted)] hover:text-[color:var(--color-ink)]')
+                : cn('-mb-px min-h-11 border-0 border-b-2 bg-transparent px-3 sm:px-4', isActive ? 'border-[color:var(--color-accent)] font-semibold text-[color:var(--color-ink)]' : 'border-transparent font-medium text-[color:var(--color-muted)] hover:text-[color:var(--color-ink)]')
             )}
           >
             {names[code] ?? code.toUpperCase()}

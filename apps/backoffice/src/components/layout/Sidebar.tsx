@@ -1,6 +1,6 @@
 'use client';
 
-import { Building2, Image as ImageIcon, LayoutDashboard, Settings, UtensilsCrossed } from 'lucide-react';
+import { Building2, LayoutDashboard, Settings } from 'lucide-react';
 import { useRestaurants, useSession } from '@/lib/query/hooks';
 import { BrandMark } from './BrandMark';
 import { NavItem } from './NavItem';
@@ -38,12 +38,6 @@ export function Sidebar() {
               </li>
             </>
           )}
-          <li>
-            <NavItem href="/dishes" icon={<UtensilsCrossed />} label="Carta" />
-          </li>
-          <li>
-            <NavItem href="/media" icon={<ImageIcon />} label="Imágenes" />
-          </li>
           {isAdmin && (
             <li className="mt-4 border-t border-[color:var(--color-nav-border)] pt-4">
               <NavItem href="/settings" icon={<Settings />} label="Ajustes" />

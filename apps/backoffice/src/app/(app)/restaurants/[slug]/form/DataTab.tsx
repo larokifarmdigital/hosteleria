@@ -1,17 +1,16 @@
 'use client';
 
 import { useFormContext } from 'react-hook-form';
-import { FormImageField } from '@/components/media/FormImageField';
 import { Section } from '@/components/shared/Section';
 import { Field } from '@/components/ui/Field';
-import { Checkbox, TextArea, TextInput } from '@/components/ui/inputs';
+import { SwitchRow, TextArea, TextInput } from '@/components/ui/inputs';
 import type { FormValues } from './model';
 import type { TabProps } from './types';
 
 type InputOptions = { hint?: string; type?: string; autoComplete?: string; inputMode?: 'tel' | 'email' | 'url' | 'numeric'; required?: boolean };
 
-/** `show`: los datos y el contacto, o el logo y los iconos, cada cosa en su apartado. */
-export function DataTab({ show, mediaScope, isAdmin }: Pick<TabProps, 'mediaScope'> & { show: 'data' | 'brand'; isAdmin: boolean }) {
+/** `show`: los datos y el contacto, o la dirección de la web (solo administradores). */
+export function DataTab({ show, mediaScope, isAdmin }: Pick<TabProps, 'mediaScope'> & { show: 'data' | 'admin'; isAdmin: boolean }) {
   const { register, formState: { errors } } = useFormContext<FormValues>();
 
   const text = (id: string, label: string, name: Parameters<typeof register>[0], error?: string, opts?: InputOptions) => (
@@ -22,73 +21,65 @@ export function DataTab({ show, mediaScope, isAdmin }: Pick<TabProps, 'mediaScop
     </Field>
   );
 
-  if (show === 'brand') {
+  // De la dirección dependen los enlaces que ve Google y la comprobación de la web: solo administradores.
+  if (show === 'admin') {
+    if (!isAdmin) return null;
     return (
-      <Section title="Logo e iconos" description="Mejor en PNG, cuadrados y de al menos 500 px de lado.">
-        <div className="flex flex-col gap-6">
-          <FormImageField name="branding.logoAssetId" label="Logo" hint="Se usa en Google y al compartir la web. Con fondo transparente." scope={mediaScope} purpose="logo" />
-          <FormImageField name="branding.faviconAssetId" label="Icono de la pestaña del navegador" hint="Se ve muy pequeño: usa un símbolo sencillo, como la inicial o el logo sin texto." scope={mediaScope} purpose="logo" />
-          <FormImageField name="branding.appIconAssetId" label="Icono para el móvil" hint="Aparece si alguien guarda la web en la pantalla de inicio. Con color de fondo, nunca transparente." scope={mediaScope} purpose="logo" />
-        </div>
-      </Section>
+      <section aria-labelledby="r-admin-titulo" className="rounded-[12px] border border-dashed border-[color:var(--color-control)] p-4 sm:p-5">
+        <h3 id="r-admin-titulo" className="m-0 mb-4 text-[13px] font-semibold text-[color:var(--color-muted)]">Solo administradores</h3>
+        {text('r-domain', 'Dirección de la web', 'domain', errors.domain?.message, { inputMode: 'url', required: true, hint: 'Sin «https://»: por ejemplo «www.mirestaurante.com». Es la que se le da a Google como oficial.' })}
+      </section>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <Section title="Datos básicos">
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {text('r-name', 'Nombre del restaurante', 'name', errors.name?.message, { required: true })}
-          {text('r-founded', 'Año de apertura', 'foundedYear', errors.foundedYear?.message, { inputMode: 'numeric', hint: 'El año en que abrió el restaurante, si quieres contarlo.' })}
-          {/* De la dirección dependen los enlaces que ve Google y la comprobación de la web: solo administradores. */}
-          {isAdmin && (
-            <div className="md:col-span-2">
-              {text('r-domain', 'Dirección de la web', 'domain', errors.domain?.message, { inputMode: 'url', required: true, hint: 'Donde se ve la web, sin «https://»: por ejemplo «www.mirestaurante.com». Es la dirección que se le da a Google como oficial.' })}
-            </div>
-          )}
+          {text('r-founded', 'Año de apertura', 'foundedYear', errors.foundedYear?.message, { inputMode: 'numeric', hint: 'Si quieres contarlo en la web.' })}
         </div>
       </Section>
 
+      <Section title="Teléfono y correo" description="Con lo que te pueden llamar, escribir o reservar.">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {text('r-phone', 'Teléfono', 'contact.phone', errors.contact?.phone?.message, { type: 'tel', inputMode: 'tel' })}
+          {text('r-whatsapp', 'WhatsApp', 'contact.whatsapp', errors.contact?.whatsapp?.message, { type: 'tel', inputMode: 'tel', hint: 'Con prefijo de país, por ejemplo +34 600 000 000.' })}
+          {text('r-email', 'Email', 'contact.email', errors.contact?.email?.message, { type: 'email', inputMode: 'email' })}
+          {text('r-web', 'Otra página web', 'contact.web', errors.contact?.web?.message, { type: 'url', inputMode: 'url', hint: 'Solo si tienes otra aparte de esta.' })}
+        </div>
+        <SwitchRow
+          id="r-bookings"
+          className="mt-5"
+          label="Aceptar reservas desde la web"
+          hint="Si lo desactivas, la web no enseña el formulario de reserva."
+          {...register('acceptsBookings')}
+        />
+      </Section>
+
       <Section title="Dirección">
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          <div className="md:col-span-2">{text('r-street', 'Calle y número', 'address.street', errors.address?.street?.message)}</div>
-          {text('r-postal', 'Código postal', 'address.postalCode', errors.address?.postalCode?.message)}
-          {text('r-city', 'Ciudad', 'address.city', errors.address?.city?.message)}
-          {text('r-district', 'Barrio', 'address.district', errors.address?.district?.message, { hint: 'Ayuda a que te encuentren quienes buscan en tu zona.' })}
-          {text('r-province', 'Provincia', 'address.province', errors.address?.province?.message)}
-          {text('r-country', 'País', 'address.country', errors.address?.country?.message)}
-          <Field id="r-map" className="md:col-span-2" label="Mapa de Google" error={errors.mapUrl?.message} hint="En Google Maps: Compartir → Insertar un mapa → Copiar HTML. Pégalo aquí tal cual.">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-6">
+          <div className="sm:col-span-4">{text('r-street', 'Calle y número', 'address.street', errors.address?.street?.message)}</div>
+          <div className="sm:col-span-2">{text('r-postal', 'Código postal', 'address.postalCode', errors.address?.postalCode?.message)}</div>
+          <div className="sm:col-span-3">{text('r-city', 'Ciudad', 'address.city', errors.address?.city?.message)}</div>
+          <div className="sm:col-span-3">{text('r-district', 'Barrio', 'address.district', errors.address?.district?.message, { hint: 'Ayuda a que te encuentren quienes buscan en tu zona.' })}</div>
+          <div className="sm:col-span-3">{text('r-province', 'Provincia', 'address.province', errors.address?.province?.message)}</div>
+          <div className="sm:col-span-3">{text('r-country', 'País', 'address.country', errors.address?.country?.message)}</div>
+          <Field id="r-map" className="sm:col-span-6" label="Mapa de Google" error={errors.mapUrl?.message} hint="En Google Maps: Compartir → Insertar un mapa → Copiar HTML. Pégalo aquí tal cual.">
             {control => <TextArea {...control} rows={3} autoComplete="off" spellCheck={false} {...register('mapUrl')} />}
           </Field>
         </div>
       </Section>
 
-      <Section title="Contacto">
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          {text('r-phone', 'Teléfono', 'contact.phone', errors.contact?.phone?.message, { type: 'tel', inputMode: 'tel' })}
-          {text('r-whatsapp', 'WhatsApp', 'contact.whatsapp', errors.contact?.whatsapp?.message, { type: 'tel', inputMode: 'tel', hint: 'Con prefijo de país, por ejemplo +34 600 000 000.' })}
-          {text('r-email', 'Email', 'contact.email', errors.contact?.email?.message, { type: 'email', inputMode: 'email' })}
-          {text('r-web', 'Página web', 'contact.web', errors.contact?.web?.message, { type: 'url', inputMode: 'url' })}
-        </div>
-      </Section>
-
       <Section title="Redes sociales" description="Pega el enlace completo de cada perfil.">
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {text('r-instagram', 'Instagram', 'socials.instagram', errors.socials?.instagram?.message, { type: 'url', inputMode: 'url' })}
           {text('r-facebook', 'Facebook', 'socials.facebook', errors.socials?.facebook?.message, { type: 'url', inputMode: 'url' })}
           {text('r-tiktok', 'TikTok', 'socials.tiktok', errors.socials?.tiktok?.message, { type: 'url', inputMode: 'url' })}
         </div>
-        <Checkbox id="r-show-socials" className="mt-4" label="Mostrar las redes en la web" {...register('showSocials')} />
+        <SwitchRow id="r-show-socials" className="mt-5" label="Mostrar las redes en la web" {...register('showSocials')} />
       </Section>
 
-      <Section title="Reservas">
-        <Checkbox
-          id="r-bookings"
-          label="Aceptar reservas desde la web"
-          hint="Si lo desactivas, la web no mostrará el formulario de reserva."
-          {...register('acceptsBookings')}
-        />
-      </Section>
     </div>
   );
 }

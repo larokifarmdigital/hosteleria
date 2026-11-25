@@ -95,6 +95,8 @@ export function useDiscardRestaurant(slug: string) {
     onSuccess: (restaurant) => {
       qc.setQueryData(qk.restaurants.detail(slug), restaurant);
       qc.invalidateQueries({ queryKey: qk.restaurants.lists() });
+      // Lo que queda por publicar cambia: la barra del editor lo vuelve a preguntar.
+      qc.invalidateQueries({ queryKey: qk.pendingTasks.all });
     },
     onError: toastError
   });

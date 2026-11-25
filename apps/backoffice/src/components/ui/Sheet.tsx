@@ -13,20 +13,20 @@ interface Props {
   children: React.ReactNode;
 }
 
-/** Panel lateral para editar sin salir de la lista. En móvil ocupa toda la pantalla. */
+/** Diálogo centrado para crear o editar un elemento de una lista, con cuerpo con scroll y pie fijo. */
 export function Sheet({ open, onRequestClose, title, description, children }: Props) {
   const returnFocus = useReturnFocus();
   return (
     <Dialog.Root open={open} onOpenChange={next => { if (!next) onRequestClose(); }}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/45" />
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-[rgb(42_20_9/0.45)]" />
         <Dialog.Content
           {...returnFocus}
-          className="fixed inset-y-0 right-0 z-40 flex w-full max-w-[520px] flex-col bg-white shadow-[var(--shadow-lg)] focus:outline-none"
+          className="fixed left-1/2 top-1/2 z-40 flex max-h-[calc(100dvh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-[580px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[var(--radius)] border border-[color:var(--color-border)] bg-white shadow-[var(--shadow-lg)] focus:outline-none"
         >
           <div className="flex items-start justify-between gap-3 border-b border-[color:var(--color-border)] px-5 py-4">
             <div className="min-w-0">
-              <Dialog.Title className="m-0 text-[18px] font-bold tracking-[-0.01em] text-[color:var(--color-ink)]">{title}</Dialog.Title>
+              <Dialog.Title className="m-0 text-[17px] font-bold tracking-[-0.015em] text-[color:var(--color-ink)]">{title}</Dialog.Title>
               {description ? (
                 <Dialog.Description className="m-0 mt-1 text-[13px] text-[color:var(--color-muted)]">{description}</Dialog.Description>
               ) : (
@@ -37,7 +37,7 @@ export function Sheet({ open, onRequestClose, title, description, children }: Pr
               <button
                 type="button"
                 aria-label="Cerrar"
-                className="grid h-11 w-11 flex-shrink-0 cursor-pointer place-items-center rounded-[10px] border border-[color:var(--color-border-strong)] bg-white text-[color:var(--color-ink)]"
+                className="-mr-2 -mt-1.5 grid h-11 w-11 flex-shrink-0 cursor-pointer place-items-center rounded-[8px] border-0 bg-transparent text-[color:var(--color-muted)] transition-colors hover:bg-[color:var(--color-surface-2)] hover:text-[color:var(--color-ink)]"
               >
                 <X aria-hidden className="h-4 w-4" />
               </button>
@@ -52,12 +52,12 @@ export function Sheet({ open, onRequestClose, title, description, children }: Pr
 
 /** Cuerpo con scroll y pie fijo: los botones de guardar quedan siempre a la vista. */
 export function SheetBody({ children }: { children: React.ReactNode }) {
-  return <div className="flex-1 overflow-y-auto px-5 py-5">{children}</div>;
+  return <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">{children}</div>;
 }
 
 export function SheetFooter({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2.5 border-t border-[color:var(--color-border)] bg-white px-5 py-3.5">
+    <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-2.5 border-t border-[color:var(--color-border)] bg-[color:var(--color-surface-2)] px-5 py-3">
       {children}
     </div>
   );

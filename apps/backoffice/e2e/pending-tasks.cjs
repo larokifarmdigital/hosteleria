@@ -64,7 +64,7 @@ const AXE = { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', '
       await audit(p, 'panel de inicio con pendientes');
 
       await group.getByRole('link', { name: /en los platos de «Comedor principal»/ }).click();
-      await p.waitForURL(/\/dishes\?/);
+      await p.waitForURL(/s=menu/);
       await p.locator('#carta-mostrar').waitFor();
       check('la tarea de la carta lleva a los platos ya filtrados por «Falta traducción»',
         /ver=sin-traducir/.test(p.url()) && (await p.locator('#carta-mostrar').inputValue()) === 'missing' && await p.getByText('Tortilla trufada').first().isVisible(), p.url());
@@ -72,16 +72,17 @@ const AXE = { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', '
 
       await p.goto(`${BASE}/dashboard`);
       await group.getByRole('link', { name: /2 textos sin traducir en el espacio/ }).click();
-      await p.waitForURL(new RegExp(`/restaurants/pruebas/spaces/${state.SPACE}`));
+      await p.waitForURL(new RegExp(`s=cover&e=${state.SPACE}`));
       check('la tarea del espacio lleva al espacio', true);
       await pause(4000);
 
       await p.goto(`${BASE}/restaurants/pruebas`);
-      const aside = p.locator('#ficha-panel-overview');
-      await aside.getByRole('heading', { name: 'Pendiente' }).waitFor();
-      const links = aside.locator('section', { has: p.getByRole('heading', { name: 'Pendiente' }) }).getByRole('link');
+      const aside = p.locator('main');
+      await aside.getByRole('heading', { name: 'Lo que falta' }).waitFor();
+      const links = aside.locator('section', { has: p.getByRole('heading', { name: 'Lo que falta' }) }).getByRole('link');
       await links.first().waitFor();
-      check('la ficha enseña lo pendiente fuera de ella (espacio y carta), no lo suyo', (await links.count()) === 3 && !(await aside.getByText('La ficha del restaurante aún no se ha publicado').count()), await links.allInnerTexts());
+      // Lo que está sin publicar lo dice la barra de arriba: en el resumen, lo que falta completar.
+      check('el resumen enseña lo que falta completar (espacio y carta)', (await links.count()) === 2 && !(await links.filter({ hasText: 'aún no se ha publicado' }).count()), await links.allInnerTexts());
       await audit(p, 'ficha con pendientes');
 
       // Se arregla lo de los platos por el api y se guarda algo en la ficha: la lista se pone al día sola.
@@ -89,15 +90,14 @@ const AXE = { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', '
       const cats = (await api('GET', `/dishes/categories?spaceId=${state.SPACE}`)).body.categories;
       for (const d of dishes) { undo.push(['PATCH', `/dishes/${d.id}`, { name: d.name, note: d.note }]); await api('PATCH', `/dishes/${d.id}`, { name: { es: 'x', ca: 'x', en: 'x' }, note: {} }); }
       for (const c of cats) { undo.push(['PATCH', `/dishes/categories/${c.id}`, { name: c.name }]); await api('PATCH', `/dishes/categories/${c.id}`, { name: { es: 'x', ca: 'x', en: 'x' } }); }
-      // En escritorio los apartados son un menú; en móvil, un desplegable.
-      const open = (id, tab) => vpName === 'móvil' ? p.locator('#ficha-picker').selectOption(id) : p.getByRole('tab', { name: tab }).click();
-      await open('data', /^Datos/);
+      // En escritorio las secciones son un menú; en móvil, un desplegable. Se guarda solo.
+      const open = (id, label) => vpName === 'móvil' ? p.locator('#seccion-picker').selectOption(`${id}:`) : p.getByRole('navigation', { name: 'Secciones de la web' }).getByRole('button', { name: label }).click();
+      await open('contact', /^Contacto y reservas/);
       await p.locator('#r-founded').fill('1999');
-      await p.getByRole('button', { name: 'Guardar', exact: true }).click();
-      await p.getByText('Cambios guardados', { exact: true }).first().waitFor();
-      await open('overview', 'Resumen');
+      await p.getByText('Cambios guardados', { exact: true }).first().waitFor({ timeout: 10000 });
+      await open('overview', /^Resumen/);
       await p.waitForFunction(() => !document.body.innerText.includes('en los platos de'), null, { timeout: 8000 }).catch(() => {});
-      check('tras guardar, lo ya resuelto desaparece de la lista', (await aside.getByText(/en los platos de/).count()) === 0 && (await links.count()) === 2, await links.allInnerTexts());
+      check('tras guardar, lo ya resuelto desaparece de la lista', (await aside.getByText(/en los platos de/).count()) === 0 && (await links.count()) === 1, await links.allInnerTexts());
       await restoreMenu();
       await api('PATCH', '/restaurants/pruebas', { foundedYear: before.r.founded_year, state: 'draft' });
       await ctx.close();
@@ -108,8 +108,8 @@ const AXE = { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', '
     const ctx = await browser.newContext({ storageState: S + '/editor.json', viewport: { width: 1280, height: 900 } });
     const p = await ctx.newPage();
     await p.goto(`${BASE}/restaurants/pruebas`);
-    await p.locator('#ficha-panel-overview').getByRole('heading', { name: 'Pendiente' }).waitFor();
-    check('el editor ve lo pendiente en la ficha de su restaurante', true);
+    await p.locator('main').getByRole('heading', { name: 'Lo que falta' }).waitFor();
+    check('el editor ve lo pendiente en el resumen de su restaurante', true);
     await ctx.close();
     await pause(15000);
 

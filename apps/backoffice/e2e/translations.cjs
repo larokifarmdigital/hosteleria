@@ -25,43 +25,47 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
 
   console.log('— A. Espacio');
   await step('A', async () => {
-    await page.goto(`${BASE}/restaurants/pruebas/spaces/${SPACE}`);
-    await page.getByRole('heading', { level: 1 }).waitFor();
+    await page.goto(`${BASE}/restaurants/pruebas?s=cover`);
+    await page.locator('#hero-title-es').waitFor();
     const names = await tabs().getByRole('button').allInnerTexts();
     console.log('   pestañas:', JSON.stringify(names));
     check('Català marca 2 textos', /faltan 2 textos/.test(await tab('Català').innerText()));
     check('English marca 1 texto', /falta 1 texto/.test(await tab('English').innerText()));
     check('Español sin marca', !/falta/.test(await tab('Español').innerText()));
-    const cover = page.locator('section', { has: page.getByRole('heading', { name: 'Portada' }) }).first();
-    check('sección Portada avisa de 2', await cover.getByText('Falta traducir 2 textos').isVisible());
-    const intro = page.locator('section', { has: page.getByRole('heading', { name: 'Texto de presentación' }) }).first();
-    check('sección Presentación sin aviso', (await intro.getByText(/Falta traducir/).count()) === 0);
+    // La Portada es un único bloque: cuánto falta lo dicen el menú de secciones y las pestañas de idioma.
+    const coverMark = () => page.getByRole('navigation', { name: 'Secciones de la web' }).getByRole('button', { name: /^Portada/ }).innerText();
+    check('el menú avisa de 2 en Portada', /falta traducir 2 textos/.test(await coverMark()), await coverMark());
     const w1 = await page.locator('#hero-title-es-warning').innerText(), w2 = await page.locator('#hero-subtitle-es-warning').innerText();
     console.log('   avisos:', w1, '|', w2);
     check('aviso por campo', /Falta en catal/i.test(w1) && / y /.test(w2));
     check('el aviso describe el campo', (await page.locator('#hero-title-es').getAttribute('aria-describedby')).includes('hero-title-es-warning'));
     check('campo sin texto en ningún idioma: sin aviso', (await page.locator('#hero-note-es-warning').count()) === 0);
 
-    const publish = panel().getByRole('button', { name: 'Publicar' });
-    check('publicar bloqueado', await publish.isDisabled());
-    check('el botón apunta al motivo', ((await publish.getAttribute('aria-describedby')) || '').includes('publicar-traducciones'));
-    console.log('   panel:', (await panel().innerText()).replace(/\n+/g, ' | '));
-    check('lista de lo que falta', await panel().getByText('Para publicar, faltan por traducir 2 textos:').isVisible());
+    // El menú de secciones marca lo que falta traducir; publicar lo dice antes de dejar hacerlo.
+    const nav = () => page.getByRole('navigation', { name: 'Secciones de la web' });
+    check('el menú marca la Portada con 2', /2/.test(await nav().getByRole('button', { name: /^Portada/ }).innerText()));
 
-    await panel().getByRole('button', { name: /Portada · Subtítulo/ }).click();
-    await page.waitForTimeout(300);
-    check('el enlace cambia de idioma', (await tab('Català').getAttribute('aria-pressed')) === 'true');
-    check('y pone el foco en el campo', await page.evaluate(() => document.activeElement?.id) === 'hero-subtitle-ca', await page.evaluate(() => document.activeElement?.id));
+    await tab('Català').click();
+    await page.locator('#hero-subtitle-ca').focus();
+    check('se pasa a Català', (await tab('Català').getAttribute('aria-pressed')) === 'true');
 
     const ref = page.locator('#hero-subtitle-ca-reference');
-    check('referencia en el idioma principal', await ref.isVisible() && /coctelería de autor/.test(await ref.innerText()) && /Subtítulo en espa/i.test(await ref.innerText()), await ref.innerText().catch(() => 'no hay'));
-    check('la referencia lleva lang=es', (await ref.locator('p[lang=es]').count()) === 1);
+    check('referencia en el idioma principal', await ref.isVisible() && /coctelería de autor/.test(await ref.innerText()) && /^En espa/i.test(await ref.innerText()), await ref.innerText().catch(() => 'no hay'));
+    check('la referencia lleva lang=es', (await ref.locator('[lang=es]').count()) === 1);
     check('la referencia describe el campo', (await page.locator('#hero-subtitle-ca').getAttribute('aria-describedby')).includes('hero-subtitle-ca-reference'));
     const box = await ref.boundingBox(), inp = await page.locator('#hero-subtitle-ca').boundingBox();
-    check('lado a lado en escritorio', box && inp && box.x + box.width <= inp.x + 2, JSON.stringify([box, inp]));
+    check('un solo campo: el original va debajo, en pequeño', box && inp && box.y >= inp.y + inp.height - 2 && Math.abs(box.x - inp.x) < 4, JSON.stringify([box, inp]));
     check('sin referencia si el principal está vacío', (await page.locator('#hero-note-ca-reference').count()) === 0);
     await tab('Español').click();
     check('en el idioma principal no hay referencia', (await page.locator('#hero-subtitle-es-reference').count()) === 0);
+
+    // Con traducciones a medias, publicar dice qué falta y no deja.
+    await page.getByRole('button', { name: 'Publicar la web' }).first().click();
+    let dialog = page.getByRole('dialog');
+    await dialog.waitFor();
+    check('publicar bloqueado: dice qué falta', /Aún no se puede publicar/.test(await dialog.innerText()) && /sin traducir en el espacio/.test(await dialog.innerText()));
+    await dialog.getByRole('button', { name: 'Cerrar' }).first().click();
+    await dialog.waitFor({ state: 'hidden' });
 
     // en vivo
     await tab('Català').click();
@@ -69,25 +73,32 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
     check('al escribir baja la cuenta de Català', /falta 1 texto/.test(await tab('Català').innerText()));
     await page.locator('#hero-title-ca').fill('Cuina de mercat,');
     check('Català completo: sin marca', !/falta/.test(await tab('Català').innerText()));
-    check('sección baja a 1', await cover.getByText('Falta traducir 1 texto').isVisible());
+    check('el menú baja a 1', /falta traducir 1 texto/.test(await coverMark()), await coverMark());
     await tab('English').click();
     await page.locator('#hero-subtitle-en').fill('signature cocktails');
-    check('todo traducido: sin avisos de sección', (await cover.getByText(/Falta traducir/).count()) === 0);
-    check('sin lista de pendientes', (await panel().getByText(/faltan? .*traducir/).count()) === 0);
-    check('con cambios sin guardar sigue sin publicar', await publish.isDisabled());
+    check('todo traducido: sin avisos en el menú', !/falta traducir/.test(await coverMark()), await coverMark());
+    check('el menú ya no marca la Portada', !/\d/.test(await nav().getByRole('button', { name: /^Portada/ }).innerText()));
 
-    // un texto nuevo solo en un idioma vuelve a bloquear
+    // Se guarda solo; con todo traducido, publicar ya ofrece hacerlo.
+    await page.getByText('Cambios guardados', { exact: true }).waitFor({ timeout: 10000 });
+    await page.waitForTimeout(1500);
+    await page.getByRole('button', { name: 'Publicar la web' }).first().click();
+    dialog = page.getByRole('dialog');
+    await dialog.waitFor();
+    check('guardado y completo: se puede publicar', /¿Publicar en la web\?/.test(await dialog.innerText()), await dialog.innerText());
+    await dialog.getByRole('button', { name: 'Cancelar' }).click();
+    await dialog.waitFor({ state: 'hidden' });
+
+    // Un texto nuevo solo en un idioma vuelve a marcar la sección.
+    await nav().getByRole('button', { name: /^Portada/ }).click();
     await tab('Español').click();
     await page.locator('#manifesto-eyebrow-es').fill('Nuestra casa');
-    check('texto nuevo en un idioma: aviso en Presentación', await intro.getByText('Falta traducir 1 texto').isVisible());
-    check('vuelve la lista', await panel().getByRole('button', { name: /Texto de presentación · Antetítulo/ }).isVisible());
+    // El texto de presentación va dentro de Portada: lo que falta lo cuentan las pestañas de idioma.
+    const pending = () => tabs().getByText(/faltan? \d+ textos?/).count();
+    check('texto nuevo en un idioma: aviso en las pestañas de idioma', (await pending()) > 0);
     await page.locator('#manifesto-eyebrow-es').fill('');
-    check('al vaciarlo desaparece', (await intro.getByText(/Falta traducir/).count()) === 0);
-
-    await page.getByRole('button', { name: 'Guardar' }).click();
-    await page.getByText('Cambios guardados').waitFor();
-    await page.waitForTimeout(800);
-    check('guardado y completo: se puede publicar', await publish.isEnabled());
+    check('al vaciarlo desaparece', (await pending()) === 0);
+    await page.waitForTimeout(2500);
   });
 
   console.log('— B. Api');
@@ -112,25 +123,25 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
 
   console.log('— C. Ficha del restaurante');
   await step('C', async () => {
-    await page.goto(`${BASE}/restaurants/pruebas?tab=search`);
+    await page.goto(`${BASE}/restaurants/pruebas?s=search`);
     await page.locator('#seo-title-es').waitFor();
     const google = page.locator('section', { has: page.getByRole('heading', { name: 'Cómo aparece en Google' }) }).first();
-    check('sin pendientes al entrar', (await google.getByText(/Falta traducir/).count()) === 0 && (await panel().getByText(/traducir/).count()) === 0);
+    check('sin pendientes al entrar', (await google.getByText(/Falta traducir/).count()) === 0);
     await page.locator('#seo-title-es').fill('Ocaña, cocina de mercado');
     check('aviso de sección', await google.getByText('Falta traducir 1 texto').isVisible());
     check('aviso de campo', /Falta en/.test(await page.locator('#seo-title-es-warning').innerText()));
     check('pestañas marcadas', /falta 1 texto/.test(await tab('Català').innerText()) && /falta 1 texto/.test(await tab('English').innerText()));
-    await panel().getByRole('button', { name: /Cómo aparece en Google · Título/ }).click();
-    await page.waitForTimeout(300);
-    check('el enlace lleva al campo en catalán', await page.evaluate(() => document.activeElement?.id) === 'seo-title-ca');
+    await tab('Català').click();
     check('referencia visible', /Ocaña, cocina de mercado/.test(await page.locator('#seo-title-ca-reference').innerText()));
-    await page.getByRole('button', { name: 'Deshacer' }).click();
-    check('deshacer limpia los avisos', (await google.getByText(/Falta traducir/).count()) === 0);
+    await tab('Español').click();
+    await page.locator('#seo-title-es').fill('');
+    check('al vaciarlo se limpian los avisos', (await google.getByText(/Falta traducir/).count()) === 0);
+    await page.waitForTimeout(2500);
   });
 
   console.log('— D. Carta');
   await step('D', async () => {
-    await page.goto(`${BASE}/dishes?r=pruebas`);
+    await page.goto(`${BASE}/restaurants/pruebas?s=menu`);
     await page.getByLabel('Mostrar').waitFor();
     await page.getByLabel('Mostrar').selectOption({ label: 'Falta traducción' });
     check('filtro: 1 resultado', await page.getByText('1 resultado', { exact: true }).isVisible());
@@ -141,7 +152,7 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
     check('panel: Català marcado', /falta 1 texto/.test(await sheet.getByRole('button', { name: /^Català/ }).innerText()));
     check('panel: aviso en el nombre', /Falta en catal/i.test(await sheet.locator('#name-es-warning').innerText()));
     await sheet.getByRole('button', { name: /^Català/ }).click();
-    check('panel: referencia encima', /Tortilla trufada/.test(await sheet.locator('#name-ca-reference').innerText()));
+    check('panel: original debajo', /Tortilla trufada/.test(await sheet.locator('#name-ca-reference').innerText()));
     await sheet.locator('#note-es').evaluate(() => {});
     await sheet.getByRole('button', { name: /^Español/ }).click();
     await sheet.locator('#note-es').fill('Con trufa negra');
@@ -171,16 +182,16 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
   await step('E', async () => {
     const m = await browser.newContext({ storageState: S + '/admin.json', viewport: { width: 390, height: 800 } });
     const p = await m.newPage();
-    await p.goto(`${BASE}/restaurants/pruebas/spaces/${SPACE}`);
+    await p.goto(`${BASE}/restaurants/pruebas?s=cover`);
     await p.getByRole('group', { name: 'Idioma del contenido' }).getByRole('button', { name: /^Català/ }).click();
     const ref = await p.locator('#hero-cta-ca-reference').boundingBox(), inp = await p.locator('#hero-cta-ca').boundingBox();
-    check('en móvil la referencia va encima', ref && inp && ref.y + ref.height <= inp.y, JSON.stringify([ref, inp]));
+    check('en móvil el original también va debajo', ref && inp && ref.y >= inp.y + inp.height - 2, JSON.stringify([ref, inp]));
     check('sin scroll horizontal', await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
     await p.screenshot({ path: S + '/f2-movil.png', fullPage: true });
     await m.close();
   });
 
-  await page.goto(`${BASE}/restaurants/pruebas/spaces/${SPACE}`);
+  await page.goto(`${BASE}/restaurants/pruebas?s=cover`);
   await page.getByRole('group', { name: 'Idioma del contenido' }).getByRole('button', { name: /^Català/ }).click();
   await page.screenshot({ path: S + '/f2-espacio.png', fullPage: true });
   check('sin errores de consola ni respuestas de error (salvo los 400 buscados)', errors.filter(e => !/^400 PATCH/.test(e) && !/status of 400/.test(e)).length === 0, errors.join(' || '));

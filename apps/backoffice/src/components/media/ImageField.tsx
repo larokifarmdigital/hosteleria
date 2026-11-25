@@ -35,34 +35,41 @@ export function ImageField({ label, hint, scope, purpose, assetId, onChange, sho
 
   return (
     <div role="group" aria-labelledby={`${id}-label`} aria-describedby={hint ? `${id}-hint` : undefined}>
-      <p id={`${id}-label`} className="m-0 mb-1.5 text-[13.5px] font-semibold text-[color:var(--color-ink)]">{label}</p>
+      <p id={`${id}-label`} className="m-0 mb-1.5 text-[13.5px] font-medium text-[color:var(--color-ink-soft)]">{label}</p>
 
       <div className="flex flex-col gap-3.5 sm:flex-row sm:items-start">
         {asset ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={asset.publicUrl} alt={asset.altText?.[scope.defaultLocale] ?? ''} className={cn(frame, purpose === 'logo' ? 'object-contain p-2' : 'object-cover')} />
         ) : (
-          <div className={cn(frame, 'grid place-items-center border-dashed border-[color:var(--color-border-strong)] text-[color:var(--color-muted)]', assetId && isPending && 'animate-pulse motion-reduce:animate-none')}>
-            {!(assetId && isPending) && (
-              <span className="flex flex-col items-center gap-1 text-[12.5px] font-semibold">
-                <ImageIcon aria-hidden className="h-5 w-5" />
-                Sin foto
-              </span>
-            )}
-          </div>
+          assetId && isPending ? (
+            <div className={cn(frame, 'animate-pulse motion-reduce:animate-none')} />
+          ) : (
+            // Sin foto, el propio hueco es el botón de elegirla.
+            <button
+              type="button"
+              onClick={() => setPicking(true)}
+              className={cn(frame, 'flex cursor-pointer flex-col items-center justify-center gap-1.5 border-2 border-dashed border-[color:var(--color-control)] bg-white text-[13px] font-medium text-[color:var(--color-ink-soft)] transition-colors hover:border-[color:var(--color-accent)] hover:bg-[color:var(--color-accent-soft)] hover:text-[color:var(--color-accent-fg)]')}
+            >
+              <ImageIcon aria-hidden className="h-5 w-5" />
+              Elegir foto
+            </button>
+          )
         )}
 
         <div className="min-w-0">
-          <div className="flex flex-wrap gap-2">
-            <Button className="min-h-11" onClick={() => setPicking(true)}>{asset ? 'Cambiar foto' : 'Elegir foto'}</Button>
-            {assetId && <Button className="min-h-11" variant="ghost" onClick={() => onChange(null)}>Quitar foto</Button>}
-          </div>
+          {assetId && (
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" onClick={() => setPicking(true)}>Cambiar foto</Button>
+              <Button size="sm" variant="ghost" onClick={() => onChange(null)}>Quitar foto</Button>
+            </div>
+          )}
           {showDescription && asset && (
             <p className="m-0 mt-2.5 text-[13px] leading-[1.5] text-[color:var(--color-ink-soft)]">
               <span className="font-semibold">Descripción:</span> {asset.altText?.[scope.defaultLocale]}
             </p>
           )}
-          {hint && <p id={`${id}-hint`} className="m-0 mt-2.5 text-[12.5px] leading-[1.5] text-[color:var(--color-muted)]">{hint}</p>}
+          {hint && <p id={`${id}-hint`} className="m-0 mt-2.5 max-w-[46ch] text-[12.5px] leading-[1.5] text-[color:var(--color-muted)]">{hint}</p>}
         </div>
       </div>
 

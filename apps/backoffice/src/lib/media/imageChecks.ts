@@ -18,7 +18,7 @@ const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', '
 const MAX_KB = 10_000;
 
 const HEAVY_KB = 2_000;
-const MIN_WIDTH: Record<ImagePurpose, number> = { hero: 1600, dish: 800, logo: 500, any: 800 };
+const MIN_WIDTH: Record<ImagePurpose, number> = { hero: 1600, dish: 800, logo: 512, any: 800 };
 
 /** Con esta lista en `accept`, iOS convierte las fotos HEIC a JPG al elegirlas. */
 export const ACCEPT_ATTRIBUTE = ACCEPTED_TYPES.join(',');

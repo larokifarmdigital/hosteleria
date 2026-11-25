@@ -8,6 +8,7 @@ import type {
   RestaurantData, SanityImg, Wine, WineCategory
 } from '@hosteleria/sanity-client';
 import { markdownToBlocks } from './markdown';
+import { withUiTextDefault } from './uiTextDefaults';
 
 type I18n = Partial<Record<string, string>> | undefined;
 type I18nField = { _key: string; value: string }[] | undefined;
@@ -117,7 +118,7 @@ function toRestaurant(site: PublishedSite): Restaurant {
     (Object.keys(UI_TEXT_FIELDS) as (keyof typeof UI_TEXT_FIELDS)[]).flatMap(group => {
       const { field, keys } = UI_TEXT_FIELDS[group];
       const values = (r.uiTexts?.[group] ?? {}) as Record<string, I18n>;
-      const out = compact(Object.fromEntries(Object.entries(keys).map(([from, to]) => [to, t(values[from])])));
+      const out = compact(Object.fromEntries(Object.entries(keys).map(([from, to]) => [to, t(withUiTextDefault(group, from, values[from], locales))])));
       return Object.keys(out).length > 0 ? [[field, out]] : [];
     })
   );

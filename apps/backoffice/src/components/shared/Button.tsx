@@ -4,29 +4,24 @@ import { cn } from '@/lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 const buttonVariants = cva(
-  'inline-flex min-h-[40px] items-center gap-2 rounded-full px-5 py-2.5 text-[13.5px] font-semibold leading-none transition-[background,border-color,color,transform,box-shadow] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[color:var(--accent-ring)] disabled:opacity-50',
+  'inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-[8px] px-4 py-2 text-[14px] font-semibold leading-none transition-[background,border-color,color,box-shadow] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 motion-reduce:active:scale-100 sm:min-h-9',
   {
     variants: {
       variant: {
-        primary: 'border border-transparent text-white hover:-translate-y-px',
+        primary: 'border border-transparent bg-[color:var(--color-accent)] text-white hover:bg-[color:var(--color-accent-hover)]',
         secondary:
-          'border border-[color:var(--color-border)] bg-white text-[color:var(--color-ink)] hover:border-[color:var(--color-border-strong)] hover:bg-[color:var(--color-surface-2)]',
+          'border border-[color:var(--color-border-strong)] bg-white text-[color:var(--color-ink-soft)] hover:bg-[color:var(--color-surface-2)] hover:text-[color:var(--color-ink)]',
         ghost:
-          'border border-transparent bg-transparent text-[color:var(--color-muted)] hover:bg-[color:var(--color-accent-soft)] hover:text-[color:var(--color-accent)]'
+          'border border-transparent bg-transparent text-[color:var(--color-ink-soft)] hover:bg-[color:var(--color-surface-2)] hover:text-[color:var(--color-ink)]'
       },
       size: {
         default: '',
-        sm: 'min-h-[32px] px-3.5 py-1.5 text-[12.5px]'
+        sm: 'px-3 text-[13px] sm:min-h-8'
       }
     },
     defaultVariants: { variant: 'secondary', size: 'default' }
   }
 );
-
-const primaryStyle: React.CSSProperties = {
-  background: 'var(--gradient-copper)',
-  boxShadow: 'var(--shadow-sm), inset 0 1px 0 rgb(255 255 255 / 0.2)'
-};
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
   VariantProps<typeof buttonVariants>;
@@ -34,7 +29,7 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
 // `type="button"` por defecto: el de HTML es `submit`, y un botón cualquiera
 // dentro de un `<form>` (p. ej. Publicar) enviaría el formulario al pulsarlo.
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = 'secondary', size, className, style, type = 'button', ...props },
+  { variant = 'secondary', size, className, type = 'button', ...props },
   ref
 ) {
   return (
@@ -42,7 +37,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       type={type}
       {...props}
-      style={variant === 'primary' ? { ...primaryStyle, ...style } : style}
       className={cn(buttonVariants({ variant, size }), className)}
     />
   );
@@ -51,11 +45,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 type LinkButtonProps = React.ComponentProps<typeof Link> &
   VariantProps<typeof buttonVariants>;
 
-export function LinkButton({ variant = 'secondary', size, className, style, ...props }: LinkButtonProps) {
+export function LinkButton({ variant = 'secondary', size, className, ...props }: LinkButtonProps) {
   return (
     <Link
       {...props}
-      style={variant === 'primary' ? { ...primaryStyle, ...style } : style}
       className={cn(buttonVariants({ variant, size }), className)}
     />
   );

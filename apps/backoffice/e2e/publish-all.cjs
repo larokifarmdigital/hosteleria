@@ -24,8 +24,8 @@ const pause = ms => new Promise(r => setTimeout(r, ms));
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', e => errors.push('pageerror: ' + e.message));
+    page.on('response', r => { if (r.status() === 429) errors.push('429 ' + r.url()); });
     page.on('response', r => { if (r.status() >= 500) errors.push(r.status() + ' ' + r.request().method() + ' ' + r.url()); });
-    const panel = () => page.locator('section', { has: page.getByRole('heading', { name: 'Publicación' }) });
 
     console.log('— Api: todo o nada');
     await step('api', async () => {
@@ -36,41 +36,30 @@ const pause = ms => new Promise(r => setTimeout(r, ms));
       check('no publica nada', after.r.state === 'draft' && !after.r.published_snapshot && after.s.state === 'draft' && !after.s.published_snapshot);
     });
 
-    console.log('— Ficha: se ve todo lo que falta, también lo del espacio');
-    await step('ficha', async () => {
+    const top = () => page.locator('main').locator('div.sticky').first();
+    const publishButton = () => page.getByRole('button', { name: /^Publicar (la web|cambios)$/ }).first();
+
+    console.log('— Barra de arriba: un solo botón y qué falta');
+    await step('bloqueado', async () => {
       await page.goto(`${BASE}/restaurants/pruebas`);
-      await panel().waitFor();
-      await page.waitForTimeout(800);
-      const text = (await panel().innerText()).replace(/\n+/g, ' | ');
-      console.log('   panel:', text);
-      check('lista la ficha y el espacio', /Datos del restaurante/.test(text) && /Espacio «Comedor principal»/.test(text));
-      check('marca lo que se edita aquí', /Datos del restaurante · lo que estás editando/.test(text));
-      check('dice que nunca se publicaron', (text.match(/Nunca se ha publicado/g) ?? []).length === 2);
-      const button = panel().getByRole('button', { name: 'Publicar todo' });
-      check('un solo botón: «Publicar todo», bloqueado', await button.isDisabled());
-      const link = panel().getByRole('link', { name: /textos sin traducir en el espacio «Comedor principal»/ });
-      check('enlaza a lo que falta en el espacio', (await link.getAttribute('href')) === `/restaurants/pruebas/spaces/${SPACE}`);
-      check('avisa de que la carta no se publica', /La carta y las páginas legales no hace falta publicarlas/.test(text));
-      check('cabecera: «Sin publicar»', await page.getByText('Sin publicar', { exact: true }).first().isVisible());
-      await link.click();
-      await page.waitForURL(`**/spaces/${SPACE}`);
-      check('el enlace lleva al espacio', true);
+      await publishButton().waitFor();
+      check('la web sin publicar lo dice arriba', /La web aún no se ha publicado/.test(await top().innerText()), await top().innerText());
+      check('un solo botón: «Publicar la web»', (await publishButton().innerText()) === 'Publicar la web');
+      await publishButton().click();
+      const dialog = page.getByRole('dialog');
+      await dialog.waitFor();
+      const text = await dialog.innerText();
+      check('con traducciones a medias no deja y dice dónde, también lo del espacio', /Aún no se puede publicar/.test(text) && /sin traducir en el espacio «Comedor principal»/.test(text), text);
+      const link = dialog.getByRole('link', { name: /sin traducir en el espacio/ });
+      check('enlaza a la sección donde se arregla', (await link.getAttribute('href')) === `/restaurants/pruebas?s=cover&e=${SPACE}`);
+      await dialog.getByRole('button', { name: 'Cerrar' }).first().click();
     });
 
-    console.log('— Espacio: el mismo panel');
-    await step('espacio', async () => {
-      await panel().waitFor();
-      await page.waitForTimeout(800);
-      const text = (await panel().innerText()).replace(/\n+/g, ' | ');
-      check('también lista la ficha', /Datos del restaurante/.test(text) && /Espacio «Comedor principal» · lo que estás editando/.test(text), text);
-      check('lo de aquí, campo a campo', await panel().getByRole('button', { name: /Portada · Título/ }).isVisible());
-      check('mantiene la cuenta de textos', /Para publicar, faltan por traducir 2 textos/.test(text), text);
-    });
-
-    console.log('— Carta: dice que sale sola');
+    console.log('— La carta dice que sale sola');
     await step('carta', async () => {
-      await page.goto(`${BASE}/dishes?r=pruebas`);
-      check('la cabecera lo explica', await page.getByText(/La carta no hace falta publicarla/).isVisible());
+      await page.goto(`${BASE}/restaurants/pruebas?s=menu`);
+      await page.getByText(/Cada cambio sale en la web sin publicar/).waitFor({ timeout: 8000 });
+      check('la sección lo explica', true);
     });
     await pause(20000);
 
@@ -81,43 +70,47 @@ const pause = ms => new Promise(r => setTimeout(r, ms));
       const saved = await api('PATCH', `/restaurants/pruebas/spaces/${SPACE}`, { hero: { ...sp.hero, title: fill(sp.hero.title), subtitle: fill(sp.hero.subtitle) }, state: 'draft' });
       check('traducciones completadas (guardado)', saved.status === 200, saved.status);
 
-      await page.goto(`${BASE}/restaurants/pruebas/spaces/${SPACE}`);
-      await panel().waitFor();
-      await page.waitForTimeout(800);
-      const button = panel().getByRole('button', { name: 'Publicar todo' });
-      check('ya se puede publicar', await button.isEnabled());
-      await button.click();
-      const dialog = page.getByRole('alertdialog').or(page.getByRole('dialog'));
+      await page.goto(`${BASE}/restaurants/pruebas?s=cover`);
+      await publishButton().waitFor();
+      await publishButton().click();
+      const dialog = page.getByRole('dialog');
       await dialog.waitFor();
       const dtext = await dialog.innerText();
-      check('el diálogo dice qué sale', /Datos del restaurante/.test(dtext) && /Espacio «Comedor principal»/.test(dtext), dtext);
-      await dialog.getByRole('button', { name: 'Publicar todo' }).click();
+      check('el diálogo dice qué sale: la ficha y el espacio', /¿Publicar en la web\?/.test(dtext) && /Los datos y textos del restaurante/.test(dtext) && /El espacio «Comedor principal»/.test(dtext), dtext);
+      await dialog.getByRole('button', { name: 'Publicar', exact: true }).click();
       await page.getByText('Publicado', { exact: true }).first().waitFor();
       await page.waitForTimeout(1500);
 
       const after = await state.read();
       check('ficha publicada', after.r.state === 'published' && !!after.r.published_snapshot);
       check('espacio publicado', after.s.state === 'published' && !!after.s.published_snapshot);
-      check('el panel dice que la web está al día', await panel().getByText('La web está al día.').isVisible());
-      check('cabecera del espacio: «Publicado»', await page.getByText('Publicado', { exact: true }).first().isVisible());
+      await page.getByText('La web está al día').first().waitFor({ timeout: 8000 });
+      check('arriba: la web está al día y el botón pasa a «Ver mi web»', await page.getByRole('link', { name: /Ver mi web/ }).first().isVisible());
     });
 
-    console.log('— Un cambio después: solo lo que cambia');
+    // Cada pantalla pide varias cosas al api: se deja respirar el límite de 100 por minuto.
+    await pause(30000);
+    console.log('— Un cambio después');
     await step('cambio', async () => {
-      const r = await api('PATCH', '/restaurants/pruebas', { foundedYear: 1999, state: 'draft' });
-      check('ficha guardada en borrador', r.status === 200);
-      await page.goto(`${BASE}/restaurants/pruebas`);
-      await panel().waitFor();
-      await page.waitForTimeout(800);
-      const text = (await panel().innerText()).replace(/\n+/g, ' | ');
-      check('solo la ficha, con cambios guardados', /Datos del restaurante · lo que estás editando/.test(text) && /Tiene cambios guardados/.test(text) && !/Espacio «/.test(text), text);
-      check('botón «Publicar» (una sola cosa)', await panel().getByRole('button', { name: 'Publicar', exact: true }).isEnabled());
-      check('descartar solo lo de aquí', await panel().getByRole('button', { name: 'Descartar los cambios de la ficha' }).isVisible());
-      check('cabecera: «Cambios sin publicar»', await page.getByText('Cambios sin publicar', { exact: true }).first().isVisible());
-      const sp = await page.goto(`${BASE}/restaurants/pruebas/spaces/${SPACE}`);
-      await panel().waitFor();
-      await page.waitForTimeout(800);
-      check('desde el espacio también se ve el cambio de la ficha', /Datos del restaurante/.test(await panel().innerText()) && !!sp);
+      await page.getByRole('navigation', { name: 'Secciones de la web' }).getByRole('button', { name: /^Contacto y reservas/ }).click();
+      await page.locator('#r-founded').fill('1987');
+      await page.getByText('Hay cambios sin publicar').first().waitFor({ timeout: 10000 });
+      check('al guardarse solo, arriba aparece «Publicar cambios»', (await publishButton().innerText()) === 'Publicar cambios');
+      await publishButton().click();
+      const dialog = page.getByRole('dialog');
+      await dialog.waitFor();
+      const dtext = await dialog.innerText();
+      check('solo sale lo que cambió', /Los datos y textos del restaurante/.test(dtext) && !/El espacio «/.test(dtext), dtext);
+      await dialog.getByRole('button', { name: 'Cancelar' }).click();
+
+      await page.getByRole('navigation', { name: 'Secciones de la web' }).getByRole('button', { name: /^Resumen/ }).click();
+      const discard = page.getByRole('button', { name: 'Descartar los cambios de los datos del restaurante' });
+      check('en el resumen se puede deshacer lo no publicado', await discard.isVisible());
+      await discard.click();
+      await page.getByRole('dialog').getByRole('button', { name: 'Sí, descartar' }).click();
+      await page.getByText('La web está al día').first().waitFor({ timeout: 10000 });
+      const r = (await api('GET', '/restaurants/pruebas')).body.restaurant;
+      check('descartar vuelve a lo publicado', r.state === 'published' && r.foundedYear !== 1987, [r.state, r.foundedYear]);
     });
 
     check('sin errores de página ni 5xx', errors.length === 0, errors.join(' || '));

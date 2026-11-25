@@ -6,6 +6,7 @@ import { prefetchRestaurants } from '@/lib/query/prefetch';
 import { DashboardPageClient } from './DashboardPageClient';
 
 export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Inicio' };
 
 export default async function DashboardPage() {
   await redirectEditorToOwnRestaurant();

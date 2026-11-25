@@ -18,18 +18,21 @@ import { Modal } from '@/components/ui/Modal';
 import { showSuccessToast } from '@/lib/api';
 import { formatFileSize } from '@/lib/media/imageChecks';
 import { useLanguages, useMediaList, useRestaurants } from '@/lib/query/hooks';
+import { useCardHeading } from '@/components/shared/Section';
 
 type Show = 'all' | 'missing';
 type Action = { type: 'describe' | 'delete'; asset: MediaAsset } | null;
 
-export function MediaPageClient() {
+/** `slug` + `embedded`: dentro del editor de la web, con el restaurante fijo y sin cabecera. */
+export function MediaPageClient({ slug: fixedSlug, embedded = false }: { slug?: string; embedded?: boolean } = {}) {
+  const CardHeading = useCardHeading();
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
 
   const restaurantsQuery = useRestaurants();
   const restaurants = restaurantsQuery.data ?? [];
-  const restaurant = restaurants.find(r => r.slug === params.get('r')) ?? restaurants[0];
+  const restaurant = restaurants.find(r => r.slug === (fixedSlug ?? params.get('r'))) ?? (fixedSlug ? undefined : restaurants[0]);
   const slug = restaurant?.slug ?? '';
 
   const mediaQuery = useMediaList({ restaurantSlug: slug });
@@ -54,14 +57,14 @@ export function MediaPageClient() {
 
   return (
     <>
-      <PageHeader title="Imágenes">Las fotos de tu restaurante. Desde aquí las subes, las describes y borras las que ya no uses.</PageHeader>
+      {!embedded && <PageHeader title="Imágenes">Las fotos de tu restaurante. Desde aquí las subes, las describes y borras las que ya no uses.</PageHeader>}
 
       <QueryBoundary queries={[restaurantsQuery]}>
         {!restaurant ? (
           <EmptyState title="Todavía no tienes ningún restaurante asignado">Pide a un administrador que te dé acceso al tuyo.</EmptyState>
         ) : (
           <>
-            {restaurants.length > 1 && (
+            {!embedded && restaurants.length > 1 && (
               <Field id="media-restaurante" label="Restaurante" className="mb-5 sm:max-w-[320px]">
                 {control => (
                   <Select
@@ -76,16 +79,16 @@ export function MediaPageClient() {
             )}
 
             <section aria-labelledby="media-upload" className="mb-8">
-              <h2 id="media-upload" className="m-0 mb-2.5 text-[15px] font-bold tracking-[-0.005em]">Subir fotos</h2>
+              <CardHeading id="media-upload" className="m-0 mb-2.5 text-[15px] font-bold tracking-[-0.005em]">Subir fotos</CardHeading>
               {/* Otro restaurante = otra cola de subida: sin la key, las fotos a medias irían al nuevo. */}
               <MediaUploader key={slug} restaurantSlug={slug} />
             </section>
 
             <section aria-labelledby="media-library">
               <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
-                <h2 id="media-library" className="m-0 text-[15px] font-bold tracking-[-0.005em]">
+                <CardHeading id="media-library" className="m-0 text-[15px] font-bold tracking-[-0.005em]">
                   Fotos de {restaurant.name} <span className="font-normal text-[color:var(--color-muted)]">· {media.length}</span>
-                </h2>
+                </CardHeading>
                 {missingCount > 0 && (
                   <Field id="media-mostrar" label="Mostrar" className="min-w-[200px]">
                     {control => (

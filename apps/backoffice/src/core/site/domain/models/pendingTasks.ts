@@ -2,7 +2,7 @@ import { i18nMissingLocales, type I18nValue } from '@/core/shared/domain';
 import type { Dish, DishCategory, Wine, WineCategory } from '@/core/menu/domain';
 import type { LegalPage, LegalPageType } from '@/core/legal/domain';
 import type { MediaAsset } from '@/core/media/domain';
-import { restaurantMediaUses, restaurantTranslatableTexts, type Restaurant } from '@/core/restaurants/domain';
+import { EDITABLE_UI_TEXT_LABELS, restaurantMediaUses, restaurantTranslatableTexts, type Restaurant } from '@/core/restaurants/domain';
 import { spaceMediaIds, spaceTranslatableTexts, type Space } from '@/core/spaces/domain';
 
 /**
@@ -42,8 +42,10 @@ export interface PendingTaskSources {
   media: MediaAsset[];
 }
 
+const UI_TEXT_LABELS = new Set(Object.values(EDITABLE_UI_TEXT_LABELS));
+
 function areaOf(label: string): RestaurantArea {
-  if (label.startsWith('Textos de la web:')) return 'uiTexts';
+  if (UI_TEXT_LABELS.has(label)) return 'uiTexts';
   if (label.endsWith('en Google') || label.startsWith('Resumen para asistentes')) return 'search';
   return 'content';
 }

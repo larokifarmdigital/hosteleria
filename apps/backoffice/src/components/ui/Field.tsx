@@ -20,12 +20,14 @@ interface Props {
   required?: boolean;
   /** Contador «usados / máximo». */
   count?: { value: number; max: number };
+  /** Justo debajo del control, antes de la ayuda: p. ej. el texto original al traducir. */
+  below?: React.ReactNode;
   className?: string;
   children: (control: FieldControlProps) => React.ReactNode;
 }
 
 /** Enlaza etiqueta, ayuda y error con el control por `id`, para que un lector de pantalla los lea juntos. */
-export function Field({ id, label, labelSuffix, hint, error, warning, describedBy: extraDescribedBy, required, count, className, children }: Props) {
+export function Field({ id, label, labelSuffix, hint, error, warning, describedBy: extraDescribedBy, required, count, below, className, children }: Props) {
   const hintId = hint ? `${id}-hint` : undefined;
   const errorId = error ? `${id}-error` : undefined;
   const warningId = warning ? `${id}-warning` : undefined;
@@ -35,10 +37,15 @@ export function Field({ id, label, labelSuffix, hint, error, warning, describedB
   return (
     <div className={cn('min-w-0', className)}>
       <div className="mb-1.5 flex items-baseline justify-between gap-3">
-        <label htmlFor={id} className="cursor-pointer text-[13.5px] font-semibold text-[color:var(--color-ink)]">
+        <label htmlFor={id} className="cursor-pointer text-[13.5px] font-medium leading-[1.35] text-[color:var(--color-ink-soft)]">
           {label}
           {labelSuffix && <span className="sr-only"> ({labelSuffix})</span>}
-          {required && <span className="font-normal text-[color:var(--color-muted)]"> (obligatorio)</span>}
+          {required && (
+            <>
+              <span aria-hidden className="ml-1 font-bold text-[color:var(--color-danger)]">*</span>
+              <span className="sr-only">, obligatorio</span>
+            </>
+          )}
         </label>
         {count && (
           <span
@@ -50,6 +57,7 @@ export function Field({ id, label, labelSuffix, hint, error, warning, describedB
         )}
       </div>
       {children({ id, 'aria-describedby': describedBy, 'aria-invalid': error ? true : undefined })}
+      {below}
       {hint && (
         <p id={hintId} className="m-0 mt-1.5 text-[12.5px] leading-[1.5] text-[color:var(--color-muted)]">
           {hint}
@@ -62,7 +70,7 @@ export function Field({ id, label, labelSuffix, hint, error, warning, describedB
         </p>
       )}
       {error && (
-        <p id={errorId} className="m-0 mt-1.5 text-[13px] font-medium text-[color:var(--color-danger)]">
+        <p id={errorId} className="m-0 mt-1.5 text-[12.5px] font-medium leading-[1.4] text-[color:var(--color-danger)]">
           {error}
         </p>
       )}

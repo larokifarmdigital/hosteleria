@@ -123,7 +123,7 @@ export function WineSheet({ scope, categories, wine, initialCategoryId, nextOrde
 
           <div>
             {scope.locales.length > 1 && (
-              <LocaleTabs locales={scope.locales} value={locale} onChange={setLocale} names={scope.localeNames} missing={pending} />
+              <LocaleTabs locales={scope.locales} value={locale} onChange={setLocale} names={scope.localeNames} missing={pending} first={scope.defaultLocale} compact />
             )}
             <I18nField name="note" label="Nota" hint="Uva, crianza o una frase breve. Opcional." multiline locales={scope.locales} activeLocale={locale} localeNames={scope.localeNames} defaultLocale={scope.defaultLocale} />
           </div>

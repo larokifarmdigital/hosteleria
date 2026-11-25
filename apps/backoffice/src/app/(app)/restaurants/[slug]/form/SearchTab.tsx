@@ -1,13 +1,14 @@
 'use client';
 
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { I18nField } from '@/components/editor/I18nField';
 import { TranslationBadge } from '@/components/editor/TranslationBadge';
 import { FormImageField } from '@/components/media/FormImageField';
+import { ImageField } from '@/components/media/ImageField';
 import { Section } from '@/components/shared/Section';
 import { Field } from '@/components/ui/Field';
 import { Checkbox, TextInput } from '@/components/ui/inputs';
-import { AI, EXTRA_SERVICES, GOOGLE, PAYMENT_METHODS, type FormValues } from './model';
+import { AI, BRAND_ICON, EXTRA_SERVICES, GOOGLE, PAYMENT_METHODS, type FormValues } from './model';
 import type { TabProps } from './types';
 
 const LEGEND = 'mb-1 p-0 text-[13.5px] font-semibold text-[color:var(--color-ink)]';
@@ -22,10 +23,14 @@ export function SearchTab({ i18n, mediaScope, localeTabs, pendingIn, isAdmin }: 
       <div className="flex flex-col gap-6">
         <Section title={GOOGLE} description="Título y descripción que se ven en los resultados de búsqueda." badge={<TranslationBadge count={pendingIn(GOOGLE)} />}>
           <div className="flex flex-col gap-5">
-            <I18nField reference="side" name="seo.title" label="Título" recommendedMax={60} {...i18n} />
-            <I18nField reference="side" name="seo.description" label="Descripción" multiline recommendedMax={160} hint="Una o dos frases que inviten a entrar." {...i18n} />
+            <I18nField name="seo.title" label="Título" recommendedMax={60} {...i18n} />
+            <I18nField name="seo.description" label="Descripción" multiline recommendedMax={160} hint="Una o dos frases que inviten a entrar." {...i18n} />
             <FormImageField name="seo.imageAssetId" label="Foto al compartir el enlace" hint="La que se ve al enviar la web por WhatsApp o redes. Horizontal y de al menos 1600 px de ancho." scope={mediaScope} purpose="hero" />
           </div>
+        </Section>
+
+        <Section title={BRAND_ICON} description="Una sola imagen cuadrada, en PNG y de al menos 512 × 512 px. Sale en la pestaña del navegador, en el móvil si alguien guarda la web y en Google.">
+          <BrandIconField mediaScope={mediaScope} />
         </Section>
 
         <Section title="Datos del negocio" description="Google los enseña junto al restaurante en el buscador y en el mapa.">
@@ -55,7 +60,7 @@ export function SearchTab({ i18n, mediaScope, localeTabs, pendingIn, isAdmin }: 
         </Section>
 
         <Section title={AI} description="Lo que leen ChatGPT, Gemini y otros asistentes cuando alguien les pregunta por el restaurante." badge={<TranslationBadge count={pendingIn(AI)} />}>
-          <I18nField reference="side" name="aiSummary" label="Resumen" multiline rows={6} hint="Qué cocina hacéis, dónde estáis, para quién es y qué os distingue. Con frases completas." {...i18n} />
+          <I18nField name="aiSummary" label="Resumen" multiline rows={6} hint="Qué cocina hacéis, dónde estáis, para quién es y qué os distingue. Con frases completas." {...i18n} />
         </Section>
 
         {isAdmin && (
@@ -67,5 +72,24 @@ export function SearchTab({ i18n, mediaScope, localeTabs, pendingIn, isAdmin }: 
         )}
       </div>
     </div>
+  );
+}
+
+const BRAND_FIELDS = ['branding.faviconAssetId', 'branding.appIconAssetId', 'branding.logoAssetId'] as const;
+
+/** Una imagen para los tres usos (pestaña, móvil y logo para Google): se guarda en los tres. */
+function BrandIconField({ mediaScope }: Pick<TabProps, 'mediaScope'>) {
+  const { control, setValue } = useFormContext<FormValues>();
+  const ids = useWatch({ control, name: BRAND_FIELDS });
+  return (
+    <ImageField
+      label="Icono"
+      hint="Con color de fondo, no transparente: en el móvil se ve sobre fondos de cualquier color. Mejor un símbolo sencillo o la inicial que el logo con letra pequeña."
+      scope={mediaScope}
+      purpose="logo"
+      assetId={ids.find(Boolean) || null}
+      showDescription
+      onChange={asset => BRAND_FIELDS.forEach(name => setValue(name, asset?.id ?? '', { shouldDirty: true }))}
+    />
   );
 }

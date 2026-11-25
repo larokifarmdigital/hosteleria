@@ -47,7 +47,7 @@ export function Topbar() {
   }
 
   return (
-    <header className="sticky top-0 z-20 flex min-h-14 items-center border-b border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-8">
+    <header className="sticky top-0 z-20 flex min-h-14 [@media(max-height:500px)]:static items-center border-b border-[color:var(--color-border)] bg-[color:var(--color-surface)] px-8">
       <nav aria-label="Ruta de navegación">
         <ol className="m-0 flex list-none items-center gap-2 p-0 text-[13px] font-medium text-[color:var(--color-muted)]">
           {crumbs.map((c, i) => {

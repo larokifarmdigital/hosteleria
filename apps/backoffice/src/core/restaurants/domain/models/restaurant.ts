@@ -81,6 +81,26 @@ export const UI_TEXT_KEYS = {
 } as const;
 export type UiTextGroup = keyof typeof UI_TEXT_KEYS;
 
+/**
+ * Los textos de la plantilla que el restaurante sí redacta, con el nombre que ve
+ * el editor. El resto de `UI_TEXT_KEYS` (menú, etiquetas del formulario…) son
+ * fijos: los traduce `packages/content-client` y no cuentan para publicar.
+ */
+export const EDITABLE_UI_TEXT_LABELS: Record<string, string> = {
+  'sections.dishesEyebrow': 'Carta: antetítulo',
+  'sections.dishesTitle': 'Carta: título',
+  'sections.winesEyebrow': 'Vinos: antetítulo',
+  'sections.winesTitle': 'Vinos: título',
+  'sections.winesFootnote': 'Vinos: nota final',
+  'sections.drinksEyebrow': 'Bebidas: antetítulo',
+  'sections.drinksTitle': 'Bebidas: título',
+  'sections.galleryEyebrow': 'Galería: antetítulo',
+  'sections.galleryTitle': 'Galería: título',
+  'form.title': 'Reservas: título',
+  'form.intro': 'Reservas: texto de entrada',
+  'footer.byline': 'Pie de página: frase'
+};
+
 /** Textos fijos de la landing (menú, títulos de sección, formulario, pie). */
 export type UiTexts = { [G in UiTextGroup]?: Partial<Record<(typeof UI_TEXT_KEYS)[G][number], I18nValue>> };
 
@@ -202,9 +222,9 @@ export function restaurantTranslatableTexts(c: Partial<RestaurantContent>): Reco
     texts[`Pregunta ${i + 1}`] = q.question;
     texts[`Respuesta ${i + 1}`] = q.answer;
   });
-  for (const group of Object.keys(UI_TEXT_KEYS) as UiTextGroup[]) {
-    const values = (c.uiTexts?.[group] ?? {}) as Record<string, I18nValue | undefined>;
-    for (const key of UI_TEXT_KEYS[group]) texts[`Textos de la web: ${group}.${key}`] = values[key];
+  for (const [path, label] of Object.entries(EDITABLE_UI_TEXT_LABELS)) {
+    const [group, key] = path.split('.') as [UiTextGroup, string];
+    texts[label] = (c.uiTexts?.[group] as Record<string, I18nValue | undefined> | undefined)?.[key];
   }
   return texts;
 }

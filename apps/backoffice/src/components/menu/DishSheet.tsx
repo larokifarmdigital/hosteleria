@@ -141,7 +141,7 @@ export function DishSheet({ scope, categories, dish, initialCategoryId, nextOrde
 
           <div>
             {scope.locales.length > 1 && (
-              <LocaleTabs locales={scope.locales} value={locale} onChange={setLocale} names={scope.localeNames} missing={pending} />
+              <LocaleTabs locales={scope.locales} value={locale} onChange={setLocale} names={scope.localeNames} missing={pending} first={scope.defaultLocale} compact />
             )}
             <div className="flex flex-col gap-5">
               <I18nField name="name" label={words.nameLabel} errorFor={scope.defaultLocale} error={errors.name?.[scope.defaultLocale]?.message} {...i18n} />

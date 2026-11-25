@@ -25,7 +25,9 @@ export default async function RestaurantHubPage({ params }: Props) {
     await Promise.all([
       prefetchLanguages(qc, api),
       qc.fetchQuery({ queryKey: qk.restaurants.detail(slug), queryFn: () => api.restaurants.get(slug) }),
-      qc.fetchQuery({ queryKey: qk.spaces.byRestaurant(slug), queryFn: () => api.spaces.list(slug) })
+      qc.fetchQuery({ queryKey: qk.spaces.byRestaurant(slug), queryFn: () => api.spaces.list(slug) }),
+      // El estado de la web («Publicar cambios» o «Ver mi web») se ve nada más entrar.
+      qc.prefetchQuery({ queryKey: qk.pendingTasks.byRestaurant(slug), queryFn: () => api.pendingTasks(slug) })
     ]);
   } catch (err) {
     if (err instanceof ApiError && (err.status === 404 || err.status === 403)) notFound();

@@ -63,38 +63,65 @@ const SP = state.SPACE;
       const active = () => p.evaluate(() => document.activeElement?.getAttribute('aria-label') ?? '');
       const status = p.getByRole('main').getByRole('status').filter({ hasText: /posición/ });
       await p.goto(`${BASE}/dishes?r=pruebas`);
-      await p.getByRole('button', { name: 'Subir: Dos' }).waitFor();
-      check('el primero no puede subir ni el último bajar', await p.getByRole('button', { name: 'Subir: Uno' }).isDisabled() && await p.getByRole('button', { name: 'Bajar: Tres' }).isDisabled());
-      await audit(p, 'carta con botones de orden');
+      const mobile = vpName === 'móvil';
+      // Escritorio: asa de arrastre, también con teclado (Espacio, flechas, Espacio).
+      // Móvil: «Subir» y «Bajar» en el menú «⋯» de la fila; con el dedo no se arrastra.
+      const moveDown = async name => {
+        if (mobile) {
+          await p.getByRole('button', { name: `Más acciones: ${name}`, exact: true }).click();
+          await p.getByRole('menuitem', { name: 'Bajar', exact: true }).click();
+        } else {
+          await p.getByRole('button', { name: `Mover ${name}`, exact: true }).focus();
+          await p.keyboard.press('Space');
+          await p.waitForTimeout(250);
+          await p.keyboard.press('ArrowDown');
+          await p.waitForTimeout(250);
+          await p.keyboard.press('Space');
+        }
+      };
+      const categoryAction = async (label, action) => {
+        await p.getByRole('button', { name: `Más acciones: categoría ${label}`, exact: true }).click();
+        await p.getByRole('menuitem', { name: action, exact: true }).click();
+      };
+      const movers = () => p.getByRole('button', { name: mobile ? /^Más acciones: (Uno|Dos|Tres)$/ : /^Mover (Uno|Dos|Tres)$/ });
+      await movers().first().waitFor();
+      check('cada plato se puede mover', (await movers().count()) === 3);
+      if (mobile) {
+        await p.getByRole('button', { name: 'Más acciones: Uno', exact: true }).click();
+        check('el primero no puede subir', (await p.getByRole('menuitem', { name: 'Subir', exact: true }).getAttribute('aria-disabled')) === 'true');
+        await p.keyboard.press('Escape');
+      }
+      await audit(p, 'carta con orden');
 
-      await p.getByRole('button', { name: 'Bajar: Uno' }).click();
-      await status.waitFor();
-      check('bajar un plato lo recoloca al momento y lo anuncia', /Uno pasa a la posición 2 de 3/.test(await status.innerText()) && /^Bajar: Uno$/.test(await active()), [await status.innerText(), await active()]);
+      await moveDown('Uno');
+      await status.first().waitFor();
+      check('bajar un plato lo recoloca al momento y lo anuncia', /Uno (pasa a|queda en) la posición 2 de 3/.test(await status.first().innerText()), await status.first().innerText());
+      if (!mobile) check('el foco sigue en el asa del plato movido', /^Mover Uno$/.test(await active()), await active());
       await p.waitForTimeout(1200);
       check('y queda guardado', state.j(await orderOf('dishes', cat.id)) === '["Dos","Uno","Tres"]', await orderOf('dishes', cat.id));
-      await p.getByRole('button', { name: 'Bajar: Uno' }).click();
-      await p.waitForTimeout(300);
-      check('al llegar al final, el foco pasa a «Subir»', /^Subir: Uno$/.test(await active()), await active());
-      await p.waitForTimeout(1200);
+      await moveDown('Uno');
+      await p.waitForTimeout(1500);
       check('orden final guardado', state.j(await orderOf('dishes', cat.id)) === '["Dos","Tres","Uno"]', await orderOf('dishes', cat.id));
 
-      await p.getByRole('button', { name: 'Subir la categoría Temporal' }).click();
+      await categoryAction('Temporal', 'Subir categoría');
       await p.waitForTimeout(1500);
-      check('subir una categoría la pone primera y se guarda', (await catOrder('dishes'))[0] === 'Temporal' && (await p.getByRole('heading', { level: 2 }).first().innerText()).startsWith('Temporal'), await catOrder('dishes'));
+      check('subir una categoría la pone primera y se guarda', (await catOrder('dishes'))[0] === 'Temporal' && (await p.getByRole('heading', { level: 3 }).first().innerText()).startsWith('Temporal'), await catOrder('dishes'));
       await p.reload();
-      await p.getByRole('button', { name: 'Subir: Tres' }).waitFor();
-      check('tras recargar se mantiene', (await p.getByRole('heading', { level: 2 }).first().innerText()).startsWith('Temporal') && state.j(await p.getByRole('button', { name: /^(Subir|Bajar): / }).evaluateAll(b => [...new Set(b.map(x => x.getAttribute('aria-label').split(': ')[1]))].slice(0, 3))) === '["Dos","Tres","Uno"]');
+      await movers().first().waitFor();
+      check('tras recargar se mantiene', (await p.getByRole('heading', { level: 3 }).first().innerText()).startsWith('Temporal')
+        && state.j(await p.getByRole('button', { name: /^Editar (Uno|Dos|Tres)$/ }).evaluateAll(b => b.map(x => x.getAttribute('aria-label').replace('Editar ', '')))) === '["Dos","Tres","Uno"]');
 
       await p.locator('#carta-buscar').fill('Dos');
       await p.waitForTimeout(400);
-      check('con un filtro activo no se ofrece mover', (await p.getByRole('button', { name: /^(Subir|Bajar)/ }).count()) === 0);
+      check('con un filtro activo no se ofrece mover', (await p.getByRole('button', { name: /^(Mover |Más acciones: (Uno|Dos|Tres)$)/ }).count()) === 0);
       await p.locator('#carta-buscar').fill('');
       await pause(4000);
 
       await p.getByRole('navigation', { name: 'Tipo de carta' }).getByRole('link', { name: /^Vinos/ }).click();
-      await p.getByRole('button', { name: 'Bajar: Rioja' }).waitFor();
-      await p.getByRole('button', { name: 'Bajar: Rioja' }).click();
-      await p.getByRole('button', { name: 'Bajar la categoría Tintos' }).click();
+      await p.getByRole('button', { name: 'Editar Rioja', exact: true }).waitFor();
+      await moveDown('Rioja');
+      await p.waitForTimeout(800);
+      await categoryAction('Tintos', 'Bajar categoría');
       await p.waitForTimeout(1500);
       check('los vinos y sus categorías también se reordenan', state.j(await orderOf('wines', created.wineCats[0])) === '["Ribera","Rioja"]' && state.j(await catOrder('wines')) === '["Blancos","Tintos"]', [await orderOf('wines', created.wineCats[0]), await catOrder('wines')]);
       await api('POST', '/wines/reorder', { ids: created.wines });
@@ -111,8 +138,8 @@ const SP = state.SPACE;
     const p = await ctx.newPage();
     const dialog = p.getByRole('dialog');
     const mark = (n) => dialog.getByRole('button', { name: new RegExp(`^Marcar la foto: Foto ${n}`) });
-    await p.goto(`${BASE}/restaurants/pruebas/spaces/${SP}?tab=photos`);
-    await p.getByRole('heading', { level: 1 }).waitFor();
+    await p.goto(`${BASE}/restaurants/pruebas?s=photos&e=${SP}`);
+    await p.getByRole('heading', { level: 2, name: 'Galería de fotos' }).waitFor();
     const gallery = p.getByRole('group', { name: 'Fotos de la galería' });
     await gallery.getByRole('button', { name: 'Añadir fotos' }).click();
     await mark('uno').waitFor();
@@ -132,17 +159,21 @@ const SP = state.SPACE;
     await gallery.getByRole('listitem').nth(1).waitFor();
     const alts = await gallery.getByRole('listitem').locator('img').evaluateAll(imgs => imgs.map(i => i.alt));
     check('se añaden juntas, en el orden en que se marcaron', state.j(alts) === '["Foto tres","Foto uno"]', alts);
-    await gallery.getByRole('button', { name: 'Añadir fotos' }).click();
+    await gallery.getByRole('button', { name: 'Añadir más' }).click();
     await mark('dos').waitFor();
     check('las ya añadidas no se ofrecen otra vez', (await mark('uno').count()) === 0 && (await mark('tres').count()) === 0);
     await p.keyboard.press('Escape');
-    await p.getByRole('button', { name: 'Guardar', exact: true }).click();
-    await p.getByText('Cambios guardados', { exact: true }).first().waitFor();
-    const saved = (await api('GET', `/restaurants/pruebas/spaces/${SP}`)).body.space.gallery;
+    // Se guarda sola: se espera a que el api la tenga.
+    let saved = [];
+    for (let i = 0; i < 12; i++) {
+      await p.waitForTimeout(700);
+      saved = (await api('GET', `/restaurants/pruebas/spaces/${SP}`)).body.space.gallery;
+      if (saved.length === 2) break;
+    }
     check('la galería queda guardada en ese orden', state.j(saved) === state.j([created.media[2], created.media[0]]), saved);
     await pause(6000);
 
-    await p.goto(`${BASE}/restaurants/pruebas?tab=content`);
+    await p.goto(`${BASE}/restaurants/pruebas?s=about`);
     const photos = p.getByRole('group', { name: 'Fotos', exact: true });
     await photos.getByRole('button', { name: 'Añadir fotos' }).click();
     await mark('uno').waitFor();
@@ -150,23 +181,27 @@ const SP = state.SPACE;
     check('con el máximo marcado (3), las demás quedan desactivadas y se explica', await mark('cuatro').isDisabled() && await dialog.getByText(/3 fotos marcadas: no caben más \(máximo 3\)\./).isVisible());
     await dialog.getByRole('button', { name: 'Añadir 3 fotos' }).click();
     await photos.getByRole('listitem').nth(2).waitFor();
-    check('con la lista llena ya no deja añadir', await photos.getByRole('button', { name: 'Añadir fotos' }).isDisabled());
+    check('con la lista llena ya no se ofrece añadir, y se explica', (await photos.getByRole('button', { name: /^Añadir/ }).count()) === 0 && await photos.getByText(/máximo de 3 fotos/).isVisible());
 
-    await p.getByRole('tab', { name: /^Logo/ }).click();
+    await p.getByRole('navigation', { name: 'Secciones de la web' }).getByRole('button', { name: /^Avanzado/ }).click();
+    await p.getByRole('navigation', { name: 'Secciones de la web' }).getByRole('button', { name: /^Logo/ }).click();
     const logo = p.getByRole('group', { name: 'Logo', exact: true });
     await logo.getByRole('button', { name: 'Elegir foto' }).click();
     await dialog.getByRole('button', { name: /^Usar la foto: Foto cuatro/ }).click();
     await logo.getByRole('button', { name: 'Cambiar foto' }).waitFor();
     check('donde va una sola foto, se sigue eligiendo con un clic', (await logo.locator('img').getAttribute('alt')) === 'Foto cuatro');
-    await p.getByRole('button', { name: 'Guardar', exact: true }).click();
-    await p.getByText('Cambios guardados', { exact: true }).first().waitFor();
-    const r = (await api('GET', '/restaurants/pruebas')).body.restaurant;
+    let r;
+    for (let i = 0; i < 12; i++) {
+      await p.waitForTimeout(700);
+      r = (await api('GET', '/restaurants/pruebas')).body.restaurant;
+      if (r.branding?.logoAssetId === created.media[3]) break;
+    }
     check('ficha guardada con las tres fotos en orden y el logo', state.j(r.about.imageAssetIds) === state.j(created.media.slice(0, 3)) && r.branding.logoAssetId === created.media[3], [r.about.imageAssetIds, r.branding]);
     await ctx.close();
     await pause(15000);
 
     console.log('— Herramienta ux-a11y-audit');
-    const out = spawnSync('node', [process.env.HOME + '/.claude/tools/ux-a11y-audit.cjs', `--storage=${S}/admin.json`, `${BASE}/dishes?r=pruebas`, `${BASE}/restaurants/pruebas/spaces/${SP}?tab=photos`], { encoding: 'utf8' });
+    const out = spawnSync('node', [process.env.HOME + '/.claude/tools/ux-a11y-audit.cjs', `--storage=${S}/admin.json`, `${BASE}/restaurants/pruebas?s=menu`, `${BASE}/restaurants/pruebas?s=photos`], { encoding: 'utf8' });
     console.log((out.stdout + out.stderr).trim().split('\n').filter(l => /══|✗|Total/.test(l)).join('\n'));
     check('herramienta: 0 incidencias', out.status === 0);
   } catch (e) { fail++; console.log('EXCEPCIÓN', e.message.split('\n').slice(0, 4).join(' | ')); }

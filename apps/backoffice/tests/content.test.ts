@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   RESTAURANT_CONTENT_KEYS,
+  EDITABLE_UI_TEXT_LABELS,
   UI_TEXT_KEYS,
   restaurantMediaUses,
   restaurantTranslatableTexts
@@ -24,7 +25,8 @@ describe('textos traducibles del restaurante', () => {
       groups: { highlights: [{ id: 'h1', text: half }], features: [{ id: 'f1', icon: 'wine', label: full, text: half }] },
       homeBlocks: [{ id: 'b1', title: full, ctaText: half }],
       faq: { items: [{ id: 'q1', question: full, answer: full }, { id: 'q2', question: half }] },
-      uiTexts: { nav: { book: half }, form: { submit: full } },
+      // El menú es fijo (no cuenta); el título de la carta lo redacta el restaurante.
+      uiTexts: { nav: { book: half }, sections: { dishesTitle: half }, form: { submit: full } },
       aiSummary: half
     });
     let fields: string[] = [];
@@ -40,14 +42,18 @@ describe('textos traducibles del restaurante', () => {
       'Grupos: ventaja 1, texto',
       'Bloque destacado 1: texto del botón',
       'Pregunta 2',
-      'Textos de la web: nav.book'
+      'Carta: título'
     ]);
   });
 
-  it('cubre todos los textos de interfaz declarados', () => {
+  it('solo cuenta los textos de interfaz que redacta el restaurante, y todos existen', () => {
     const labels = Object.keys(restaurantTranslatableTexts({}));
-    const total = Object.values(UI_TEXT_KEYS).reduce((n, keys) => n + keys.length, 0);
-    expect(labels.filter(l => l.startsWith('Textos de la web: '))).toHaveLength(total);
+    for (const [path, label] of Object.entries(EDITABLE_UI_TEXT_LABELS)) {
+      const [group, key] = path.split('.') as [keyof typeof UI_TEXT_KEYS, string];
+      expect((UI_TEXT_KEYS[group] as readonly string[]).includes(key)).toBe(true);
+      expect(labels).toContain(label);
+    }
+    expect(labels.some(l => l.includes('nav.') || l.includes('labelName'))).toBe(false);
   });
 });
 

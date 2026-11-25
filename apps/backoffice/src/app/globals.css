@@ -21,6 +21,8 @@
   --color-surface-2: #faf8f5;
   --color-border: #eee8e0;
   --color-border-strong: #c8c1b5;
+  /* Borde de campos, interruptores y casillas: 3:1 sobre blanco. Las tarjetas y los separadores usan border. */
+  --color-control: #8f877b;
 
   --color-ink: #0a0a0a;
   --color-ink-soft: #26221e;
@@ -104,6 +106,9 @@
 @layer base {
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
+  /* Cabecera y barra del editor arriba, barra de publicar abajo (móvil): lo enfocado no debe quedar debajo. */
+  html { scroll-padding-top: 9.5rem; scroll-padding-bottom: 5.5rem; }
+  @media (max-height: 500px) { html { scroll-padding-top: 1rem; scroll-padding-bottom: 1rem; } }
   body {
     background: var(--color-bg);
     color: var(--color-ink);
@@ -141,4 +146,13 @@
     font-feature-settings: "tnum";
   }
   .tabular { font-variant-numeric: tabular-nums; }
+  /* Separador que se desvanece en los extremos, entre bloques de una sección. */
+  .hairline { height: 1px; border: 0; margin: 0; background: linear-gradient(90deg, transparent, var(--color-border) 8%, var(--color-border) 92%, transparent); }
+}
+
+/* Bloques de una sección del editor: van sobre el fondo, sin tarjeta, separados por una línea. */
+@layer components {
+  .editor-block + .editor-block,
+  .editor-block + .editor-fold,
+  .editor-fold + .editor-block { border-top: 1px solid var(--color-border); padding-top: 28px; margin-top: 4px; }
 }

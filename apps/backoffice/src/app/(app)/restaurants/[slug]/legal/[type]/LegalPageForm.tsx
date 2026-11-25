@@ -157,7 +157,7 @@ export function LegalPageForm({ restaurant, type, title, page, localeNames }: Pr
         pending={remove.isPending}
         onConfirm={() =>
           remove.mutateAsync().then(
-            () => { showSuccessToast('Página borrada'); router.push(`/restaurants/${restaurant.slug}/legal`); },
+            () => { showSuccessToast('Página borrada'); router.push(`/restaurants/${restaurant.slug}?s=legal`); },
             () => {}
           )
         }

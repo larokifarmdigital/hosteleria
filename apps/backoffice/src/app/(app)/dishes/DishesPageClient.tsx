@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Plus } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { CategoryDialog } from '@/components/menu/CategoryDialog';
 import { DishSheet } from '@/components/menu/DishSheet';
 import { MenuList, type MenuRow } from '@/components/menu/MenuList';
@@ -31,19 +31,26 @@ type Editing = { type: 'item'; id: string | null; categoryId?: string } | { type
 
 const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
-export function DishesPageClient() {
+interface Props {
+  /** Dentro del editor de la web: restaurante y espacio fijos, sin cabecera ni selectores. */
+  slug?: string;
+  spaceId?: string;
+  embedded?: boolean;
+}
+
+export function DishesPageClient({ slug: fixedSlug, spaceId: fixedSpaceId, embedded = false }: Props = {}) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
 
   const restaurantsQuery = useRestaurants();
   const restaurants = restaurantsQuery.data ?? [];
-  const restaurant = restaurants.find(r => r.slug === params.get('r')) ?? restaurants[0];
+  const restaurant = restaurants.find(r => r.slug === (fixedSlug ?? params.get('r'))) ?? (fixedSlug ? undefined : restaurants[0]);
   const slug = restaurant?.slug ?? '';
 
   const spacesQuery = useSpaces(slug);
   const spaces = spacesQuery.data ?? [];
-  const space = spaces.find(s => s.id === params.get('e')) ?? spaces.find(s => s.isDefault) ?? spaces[0];
+  const space = spaces.find(s => s.id === (fixedSpaceId ?? params.get('e'))) ?? spaces.find(s => s.isDefault) ?? spaces[0];
   const spaceId = space?.id ?? '';
 
   const tipoParam = params.get('tipo');
@@ -158,10 +165,12 @@ export function DishesPageClient() {
 
   return (
     <>
-      <PageHeader title="Carta">
-        {hasDrinks ? 'Los platos, vinos y bebidas' : 'Los platos y vinos'} de cada espacio, agrupados por categoría.{' '}
-        <strong className="font-semibold text-[color:var(--color-ink)]">La carta no hace falta publicarla:</strong> cada cambio sale en la web un par de minutos después de guardarlo.
-      </PageHeader>
+      {!embedded && (
+        <PageHeader title="Carta">
+          {hasDrinks ? 'Los platos, vinos y bebidas' : 'Los platos y vinos'} de cada espacio, agrupados por categoría.{' '}
+          <strong className="font-semibold text-[color:var(--color-ink)]">La carta no hace falta publicarla:</strong> cada cambio sale en la web un par de minutos después de guardarlo.
+        </PageHeader>
+      )}
 
       <QueryBoundary queries={[restaurantsQuery, spacesQuery]}>
         {!restaurant ? (
@@ -171,7 +180,7 @@ export function DishesPageClient() {
             {/* La carta no tiene botón de publicar: aquí se ve si la web ya recogió lo guardado. */}
             <SiteStatusNote restaurantSlug={slug} />
 
-            {(restaurants.length > 1 || spaces.length > 1) && (
+            {!embedded && (restaurants.length > 1 || spaces.length > 1) && (
               <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:max-w-[640px]">
                 {restaurants.length > 1 && (
                   <Field id="carta-restaurante" label="Restaurante">
@@ -200,7 +209,7 @@ export function DishesPageClient() {
               </EmptyState>
             ) : (
               <>
-                <nav aria-label="Tipo de carta" className="mb-5 border-b border-[color:var(--color-border)]">
+                <nav aria-label="Tipo de carta" className="mb-6 border-b border-[color:var(--color-border)]">
                   <ul className="m-0 flex list-none gap-1 p-0">
                     {([['dishes', 'Platos', dishes.length], ['wines', 'Vinos', wines.length], ...(hasDrinks ? [['drinks', 'Bebidas', drinks.length] as const] : [])] as const).map(([tipo, label, count]) => (
                       <li key={tipo}>
@@ -210,10 +219,10 @@ export function DishesPageClient() {
                           scroll={false}
                           aria-current={kind === tipo ? 'page' : undefined}
                           className={cn(
-                            '-mb-px inline-flex min-h-11 items-center gap-1.5 border-b-2 px-4 text-[14px] font-semibold transition-colors',
+                            '-mb-px inline-flex min-h-11 items-center gap-1.5 border-b-2 px-3 text-[14px] transition-colors sm:px-4',
                             kind === tipo
-                              ? 'border-[color:var(--color-accent)] text-[color:var(--color-accent)]'
-                              : 'border-transparent text-[color:var(--color-muted)] hover:text-[color:var(--color-ink)]'
+                              ? 'border-[color:var(--color-accent)] font-semibold text-[color:var(--color-ink)]'
+                              : 'border-transparent font-medium text-[color:var(--color-muted)] hover:text-[color:var(--color-ink)]'
                           )}
                         >
                           {label}
@@ -239,24 +248,21 @@ export function DishesPageClient() {
                     </div>
                   ) : (
                     <>
-                      <div className="mb-5 flex flex-wrap items-end gap-4">
-                        <Field id="carta-buscar" label={`Buscar ${itemNoun}`} className="min-w-[200px] flex-1 sm:max-w-[320px]">
-                          {control => <TextInput {...control} type="search" autoComplete="off" value={search} onChange={e => setSearch(e.target.value)} />}
-                        </Field>
-                        <Field id="carta-mostrar" label="Mostrar" className="min-w-[180px]">
-                          {control => (
-                            <Select {...control} value={visibility} onChange={e => setVisibility(e.target.value as Visibility)}>
-                              <option value="all">Todos</option>
-                              <option value="visible">Solo visibles</option>
-                              <option value="hidden">Solo ocultos</option>
-                              {locales.length > 1 && <option value="missing">Falta traducción</option>}
-                            </Select>
-                          )}
-                        </Field>
-                        <div className="ml-auto flex gap-2.5">
-                          <Button onClick={() => setEditing({ type: 'category', category: null })}>
+                      <div className="mb-6 flex flex-wrap items-center gap-2.5">
+                        <div className="relative w-full sm:w-auto sm:min-w-[200px] sm:max-w-[300px] sm:flex-1">
+                          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--color-muted)]" />
+                          <TextInput id="carta-buscar" type="search" autoComplete="off" aria-label={`Buscar ${itemNoun}`} placeholder={`Buscar ${itemNoun}`} className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+                        </div>
+                        <Select id="carta-mostrar" aria-label="Mostrar" className="w-auto min-w-[150px]" value={visibility} onChange={e => setVisibility(e.target.value as Visibility)}>
+                          <option value="all">Todos</option>
+                          <option value="visible">Solo visibles</option>
+                          <option value="hidden">Solo ocultos</option>
+                          {locales.length > 1 && <option value="missing">Falta traducción</option>}
+                        </Select>
+                        <div className="ml-auto flex gap-2">
+                          <Button variant="ghost" aria-label="Añadir categoría" onClick={() => setEditing({ type: 'category', category: null })}>
                             <Plus aria-hidden className="h-4 w-4" />
-                            Añadir categoría
+                            <span><span className="hidden sm:inline">Añadir </span>categoría</span>
                           </Button>
                           <Button variant="primary" onClick={() => setEditing({ type: 'item', id: null })}>
                             <Plus aria-hidden className="h-4 w-4" />

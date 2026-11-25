@@ -13,17 +13,19 @@ interface Props {
   pendingLabel: string;
   pending: boolean;
   onConfirm: () => void;
+  /** A dónde va el foco al cerrar si quien abrió el diálogo ya no existe. */
+  returnFocusTo?: () => HTMLElement | null;
 }
 
 /** Radix aporta el foco atrapado y Escape; la devolución del foco la pone `useReturnFocus`. */
-export function ConfirmDialog({ open, onOpenChange, title, children, confirmLabel, pendingLabel, pending, onConfirm }: Props) {
-  const returnFocus = useReturnFocus();
+export function ConfirmDialog({ open, onOpenChange, title, children, confirmLabel, pendingLabel, pending, onConfirm, returnFocusTo }: Props) {
+  const returnFocus = useReturnFocus(returnFocusTo);
   return (
     <Dialog.Root open={open} onOpenChange={next => { if (!pending) onOpenChange(next); }}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45" />
-        <Dialog.Content {...returnFocus} className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-[480px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[var(--radius-lg)] bg-white p-6 shadow-[var(--shadow-lg)] focus:outline-none">
-          <Dialog.Title className="m-0 text-[18px] font-bold tracking-[-0.01em] text-[color:var(--color-ink)]">
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-[rgb(42_20_9/0.45)]" />
+        <Dialog.Content {...returnFocus} className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-[440px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[var(--radius)] border border-[color:var(--color-border)] bg-white p-5 shadow-[var(--shadow-lg)] focus:outline-none">
+          <Dialog.Title className="m-0 text-[17px] font-bold tracking-[-0.015em] text-[color:var(--color-ink)]">
             {title}
           </Dialog.Title>
           <Dialog.Description asChild>
