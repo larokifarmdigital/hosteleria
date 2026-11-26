@@ -157,7 +157,8 @@ export function buildPublishedSite(
   const content = publishedRestaurantContent(r);
   if (!content) return null;
 
-  const byOrder = <T extends { order: number }>(a: T, b: T) => a.order - b.order;
+  // Con el mismo número de orden, el id decide: la web sale igual se lea de donde se lea.
+  const byOrder = <T extends { order: number; id: string }>(a: T, b: T) => a.order - b.order || a.id.localeCompare(b.id);
 
   const spaces: PublishedSpace[] = [];
   for (const s of [...src.spaces].sort(byOrder)) {

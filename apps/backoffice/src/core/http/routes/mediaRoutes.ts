@@ -98,7 +98,9 @@ export function createMediaRoutes() {
     ]);
     // `restaurant`: sitios de la ficha donde se usa (logo, sobre nosotros…).
     const restaurant = refs.filter(r => r.kind === 'restaurant').map(r => r.use!);
-    return c.json({ dishes, spaces, galleries, restaurant });
+    // Sale en una web publicada: no se puede borrar hasta publicar sin ella.
+    const published = (await c.get('container').repos.siteCopiesRepo.listMediaIds()).includes(id);
+    return c.json({ dishes, spaces, galleries, restaurant, published });
   });
 
   app.delete('/:id', async (c) => {

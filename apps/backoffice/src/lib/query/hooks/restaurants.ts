@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Restaurant, ApiClient } from '@hosteleria/api-client';
+import type { Restaurant, ApiClient, SiteChanges } from '@hosteleria/api-client';
 import { api } from '../../api/browser';
 import { useErrorToast } from '../../api/errorHandling';
 import { qk } from '../keys';
@@ -35,6 +35,7 @@ export function usePatchRestaurant(slug: string) {
   const qc = useQueryClient();
   const toastError = useErrorToast();
   return useMutation({
+    meta: { keepsSiteChanges: true },
     mutationFn: (body: PatchInput) => api.restaurants.patch(slug, body),
     onMutate: async (body) => {
       await qc.cancelQueries({ queryKey: qk.restaurants.detail(slug) });
@@ -97,6 +98,44 @@ export function useDiscardRestaurant(slug: string) {
       qc.invalidateQueries({ queryKey: qk.restaurants.lists() });
       // Lo que queda por publicar cambia: la barra del editor lo vuelve a preguntar.
       qc.invalidateQueries({ queryKey: qk.pendingTasks.all });
+    },
+    onError: toastError
+  });
+}
+
+/** Qué ha cambiado desde el último «Publicar» en carta, vinos, legales y espacios. */
+export function useSiteChanges(slug: string) {
+  return useQuery<SiteChanges>({
+    queryKey: qk.siteChanges.byRestaurant(slug),
+    queryFn: () => api.restaurants.changes(slug),
+    staleTime: 0
+  });
+}
+
+/** «Recuperar» un plato, bebida o vino borrado que sigue en la web. */
+export function useRestorePublishedRow(slug: string) {
+  const qc = useQueryClient();
+  const toastError = useErrorToast();
+  return useMutation({
+    mutationFn: (body: { kind: 'dish' | 'wine'; id: string }) => api.restaurants.restore(slug, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.dishes.all });
+      qc.invalidateQueries({ queryKey: qk.wines.all });
+    },
+    onError: toastError
+  });
+}
+
+/** Descartar todo: el backoffice vuelve a ser la web publicada. */
+export function useDiscardAll(slug: string) {
+  const qc = useQueryClient();
+  const toastError = useErrorToast();
+  return useMutation({
+    mutationFn: () => api.restaurants.discardAll(slug),
+    onSuccess: (restaurant) => {
+      qc.setQueryData(qk.restaurants.detail(slug), restaurant);
+      // Cambian la ficha, los espacios, la carta y los legales: se vuelve a pedir todo.
+      qc.invalidateQueries();
     },
     onError: toastError
   });

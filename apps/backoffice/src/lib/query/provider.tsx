@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ApiError } from '../api';
+import { qk } from './keys';
 
 /**
  * Defaults pensados para un CMS:
@@ -14,9 +15,20 @@ import { ApiError } from '../api';
  * El 401 → /login y el reporte de 5xx viven en `onError` de `lib/api/browser.ts`.
  */
 export function QueryProvider({ children }: { children: ReactNode }) {
-  const [client] = useState(
-    () =>
+  const [client] = useState(() => {
+    // Cualquier cambio guardado (un plato, un texto legal, el orden de los espacios…) puede
+    // cambiar lo que queda por publicar: las marcas «Sin publicar» se vuelven a pedir.
+    const mutationCache = new MutationCache({
+      // El guardado automático de la ficha y del espacio no toca carta, legales ni espacios: no cuenta
+      // (`meta.keepsSiteChanges`), y así no se gasta una petición por cada guardado.
+      onSuccess: (_data, _vars, _ctx, mutation) => {
+        if (mutation.meta?.keepsSiteChanges) return;
+        void client.invalidateQueries({ queryKey: qk.siteChanges.all });
+      }
+    });
+    const client: QueryClient =
       new QueryClient({
+        mutationCache,
         defaultOptions: {
           queries: {
             staleTime: 30_000,
@@ -34,8 +46,9 @@ export function QueryProvider({ children }: { children: ReactNode }) {
             retry: false
           }
         }
-      })
-  );
+      });
+    return client;
+  });
 
   return (
     <QueryClientProvider client={client}>

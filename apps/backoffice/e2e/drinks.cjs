@@ -50,24 +50,25 @@ const cleanup = async () => {
       await cleanup();
       const ctx = await browser.newContext({ storageState: S + '/admin.json', viewport: vp, isMobile: vpName === 'móvil', hasTouch: vpName === 'móvil' });
       const p = await ctx.newPage();
-      const tabs = p.getByRole('navigation', { name: 'Tipo de carta' });
+      const tabs = p.getByRole('navigation', { name: 'Partes de la carta' });
+      const drinksPart = p.locator('#carta-bebidas');
 
       await p.goto(`${BASE}/dishes?r=pruebas`);
       await tabs.waitFor();
-      check('sin bebidas, la pestaña «Bebidas» no se ofrece', (await tabs.getByRole('link', { name: /^Bebidas/ }).count()) === 0);
+      check('sin bebidas, la parte «Bebidas» no sale y se ofrece añadirla', (await tabs.getByRole('link', { name: /^Bebidas/ }).count()) === 0 && await p.getByRole('button', { name: 'Añadir una carta de bebidas' }).isVisible());
 
       // Una categoría con una bebida, por el api: ya hay carta de bebidas.
       const cat = (await api('POST', '/dishes/categories', { spaceId: state.SPACE, name: all('Cafés'), order: 0, kind: 'drink' })).body.category;
       await api('POST', '/dishes', { spaceId: state.SPACE, categoryId: cat.id, name: all('Espresso'), price: 2.2 });
       await p.goto(`${BASE}/dishes?r=pruebas`);
       await tabs.getByRole('link', { name: /^Bebidas/ }).waitFor();
-      await tabs.getByRole('link', { name: /^Bebidas\s*1$/ }).waitFor({ timeout: 8000 }).catch(() => {});
-      check('con bebidas, aparece la pestaña con su número', /Bebidas\s*1/.test(await tabs.getByRole('link', { name: /^Bebidas/ }).innerText()), await tabs.getByRole('link', { name: /^Bebidas/ }).innerText());
-      check('la bebida no sale entre los platos', (await p.getByText('Espresso', { exact: true }).count()) === 0 && (await p.getByRole('heading', { name: /Cafés/ }).count()) === 0);
+      await drinksPart.getByRole('heading', { name: /^Bebidas\s*·\s*1$/ }).waitFor({ timeout: 8000 }).catch(() => {});
+      check('con bebidas, sale su parte con su número', /Bebidas\s*·\s*1/.test(await drinksPart.getByRole('heading', { level: 3 }).first().innerText()), await drinksPart.innerText());
+      check('la bebida no sale entre los platos', (await p.locator('#carta-platos').getByText('Espresso', { exact: true }).count()) === 0 && (await p.locator('#carta-platos').getByRole('heading', { name: /Cafés/ }).count()) === 0);
       await tabs.getByRole('link', { name: /^Bebidas/ }).click();
-      await p.getByText('Espresso', { exact: true }).waitFor();
-      check('en «Bebidas» sale la categoría con su bebida y su precio', p.url().includes('tipo=bebidas') && await p.getByText('2,20 €').first().isVisible());
-      check('y no salen los platos', (await p.getByRole('button', { name: 'Añadir plato' }).count()) === 0 && (await p.getByRole('button', { name: 'Añadir bebida', exact: true }).count()) === 1);
+      await drinksPart.getByText('Espresso', { exact: true }).waitFor();
+      check('en «Bebidas» sale la categoría con su bebida y su precio', p.url().includes('#carta-bebidas') && await drinksPart.getByText('2,20 €').first().isVisible());
+      check('platos, vinos y bebidas en una sola lista', await p.locator('#carta-platos').isVisible() && await p.locator('#carta-vinos').isVisible() && (await drinksPart.getByRole('button', { name: 'Añadir bebida', exact: true }).count()) === 1);
       await audit(p, 'carta de bebidas');
 
       await p.getByRole('button', { name: 'Añadir bebida', exact: true }).click();
@@ -96,7 +97,7 @@ const cleanup = async () => {
       check('editar cambia el precio', (await api('GET', `/dishes/${cortado.id}`)).body.dish.price === 3);
       await pause(8000);
 
-      await p.getByRole('button', { name: 'Añadir categoría' }).first().click();
+      await p.getByRole('button', { name: 'Añadir categoría de bebidas' }).click();
       const dialog = p.getByRole('dialog');
       await dialog.getByText('Por ejemplo: Cafés, Cervezas, Refrescos.').waitFor();
       await audit(p, 'categoría de bebidas nueva', '[role=dialog]');

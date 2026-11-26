@@ -3,11 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { AlertCircle, Check, ChevronRight, ExternalLink, Loader2 } from 'lucide-react';
-import type { PendingTask } from '@hosteleria/api-client';
+import type { PendingTask, SiteChanges } from '@hosteleria/api-client';
 import { Button } from '@/components/shared/Button';
 import { Modal } from '@/components/ui/Modal';
 import { showSuccessToast } from '@/lib/api';
-import { usePendingTasks, usePublishAll, useSiteStatus } from '@/lib/query/hooks';
+import { api } from '@/lib/api/browser';
+import { useDiscardAll, usePendingTasks, usePublishAll, useSiteChanges, useSiteStatus } from '@/lib/query/hooks';
+import { toForm as restaurantToForm } from '@/app/(app)/restaurants/[slug]/form/model';
+import { toForm as spaceToForm } from './spaceForm';
 import { describeTask } from '@/lib/tasks';
 import { cn } from '@/lib/utils';
 import { SectionHeadingLevel } from '@/components/shared/Section';
@@ -18,11 +21,26 @@ import type { SaveStatus } from './useAutosave';
 type Unpublished = Extract<PendingTask, { type: 'unpublished' }>;
 
 /** Los dos estados que importan, en palabras de quien edita: ¿está guardado? ¿está en la web? */
+/** Lo que sale al publicar además de la ficha y los espacios: carta, legales y espacios. */
+function otherChanges(changes: SiteChanges, spaceNames: Map<string, string>): { key: string; label: string }[] {
+  const out: { key: string; label: string }[] = [];
+  for (const id of changes.menuSpaceIds) {
+    out.push({ key: `menu:${id}`, label: spaceNames.size > 1 ? `La carta de «${spaceNames.get(id) ?? 'un espacio'}»` : 'La carta' });
+  }
+  if (changes.legal.length > 0) out.push({ key: 'legal', label: 'Los textos legales' });
+  if (changes.spaces.order || changes.spaces.isDefault) out.push({ key: 'spaces', label: 'El orden de los espacios' });
+  for (const s of changes.spaces.removed) out.push({ key: `removed:${s.id}`, label: `Quitar el espacio «${s.name}»` });
+  return out;
+}
+
 export function useEditorStatus() {
-  const { restaurant } = useEditor();
+  const { restaurant, spaces } = useEditor();
+  const spaceNames = new Map(spaces.map(s => [s.id, s.name]));
   const restaurantDraft = useRestaurantDraft();
   const spaceDraft = useSpaceDraft();
   const { data: tasks } = usePendingTasks(restaurant.slug);
+  // Carta, legales y espacios no tienen borrador propio: lo que cambió desde el último «Publicar».
+  const { data: changes } = useSiteChanges(restaurant.slug);
 
   const drafts: { which: 'restaurant' | 'space'; status: SaveStatus }[] = [
     { which: 'restaurant', status: restaurantDraft.status },
@@ -35,10 +53,12 @@ export function useEditorStatus() {
 
   const unpublished = (tasks ?? []).filter((t): t is Unpublished => t.type === 'unpublished');
   const neverPublished = !restaurant.publishedSnapshot && !restaurant.lastPublishedAt;
+  const other = changes ? otherChanges(changes, spaceNames) : [];
   const web: 'loading' | 'up_to_date' | 'changes' | 'never' =
-    !tasks ? 'loading' : neverPublished ? 'never' : unpublished.length > 0 ? 'changes' : 'up_to_date';
+    // Los cambios de carta y legales llegan aparte: no retrasan el botón.
+    !tasks ? 'loading' : neverPublished ? 'never' : unpublished.length > 0 || other.length > 0 ? 'changes' : 'up_to_date';
 
-  return { saving, failed, invalid, saved, unpublished, tasks: tasks ?? [], web };
+  return { saving, failed, invalid, saved, unpublished, otherChanges: other, tasks: tasks ?? [], web };
 }
 
 /** Cabecera del editor: nombre del restaurante, los dos estados y una sola acción. */
@@ -212,39 +232,75 @@ function MainAction() {
 }
 
 function PublishDialog({ onClose }: { onClose: () => void }) {
-  const { restaurant, localeNames } = useEditor();
-  const { failed, invalid, unpublished, tasks } = useEditorStatus();
+  const { restaurant, localeNames, space } = useEditor();
+  const { failed, invalid, unpublished, otherChanges, tasks, web } = useEditorStatus();
   const publish = usePublishAll(restaurant.slug);
+  const discardAll = useDiscardAll(restaurant.slug);
+  const restaurantDraft = useRestaurantDraft();
+  const spaceDraft = useSpaceDraft();
+  const { locales } = useEditor();
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const firstTime = web === 'never';
+  // Lo que falta traducir. La primera vez frena (la web tiene que nacer completa);
+  // después solo avisa: en esos textos la web enseña el idioma principal.
   const pendingKeys = new Set(unpublished.map(t => (t.target.kind === 'space' ? t.target.spaceId : 'ficha')));
-  // Solo bloquea lo que falta traducir en lo que se va a publicar; la carta y los legales salen solos.
-  const blockers = tasks
-    .filter(t => t.type === 'translations' && (t.target.kind === 'restaurant' || t.target.kind === 'space'))
-    .filter(t => pendingKeys.has(t.target.kind === 'space' ? t.target.spaceId : 'ficha'))
+  const untranslated = tasks
+    .filter(t => t.type === 'translations')
+    .filter(t => !firstTime || ((t.target.kind === 'restaurant' || t.target.kind === 'space') && pendingKeys.has(t.target.kind === 'space' ? t.target.spaceId : 'ficha')))
     .map(t => describeTask(t, restaurant.slug, localeNames));
+  const blocked = firstTime && untranslated.length > 0;
   const notSaved = !!failed || !!invalid;
-  const items = unpublished.map(t => ({
-    key: t.target.kind === 'space' ? t.target.spaceId : 'ficha',
-    label: t.target.kind === 'space' ? `El espacio «${t.target.spaceName}»` : 'Los datos y textos del restaurante',
-    never: t.neverPublished
-  }));
+  const items = [
+    ...unpublished.map(t => ({
+      key: t.target.kind === 'space' ? t.target.spaceId : 'ficha',
+      label: t.target.kind === 'space' ? `El espacio «${t.target.spaceName}»` : 'Los datos y textos del restaurante',
+      never: t.neverPublished
+    })),
+    ...otherChanges.map(c => ({ ...c, never: false }))
+  ];
+
+  const onDiscard = () => discardAll.mutateAsync().then(async r => {
+    // Los formularios abiertos vuelven también a lo publicado.
+    restaurantDraft.form.reset(restaurantToForm(r));
+    if (spaceDraft && space) spaceDraft.form.reset(spaceToForm(await api.spaces.get(restaurant.slug, space.id), locales));
+    onClose();
+    showSuccessToast('Has vuelto a lo publicado');
+  }, () => {});
+
+  const taskList = (list: typeof untranslated) => (
+    <ul className="m-0 mt-3 flex list-none flex-col gap-2 p-0">
+      {list.map(b => (
+        <li key={b.id}>
+          <Link href={b.href} onClick={onClose} className="block rounded-[10px] border border-[color:var(--color-border)] px-3.5 py-2.5 hover:border-[color:var(--color-accent)]">
+            <span className="block text-[14px] font-semibold text-[color:var(--color-ink)] underline underline-offset-2">{b.text}</span>
+            {b.detail && <span className="mt-0.5 block text-[13px] text-[color:var(--color-muted)]">{b.detail}</span>}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+
+  if (confirmDiscard) {
+    return (
+      <Modal open onClose={onClose} title="¿Descartar todos los cambios?">
+        <p className="m-0 text-[14px] leading-[1.55]">Todo vuelve a como se ve ahora en tu web: {items.map(i => i.label.toLowerCase()).join(', ')}.</p>
+        <p className="m-0 mt-2 text-[14px] leading-[1.55]">No se puede deshacer. Un espacio que hayas borrado no vuelve.</p>
+        <div className="mt-5 flex flex-wrap justify-end gap-2.5">
+          <Button onClick={() => setConfirmDiscard(false)}>Volver</Button>
+          <Button variant="primary" disabled={discardAll.isPending} onClick={onDiscard}>{discardAll.isPending ? 'Descartando…' : 'Sí, descartar todo'}</Button>
+        </div>
+      </Modal>
+    );
+  }
 
   return (
-    <Modal open onClose={onClose} title={blockers.length > 0 || notSaved ? 'Aún no se puede publicar' : '¿Publicar en la web?'}>
+    <Modal open onClose={onClose} title={blocked || notSaved ? 'Aún no se puede publicar' : '¿Publicar en la web?'}>
       {notSaved ? (
         <p className="m-0 text-[14px] leading-[1.55]">Hay un cambio que no se ha podido guardar. Corrígelo arriba (en rojo) y vuelve a intentarlo.</p>
-      ) : blockers.length > 0 ? (
+      ) : blocked ? (
         <>
-          <p className="m-0 text-[14px] leading-[1.55]">La web tiene que estar en todos sus idiomas. Falta traducir:</p>
-          <ul className="m-0 mt-3 flex list-none flex-col gap-2 p-0">
-            {blockers.map(b => (
-              <li key={b.id}>
-                <Link href={b.href} onClick={onClose} className="block rounded-[10px] border border-[color:var(--color-border)] px-3.5 py-2.5 hover:border-[color:var(--color-accent)]">
-                  <span className="block text-[14px] font-semibold text-[color:var(--color-ink)] underline underline-offset-2">{b.text}</span>
-                  {b.detail && <span className="mt-0.5 block text-[13px] text-[color:var(--color-muted)]">{b.detail}</span>}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <p className="m-0 text-[14px] leading-[1.55]">La primera vez, la web tiene que estar en todos sus idiomas. Falta traducir:</p>
+          {taskList(untranslated)}
         </>
       ) : (
         <>
@@ -252,12 +308,22 @@ function PublishDialog({ onClose }: { onClose: () => void }) {
           <ul className="m-0 mt-2 list-disc pl-5 text-[14px] leading-[1.7]">
             {items.map(item => <li key={item.key}>{item.label}{item.never ? ' (primera vez)' : ''}</li>)}
           </ul>
+          {untranslated.length > 0 && (
+            <div className="mt-4 rounded-[10px] bg-[color:var(--color-warn-soft)] px-3.5 py-3">
+              <p className="m-0 text-[14px] font-semibold text-[color:var(--color-warn-fg)]">Falta traducir algunos textos</p>
+              <p className="m-0 mt-1 text-[13.5px] leading-[1.5] text-[color:var(--color-ink-soft)]">Puedes publicar igualmente: en esos idiomas, la web enseñará el texto en el idioma principal.</p>
+              {taskList(untranslated)}
+            </div>
+          )}
           <p className="m-0 mt-3 text-[13.5px] leading-[1.5] text-[color:var(--color-muted)]">La web tarda un par de minutos en actualizarse.</p>
         </>
       )}
-      <div className="mt-5 flex flex-wrap justify-end gap-2.5">
-        <Button onClick={onClose}>{blockers.length > 0 || notSaved ? 'Cerrar' : 'Cancelar'}</Button>
-        {!notSaved && blockers.length === 0 && (
+      <div className="mt-5 flex flex-wrap items-center justify-end gap-2.5">
+        {!firstTime && !notSaved && items.length > 0 && (
+          <Button variant="ghost" className="mr-auto text-[color:var(--color-danger)]" onClick={() => setConfirmDiscard(true)}>Descartar todos los cambios</Button>
+        )}
+        <Button onClick={onClose}>{blocked || notSaved ? 'Cerrar' : 'Cancelar'}</Button>
+        {!notSaved && !blocked && (
           <Button
             variant="primary"
             disabled={publish.isPending}
@@ -266,7 +332,7 @@ function PublishDialog({ onClose }: { onClose: () => void }) {
               showSuccessToast('Publicado', 'La web se actualizará en un par de minutos.');
             }, () => {})}
           >
-            {publish.isPending ? 'Publicando…' : 'Publicar'}
+            {publish.isPending ? 'Publicando…' : untranslated.length > 0 ? 'Publicar igualmente' : 'Publicar'}
           </Button>
         )}
       </div>

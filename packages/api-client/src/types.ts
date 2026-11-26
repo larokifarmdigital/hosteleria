@@ -150,6 +150,33 @@ export type RestaurantContentKey =
 export interface PublishAllResult {
   restaurant: boolean;
   spaces: { id: string; name: string }[];
+  /** Textos publicados sin traducir del todo (en esos idiomas la web enseña el principal). */
+  untranslated?: string[];
+}
+
+/** Qué ha cambiado desde el último «Publicar» en carta, vinos, legales y espacios. */
+export interface SiteRowChange {
+  status: 'new' | 'changed';
+  /** Precios de la web de ahora, si han cambiado. */
+  before?: { price?: number | null; priceGlass?: number | null; priceBottle?: number | null };
+}
+export interface SiteRemovedRow {
+  kind: 'dish' | 'drink' | 'wine';
+  id: string;
+  spaceId: string;
+  categoryId: string;
+  categoryName: I18nString;
+  name: I18nString | string;
+  price: number | null;
+}
+export interface SiteChanges {
+  hasCopy: boolean;
+  /** Por id de plato, vino o categoría. */
+  rows: Record<string, SiteRowChange>;
+  removed: SiteRemovedRow[];
+  legal: LegalPageType[];
+  spaces: { order: boolean; isDefault: boolean; removed: { id: string; name: string }[] };
+  menuSpaceIds: string[];
 }
 
 export interface Restaurant {
@@ -348,6 +375,8 @@ export interface MediaReferences {
   galleries: Array<{ id: string; name: string }>;
   /** Sitios de la ficha del restaurante donde se usa. */
   restaurant: RestaurantMediaUse[];
+  /** Sale en la web publicada: no se puede borrar hasta publicar sin ella. */
+  published?: boolean;
 }
 
 // ─── Legal pages ─────────────────────────────────────────────────

@@ -42,6 +42,7 @@ export function usePatchSpace(restaurantSlug: string, spaceId: string) {
   const qc = useQueryClient();
   const toastError = useErrorToast();
   return useMutation({
+    meta: { keepsSiteChanges: true },
     mutationFn: (body: PatchInput) => api.spaces.patch(restaurantSlug, spaceId, body),
     onMutate: async (body) => {
       await qc.cancelQueries({ queryKey: qk.spaces.detail(restaurantSlug, spaceId) });

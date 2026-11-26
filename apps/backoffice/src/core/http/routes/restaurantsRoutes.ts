@@ -4,7 +4,7 @@ import { validate } from '../validate';
 import { z } from 'zod';
 import { requireAuth, requireAdmin, requireRestaurant } from '../middleware/authMiddleware';
 import { requestSiteRebuild } from '../middleware/rebuildSite';
-import { cacheHeaders } from '../middleware/cache';
+import { cacheHeaders, noCache } from '../middleware/cache';
 import { restaurantToDto } from '../dto/restaurantDto';
 import {
   RestaurantNotFoundError,
@@ -57,9 +57,35 @@ export function createRestaurantsRoutes() {
     const user = c.get('user')!;
     const slug = c.req.param('slug');
     const published = await c.get('container').restaurants.publishAll.execute(slug, user.id);
-    if (published.restaurant || published.spaces.length > 0) c.set('rebuild', { restaurantSlug: slug });
+    // La web pasa a ser lo que hay ahora en el backoffice: también la carta, los legales y los espacios.
+    const { changed } = await c.get('container').public.saveCopy.execute(slug, user.id);
+    if (changed || published.restaurant || published.spaces.length > 0) c.set('rebuild', { restaurantSlug: slug });
     const r = await c.get('container').restaurants.get.execute(slug);
     return c.json({ published, restaurant: restaurantToDto(r, user) });
+  });
+
+  // Qué ha cambiado desde el último «Publicar» en carta, vinos, legales y espacios (marcas «Sin publicar»).
+  app.get('/:slug/changes', requireAuth, requireRestaurant('slug'), noCache, async (c) => {
+    return c.json({ changes: await c.get('container').restaurants.changes.execute(c.req.param('slug')) });
+  });
+
+  // «Recuperar» un plato, bebida o vino borrado que sigue en la web publicada.
+  app.post('/:slug/restore', requireAuth, requireRestaurant('slug'),
+    validate('json', z.object({ kind: z.enum(['dish', 'wine']), id: z.string().min(1) })),
+    async (c) => {
+      const { kind, id } = c.req.valid('json');
+      await c.get('container').restaurants.restoreRow.execute(c.req.param('slug'), kind, id);
+      return c.json({ ok: true });
+    }
+  );
+
+  // Descartar todo: el backoffice vuelve a ser la web publicada.
+  app.post('/:slug/discard-all', requireAuth, requireRestaurant('slug'), async (c) => {
+    const user = c.get('user')!;
+    const slug = c.req.param('slug');
+    await c.get('container').restaurants.discardAll.execute(slug, user.id);
+    const r = await c.get('container').restaurants.get.execute(slug);
+    return c.json({ restaurant: restaurantToDto(r, user) });
   });
 
   app.post('/', requireAdmin, validate('json', createSchema), async (c) => {
@@ -83,6 +109,7 @@ export function createRestaurantsRoutes() {
     const mediaIds = [...new Set(restaurantMediaUses(body as Partial<RestaurantContent>).map(u => u.assetId))];
     for (const id of mediaIds) await assertMediaInRestaurant(c, id, current.id);
     await c.get('container').restaurants.patch.execute(slug, body as PatchRestaurantInput, user.id);
+    if (body.state === 'published') await c.get('container').public.saveCopy.execute(slug, user.id);
     const r = await c.get('container').restaurants.get.execute(slug);
     return c.json({ restaurant: restaurantToDto(r, user) });
   });

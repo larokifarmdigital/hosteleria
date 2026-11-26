@@ -70,23 +70,26 @@ const check = (name, ok, extra = '') => { ok ? pass++ : fail++; console.log(`${o
     await step('publicar el espacio', 1, () => api('PATCH', SP, { state: 'published' }));
     await step('descartar cambios de la ficha', 0, async () => { await api('PATCH', '/restaurants/pruebas', { foundedYear: 2002, state: 'draft' }); return api('POST', '/restaurants/pruebas/discard'); });
 
-    console.log('— Carta y páginas legales (sin borrador: cada cambio regenera)');
-    await step('cambiar un plato', 1, () => api('PATCH', `/dishes/${dish.id}`, { active: !dish.active }));
-    await step('dejarlo como estaba', 1, () => api('PATCH', `/dishes/${dish.id}`, { active: dish.active }));
-    const c = await step('crear una categoría de platos', 1, () => api('POST', '/dishes/categories', { spaceId: state.SPACE, name: all('Temporal'), order: 99 }));
+    console.log('— Carta y páginas legales: esperan a publicar, no regeneran al guardar');
+    await step('cambiar un plato', 0, () => api('PATCH', `/dishes/${dish.id}`, { active: !dish.active }));
+    await step('dejarlo como estaba', 0, () => api('PATCH', `/dishes/${dish.id}`, { active: dish.active }));
+    const c = await step('crear una categoría de platos', 0, () => api('POST', '/dishes/categories', { spaceId: state.SPACE, name: all('Temporal'), order: 99 }));
     catId = c.body.category.id;
-    await step('renombrarla', 1, () => api('PATCH', `/dishes/categories/${catId}`, { name: all('Temporal 2') }));
-    const d = await step('crear un plato', 1, () => api('POST', '/dishes', { spaceId: state.SPACE, categoryId: catId, name: all('Plato temporal'), price: 1 }));
-    await step('borrar el plato', 1, () => api('DELETE', `/dishes/${d.body.dish.id}`));
-    await step('borrar la categoría', 1, () => api('DELETE', `/dishes/categories/${catId}`)); catId = null;
-    const w = await step('crear una categoría de vinos', 1, () => api('POST', '/wines/categories', { spaceId: state.SPACE, name: all('Temporal'), order: 99 }));
+    await step('renombrarla', 0, () => api('PATCH', `/dishes/categories/${catId}`, { name: all('Temporal 2') }));
+    const d = await step('crear un plato', 0, () => api('POST', '/dishes', { spaceId: state.SPACE, categoryId: catId, name: all('Plato temporal'), price: 1 }));
+    await step('borrar el plato', 0, () => api('DELETE', `/dishes/${d.body.dish.id}`));
+    await step('borrar la categoría', 0, () => api('DELETE', `/dishes/categories/${catId}`)); catId = null;
+    const w = await step('crear una categoría de vinos', 0, () => api('POST', '/wines/categories', { spaceId: state.SPACE, name: all('Temporal'), order: 99 }));
     wineCatId = w.body.category.id;
-    const wn = await step('crear un vino', 1, () => api('POST', '/wines', { spaceId: state.SPACE, categoryId: wineCatId, name: 'Vino temporal' }));
-    await step('cambiar el vino', 1, () => api('PATCH', `/wines/${wn.body.wine.id}`, { priceGlass: 4 }));
-    await step('borrar el vino', 1, () => api('DELETE', `/wines/${wn.body.wine.id}`));
-    await step('borrar la categoría de vinos', 1, () => api('DELETE', `/wines/categories/${wineCatId}`)); wineCatId = null;
-    await step('guardar una página legal', 1, () => api('PUT', '/restaurants/pruebas/legal-pages/privacy', { title: all('Privacidad'), content: all('Texto nuevo'), lastUpdated: '2026-11-21' }));
-    await step('borrar la página legal', 1, () => api('DELETE', '/restaurants/pruebas/legal-pages/privacy'));
+    const wn = await step('crear un vino', 0, () => api('POST', '/wines', { spaceId: state.SPACE, categoryId: wineCatId, name: 'Vino temporal' }));
+    await step('cambiar el vino', 0, () => api('PATCH', `/wines/${wn.body.wine.id}`, { priceGlass: 4 }));
+    await step('borrar el vino', 0, () => api('DELETE', `/wines/${wn.body.wine.id}`));
+    await step('borrar la categoría de vinos', 0, () => api('DELETE', `/wines/categories/${wineCatId}`)); wineCatId = null;
+    await step('guardar una página legal', 0, () => api('PUT', '/restaurants/pruebas/legal-pages/privacy', { title: all('Privacidad'), content: all('Texto nuevo'), lastUpdated: '2026-11-21' }));
+    await step('borrar la página legal', 0, () => api('DELETE', '/restaurants/pruebas/legal-pages/privacy'));
+
+    await step('publicar todo (carta y legales incluidos)', 1, () => api('POST', '/restaurants/pruebas/publish'));
+    await step('publicar sin cambios no regenera', 0, () => api('POST', '/restaurants/pruebas/publish'));
 
     console.log('— Lo que no regenera');
     await step('una escritura que falla (plato inexistente)', 0, async () => { const r = await api('PATCH', '/dishes/no-existe', { price: 1 }); return { status: r.status === 404 ? 200 : 500 }; });

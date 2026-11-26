@@ -27,7 +27,7 @@ describe('PublishSiteUseCase', () => {
     const { useCase, calls } = setup();
     const result = await useCase.execute('pruebas', 'u1');
     expect(calls).toEqual(['space:s1', 'restaurant:pruebas']);
-    expect(result).toEqual({ restaurant: true, spaces: [{ id: 's1', name: 'Comedor' }] });
+    expect(result).toEqual({ restaurant: true, spaces: [{ id: 's1', name: 'Comedor' }], untranslated: [] });
   });
 
   it('incluye lo que nunca se publicó y deja fuera lo que está al día', async () => {
@@ -42,12 +42,13 @@ describe('PublishSiteUseCase', () => {
 
   it('sin nada pendiente no publica nada', async () => {
     const { useCase, calls } = setup({ restaurant: { state: 'published' }, spaces: [] });
-    expect(await useCase.execute('pruebas', 'u1')).toEqual({ restaurant: false, spaces: [] });
+    expect(await useCase.execute('pruebas', 'u1')).toEqual({ restaurant: false, spaces: [], untranslated: [] });
     expect(calls).toEqual([]);
   });
 
-  it('si falta una traducción en cualquier parte no publica nada y dice dónde', async () => {
+  it('la primera vez, si falta una traducción en cualquier parte no publica nada y dice dónde', async () => {
     const { useCase, calls } = setup({
+      restaurant: { publishedSnapshot: null },
       spaces: [{ id: 's1', name: 'Comedor', state: 'draft', publishedSnapshot: {}, hero: { title: { es: 'Solo en español' } } }]
     });
     await expect(useCase.execute('pruebas', 'u1')).rejects.toMatchObject({
@@ -55,5 +56,14 @@ describe('PublishSiteUseCase', () => {
       fields: expect.arrayContaining([expect.stringMatching(/^Comedor · /)])
     });
     expect(calls).toEqual([]);
+  });
+
+  it('una web ya publicada se publica aunque falte traducir, y dice qué falta', async () => {
+    const { useCase, calls } = setup({
+      spaces: [{ id: 's1', name: 'Comedor', state: 'draft', publishedSnapshot: {}, hero: { title: { es: 'Solo en español' } } }]
+    });
+    const result = await useCase.execute('pruebas', 'u1');
+    expect(calls).toEqual(['space:s1', 'restaurant:pruebas']);
+    expect(result.untranslated).toEqual([expect.stringMatching(/^Comedor · /)]);
   });
 });

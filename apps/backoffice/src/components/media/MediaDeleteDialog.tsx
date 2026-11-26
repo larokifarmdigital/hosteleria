@@ -32,7 +32,8 @@ export function MediaDeleteDialog({ asset, defaultLocale, onClose }: Props) {
         ...references.data.spaces.map(s => `Portada de «${s.name}»`),
         ...(references.data.galleries ?? []).map(s => `Galería de «${s.name}»`),
         ...(references.data.restaurant ?? []).map(use => `Ficha del restaurante: ${RESTAURANT_USES[use]}`),
-        ...references.data.dishes.map(d => `Plato «${d.name[defaultLocale] ?? Object.values(d.name).find(Boolean) ?? 'sin nombre'}»`)
+        ...references.data.dishes.map(d => `Plato «${d.name[defaultLocale] ?? Object.values(d.name).find(Boolean) ?? 'sin nombre'}»`),
+        ...(references.data.published ? ['Tu web, tal como está publicada'] : [])
       ]
     : [];
   const inUse = uses.length > 0;
@@ -65,7 +66,7 @@ export function MediaDeleteDialog({ asset, defaultLocale, onClose }: Props) {
             {uses.map(use => <li key={use}>{use}</li>)}
           </ul>
           <p className="m-0 text-[14px] leading-[1.55] text-[color:var(--color-ink-soft)]">
-            Cambia o quita la foto ahí primero. Si es una portada, publica el cambio; después podrás borrarla.
+            Cambia o quita la foto ahí primero y publica el cambio; después podrás borrarla.
           </p>
           <div className="mt-6 flex justify-end">
             <Button variant="primary" onClick={onClose}>Entendido</Button>

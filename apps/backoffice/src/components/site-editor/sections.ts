@@ -25,14 +25,14 @@ export const SECTIONS: SectionMeta[] = [
   { key: 'languages', label: 'Idiomas de la web', hint: 'En qué idiomas se puede leer la web.' },
   { key: 'cover', label: 'Portada', hint: 'Lo primero que se ve al entrar en la web: título, foto, botón y el texto de presentación.', perSpace: true },
   { key: 'home', label: 'Bloques destacados', hint: 'Los bloques de la página de inicio que llevan a cada espacio.' },
-  { key: 'menu', label: 'Carta', hint: 'Platos, vinos y bebidas. Cada cambio sale en la web un par de minutos después de guardarlo, sin publicar.', perSpace: true },
+  { key: 'menu', label: 'Carta', hint: 'Platos, vinos y bebidas. Los cambios se guardan solos y salen en tu web al pulsar «Publicar cambios».', perSpace: true },
   { key: 'photos', label: 'Galería de fotos', hint: 'Las fotos de la galería, en el orden en que se ven.', perSpace: true },
   { key: 'about', label: 'Sobre nosotros', hint: 'La historia del restaurante, con sus fotos.' },
   { key: 'groups', label: 'Grupos y eventos', hint: 'Lo que ofrecéis a grupos y celebraciones. En la página de inicio va hacia el final, justo antes de las preguntas frecuentes.' },
   { key: 'faq', label: 'Preguntas frecuentes', hint: 'Respuestas a las dudas habituales. Google también puede mostrarlas.' },
   // Fuera del menú: describir y borrar fotos se hace al elegirlas. Solo se llega desde el aviso de fotos en uso sin descripción.
   { key: 'media', label: 'Fotos sin descripción', hint: 'Fotos que ya salen en la web y no tienen descripción en todos los idiomas. La descripción es lo que oye quien no puede verlas.' },
-  { key: 'legal', label: 'Textos legales', hint: 'Aviso legal, privacidad y cookies. Salen en la web al guardarlos.' },
+  { key: 'legal', label: 'Textos legales', hint: 'Aviso legal, privacidad y cookies. Salen en tu web al pulsar «Publicar cambios».' },
   { key: 'search', label: 'Google y buscadores', hint: 'Cómo aparece la web en Google, su icono y lo que leen los asistentes de IA.' },
   { key: 'spaces', label: 'Espacios', hint: 'Comedor, terraza, barra…: cada uno con su portada, horario y carta.' },
   // Solo con varios espacios: con uno, su nombre se cambia en «Espacios».

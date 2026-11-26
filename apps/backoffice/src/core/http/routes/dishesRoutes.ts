@@ -34,7 +34,6 @@ export function createDishesRoutes() {
   cats.post('/', validate('json', categoryCreateSchema), async (c) => {
     const body = c.req.valid('json');
     await assertSpaceAccess(c, body.spaceId);
-    c.set('rebuild', { spaceId: body.spaceId });
     const row = await c.get('container').dishes.createCategory.execute(body);
     return c.json({ category: row }, 201);
   });
@@ -47,7 +46,6 @@ export function createDishesRoutes() {
     const group = assertSameGroup(ids, found, cat => `${cat.spaceId}|${cat.kind}`);
     const spaceId = group.split('|')[0];
     await assertSpaceAccess(c, spaceId);
-    c.set('rebuild', { spaceId });
     await repo.reorderCategories(ids);
     return c.json({ ok: true });
   });
@@ -57,7 +55,6 @@ export function createDishesRoutes() {
     const cat = await c.get('container').repos.dishesRepo.findCategoryById(id);
     if (!cat) throw new DishCategoryNotFoundError(id);
     await assertSpaceAccess(c, cat.spaceId);
-    c.set('rebuild', { spaceId: cat.spaceId });
     await c.get('container').dishes.updateCategory.execute(id, c.req.valid('json'));
     const updated = await c.get('container').repos.dishesRepo.findCategoryById(id);
     return c.json({ category: updated });
@@ -68,7 +65,6 @@ export function createDishesRoutes() {
     const cat = await c.get('container').repos.dishesRepo.findCategoryById(id);
     if (!cat) throw new DishCategoryNotFoundError(id);
     await assertSpaceAccess(c, cat.spaceId);
-    c.set('rebuild', { spaceId: cat.spaceId });
     await c.get('container').dishes.deleteCategory.execute(id);
     return c.json({ ok: true });
   });
@@ -99,7 +95,6 @@ export function createDishesRoutes() {
   app.post('/', validate('json', dishCreateSchema), async (c) => {
     const body = c.req.valid('json');
     await assertSpaceAccess(c, body.spaceId);
-    c.set('rebuild', { spaceId: body.spaceId });
     if (body.imageAssetId) await assertDishImage(c, body.spaceId, body.imageAssetId);
     const d = await c.get('container').dishes.create.execute({
       spaceId: body.spaceId,
@@ -123,7 +118,6 @@ export function createDishesRoutes() {
     assertSameGroup(ids, found, dish => dish.categoryId);
     const spaceId = found[0]!.spaceId;
     await assertSpaceAccess(c, spaceId);
-    c.set('rebuild', { spaceId });
     await repo.reorder(ids);
     return c.json({ ok: true });
   });
@@ -133,7 +127,6 @@ export function createDishesRoutes() {
     const id = c.req.param('id');
     const existing = await c.get('container').dishes.get.execute(id);
     await assertSpaceAccess(c, existing.spaceId);
-    c.set('rebuild', { spaceId: existing.spaceId });
     const body = c.req.valid('json');
     if (body.imageAssetId) await assertDishImage(c, existing.spaceId, body.imageAssetId);
     const d = await c.get('container').dishes.update.execute(id, body, user.id);
@@ -144,7 +137,6 @@ export function createDishesRoutes() {
     const id = c.req.param('id');
     const existing = await c.get('container').dishes.get.execute(id);
     await assertSpaceAccess(c, existing.spaceId);
-    c.set('rebuild', { spaceId: existing.spaceId });
     await c.get('container').dishes.delete.execute(id);
     return c.json({ ok: true });
   });

@@ -5,7 +5,9 @@ import { MediaNotFoundError, MediaHasReferencesError } from '../domain/models/me
 export class DeleteMediaUseCase {
   constructor(
     private readonly media: MediaRepository,
-    private readonly storage: MediaStorage
+    private readonly storage: MediaStorage,
+    /** Si la foto sale en alguna web publicada: aunque el borrador ya no la use, la web sí hasta publicar. */
+    private readonly inPublishedSite: (id: string) => Promise<boolean> = async () => false
   ) {}
 
   async execute(id: string): Promise<void> {
@@ -13,10 +15,11 @@ export class DeleteMediaUseCase {
     if (!m) throw new MediaNotFoundError(id);
 
     const refs = await this.media.findReferences(id);
-    if (refs.length > 0) {
+    const published = await this.inPublishedSite(id);
+    if (refs.length > 0 || published) {
       const dishesCount = refs.filter(r => r.kind === 'dish').length;
       const spacesCount = new Set(refs.filter(r => r.kind === 'hero' || r.kind === 'gallery').map(r => r.refId)).size;
-      throw new MediaHasReferencesError(dishesCount, spacesCount, refs.some(r => r.kind === 'restaurant'));
+      throw new MediaHasReferencesError(dishesCount, spacesCount, refs.some(r => r.kind === 'restaurant'), published);
     }
 
     // Primero el objeto, luego la fila: si el DELETE de R2 falla, la fila

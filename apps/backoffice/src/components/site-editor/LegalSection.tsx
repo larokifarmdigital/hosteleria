@@ -4,7 +4,7 @@ import { ArrowLeft, ChevronRight } from 'lucide-react';
 import type { LegalPageType } from '@hosteleria/api-client';
 import { Pill } from '@/components/shared/Pill';
 import { missingLocales } from '@/lib/forms/translations';
-import { useLegalPages } from '@/lib/query/hooks';
+import { useLegalPages, useSiteChanges } from '@/lib/query/hooks';
 import { formatDate } from '@/lib/utils';
 import { LEGAL_PAGES, legalPageInfo } from '@/app/(app)/restaurants/[slug]/legal/legalPages';
 import { LegalPageForm } from '@/app/(app)/restaurants/[slug]/legal/[type]/LegalPageForm';
@@ -13,10 +13,11 @@ import { useEditor } from './EditorContext';
 const ROW =
   'flex w-full cursor-pointer items-center justify-between gap-4 rounded-[var(--radius)] border border-[color:var(--color-border)] bg-white px-5 py-4 text-left transition-colors hover:border-[color:var(--color-copper-300)]';
 
-/** Aviso legal, privacidad y cookies: no tienen borrador, salen en la web al guardarlos. */
+/** Aviso legal, privacidad y cookies: como todo, salen en la web al publicar. */
 export function LegalSection() {
   const { restaurant, locales, localeNames, legalPage, goTo } = useEditor();
   const { data: pages = [] } = useLegalPages(restaurant.slug);
+  const { data: changes } = useSiteChanges(restaurant.slug);
   const info = legalPage ? legalPageInfo(legalPage as LegalPageType) : null;
 
   if (info) {
@@ -58,6 +59,7 @@ export function LegalSection() {
                   {!page && <Pill variant="plain">Sin escribir</Pill>}
                   {page && !incomplete && <Pill variant="ok" dot>Escrito</Pill>}
                   {incomplete && <Pill variant="warn" dot>Falta traducir</Pill>}
+                  {changes?.legal.includes(item.type) && <Pill variant="warn" dot>Sin publicar</Pill>}
                 </span>
                 <span className="mt-1 block text-[13px] leading-[1.5] text-[color:var(--color-muted)]">{item.description}</span>
                 {page?.lastUpdated && (

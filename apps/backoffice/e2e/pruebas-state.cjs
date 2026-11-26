@@ -19,6 +19,8 @@ module.exports = function (api) {
     // Las pruebas no cambian los horarios: solo se comprueba que siguen igual.
     schedule: (await pool.query(`SELECT day, open, close, "order" FROM space_schedule WHERE space_id = $1 ORDER BY day, "order"`, [SPACE])).rows,
     legal: (await pool.query(`SELECT type FROM legal_pages WHERE restaurant_id = (SELECT id FROM restaurants WHERE slug = 'pruebas') ORDER BY 1`)).rows,
+    // La copia publicada (lo que la web lee): publicar la crea o la cambia.
+    site: (await pool.query(`SELECT sources, published_at, published_by FROM published_sites WHERE restaurant_id = (SELECT id FROM restaurants WHERE slug = 'pruebas')`)).rows[0] ?? null,
     media: (await api('GET', '/media?restaurantSlug=pruebas')).body.media.map(m => m.id).sort()
   });
   return {
@@ -28,6 +30,14 @@ module.exports = function (api) {
       const val = (c, v) => (JSONB.has(c) && v !== null ? JSON.stringify(v) : v);
       await pool.query(`UPDATE restaurants SET ${R_COLS.map((c, i) => `${c} = $${i + 2}${JSONB.has(c) ? '::jsonb' : ''}`).join(', ')} WHERE id = $1`, [before.r.id, ...R_COLS.map(c => val(c, before.r[c]))]);
       await pool.query(`UPDATE spaces SET ${S_COLS.map((c, i) => `${c} = $${i + 2}${JSONB.has(c) ? '::jsonb' : ''}`).join(', ')} WHERE id = $1`, [SPACE, ...S_COLS.map(c => val(c, before.s[c]))]);
+      // La copia publicada va antes que las fotos: una foto que está en ella no se puede borrar.
+      if (before.site) {
+        await pool.query(`INSERT INTO published_sites (restaurant_id, sources, published_at, published_by) VALUES ($1, $2::jsonb, $3, $4)
+          ON CONFLICT (restaurant_id) DO UPDATE SET sources = EXCLUDED.sources, published_at = EXCLUDED.published_at, published_by = EXCLUDED.published_by`,
+          [before.r.id, JSON.stringify(before.site.sources), before.site.published_at, before.site.published_by]);
+      } else {
+        await pool.query(`DELETE FROM published_sites WHERE restaurant_id = $1`, [before.r.id]);
+      }
       // «pruebas» no tenía páginas legales antes de las pruebas (se comprueba al empezar).
       for (const type of ['legal-notice', 'privacy', 'cookies']) {
         if (!before.legal.some(l => l.type === type)) await api('DELETE', `/restaurants/pruebas/legal-pages/${type}`);

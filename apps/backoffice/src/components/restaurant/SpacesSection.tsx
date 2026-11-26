@@ -124,10 +124,10 @@ export function SpacesSection({ restaurant, spaces }: Props) {
         }}
       >
         <p className="m-0">
-          Se borran también su portada, su horario y toda su carta (platos, bebidas y vinos). Las fotos se conservan en «Imágenes». No se puede deshacer.
+          Se borran también su portada, su horario y toda su carta (platos, bebidas y vinos). Las fotos se conservan. No se puede deshacer.
         </p>
         {deleting?.isDefault && <p className="m-0 mt-2">Es el espacio principal: pasará a serlo el siguiente de la lista.</p>}
-        {deleting?.state === 'published' && <p className="m-0 mt-2">Está publicado: desaparecerá de la web en un par de minutos.</p>}
+        {deleting?.state === 'published' && <p className="m-0 mt-2">Está publicado: seguirá en tu web hasta que pulses «Publicar cambios».</p>}
       </ConfirmDialog>
     </section>
   );

@@ -143,4 +143,19 @@ export class DrizzleDishRepository implements DishRepository {
     if (Number(n) > 0) throw new CategoryHasDishesError();
     await this.db.delete(dishCategories).where(eq(dishCategories.id, id));
   }
+
+  async restore(categories: DishCategory[], items: Dish[]): Promise<void> {
+    for (const c of categories) {
+      const values = { spaceId: c.spaceId, name: c.name, order: c.order, kind: c.kind };
+      await this.db.insert(dishCategories).values({ id: c.id, ...values }).onConflictDoUpdate({ target: dishCategories.id, set: values });
+    }
+    for (const d of items) {
+      const values = {
+        spaceId: d.spaceId, categoryId: d.categoryId, name: d.name, note: d.note ?? {},
+        price: d.price !== null ? String(d.price) : null, order: d.order, active: d.active,
+        imageAssetId: d.imageAssetId, imageGradient: d.imageGradient, updatedAt: new Date()
+      };
+      await this.db.insert(dishes).values({ id: d.id, ...values }).onConflictDoUpdate({ target: dishes.id, set: values });
+    }
+  }
 }

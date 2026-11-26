@@ -121,4 +121,20 @@ export class DrizzleWineRepository implements WineRepository {
     if (Number(n) > 0) throw new CategoryHasWinesError();
     await this.db.delete(wineCategories).where(eq(wineCategories.id, id));
   }
+
+  async restore(categories: WineCategory[], items: Wine[]): Promise<void> {
+    for (const c of categories) {
+      const values = { spaceId: c.spaceId, name: c.name, order: c.order };
+      await this.db.insert(wineCategories).values({ id: c.id, ...values }).onConflictDoUpdate({ target: wineCategories.id, set: values });
+    }
+    for (const w of items) {
+      const values = {
+        spaceId: w.spaceId, categoryId: w.categoryId, name: w.name, region: w.region, note: w.note ?? {},
+        priceGlass: w.priceGlass !== null ? String(w.priceGlass) : null,
+        priceBottle: w.priceBottle !== null ? String(w.priceBottle) : null,
+        order: w.order, active: w.active, imageGradient: w.imageGradient, updatedAt: new Date()
+      };
+      await this.db.insert(wines).values({ id: w.id, ...values }).onConflictDoUpdate({ target: wines.id, set: values });
+    }
+  }
 }

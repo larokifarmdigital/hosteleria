@@ -1,5 +1,6 @@
 import type {
   PublishAllResult,
+  SiteChanges,
   Language,
   User,
   SessionUser,
@@ -177,7 +178,16 @@ export function createApiClient(opts: ApiClientOpts) {
         req<{ restaurant: Restaurant }>(`/restaurants/${slug}/discard`, { method: 'POST' }).then(r => r.restaurant),
       /** Publica la ficha y todos los espacios con cambios, de una vez. */
       publishAll: (slug: string) =>
-        req<{ published: PublishAllResult; restaurant: Restaurant }>(`/restaurants/${slug}/publish`, { method: 'POST' })
+        req<{ published: PublishAllResult; restaurant: Restaurant }>(`/restaurants/${slug}/publish`, { method: 'POST' }),
+      /** Cambios desde el último «Publicar» en carta, vinos, legales y espacios. */
+      changes: (slug: string) =>
+        req<{ changes: SiteChanges }>(`/restaurants/${slug}/changes`).then(r => r.changes),
+      /** Vuelve a crear un plato, bebida o vino borrado tal como está en la web. */
+      restore: (slug: string, body: { kind: 'dish' | 'wine'; id: string }) =>
+        req<{ ok: true }>(`/restaurants/${slug}/restore`, { method: 'POST', body: JSON.stringify(body) }),
+      /** Deja todo como en la web publicada. */
+      discardAll: (slug: string) =>
+        req<{ restaurant: Restaurant }>(`/restaurants/${slug}/discard-all`, { method: 'POST' }).then(r => r.restaurant)
     },
 
     // ─── Spaces ─────────────────────────────────────────────────

@@ -71,8 +71,7 @@ export function LegalPageForm({ restaurant, type, title, page, localeNames }: Pr
   const nameOf = (code: string) => (localeNames[code] ?? code.toUpperCase()).toLowerCase();
 
   const onSave = handleSubmit(async formValues => {
-    // Esta página no tiene borrador: lo que se guarda es lo que sale en la web,
-    // así que tiene que estar completa en todos los idiomas.
+    // Un texto legal no puede salir a medias en un idioma: se pide completo antes de guardar.
     for (const field of ['title', 'content'] as const) {
       const missing = locales.find(code => !formValues[field][code]?.trim());
       if (missing) {
@@ -103,8 +102,8 @@ export function LegalPageForm({ restaurant, type, title, page, localeNames }: Pr
   return (
     <FormProvider {...form}>
       <form onSubmit={onSave} noValidate className={isDirty ? 'max-w-[900px] pb-24' : 'max-w-[900px]'}>
-        <Callout className="mb-6" title="Esta página no tiene borrador">
-          Lo que guardes es lo que saldrá en la web. Por eso hace falta escribirla en todos los idiomas antes de guardar.
+        <Callout className="mb-6" title="Sale en tu web al publicar">
+          Lo que guardes sale en tu web al pulsar «Publicar cambios». Por ser un texto legal, hay que escribirlo en todos los idiomas antes de guardar.
         </Callout>
 
         <LocaleTabs locales={locales} value={locale} onChange={setLocale} names={localeNames} missing={anyText ? missingByLocale : {}} />
@@ -162,7 +161,7 @@ export function LegalPageForm({ restaurant, type, title, page, localeNames }: Pr
           )
         }
       >
-        <p className="m-0">Se borrará el texto en todos los idiomas y la web dejará de enseñar esta página. No se puede deshacer.</p>
+        <p className="m-0">Se borrará el texto en todos los idiomas. La web dejará de enseñar esta página al publicar.</p>
       </ConfirmDialog>
     </FormProvider>
   );

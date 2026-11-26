@@ -48,9 +48,11 @@ export function createSpacesRoutes() {
     const s = await c.get('container').spaces.patch.execute(
       restaurantId, c.req.param('spaceId'), body, user.id
     );
-    if (body.state === 'published') c.set('rebuild', { spaceId: s.id });
-    // El orden y cuál es el principal no tienen borrador: se ven en la web al momento.
-    else if (body.order !== undefined || body.isDefault !== undefined) c.set('rebuild', { restaurantSlug: c.req.param('slug')! });
+    // El orden y cuál es el principal también esperan a publicar: la web lee la copia publicada.
+    if (body.state === 'published') {
+      await c.get('container').public.saveCopy.execute(c.req.param('slug')!, user.id);
+      c.set('rebuild', { spaceId: s.id });
+    }
     return c.json({ space: spaceToDto(s) });
   });
 
@@ -64,7 +66,7 @@ export function createSpacesRoutes() {
   app.delete('/:spaceId', async (c) => {
     const user = c.get('user')!;
     const restaurantId = await resolveRestaurantId(c);
-    c.set('rebuild', { restaurantSlug: c.req.param('slug')! });
+    // Sigue en la web (en la copia publicada) hasta publicar.
     await c.get('container').spaces.delete.execute(restaurantId, c.req.param('spaceId'), user.id);
     return c.json({ ok: true });
   });

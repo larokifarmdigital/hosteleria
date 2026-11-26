@@ -46,6 +46,10 @@ const check = (name, ok, extra = '') => { ok ? pass++ : fail++; console.log(`${o
     check('publica el espacio', p2.status === 200, p2.body);
     const l = await api('PUT', '/restaurants/pruebas/legal-pages/privacy', { title: all('Privacidad'), content: all('## Responsable\n\nOcaña S.L.'), lastUpdated: '2026-11-20' });
     check('guarda una página legal', l.status === 200, l.body);
+    const before0 = await pub('/restaurants/pruebas');
+    check('la página legal no sale hasta publicar', before0.body.legalPages.length === 0, before0.body.legalPages);
+    const pubLegal = await api('POST', '/restaurants/pruebas/publish');
+    check('publicar la saca', pubLegal.status === 200, pubLegal.body);
 
     const r = await pub('/restaurants/pruebas');
     const site = r.body;
@@ -85,16 +89,20 @@ const check = (name, ok, extra = '') => { ok ? pass++ : fail++; console.log(`${o
     const r3 = await pub('/restaurants/pruebas');
     check('al publicar la ficha, sale lo nuevo de la ficha y no lo del espacio', p3.status === 200 && r3.body.restaurant.foundedYear === 2001 && r3.body.restaurant.about.title.es === 'BORRADOR' && r3.body.spaces[0].hero.title.es === 'Ocaña' && r3.headers.get('etag') !== etag, [r3.body.restaurant.foundedYear, r3.body.spaces[0].hero.title]);
 
-    console.log('— Carta (sin borrador)');
+    console.log('— Carta: espera a publicar');
     if (active.length) {
       dishToRestore = active[0];
       const off = await api('PATCH', `/dishes/${dishToRestore.id}`, { active: false });
       const r4 = await pub('/restaurants/pruebas');
       const ids = r4.body.spaces[0].dishCategories.flatMap(c => c.dishes).map(d => d.id);
-      check('un plato desactivado deja de salir al momento', off.status === 200 && !ids.includes(dishToRestore.id), [off.status, ids]);
+      check('un plato desactivado sigue en la web hasta publicar', off.status === 200 && ids.includes(dishToRestore.id), [off.status, ids]);
+      await api('POST', '/restaurants/pruebas/publish');
+      const r4b = await pub('/restaurants/pruebas');
+      check('al publicar deja de salir', !r4b.body.spaces[0].dishCategories.flatMap(c => c.dishes).some(d => d.id === dishToRestore.id));
       const on = await api('PATCH', `/dishes/${dishToRestore.id}`, { active: true });
+      await api('POST', '/restaurants/pruebas/publish');
       const r5 = await pub('/restaurants/pruebas');
-      check('y vuelve al activarlo', on.status === 200 && r5.body.spaces[0].dishCategories.flatMap(c => c.dishes).some(d => d.id === dishToRestore.id));
+      check('y vuelve al activarlo y publicar', on.status === 200 && r5.body.spaces[0].dishCategories.flatMap(c => c.dishes).some(d => d.id === dishToRestore.id));
       dishToRestore = null;
     } else console.log('  (sin platos activos: no se prueba)');
 

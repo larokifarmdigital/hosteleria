@@ -105,10 +105,10 @@ const SP = state.SPACE;
 
       await categoryAction('Temporal', 'Subir categoría');
       await p.waitForTimeout(1500);
-      check('subir una categoría la pone primera y se guarda', (await catOrder('dishes'))[0] === 'Temporal' && (await p.getByRole('heading', { level: 3 }).first().innerText()).startsWith('Temporal'), await catOrder('dishes'));
+      check('subir una categoría la pone primera y se guarda', (await catOrder('dishes'))[0] === 'Temporal' && (await p.locator('#carta-platos').getByRole('heading', { level: 4 }).first().innerText()).startsWith('Temporal'), await catOrder('dishes'));
       await p.reload();
       await movers().first().waitFor();
-      check('tras recargar se mantiene', (await p.getByRole('heading', { level: 3 }).first().innerText()).startsWith('Temporal')
+      check('tras recargar se mantiene', (await p.locator('#carta-platos').getByRole('heading', { level: 4 }).first().innerText()).startsWith('Temporal')
         && state.j(await p.getByRole('button', { name: /^Editar (Uno|Dos|Tres)$/ }).evaluateAll(b => b.map(x => x.getAttribute('aria-label').replace('Editar ', '')))) === '["Dos","Tres","Uno"]');
 
       await p.locator('#carta-buscar').fill('Dos');
@@ -117,7 +117,7 @@ const SP = state.SPACE;
       await p.locator('#carta-buscar').fill('');
       await pause(4000);
 
-      await p.getByRole('navigation', { name: 'Tipo de carta' }).getByRole('link', { name: /^Vinos/ }).click();
+      await p.getByRole('navigation', { name: 'Partes de la carta' }).getByRole('link', { name: /^Vinos/ }).click();
       await p.getByRole('button', { name: 'Editar Rioja', exact: true }).waitFor();
       await moveDown('Rioja');
       await p.waitForTimeout(800);

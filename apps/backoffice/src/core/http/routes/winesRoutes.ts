@@ -28,7 +28,6 @@ export function createWinesRoutes() {
   cats.post('/', validate('json', categoryCreateSchema), async (c) => {
     const body = c.req.valid('json');
     await assertSpaceAccess(c, body.spaceId);
-    c.set('rebuild', { spaceId: body.spaceId });
     const row = await c.get('container').wines.createCategory.execute(body);
     return c.json({ category: row }, 201);
   });
@@ -40,7 +39,6 @@ export function createWinesRoutes() {
     const found = await Promise.all(ids.map(id => repo.findCategoryById(id)));
     const spaceId = assertSameGroup(ids, found, cat => cat.spaceId);
     await assertSpaceAccess(c, spaceId);
-    c.set('rebuild', { spaceId });
     await repo.reorderCategories(ids);
     return c.json({ ok: true });
   });
@@ -50,7 +48,6 @@ export function createWinesRoutes() {
     const cat = await c.get('container').repos.winesRepo.findCategoryById(id);
     if (!cat) throw new WineCategoryNotFoundError(id);
     await assertSpaceAccess(c, cat.spaceId);
-    c.set('rebuild', { spaceId: cat.spaceId });
     await c.get('container').wines.updateCategory.execute(id, c.req.valid('json'));
     const updated = await c.get('container').repos.winesRepo.findCategoryById(id);
     return c.json({ category: updated });
@@ -61,7 +58,6 @@ export function createWinesRoutes() {
     const cat = await c.get('container').repos.winesRepo.findCategoryById(id);
     if (!cat) throw new WineCategoryNotFoundError(id);
     await assertSpaceAccess(c, cat.spaceId);
-    c.set('rebuild', { spaceId: cat.spaceId });
     await c.get('container').wines.deleteCategory.execute(id);
     return c.json({ ok: true });
   });
@@ -88,7 +84,6 @@ export function createWinesRoutes() {
   app.post('/', validate('json', wineCreateSchema), async (c) => {
     const body = c.req.valid('json');
     await assertSpaceAccess(c, body.spaceId);
-    c.set('rebuild', { spaceId: body.spaceId });
     const w = await c.get('container').wines.create.execute({
       spaceId: body.spaceId,
       categoryId: body.categoryId,
@@ -112,7 +107,6 @@ export function createWinesRoutes() {
     assertSameGroup(ids, found, wine => wine.categoryId);
     const spaceId = found[0]!.spaceId;
     await assertSpaceAccess(c, spaceId);
-    c.set('rebuild', { spaceId });
     await repo.reorder(ids);
     return c.json({ ok: true });
   });
@@ -122,7 +116,6 @@ export function createWinesRoutes() {
     const id = c.req.param('id');
     const existing = await c.get('container').wines.get.execute(id);
     await assertSpaceAccess(c, existing.spaceId);
-    c.set('rebuild', { spaceId: existing.spaceId });
     const w = await c.get('container').wines.update.execute(id, c.req.valid('json'), user.id);
     return c.json({ wine: await enrichWine(c, w) });
   });
@@ -131,7 +124,6 @@ export function createWinesRoutes() {
     const id = c.req.param('id');
     const existing = await c.get('container').wines.get.execute(id);
     await assertSpaceAccess(c, existing.spaceId);
-    c.set('rebuild', { spaceId: existing.spaceId });
     await c.get('container').wines.delete.execute(id);
     return c.json({ ok: true });
   });

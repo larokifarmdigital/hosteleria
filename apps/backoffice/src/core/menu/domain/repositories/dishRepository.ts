@@ -25,6 +25,9 @@ export interface DishRepository {
   createCategory(input: { spaceId: string; name: I18nValue; order: number; kind?: DishKind }): Promise<DishCategory>;
   updateCategory(id: string, patch: { name?: I18nValue; order?: number }): Promise<void>;
 
+  /** Vuelve a crear (o deja como estaban) categorías y platos con sus ids: recuperar lo publicado. */
+  restore(categories: DishCategory[], dishes: Dish[]): Promise<void>;
+
   /** Restrict: lanza `CategoryHasDishesError` si la categoría tiene platos. */
   deleteCategory(id: string): Promise<void>;
 }

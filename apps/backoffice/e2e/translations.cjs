@@ -145,7 +145,10 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
   await step('D', async () => {
     await page.goto(`${BASE}/restaurants/pruebas?s=menu`);
     await page.getByLabel('Mostrar').waitFor();
+    // La barra sale antes que la lista: se espera a los platos.
+    await page.getByText('Tortilla trufada').first().waitFor();
     await page.getByLabel('Mostrar').selectOption({ label: 'Falta traducción' });
+    await page.getByText('1 resultado', { exact: true }).waitFor({ timeout: 5000 }).catch(() => {});
     check('filtro: 1 resultado', await page.getByText('1 resultado', { exact: true }).isVisible());
     check('es la tortilla y dice qué falta', await page.getByText('Tortilla trufada').isVisible() && await page.locator('li', { hasText: 'Tortilla trufada' }).getByText('Falta traducir: CA').isVisible() && !(await page.getByText('Escalivada con anchoa').count()));
     await page.getByRole('button', { name: 'Editar Tortilla trufada' }).click();
@@ -166,7 +169,7 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
     await sheet.waitFor({ state: 'hidden' });
 
     await page.getByLabel('Mostrar').selectOption({ label: 'Todos' });
-    await page.getByRole('button', { name: 'Añadir categoría' }).click();
+    await page.getByRole('button', { name: 'Añadir categoría de platos' }).click();
     const dlg = page.getByRole('dialog', { name: 'Nueva categoría' });
     await dlg.locator('#cat-es').fill('Postres');
     check('categoría: aviso en los idiomas vacíos', await dlg.locator('#cat-ca-warning').isVisible() && await dlg.locator('#cat-en-warning').isVisible() && !(await dlg.locator('#cat-es-warning').count()));
@@ -175,7 +178,7 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
     await page.waitForTimeout(400);
     await dlg.getByRole('button', { name: 'Cancelar' }).click();
 
-    await page.getByRole('link', { name: /Vinos/ }).click();
+    await page.getByRole('navigation', { name: 'Partes de la carta' }).getByRole('link', { name: /Vinos/ }).click();
     await page.waitForTimeout(800);
     const has = await page.getByLabel('Mostrar').count() ? await page.getByLabel('Mostrar').locator('option').allInnerTexts() : ['(sin categorías de vino)'];
     console.log('   filtro en vinos:', JSON.stringify(has));

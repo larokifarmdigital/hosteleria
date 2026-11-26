@@ -19,5 +19,7 @@ export interface WineRepository {
   updateCategory(id: string, patch: { name?: I18nValue; order?: number }): Promise<void>;
 
   /** Restrict: lanza `CategoryHasWinesError` si tiene vinos. */
+  /** Vuelve a crear (o deja como estaban) categorías y vinos con sus ids: recuperar lo publicado. */
+  restore(categories: WineCategory[], wines: Wine[]): Promise<void>;
   deleteCategory(id: string): Promise<void>;
 }

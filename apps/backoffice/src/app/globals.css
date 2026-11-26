@@ -147,3 +147,13 @@
   .editor-block + .editor-fold,
   .editor-fold + .editor-block { border-top: 1px solid var(--color-border); padding-top: 28px; margin-top: 4px; }
 }
+
+/* Avisos (sonner, richColors): sus verdes y rojos por defecto no llegan a 4,5:1. Se usan los de la paleta. */
+html [data-sonner-toaster][data-sonner-theme='light'] {
+  --success-bg: var(--color-ok-soft);
+  --success-border: #c9e2d0;
+  --success-text: var(--color-ok-fg);
+  --error-bg: var(--color-danger-soft);
+  --error-border: #f3c9c4;
+  --error-text: var(--color-danger);
+}

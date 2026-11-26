@@ -55,10 +55,10 @@ const pause = ms => new Promise(r => setTimeout(r, ms));
       await dialog.getByRole('button', { name: 'Cerrar' }).first().click();
     });
 
-    console.log('— La carta dice que sale sola');
+    console.log('— La carta también sale al publicar');
     await step('carta', async () => {
       await page.goto(`${BASE}/restaurants/pruebas?s=menu`);
-      await page.getByText(/Cada cambio sale en la web .*sin publicar/).waitFor({ timeout: 8000 });
+      await page.getByText(/salen en tu web al pulsar «Publicar cambios»/).first().waitFor({ timeout: 8000 });
       check('la sección lo explica', true);
     });
     await pause(20000);
@@ -104,12 +104,12 @@ const pause = ms => new Promise(r => setTimeout(r, ms));
       await dialog.getByRole('button', { name: 'Cancelar' }).click();
 
       await page.waitForTimeout(400);
-      await page.getByRole('button', { name: /ver el detalle/ }).first().click();
-      const discard = page.getByRole('dialog').getByRole('button', { name: 'Descartar los cambios de los datos del restaurante' });
+      await publishButton().click();
+      const discard = page.getByRole('dialog').getByRole('button', { name: 'Descartar todos los cambios' });
       await discard.waitFor();
-      check('en el estado de la web se puede deshacer lo no publicado', await discard.isVisible());
+      check('en el diálogo de publicar se puede descartar lo no publicado', await discard.isVisible());
       await discard.click();
-      await page.getByRole('dialog').getByRole('button', { name: 'Sí, descartar' }).click();
+      await page.getByRole('dialog').getByRole('button', { name: 'Sí, descartar todo' }).click();
       await page.getByText('La web está al día').first().waitFor({ timeout: 10000 });
       const r = (await api('GET', '/restaurants/pruebas')).body.restaurant;
       check('descartar vuelve a lo publicado', r.state === 'published' && r.foundedYear !== 1987, [r.state, r.foundedYear]);

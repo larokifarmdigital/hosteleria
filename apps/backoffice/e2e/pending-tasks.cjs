@@ -66,6 +66,7 @@ const AXE = { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', '
       await group.getByRole('link', { name: /en los platos de «Comedor principal»/ }).click();
       await p.waitForURL(/s=menu/);
       await p.locator('#carta-mostrar').waitFor();
+      await p.getByText('Tortilla trufada').first().waitFor({ timeout: 10000 }).catch(() => {});
       check('la tarea de la carta lleva a los platos ya filtrados por «Falta traducción»',
         /ver=sin-traducir/.test(p.url()) && (await p.locator('#carta-mostrar').inputValue()) === 'missing' && await p.getByText('Tortilla trufada').first().isVisible(), p.url());
       await pause(4000);

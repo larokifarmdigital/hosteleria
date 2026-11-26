@@ -55,7 +55,7 @@ export function ItemSheetShell({ title, dirty, saving, onSubmit, onClose, deleti
           pending={deletion.pending}
           onConfirm={() => deletion.onConfirm().then(() => setConfirmDelete(false), () => {})}
         >
-          <p className="m-0">Desaparecerá de la carta. No se puede deshacer.</p>
+          <p className="m-0">Si sale en tu web, se quitará al publicar. Hasta entonces puedes recuperarlo.</p>
         </ConfirmDialog>
       )}
     </Sheet>

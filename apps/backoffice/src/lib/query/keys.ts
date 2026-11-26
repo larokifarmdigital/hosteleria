@@ -23,6 +23,11 @@ export const qk = {
     all: ['pendingTasks'] as const,
     byRestaurant: (restaurantSlug: string, stamp: number = 0) => [...qk.pendingTasks.all, restaurantSlug, stamp] as const
   },
+  /** Cambios sin publicar en carta, vinos, legales y espacios. */
+  siteChanges: {
+    all: ['siteChanges'] as const,
+    byRestaurant: (restaurantSlug: string) => [...qk.siteChanges.all, restaurantSlug] as const
+  },
   siteStatus: {
     all: ['siteStatus'] as const,
     byRestaurant: (restaurantSlug: string) => [...qk.siteStatus.all, restaurantSlug] as const

@@ -24,7 +24,8 @@ export class PatchRestaurantUseCase {
     private readonly languages: LanguageRepository
   ) {}
 
-  async execute(slug: string, input: PatchRestaurantInput, actorId: string): Promise<{ id: string }> {
+  /** `allowIncompleteTranslations`: publicar aunque falte traducir algo (solo «Publicar», y no la primera vez). */
+  async execute(slug: string, input: PatchRestaurantInput, actorId: string, opts: { allowIncompleteTranslations?: boolean } = {}): Promise<{ id: string }> {
     const r = await this.restaurants.findBySlug(slug);
     if (!r) throw new RestaurantNotFoundError(slug);
 
@@ -40,7 +41,7 @@ export class PatchRestaurantUseCase {
     const activeLocaleCodes = input.activeLocaleCodes ?? r.activeLocaleCodes;
     const defaultLocaleCode = input.defaultLocaleCode ?? r.defaultLocaleCode;
 
-    if (willBePublished) {
+    if (willBePublished && !opts.allowIncompleteTranslations) {
       assertTranslationsComplete(restaurantTranslatableTexts(content as RestaurantContent), activeLocaleCodes);
     }
 

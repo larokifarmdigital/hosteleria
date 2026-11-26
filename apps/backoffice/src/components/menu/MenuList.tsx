@@ -23,6 +23,18 @@ export interface MenuRow {
   missing: string[];
   /** Foto del plato, si tiene. */
   imageUrl?: string;
+  /** Cambiado desde el último «Publicar»: aún no está así en la web. */
+  unpublished?: boolean;
+  /** El precio que enseña la web ahora, si ha cambiado. */
+  pricedBefore?: string;
+}
+
+/** Lo que la web enseña y en el backoffice ya no está: se quitará al publicar. */
+export interface RemovedMenuRow {
+  id: string;
+  categoryId: string;
+  name: string;
+  price: string;
 }
 
 interface Props {
@@ -44,6 +56,12 @@ interface Props {
   onReorderItems: (ids: string[]) => void;
   /** Los ids de las categorías en su orden nuevo. */
   onReorderCategories: (ids: string[]) => void;
+  /** Categorías con cambios sin publicar. */
+  unpublishedCategories?: Set<string>;
+  removed?: RemovedMenuRow[];
+  onRestore?: (id: string) => void;
+  /** Nivel del título de cada categoría: va debajo del de su carta (Platos, Vinos, Bebidas). */
+  categoryHeading?: 'h3' | 'h4';
 }
 
 function moved<T>(list: T[], from: number, to: number): T[] {
@@ -52,8 +70,9 @@ function moved<T>(list: T[], from: number, to: number): T[] {
   return next;
 }
 
-export function MenuList({ categories, locales, rows, totals, filtering, defaultLocale, itemNoun, onAdd, onEdit, onToggle, onRenameCategory, onDeleteCategory, onReorderItems, onReorderCategories }: Props) {
-  const CardHeading = useCardHeading();
+export function MenuList({ categories, locales, rows, totals, filtering, defaultLocale, itemNoun, onAdd, onEdit, onToggle, onRenameCategory, onDeleteCategory, onReorderItems, onReorderCategories, unpublishedCategories, removed = [], onRestore, categoryHeading }: Props) {
+  const contextHeading = useCardHeading();
+  const CardHeading = categoryHeading ?? contextHeading;
   const [announcement, setAnnouncement] = useState('');
 
   const moveCategory = (index: number, to: number, label: string) => {
@@ -86,6 +105,7 @@ export function MenuList({ categories, locales, rows, totals, filtering, default
                 <CardHeading id={`cat-${category.id}`} className="m-0 text-[15px] font-bold tracking-[-0.01em]">
                   {label} <span className="tabular font-normal text-[color:var(--color-muted)]">· {total}</span>
                 </CardHeading>
+                {unpublishedCategories?.has(category.id) && <Pill variant="warn" dot>Sin publicar</Pill>}
                 {untranslated.length > 0 && <Pill variant="warn">Falta traducir: {untranslated.map(c => c.toUpperCase()).join(', ')}</Pill>}
               </div>
               <div className="flex flex-shrink-0 items-center gap-1">
@@ -140,9 +160,40 @@ export function MenuList({ categories, locales, rows, totals, filtering, default
                 </ul>
               </SortableList>
             )}
+            {!filtering && <RemovedRows rows={removed.filter(r => r.categoryId === category.id)} onRestore={onRestore} />}
           </section>
         );
       })}
+      {!filtering && (() => {
+        // De categorías que también se han borrado.
+        const known = new Set(categories.map(c => c.id));
+        const orphans = removed.filter(r => !known.has(r.categoryId));
+        return orphans.length > 0 && (
+          <section aria-label="De categorías borradas">
+            <RemovedRows rows={orphans} onRestore={onRestore} />
+          </section>
+        );
+      })()}
+    </div>
+  );
+}
+
+function RemovedRows({ rows, onRestore }: { rows: RemovedMenuRow[]; onRestore?: (id: string) => void }) {
+  if (rows.length === 0) return null;
+  return (
+    <div className="mt-2 rounded-[10px] border border-dashed border-[color:var(--color-border-strong)] px-3 py-2">
+      <p className="m-0 mb-1 text-[13px] font-semibold text-[color:var(--color-warn-fg)]">Se quitará de tu web al publicar</p>
+      <ul className="m-0 flex list-none flex-col p-0">
+        {rows.map(row => (
+          <li key={row.id} className="flex min-h-11 items-center gap-3 text-[14px]">
+            <span className="min-w-0 flex-1 truncate text-[color:var(--color-muted)] line-through">{row.name}</span>
+            <span className="tabular text-[color:var(--color-muted)] line-through">{row.price}</span>
+            {onRestore && (
+              <Button size="sm" variant="secondary" aria-label={`Recuperar ${row.name}`} onClick={() => onRestore(row.id)}>Recuperar</Button>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -165,7 +216,10 @@ function ItemRow({ row, sortable, onEdit, onToggle, onUp, onDown }: { row: MenuR
           <img src={row.imageUrl} alt="" loading="lazy" decoding="async" className="h-9 w-9 flex-shrink-0 rounded-[6px] object-cover" />
         )}
         <span className="min-w-0 flex-1">
-          <span className={cn('block text-[14px] font-semibold leading-snug', row.active ? 'text-[color:var(--color-ink)]' : 'text-[color:var(--color-muted)]')}>{row.name}</span>
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <span className={cn('text-[14px] font-semibold leading-snug', row.active ? 'text-[color:var(--color-ink)]' : 'text-[color:var(--color-muted)]')}>{row.name}</span>
+            {row.unpublished && <Pill variant="warn" dot>Sin publicar</Pill>}
+          </span>
           {row.detail && <span className="mt-0.5 hidden truncate text-[13px] leading-tight text-[color:var(--color-muted)] sm:block">{row.detail}</span>}
           {row.missing.length > 0 && (
             <span className="mt-0.5 flex items-center gap-1.5 text-[12.5px] font-medium text-[color:var(--color-warn-fg)]">
@@ -174,7 +228,10 @@ function ItemRow({ row, sortable, onEdit, onToggle, onUp, onDown }: { row: MenuR
             </span>
           )}
         </span>
-        <span className={cn('tabular flex-shrink-0 text-right text-[14px] font-semibold', row.active ? 'text-[color:var(--color-ink)]' : 'text-[color:var(--color-muted)]')}>{row.price}</span>
+        <span className="flex flex-shrink-0 flex-col items-end">
+          <span className={cn('tabular text-right text-[14px] font-semibold', row.active ? 'text-[color:var(--color-ink)]' : 'text-[color:var(--color-muted)]')}>{row.price}</span>
+          {row.pricedBefore && <span className="tabular text-[12.5px] text-[color:var(--color-muted)]">Antes: {row.pricedBefore}</span>}
+        </span>
       </button>
       <label className="flex min-h-11 flex-shrink-0 cursor-pointer items-center gap-2 pl-1 pr-1 text-[13px] text-[color:var(--color-ink-soft)]">
         <span aria-hidden className="hidden w-[46px] text-right md:inline">{row.active ? 'Visible' : 'Oculto'}</span>

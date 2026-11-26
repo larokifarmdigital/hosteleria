@@ -35,11 +35,12 @@ export class MediaHasReferencesError extends DomainError {
   readonly status = 400;
   readonly dishesCount: number;
   readonly spacesCount: number;
-  constructor(dishesCount: number, spacesCount: number, inRestaurant = false) {
+  constructor(dishesCount: number, spacesCount: number, inRestaurant = false, inPublishedSite = false) {
     const parts: string[] = [];
     if (dishesCount > 0) parts.push(`${dishesCount} plato${dishesCount === 1 ? '' : 's'}`);
     if (spacesCount > 0) parts.push(`${spacesCount} espacio${spacesCount === 1 ? '' : 's'}`);
     if (inRestaurant) parts.push('la ficha del restaurante');
+    if (inPublishedSite) parts.push('la web publicada');
     const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} y ${parts[parts.length - 1]}` : parts[0];
     super(`No puedes borrar este archivo: lo usa${dishesCount + spacesCount > 1 || parts.length > 1 ? 'n' : ''} ${list}.`);
     this.name = 'MediaHasReferencesError';

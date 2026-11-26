@@ -87,7 +87,13 @@ import {
   RequestSiteRebuildUseCase,
   GetSiteStatusUseCase,
   PublishSiteUseCase,
-  FetchSiteProbe
+  FetchSiteProbe,
+  DrizzlePublishedSiteRepository,
+  SaveSiteCopyUseCase,
+  SiteSourcesLoader,
+  GetSiteChangesUseCase,
+  RestorePublishedRowUseCase,
+  DiscardSiteChangesUseCase
 } from '@/core/site';
 import {
   ListUsersUseCase,
@@ -123,18 +129,21 @@ export function buildContainer(env: Env) {
     : new ConsoleEmailSender();
   const storage = new R2MediaStorage(env);
   const rebuildHook = new FetchRebuildHookCaller();
-  const getSite = new GetPublishedSiteUseCase(
-    restaurantsRepo, spacesRepo, dishesRepo, winesRepo, legalPagesRepo, mediaRepo, languagesRepo, env.R2_PUBLIC_URL
-  );
+  const siteCopiesRepo = new DrizzlePublishedSiteRepository(env);
+  const siteSources = new SiteSourcesLoader(spacesRepo, dishesRepo, winesRepo, legalPagesRepo, mediaRepo, languagesRepo);
+  const getSite = new GetPublishedSiteUseCase(restaurantsRepo, siteCopiesRepo, siteSources, env.R2_PUBLIC_URL);
+  const saveSiteCopy = new SaveSiteCopyUseCase(restaurantsRepo, siteCopiesRepo, siteSources, env.R2_PUBLIC_URL);
 
   const patchRestaurant = new PatchRestaurantUseCase(restaurantsRepo, languagesRepo);
   const patchSpace = new PatchSpaceUseCase(spacesRepo, restaurantsRepo);
+  const discardRestaurant = new DiscardChangesUseCase(restaurantsRepo, languagesRepo);
+  const discardSpace = new DiscardSpaceChangesUseCase(spacesRepo);
 
   return {
     // Expuestos para middlewares que leen directo sin UC (p.ej. `requireRestaurant`).
     repos: {
       restaurantsRepo, usersRepo, sessionsRepo,
-      spacesRepo, dishesRepo, winesRepo, mediaRepo, languagesRepo
+      spacesRepo, dishesRepo, winesRepo, mediaRepo, languagesRepo, siteCopiesRepo
     },
     services: { hasher, storage },
     config: { mediaPublicUrl: env.R2_PUBLIC_URL },
@@ -145,7 +154,12 @@ export function buildContainer(env: Env) {
       get: new GetRestaurantUseCase(restaurantsRepo),
       patch: patchRestaurant,
       publishAll: new PublishSiteUseCase(restaurantsRepo, spacesRepo, patchRestaurant, patchSpace),
-      discard: new DiscardChangesUseCase(restaurantsRepo, languagesRepo),
+      discard: discardRestaurant,
+      changes: new GetSiteChangesUseCase(restaurantsRepo, siteCopiesRepo, siteSources),
+      restoreRow: new RestorePublishedRowUseCase(restaurantsRepo, spacesRepo, siteCopiesRepo, dishesRepo, winesRepo),
+      discardAll: new DiscardSiteChangesUseCase(
+        restaurantsRepo, spacesRepo, siteCopiesRepo, dishesRepo, winesRepo, legalPagesRepo, discardRestaurant, discardSpace
+      ),
       delete: new DeleteRestaurantUseCase(restaurantsRepo),
       pendingTasks: new GetPendingTasksUseCase(restaurantsRepo, spacesRepo, dishesRepo, winesRepo, legalPagesRepo, mediaRepo)
     },
@@ -182,7 +196,7 @@ export function buildContainer(env: Env) {
       get: new GetSpaceUseCase(spacesRepo),
       create: new CreateSpaceUseCase(spacesRepo),
       patch: patchSpace,
-      discard: new DiscardSpaceChangesUseCase(spacesRepo),
+      discard: discardSpace,
       delete: new DeleteSpaceUseCase(spacesRepo)
     },
 
@@ -218,6 +232,7 @@ export function buildContainer(env: Env) {
 
     public: {
       getSite,
+      saveCopy: saveSiteCopy,
       requestRebuild: new RequestSiteRebuildUseCase(restaurantsRepo, spacesRepo, rebuildHook),
       siteStatus: new GetSiteStatusUseCase(restaurantsRepo, getSite, new FetchSiteProbe())
     },
@@ -228,7 +243,7 @@ export function buildContainer(env: Env) {
       confirmUpload: new ConfirmMediaUploadUseCase(mediaRepo, storage),
       update: new UpdateMediaUseCase(mediaRepo),
       references: new GetMediaReferencesUseCase(mediaRepo),
-      delete: new DeleteMediaUseCase(mediaRepo, storage)
+      delete: new DeleteMediaUseCase(mediaRepo, storage, async id => (await siteCopiesRepo.listMediaIds()).includes(id))
     }
   };
 }

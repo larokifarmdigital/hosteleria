@@ -95,14 +95,14 @@ export function DishSheet({ scope, categories, dish, initialCategoryId, nextOrde
     try {
       if (dish) {
         await update.mutateAsync({ id: dish.id, body: { categoryId: values.categoryId, name, note, price, active: values.active, imageAssetId: values.imageAssetId } });
-        showSuccessToast(words.saved, 'La web se actualiza en un par de minutos.');
+        showSuccessToast(words.saved, 'Sale en tu web al publicar.');
       } else {
         await create.mutateAsync({
           spaceId: scope.spaceId, categoryId: values.categoryId, name, note,
           price: price ?? undefined, active: values.active, order: nextOrder,
           imageAssetId: values.imageAssetId ?? undefined
         });
-        showSuccessToast(words.added, 'La web se actualiza en un par de minutos.');
+        showSuccessToast(words.added, 'Sale en tu web al publicar.');
       }
       onClose();
     } catch {

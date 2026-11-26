@@ -35,7 +35,8 @@ export class PatchSpaceUseCase {
     private readonly restaurants: RestaurantRepository
   ) {}
 
-  async execute(restaurantId: string, spaceId: string, input: PatchSpaceInput, actorId: string): Promise<Space> {
+  /** `allowIncompleteTranslations`: publicar aunque falte traducir algo (solo «Publicar», y no la primera vez). */
+  async execute(restaurantId: string, spaceId: string, input: PatchSpaceInput, actorId: string, opts: { allowIncompleteTranslations?: boolean } = {}): Promise<Space> {
     const s = await this.spaces.findById(spaceId);
     if (!s || s.restaurantId !== restaurantId) throw new SpaceNotFoundError(spaceId);
 
@@ -54,7 +55,7 @@ export class PatchSpaceUseCase {
       if (input[key] !== undefined) (patch as Record<string, unknown>)[key] = input[key];
     }
 
-    if (input.state === 'published') {
+    if (input.state === 'published' && !opts.allowIncompleteTranslations) {
       const restaurant = await this.restaurants.findById(restaurantId);
       assertTranslationsComplete(spaceTranslatableTexts(content as SpaceContent), restaurant?.activeLocaleCodes ?? []);
     }

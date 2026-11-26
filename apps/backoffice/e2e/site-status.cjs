@@ -63,7 +63,7 @@ const SP = `/restaurants/pruebas/spaces/${state.SPACE}`;
     check('un editor también puede pedirla en su restaurante, y no en otro', (await editorApi('POST', '/restaurants/pruebas/rebuild')).status === 200 && calls === 3 && (await editorApi('POST', '/restaurants/pubilla/rebuild')).status === 403);
     const dish = (await api('GET', '/dishes?restaurantSlug=pruebas')).body.dishes[0];
     await api('PATCH', `/dishes/${dish.id}`, { price: dish.price });
-    check('guardar un plato avisa y queda apuntado', calls === 4 && (await api('GET', '/restaurants/pruebas/site-status')).body.site.lastRebuildOk === true);
+    check('guardar un plato no avisa a la web: espera a publicar', calls === 3);
     const bad = await api('PATCH', '/restaurants/pruebas', { domain: 'localhost', state: 'draft' });
     const s2 = (await api('GET', '/restaurants/pruebas/site-status')).body.site;
     check('un dominio que no es una web pública no se consulta', bad.status === 200 && s2.state === 'unknown' && s2.siteUrl === null, s2);
@@ -119,21 +119,12 @@ const SP = `/restaurants/pruebas/spaces/${state.SPACE}`;
       check('sin publicar: la tarjeta no aparece', (await card.count()) === 0);
 
       await pause(20000);
-      // Carta
-      const note = p.getByRole('main').getByRole('status').filter({ hasText: /La web/ });
-      mock = site({});
-      await p.goto(`${BASE}/dishes?r=pruebas`);
-      await p.getByRole('navigation', { name: 'Tipo de carta' }).waitFor();
-      await p.waitForTimeout(700);
-      check('carta con la web al día: no hay aviso', (await note.count()) === 0);
+      // Carta: ya no lleva aviso del estado de la web; sus cambios salen al publicar.
       mock = site({ state: 'updating' });
-      const c1 = calls;
-      await p.getByRole('switch').first().click().catch(async () => { await p.getByRole('checkbox').first().click(); });
-      await note.waitFor({ timeout: 10000 });
-      check('al cambiar un plato, la carta avisa de que la web se está actualizando', /La web se está actualizando/.test(await note.innerText()) && calls === c1 + 1, [await note.innerText(), c1, calls]);
-      await audit(p, 'carta con el aviso');
-      await p.getByRole('switch').first().click().catch(async () => { await p.getByRole('checkbox').first().click(); });
+      await p.goto(`${BASE}/dishes?r=pruebas`);
+      await p.getByRole('navigation', { name: 'Partes de la carta' }).waitFor();
       await p.waitForTimeout(1500);
+      check('la carta no enseña el estado de la web', (await p.getByRole('main').getByRole('status').filter({ hasText: /La web se está/ }).count()) === 0);
       await ctx.close();
       await pause(45000);
     }

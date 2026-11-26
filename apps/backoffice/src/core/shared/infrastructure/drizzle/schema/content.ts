@@ -305,3 +305,17 @@ export const winesRelations = relations(wines, ({ one }) => ({
     references: [wineCategories.id]
   })
 }));
+
+/**
+ * Lo que la web enseña: una copia de las filas tal como estaban al pulsar «Publicar»
+ * (ficha y espacios con su snapshot, carta con lo oculto, vinos, legales y fotos usadas).
+ * La lectura pública construye la web desde aquí; las tablas de arriba son el borrador.
+ */
+export const publishedSites = pgTable('published_sites', {
+  restaurantId: text('restaurant_id')
+    .primaryKey()
+    .references(() => restaurants.id, { onDelete: 'cascade' }),
+  sources: jsonb('sources').notNull(),
+  publishedAt: timestamp('published_at', { withTimezone: true }).notNull().defaultNow(),
+  publishedBy: text('published_by')
+});
