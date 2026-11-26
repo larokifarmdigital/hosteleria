@@ -39,12 +39,12 @@ const priceLabels = PRICE_LABELS[locale] ?? PRICE_LABELS.es;
   class='py-[12vh] px-(--gap) bg-bg border-b border-line-strong/40 max-[960px]:py-[8vh]'
 >
   <div class='reveal text-center mb-[70px] mx-auto max-w-[var(--max)] max-[960px]:mb-12'>
-    <div aria-hidden='true' class='flex items-center justify-center gap-3 mb-6 text-accent-alt'>
+    <div aria-hidden='true' class='flex items-center justify-center gap-3 mb-6 text-terracotta'>
       <span class='w-14 h-px bg-accent-alt/60'></span>
       <span class='font-serif text-[20px] leading-none'>∗</span>
       <span class='w-14 h-px bg-accent-alt/60'></span>
     </div>
-    <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-accent-alt font-semibold mb-4'>
+    <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-terracotta font-semibold mb-4'>
       {t(sec.vinosEyebrow, locale, defaultLocale)}
     </span>
     <h2
@@ -89,15 +89,15 @@ const priceLabels = PRICE_LABELS[locale] ?? PRICE_LABELS.es;
                           {wine.nombre}
                         </span>
                         {wine.region && (
-                          <span class='font-serif italic text-accent-alt text-[13px]'>
+                          <span class='font-serif italic text-terracotta text-[13px]'>
                             · {wine.region}
                           </span>
                         )}
                       </div>
-                      <span class='w-[70px] text-right font-serif italic text-accent-alt text-[15px] font-semibold tabular-nums'>
+                      <span class='w-[70px] text-right font-serif italic text-terracotta text-[15px] font-semibold tabular-nums'>
                         {wine.precioCopa != null ? `${wine.precioCopa} €` : '—'}
                       </span>
-                      <span class='w-[70px] text-right font-serif italic text-accent-alt text-[15px] font-semibold tabular-nums'>
+                      <span class='w-[70px] text-right font-serif italic text-terracotta text-[15px] font-semibold tabular-nums'>
                         {wine.precioBotella != null ? `${wine.precioBotella} €` : '—'}
                       </span>
                     </div>

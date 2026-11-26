@@ -45,12 +45,12 @@ const openMapsLabel = locale === 'en' ? 'Open in Google Maps' : 'Ver en Google M
   class='py-[14vh] px-(--gap) border-t border-line max-[900px]:py-[10vh]'
 >
   <div class='reveal max-w-[var(--max)] mx-auto mb-[clamp(50px,6vw,70px)] text-center max-[900px]:mb-10'>
-    <div aria-hidden='true' class='flex items-center justify-center gap-3 mb-6 text-accent-alt'>
+    <div aria-hidden='true' class='flex items-center justify-center gap-3 mb-6 text-terracotta'>
       <span class='w-14 h-px bg-accent-alt/60'></span>
       <span class='font-serif text-[20px] leading-none'>∗</span>
       <span class='w-14 h-px bg-accent-alt/60'></span>
     </div>
-    <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-accent-alt font-semibold mb-4'>
+    <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-terracotta font-semibold mb-4'>
       {headerTitle}
     </span>
     <h2
@@ -73,7 +73,8 @@ const openMapsLabel = locale === 'en' ? 'Open in Google Maps' : 'Ver en Google M
           loading='lazy'
           referrerpolicy='no-referrer-when-downgrade'
           allowfullscreen
-          class='block w-full border-0 h-[clamp(360px,55vh,540px)] max-[900px]:h-[clamp(280px,44vh,380px)] filter [filter:grayscale(0.15)_sepia(0.15)_contrast(0.95)]'
+          data-map-frame
+          class='block w-full border-0 h-[clamp(360px,55vh,540px)] max-[900px]:h-[clamp(280px,44vh,380px)] filter [filter:grayscale(0.15)_sepia(0.15)_contrast(0.95)] data-[kbd-focus]:outline-2 data-[kbd-focus]:outline-accent data-[kbd-focus]:-outline-offset-2'
         ></iframe>
       </div>
     </div>
@@ -111,3 +112,20 @@ const openMapsLabel = locale === 'en' ? 'Open in Google Maps' : 'Ver en Google M
     )
   }
 </section>
+
+<script is:inline>
+  // Un iframe de otro origen nunca casa con :focus: al llegar con Tab no se vería
+  // dónde está el foco. Se marca a mano, solo si se llegó con teclado (como en Casabella).
+  (function () {
+    const frame = document.querySelector('[data-map-frame]');
+    if (!frame) return;
+    let lastTab = 0;
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') lastTab = Date.now();
+    });
+    window.addEventListener('blur', () => {
+      if (document.activeElement === frame && Date.now() - lastTab < 200) frame.setAttribute('data-kbd-focus', '');
+    });
+    window.addEventListener('focus', () => frame.removeAttribute('data-kbd-focus'));
+  })();
+</script>

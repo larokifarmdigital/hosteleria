@@ -14,14 +14,12 @@ const { restaurant, espacio, locale, defaultLocale } = Astro.props;
 
 const sec = restaurant.textosSecciones ?? {};
 
-const galeriaFallback = [
-  '/img/gal-table.jpg', '/img/gal-room.jpg', '/img/gal-soup.jpg',
-  '/img/gal-martini.jpg', '/img/cellar.jpg', '/img/pass.jpg',
-  '/img/glass.jpg', '/img/hire.jpg', '/img/kitchen.jpg'
-];
-const galeriaImgs = espacio.galeria?.length
-  ? espacio.galeria.map(g => img.url(g) ?? '/img/gal-room.jpg')
-  : galeriaFallback;
+// Solo las fotos del espacio, con su descripción: sin fotos no hay galería (antes salían fotos de catálogo).
+const galeriaImgs = (espacio.galeria ?? [])
+  .map(g => ({ src: img.url(g), alt: t(g.alt, locale, defaultLocale) }))
+  .filter((g): g is { src: string; alt: string } => !!g.src);
+const ENLARGE: Record<string, string> = { es: 'Ampliar foto', ca: 'Ampliar la foto', en: 'Enlarge photo', fr: 'Agrandir la photo', it: 'Ingrandisci la foto' };
+const enlarge = ENLARGE[locale] ?? ENLARGE.es;
 
 // Rotación pseudo-aleatoria estable por índice (efecto álbum de recortes)
 const tiltFor = (i: number) => {
@@ -42,12 +40,13 @@ const aspectFor = (i: number) => {
   al hover), aspects variables entre 4/5 y 3/4 para romper rigidez del grid
   uniforme. Look "cuaderno de fotos pegadas con washi tape".
 -->
+{galeriaImgs.length > 0 && (
 <section
   id='gallery'
   class='mx-auto py-[14vh] px-(--gap) max-w-[var(--max)] max-[960px]:py-[10vh]'
 >
   <div class='reveal text-center mb-[70px]'>
-    <div aria-hidden='true' class='flex items-center justify-center gap-3 mb-6 text-accent-alt'>
+    <div aria-hidden='true' class='flex items-center justify-center gap-3 mb-6 text-terracotta'>
       <span class='w-14 h-px bg-accent-alt/60'></span>
       <span class='font-serif text-[20px] leading-none'>∗</span>
       <span class='w-14 h-px bg-accent-alt/60'></span>
@@ -63,17 +62,19 @@ const aspectFor = (i: number) => {
     class='grid grid-cols-3 gap-x-8 gap-y-14 max-[960px]:grid-cols-2 max-[960px]:gap-x-6 max-[960px]:gap-y-10 max-[600px]:grid-cols-1 max-[600px]:gap-y-8'
   >
     {
-      galeriaImgs.map((src, i) => (
+      galeriaImgs.map(({ src, alt }, i) => (
         <button
           type='button'
           data-gallery-item
+          data-alt={alt}
+          aria-label={alt ? `${enlarge}: ${alt}` : `${enlarge} ${i + 1}`}
           style={`--tilt: ${tiltFor(i)}deg;`}
           class:list={[
             'group relative block bg-bg p-3 shadow-[0_12px_28px_-8px_rgb(26_26_36/0.28),0_2px_6px_rgb(26_26_36/0.12)]',
             'transition-[transform,box-shadow] duration-[400ms] ease-out',
             'rotate-[var(--tilt)] hover:rotate-0 hover:-translate-y-1.5',
             'hover:shadow-[0_22px_44px_-8px_rgb(26_26_36/0.4),0_4px_12px_rgb(26_26_36/0.2)]',
-            'cursor-zoom-in motion-reduce:hover:translate-y-0 motion-reduce:rotate-0'
+            'cursor-pointer motion-reduce:hover:translate-y-0 motion-reduce:rotate-0'
           ]}
         >
           <!-- Washi tape simulado (esquina superior izquierda) -->
@@ -97,12 +98,17 @@ const aspectFor = (i: number) => {
     }
   </div>
 </section>
+)}
 
-<!-- Lightbox -->
+<!-- Visor: se cierra con un clic o con Escape, y el foco vuelve a la foto. -->
 <div
   id='lightbox'
   data-open='false'
-  class="fixed inset-0 z-[200] grid place-items-center cursor-zoom-out
+  role='dialog'
+  aria-modal='true'
+  aria-label={enlarge}
+  tabindex='-1'
+  class="fixed inset-0 z-[200] grid place-items-center cursor-pointer outline-none
          invisible opacity-0
          bg-[rgb(26_26_36/0.94)]
          transition-[opacity,visibility] duration-[400ms] delay-[400ms]
@@ -116,20 +122,25 @@ const aspectFor = (i: number) => {
     const lb = document.getElementById('lightbox');
     if (!lb) return;
     const lbi = lb.querySelector('img');
+    let opener = null;
     const setOpen = open => {
       lb.dataset.open = open ? 'true' : 'false';
+      if (open) lb.focus();
+      else if (opener) { opener.focus(); opener = null; }
     };
     document.querySelectorAll('[data-gallery-item]').forEach(c => {
       const inner = c.querySelector('img');
       if (!inner) return;
       c.addEventListener('click', () => {
         lbi.src = inner.src;
+        lbi.alt = c.dataset.alt || '';
+        opener = c;
         setOpen(true);
       });
     });
     lb.addEventListener('click', () => setOpen(false));
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape' && lb.dataset.open === 'true') setOpen(false);
     });
   })();
 </script>

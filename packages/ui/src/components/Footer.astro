@@ -49,8 +49,9 @@ const tt = T[locale] ?? T.es;
 const byline = t(footerTexts.bylineIzq, locale, defaultLocale);
 
 const h4Cls = 'uppercase text-accent font-medium text-[11px] tracking-[0.32em] mb-5';
+// inline-block: el enlace ocupa toda la línea (28 px) y se puede tocar con el dedo; se ve igual.
 const linkCls =
-  'text-ink-soft text-[15px] leading-[1.9] transition-colors duration-300 hover:text-accent cursor-pointer';
+  'inline-block text-ink-soft text-[15px] leading-[1.9] transition-colors duration-300 hover:text-accent cursor-pointer';
 
 const hasRedes = Boolean(instagram || facebook || tiktok);
 const hasLegal = legalPages.length > 0;
@@ -77,7 +78,7 @@ const socialBtn =
     class='grid mx-auto max-w-[var(--max)] mb-14 grid-cols-3 gap-[clamp(40px,6vw,80px)] max-[900px]:grid-cols-1 max-[900px]:gap-10 max-[900px]:mb-10'
   >
     <div>
-      <h4 class={h4Cls}>{tt.visit}</h4>
+      <h2 class={h4Cls}>{tt.visit}</h2>
       <p class='text-ink-soft text-[15px] leading-[1.9]'>
         {dir.calle}<br />
         {dir.codigoPostal} {dir.ciudad}<br />
@@ -86,7 +87,7 @@ const socialBtn =
     </div>
 
     <div>
-      <h4 class={h4Cls}>{tt.contact}</h4>
+      <h2 class={h4Cls}>{tt.contact}</h2>
       {bookingPhone && (
         <p>
           <a href={`tel:${bookingPhone}`} class={linkCls}>{bookingPhone}</a>
@@ -135,7 +136,7 @@ const socialBtn =
 
     {hasLegal && (
       <div>
-        <h4 class={h4Cls}>{tt.legal}</h4>
+        <h2 class={h4Cls}>{tt.legal}</h2>
         <ul class='flex flex-col gap-1.5'>
           {legalPages.map(p => (
             <li>

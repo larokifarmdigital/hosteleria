@@ -104,27 +104,34 @@ const currentSlug = espacio.slug?.current ?? '';
 <main id="main">
   <Hero restaurant={restaurant} espacio={espacio} locale={locale} defaultLocale={defaultLocale} />
   <Manifesto restaurant={restaurant} espacio={espacio} locale={locale} defaultLocale={defaultLocale} />
-  <Dishes
-    restaurant={restaurant}
-    dishCategories={dishCategories}
-    dishes={dishes}
-    locale={locale}
-    defaultLocale={defaultLocale}
-  />
-  <Drinks
-    restaurant={restaurant}
-    drinkCategories={drinkCategories}
-    drinks={drinks}
-    locale={locale}
-    defaultLocale={defaultLocale}
-  />
-  <Wines
-    restaurant={restaurant}
-    wineCategories={wineCategories}
-    wines={wines}
-    locale={locale}
-    defaultLocale={defaultLocale}
-  />
+  {/* Cada parte de la carta solo sale si el espacio tiene algo en ella (Apotheke y Sala no tienen vinos). */}
+  {dishes.length > 0 && (
+    <Dishes
+      restaurant={restaurant}
+      dishCategories={dishCategories}
+      dishes={dishes}
+      locale={locale}
+      defaultLocale={defaultLocale}
+    />
+  )}
+  {drinks.length > 0 && (
+    <Drinks
+      restaurant={restaurant}
+      drinkCategories={drinkCategories}
+      drinks={drinks}
+      locale={locale}
+      defaultLocale={defaultLocale}
+    />
+  )}
+  {wines.length > 0 && (
+    <Wines
+      restaurant={restaurant}
+      wineCategories={wineCategories}
+      wines={wines}
+      locale={locale}
+      defaultLocale={defaultLocale}
+    />
+  )}
   <Gallery restaurant={restaurant} espacio={espacio} locale={locale} defaultLocale={defaultLocale} />
   <Booking
     restaurant={restaurant}
@@ -148,6 +155,6 @@ const currentSlug = espacio.slug?.current ?? '';
   showCta={false}
 />
 
-<WhatsAppFab href={waHref} locale={locale} />
+<aside aria-label='WhatsApp'><WhatsAppFab href={waHref} locale={locale} /></aside>
 
 <RevealScript />

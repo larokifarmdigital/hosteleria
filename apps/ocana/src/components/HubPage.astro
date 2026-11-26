@@ -306,9 +306,9 @@ const mapsExternalUrl = buildMapsExternalUrl('', coords, fullAddress, locale);
     ></div>
 
     {heroEyebrow && (
-      <div class='reveal relative flex items-center gap-4 text-accent-alt mb-8'>
+      <div class='reveal relative flex items-center gap-4 text-terracotta mb-8'>
         <span class='w-16 h-px bg-accent-alt/60'></span>
-        <span class='font-sans uppercase text-[11px] tracking-[0.36em] text-accent-alt font-semibold'>
+        <span class='font-sans uppercase text-[11px] tracking-[0.36em] text-terracotta font-semibold'>
           {heroEyebrow}
         </span>
         <span class='w-16 h-px bg-accent-alt/60'></span>
@@ -395,7 +395,7 @@ const mapsExternalUrl = buildMapsExternalUrl('', coords, fullAddress, locale);
     class='py-[10vh] px-(--gap) max-w-[var(--max)] mx-auto max-[900px]:py-[8vh]'
   >
     <div class='reveal text-center mb-[clamp(50px,6vw,80px)]'>
-      <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-accent-alt font-semibold mb-4'>
+      <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-terracotta font-semibold mb-4'>
         {c.discover}
       </span>
       <h2 class='font-serif font-normal leading-[1] tracking-[-0.01em] text-[clamp(38px,5vw,64px)] mb-5'>
@@ -549,7 +549,7 @@ const mapsExternalUrl = buildMapsExternalUrl('', coords, fullAddress, locale);
        para que sirva a cualquier grupo. -->
   <section class='py-[14vh] px-(--gap) max-w-[var(--max)] mx-auto text-center max-[960px]:py-[10vh]'>
     <div class='reveal'>
-      <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-accent-alt font-semibold mb-5'>
+      <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-terracotta font-semibold mb-5'>
         {c.visit}
       </span>
       <h2 class='font-serif font-normal leading-[1.05] tracking-[-0.01em] text-[clamp(38px,5.5vw,72px)] mb-10'>
@@ -593,7 +593,7 @@ const mapsExternalUrl = buildMapsExternalUrl('', coords, fullAddress, locale);
 <footer class='pt-[12vh] pb-8 px-(--gap) border-t border-line bg-surface [&_a]:cursor-pointer max-[960px]:py-[8vh] max-[960px]:pb-8'>
   <div class='mx-auto max-w-[var(--max)] grid grid-cols-3 gap-[clamp(40px,6vw,80px)] mb-14 max-[900px]:grid-cols-1 max-[900px]:gap-10 max-[900px]:mb-10'>
     <div>
-      <h4 class='uppercase text-accent font-medium text-[11px] tracking-[0.32em] mb-5'>{c.espaciosCol}</h4>
+      <h2 class='uppercase text-accent font-medium text-[11px] tracking-[0.32em] mb-5'>{c.espaciosCol}</h2>
       <ul class='space-y-3'>
         {espacioCards.map((e) => (
           <li>
@@ -609,7 +609,7 @@ const mapsExternalUrl = buildMapsExternalUrl('', coords, fullAddress, locale);
       </ul>
     </div>
     <div>
-      <h4 class='uppercase text-accent font-medium text-[11px] tracking-[0.32em] mb-5'>{c.visit}</h4>
+      <h2 class='uppercase text-accent font-medium text-[11px] tracking-[0.32em] mb-5'>{c.visit}</h2>
       <p class='text-ink-soft text-[15px] leading-[1.9]'>
         {dir.calle}<br />
         {dir.codigoPostal} {dir.ciudad}<br />
@@ -618,15 +618,15 @@ const mapsExternalUrl = buildMapsExternalUrl('', coords, fullAddress, locale);
       <p class='mt-4 text-dim text-[13px] italic'>{c.hoursNote}</p>
     </div>
     <div>
-      <h4 class='uppercase text-accent font-medium text-[11px] tracking-[0.32em] mb-5'>{c.contact}</h4>
+      <h2 class='uppercase text-accent font-medium text-[11px] tracking-[0.32em] mb-5'>{c.contact}</h2>
       {bookingPhone && (
-        <p><a href={`tel:${bookingPhone}`} class='text-ink-soft text-[15px] leading-[1.9] hover:text-accent transition-colors'>{bookingPhone}</a></p>
+        <p><a href={`tel:${bookingPhone}`} class='inline-block text-ink-soft text-[15px] leading-[1.9] hover:text-accent transition-colors'>{bookingPhone}</a></p>
       )}
       {bookingEmail && (
-        <p><a href={`mailto:${bookingEmail}`} class='text-ink-soft text-[15px] leading-[1.9] hover:text-accent transition-colors'>{bookingEmail}</a></p>
+        <p><a href={`mailto:${bookingEmail}`} class='inline-block text-ink-soft text-[15px] leading-[1.9] hover:text-accent transition-colors'>{bookingEmail}</a></p>
       )}
       {waHref && (
-        <p><a href={waHref} target='_blank' rel='noopener' class='text-ink-soft text-[15px] leading-[1.9] hover:text-accent transition-colors'>WhatsApp · {whatsappRaw}</a></p>
+        <p><a href={waHref} target='_blank' rel='noopener' class='inline-block text-ink-soft text-[15px] leading-[1.9] hover:text-accent transition-colors'>WhatsApp · {whatsappRaw}</a></p>
       )}
     </div>
   </div>
@@ -650,7 +650,7 @@ const mapsExternalUrl = buildMapsExternalUrl('', coords, fullAddress, locale);
     )}
     <div class='flex items-center gap-6 max-[700px]:gap-4'>
       {instagramHandle && (
-        <a href={instagram} target='_blank' rel='noopener' class='hover:text-accent transition-colors'>
+        <a href={instagram} target='_blank' rel='noopener' class='inline-flex min-h-6 items-center hover:text-accent transition-colors'>
           {instagramHandle}
         </a>
       )}
@@ -659,7 +659,7 @@ const mapsExternalUrl = buildMapsExternalUrl('', coords, fullAddress, locale);
   </div>
 </footer>
 
-<WhatsAppFab href={waHref} locale={locale} />
+<aside aria-label='WhatsApp'><WhatsAppFab href={waHref} locale={locale} /></aside>
 <RevealScript />
 
 <style>

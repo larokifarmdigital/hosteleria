@@ -36,13 +36,13 @@ const bookingConfig = {
 
 // Inputs con font-serif italic placeholder (aire "recetario manuscrito")
 const inputCls =
-  'w-full bg-transparent border-0 border-b-2 border-line-strong/60 py-3 pb-3.5 px-0 font-serif text-ink text-[17px] font-normal transition-colors duration-300 focus:outline-none focus:border-accent placeholder:text-dim placeholder:italic';
+  'w-full bg-transparent border-0 border-b-2 border-line-strong/60 py-3 pb-3.5 px-0 font-serif text-ink text-[17px] font-normal transition-colors duration-300 focus:outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent focus:border-accent placeholder:text-dim placeholder:italic';
 const labelCls =
   'flex flex-col gap-2.5 font-sans uppercase text-muted font-medium text-[11px] tracking-[0.22em]';
 const errorCls =
   'text-[11px] tracking-normal normal-case text-accent italic hidden data-[error]:block';
 const pickerBtnCls =
-  'w-full bg-transparent border-0 border-b-2 border-line-strong/60 py-3 pb-3.5 px-0 font-serif text-ink text-[17px] font-normal text-left transition-colors duration-300 hover:border-accent focus:outline-none focus:border-accent flex items-center justify-between gap-3 cursor-pointer';
+  'w-full bg-transparent border-0 border-b-2 border-line-strong/60 py-3 pb-3.5 px-0 font-serif text-ink text-[17px] font-normal text-left transition-colors duration-300 hover:border-accent focus:outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent focus:border-accent flex items-center justify-between gap-3 cursor-pointer';
 ---
 
 <!--
@@ -58,12 +58,12 @@ const pickerBtnCls =
   <div class='mx-auto max-w-[860px]'>
     <!-- Header con asterisco -->
     <div class='reveal text-center mb-[60px] max-[960px]:mb-10'>
-      <div aria-hidden='true' class='flex items-center justify-center gap-3 mb-6 text-accent-alt'>
+      <div aria-hidden='true' class='flex items-center justify-center gap-3 mb-6 text-terracotta'>
         <span class='w-14 h-px bg-accent-alt/60'></span>
         <span class='font-serif text-[20px] leading-none'>∗</span>
         <span class='w-14 h-px bg-accent-alt/60'></span>
       </div>
-      <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-accent-alt font-semibold mb-4'>
+      <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-terracotta font-semibold mb-4'>
         {t(nav.linkReservar, locale, defaultLocale) || 'Reserva'}
       </span>
       <h2

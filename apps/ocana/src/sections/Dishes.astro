@@ -32,12 +32,12 @@ const dishesByCategory = dishCategories.map(cat => ({
 >
   <!-- Header con doble regla -->
   <div class='reveal text-center mb-[70px] mx-auto max-w-[var(--max)] max-[960px]:mb-12'>
-    <div aria-hidden='true' class='flex items-center justify-center gap-3 mb-6 text-accent-alt'>
+    <div aria-hidden='true' class='flex items-center justify-center gap-3 mb-6 text-terracotta'>
       <span class='w-14 h-px bg-accent-alt/60'></span>
       <span class='font-serif text-[20px] leading-none'>∗</span>
       <span class='w-14 h-px bg-accent-alt/60'></span>
     </div>
-    <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-accent-alt font-semibold mb-4'>
+    <span class='block font-sans uppercase text-[11px] tracking-[0.32em] text-terracotta font-semibold mb-4'>
       {t(sec.platosEyebrow, locale, defaultLocale)}
     </span>
     <h2
@@ -73,7 +73,7 @@ const dishesByCategory = dishCategories.map(cat => ({
                         class='flex-1 min-w-[24px] border-b border-dotted border-line-strong/60 translate-y-[-4px]'
                         aria-hidden='true'
                       />
-                      <span class='font-serif italic text-accent-alt text-[16px] font-semibold tabular-nums whitespace-nowrap shrink-0'>
+                      <span class='font-serif italic text-terracotta text-[16px] font-semibold tabular-nums whitespace-nowrap shrink-0'>
                         {dish.precio != null ? `${dish.precio} €` : '—'}
                       </span>
                     </div>

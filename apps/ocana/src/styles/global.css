@@ -24,7 +24,8 @@
   --color-ink: #e8e2d5;           /* crema tenue (fg principal) */
   --color-ink-soft: #cfc7b6;
   --color-muted: #a89f8f;
-  --color-dim: #7a7264;
+  /* 4,5:1 sobre bg, bg-2 y surface (antes #7a7264 no llegaba en texto pequeño). */
+  --color-dim: #8f8676;
   --color-line: rgb(232 226 213 / 0.12);
   --color-line-strong: rgb(232 226 213 / 0.28);
 
@@ -34,6 +35,8 @@
   --color-accent-hover: #d8bd7f;
   /* Accent secundario: terracota / ladrillo (evoca las bóvedas) */
   --color-accent-alt: #8b3a26;
+  /* La terracota como texto: #8b3a26 sobre el fondo oscuro se queda en 2,4:1. Esta llega a 4,9:1. */
+  --color-terracotta: #c4704f;
 
   /* WhatsApp FAB outline (marca-específico) */
   --wa-outline: rgb(201 169 97 / 0.35);
