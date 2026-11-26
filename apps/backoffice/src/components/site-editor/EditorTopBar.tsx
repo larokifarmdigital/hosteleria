@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { AlertCircle, Check, ExternalLink, Loader2 } from 'lucide-react';
+import { AlertCircle, Check, ChevronRight, ExternalLink, Loader2 } from 'lucide-react';
 import type { PendingTask } from '@hosteleria/api-client';
 import { Button } from '@/components/shared/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -10,7 +10,9 @@ import { showSuccessToast } from '@/lib/api';
 import { usePendingTasks, usePublishAll, useSiteStatus } from '@/lib/query/hooks';
 import { describeTask } from '@/lib/tasks';
 import { cn } from '@/lib/utils';
+import { SectionHeadingLevel } from '@/components/shared/Section';
 import { useEditor, useFlushAll, useGoToField, useRestaurantDraft, useSpaceDraft } from './EditorContext';
+import { StatusContent } from './StatusContent';
 import type { SaveStatus } from './useAutosave';
 
 type Unpublished = Extract<PendingTask, { type: 'unpublished' }>;
@@ -124,17 +126,47 @@ function SaveIndicator() {
   return <span role="status" aria-live="polite">{content}</span>;
 }
 
+/** Estado de la web; al pulsarlo, el detalle: cómo está la web, lo que falta y deshacer lo no publicado. */
 function WebIndicator() {
   const { restaurant } = useEditor();
-  const { web } = useEditorStatus();
+  const { web, tasks } = useEditorStatus();
   const { data: site } = useSiteStatus(restaurant.slug);
+  const [open, setOpen] = useState(false);
   const dot = (color: string) => <span aria-hidden className="h-2 w-2 flex-shrink-0 rounded-full" style={{ background: color }} />;
   const base = 'inline-flex min-h-7 items-center gap-1.5 text-[13px] font-medium text-[color:var(--color-ink-soft)]';
   if (web === 'loading') return <span className={base}>Comprobando la web…</span>;
-  if (web === 'never') return <span className={base}>{dot('var(--color-muted)')}La web aún no se ha publicado</span>;
-  if (web === 'changes') return <span className={base}>{dot('var(--color-warn)')}Hay cambios sin publicar</span>;
-  if (site?.state === 'updating') return <span className={base}>{dot('var(--color-warn)')}La web se está actualizando</span>;
-  return <span className={base}>{dot('var(--color-ok)')}La web está al día</span>;
+
+  const todo = tasks.filter(t => t.type !== 'unpublished').length;
+  const label =
+    web === 'never' ? <>{dot('var(--color-muted)')}La web aún no se ha publicado</>
+      : web === 'changes' ? <>{dot('var(--color-warn)')}Hay cambios sin publicar</>
+        : site?.state === 'updating' ? <>{dot('var(--color-warn)')}La web se está actualizando</>
+          : <>{dot('var(--color-ok)')}La web está al día</>;
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={cn(base, 'cursor-pointer rounded-[6px] border-0 bg-transparent px-0 hover:text-[color:var(--color-ink)]')}
+      >
+        {label}
+        {todo > 0 && <span className="text-[color:var(--color-muted)]">· {todo === 1 ? 'falta 1 cosa' : `faltan ${todo} cosas`}</span>}
+        <ChevronRight aria-hidden className="h-3.5 w-3.5 text-[color:var(--color-muted)]" />
+        <span className="sr-only">(ver el detalle)</span>
+      </button>
+      {open && (
+        <Modal open size="lg" onClose={() => setOpen(false)} title="Estado de tu web">
+          {/* Un aviso lleva a otra sección: el diálogo se cierra al seguirlo. */}
+          <div onClickCapture={e => { if ((e.target as HTMLElement).closest('a[href^="/"]')) setOpen(false); }}>
+            <SectionHeadingLevel value={3}>
+              <StatusContent />
+            </SectionHeadingLevel>
+          </div>
+        </Modal>
+      )}
+    </>
+  );
 }
 
 function MainAction() {

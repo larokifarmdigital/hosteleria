@@ -87,10 +87,10 @@ export function SpacesSection({ restaurant, spaces }: Props) {
                   {space.isDefault && ordered.length > 1 && <span className="sr-only">: es el que la web enseña primero</span>}
                 </div>
                 <p className="m-0 text-[13px] text-[color:var(--color-muted)]">
-                  {spaceTypeLabel(space.type)}{space.descriptor ? ` · ${space.descriptor}` : ''}
+                  {spaceTypeLabel(space.type)}
                 </p>
               </div>
-              <LinkButton size="sm" href={`/restaurants/${slug}?s=spaces&e=${space.id}`} aria-label={`Editar ${space.name}`}>Editar</LinkButton>
+              <LinkButton size="sm" href={`/restaurants/${slug}?s=cover&e=${space.id}`} aria-label={`Editar ${space.name}`}>Editar</LinkButton>
               {/* Lo ocasional (ordenar, cambiar el principal, eliminar), en el menú de la fila. */}
               {ordered.length > 1 && (
                 <RowMenu

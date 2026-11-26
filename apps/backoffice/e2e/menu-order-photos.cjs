@@ -183,9 +183,9 @@ const SP = state.SPACE;
     await photos.getByRole('listitem').nth(2).waitFor();
     check('con la lista llena ya no se ofrece añadir, y se explica', (await photos.getByRole('button', { name: /^Añadir/ }).count()) === 0 && await photos.getByText(/máximo de 3 fotos/).isVisible());
 
-    await p.getByRole('navigation', { name: 'Secciones de la web' }).getByRole('button', { name: /^Avanzado/ }).click();
-    await p.getByRole('navigation', { name: 'Secciones de la web' }).getByRole('button', { name: /^Logo/ }).click();
-    const logo = p.getByRole('group', { name: 'Logo', exact: true });
+    // El logo y los iconos son ahora un solo «Icono», en Google y buscadores.
+    await p.getByRole('navigation', { name: 'Secciones de la web' }).getByRole('button', { name: /^Google y buscadores/ }).click();
+    const logo = p.getByRole('group', { name: 'Icono', exact: true });
     await logo.getByRole('button', { name: 'Elegir foto' }).click();
     await dialog.getByRole('button', { name: /^Usar la foto: Foto cuatro/ }).click();
     await logo.getByRole('button', { name: 'Cambiar foto' }).waitFor();

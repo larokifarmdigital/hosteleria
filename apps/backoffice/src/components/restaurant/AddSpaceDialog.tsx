@@ -37,7 +37,7 @@ export function AddSpaceDialog({ restaurantSlug, spaces, onClose }: Props) {
         descriptor: values.descriptor.trim()
       });
       showSuccessToast('Espacio creado', 'Rellena su portada y su horario, y publícalo cuando esté listo.');
-      router.push(`/restaurants/${restaurantSlug}?s=spaces&e=${space.id}`);
+      router.push(`/restaurants/${restaurantSlug}?s=cover&e=${space.id}`);
     } catch {
       // El hook ya muestra el error; el diálogo sigue abierto con lo escrito.
     }
@@ -60,9 +60,6 @@ export function AddSpaceDialog({ restaurantSlug, spaces, onClose }: Props) {
               {SPACE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </Select>
           )}
-        </Field>
-        <Field id="sp-descriptor" label="Descripción corta" hint="Opcional. Una línea, por ejemplo «Terraza con vistas al puerto».">
-          {control => <TextInput autoComplete="off" maxLength={200} {...control} {...register('descriptor')} />}
         </Field>
         {spaces.length === 1 && (
           <p className="m-0 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)] px-3.5 py-2.5 text-[13px] leading-[1.5] text-[color:var(--color-ink-soft)]">

@@ -23,8 +23,6 @@ export const TRANSLATABLE: TranslatableField[] = [
   { name: 'hero.cta', label: 'Texto del botón', section: COVER },
   { name: 'manifesto.eyebrow', label: 'Antetítulo', section: INTRO },
   { name: 'manifesto.text', label: 'Texto', section: INTRO },
-  { name: 'scheduleTexts.title', label: 'Título', section: SCHEDULE_TEXTS },
-  { name: 'scheduleTexts.text', label: 'Texto', section: SCHEDULE_TEXTS },
   { name: 'scheduleTexts.open', label: 'Aviso de abierto', section: SCHEDULE_TEXTS },
   { name: 'scheduleTexts.nextOpening', label: 'Aviso de próxima apertura', section: SCHEDULE_TEXTS },
   { name: 'scheduleTexts.closed', label: 'Aviso de cerrado', section: SCHEDULE_TEXTS }

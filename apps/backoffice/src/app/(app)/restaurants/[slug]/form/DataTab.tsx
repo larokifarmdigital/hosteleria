@@ -46,7 +46,6 @@ export function DataTab({ show, mediaScope, isAdmin }: Pick<TabProps, 'mediaScop
           {text('r-phone', 'Teléfono', 'contact.phone', errors.contact?.phone?.message, { type: 'tel', inputMode: 'tel' })}
           {text('r-whatsapp', 'WhatsApp', 'contact.whatsapp', errors.contact?.whatsapp?.message, { type: 'tel', inputMode: 'tel', hint: 'Con prefijo de país, por ejemplo +34 600 000 000.' })}
           {text('r-email', 'Email', 'contact.email', errors.contact?.email?.message, { type: 'email', inputMode: 'email' })}
-          {text('r-web', 'Otra página web', 'contact.web', errors.contact?.web?.message, { type: 'url', inputMode: 'url', hint: 'Solo si tienes otra aparte de esta.' })}
         </div>
         <SwitchRow
           id="r-bookings"

@@ -35,11 +35,8 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
     // La Portada es un único bloque: cuánto falta lo dicen el menú de secciones y las pestañas de idioma.
     const coverMark = () => page.getByRole('navigation', { name: 'Secciones de la web' }).getByRole('button', { name: /^Portada/ }).innerText();
     check('el menú avisa de 2 en Portada', /falta traducir 2 textos/.test(await coverMark()), await coverMark());
-    const w1 = await page.locator('#hero-title-es-warning').innerText(), w2 = await page.locator('#hero-subtitle-es-warning').innerText();
-    console.log('   avisos:', w1, '|', w2);
-    check('aviso por campo', /Falta en catal/i.test(w1) && / y /.test(w2));
-    check('el aviso describe el campo', (await page.locator('#hero-title-es').getAttribute('aria-describedby')).includes('hero-title-es-warning'));
-    check('campo sin texto en ningún idioma: sin aviso', (await page.locator('#hero-note-es-warning').count()) === 0);
+    // Mientras se escribe en el idioma principal no hay avisos por campo: se ven en la pestaña del idioma que falta.
+    check('en español, sin avisos por campo', (await page.locator('[id$="-es-warning"]').count()) === 0);
 
     // El menú de secciones marca lo que falta traducir; publicar lo dice antes de dejar hacerlo.
     const nav = () => page.getByRole('navigation', { name: 'Secciones de la web' });
@@ -48,6 +45,10 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
     await tab('Català').click();
     await page.locator('#hero-subtitle-ca').focus();
     check('se pasa a Català', (await tab('Català').getAttribute('aria-pressed')) === 'true');
+    const w1 = await page.locator('#hero-title-ca-warning').innerText().catch(() => 'no hay');
+    check('en la pestaña del idioma que falta, aviso por campo', /Falta en catal/i.test(w1), w1);
+    check('el aviso describe el campo', (await page.locator('#hero-title-ca').getAttribute('aria-describedby')).includes('hero-title-ca-warning'));
+    check('campo sin texto en ningún idioma: sin aviso', (await page.locator('#hero-note-ca-warning').count()) === 0);
 
     const ref = page.locator('#hero-subtitle-ca-reference');
     check('referencia en el idioma principal', await ref.isVisible() && /coctelería de autor/.test(await ref.innerText()) && /^En espa/i.test(await ref.innerText()), await ref.innerText().catch(() => 'no hay'));
@@ -129,9 +130,10 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
     check('sin pendientes al entrar', (await google.getByText(/Falta traducir/).count()) === 0);
     await page.locator('#seo-title-es').fill('Ocaña, cocina de mercado');
     check('aviso de sección', await google.getByText('Falta traducir 1 texto').isVisible());
-    check('aviso de campo', /Falta en/.test(await page.locator('#seo-title-es-warning').innerText()));
+    check('en español, sin aviso de campo', (await page.locator('#seo-title-es-warning').count()) === 0);
     check('pestañas marcadas', /falta 1 texto/.test(await tab('Català').innerText()) && /falta 1 texto/.test(await tab('English').innerText()));
     await tab('Català').click();
+    check('aviso de campo en la pestaña que falta', /Falta en/.test(await page.locator('#seo-title-ca-warning').innerText()));
     check('referencia visible', /Ocaña, cocina de mercado/.test(await page.locator('#seo-title-ca-reference').innerText()));
     await tab('Español').click();
     await page.locator('#seo-title-es').fill('');
@@ -150,8 +152,9 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
     const sheet = page.getByRole('dialog');
     await sheet.waitFor();
     check('panel: Català marcado', /falta 1 texto/.test(await sheet.getByRole('button', { name: /^Català/ }).innerText()));
-    check('panel: aviso en el nombre', /Falta en catal/i.test(await sheet.locator('#name-es-warning').innerText()));
+    check('panel: en español, sin aviso en el nombre', (await sheet.locator('#name-es-warning').count()) === 0);
     await sheet.getByRole('button', { name: /^Català/ }).click();
+    check('panel: aviso en el nombre en català', /Falta en catal/i.test(await sheet.locator('#name-ca-warning').innerText()));
     check('panel: original debajo', /Tortilla trufada/.test(await sheet.locator('#name-ca-reference').innerText()));
     await sheet.locator('#note-es').evaluate(() => {});
     await sheet.getByRole('button', { name: /^Español/ }).click();

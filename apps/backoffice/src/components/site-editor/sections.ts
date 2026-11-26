@@ -1,32 +1,31 @@
 /**
  * Secciones del editor de la web, en el orden en que el cliente las piensa:
- * primero su restaurante, luego la web de arriba abajo, al final lo avanzado.
+ * lo de cada semana arriba, luego la web de arriba abajo y al final la información.
  * La clave va en la URL (`?s=cover`) y no debe cambiar: los avisos de «Pendiente»
  * y las direcciones antiguas enlazan a ella.
  */
 export type SectionKey =
-  | 'overview' | 'hours' | 'contact' | 'languages'
+  | 'hours' | 'contact' | 'languages'
   | 'cover' | 'home'
   | 'menu' | 'photos' | 'about' | 'groups' | 'faq'
-  | 'media' | 'legal' | 'search' | 'spaces';
+  | 'media' | 'legal' | 'search' | 'spaces' | 'spacename';
 
 export interface SectionMeta {
   key: SectionKey;
   label: string;
   /** Una frase: qué es y dónde sale en la web. */
   hint: string;
-  /** Se edita por espacio: con varios espacios, la sección lleva un selector. */
+  /** Se edita por espacio: con varios espacios, es una pestaña de la página del espacio. */
   perSpace?: boolean;
 }
 
 export const SECTIONS: SectionMeta[] = [
-  { key: 'overview', label: 'Resumen', hint: 'Qué falta para que la web esté completa y en qué estado está.' },
   { key: 'hours', label: 'Horario', hint: 'Los días y las horas en que abre. Un día sin turnos sale como cerrado.', perSpace: true },
   { key: 'contact', label: 'Contacto y reservas', hint: 'Nombre, dirección, teléfono, redes y cómo se reserva.' },
   { key: 'languages', label: 'Idiomas de la web', hint: 'En qué idiomas se puede leer la web.' },
   { key: 'cover', label: 'Portada', hint: 'Lo primero que se ve al entrar en la web: título, foto, botón y el texto de presentación.', perSpace: true },
   { key: 'home', label: 'Bloques destacados', hint: 'Los bloques de la página de inicio que llevan a cada espacio.' },
-  { key: 'menu', label: 'Carta', hint: 'Platos, vinos y bebidas. Cada cambio sale en la web sin publicar.', perSpace: true },
+  { key: 'menu', label: 'Carta', hint: 'Platos, vinos y bebidas. Cada cambio sale en la web un par de minutos después de guardarlo, sin publicar.', perSpace: true },
   { key: 'photos', label: 'Galería de fotos', hint: 'Las fotos de la galería, en el orden en que se ven.', perSpace: true },
   { key: 'about', label: 'Sobre nosotros', hint: 'La historia del restaurante, con sus fotos.' },
   { key: 'groups', label: 'Grupos y eventos', hint: 'Lo que ofrecéis a grupos y celebraciones. En la página de inicio va hacia el final, justo antes de las preguntas frecuentes.' },
@@ -34,44 +33,71 @@ export const SECTIONS: SectionMeta[] = [
   { key: 'media', label: 'Todas las fotos', hint: 'Subir fotos, describirlas y borrar las que ya no uses.' },
   { key: 'legal', label: 'Textos legales', hint: 'Aviso legal, privacidad y cookies. Salen en la web al guardarlos.' },
   { key: 'search', label: 'Google y buscadores', hint: 'Cómo aparece la web en Google, su icono y lo que leen los asistentes de IA.' },
-  { key: 'spaces', label: 'Espacios', hint: 'Comedor, terraza, barra…: cada uno con su portada, horario y carta.' }
+  { key: 'spaces', label: 'Espacios', hint: 'Comedor, terraza, barra…: cada uno con su portada, horario y carta.' },
+  // Solo con varios espacios: con uno, su nombre se cambia en «Espacios».
+  { key: 'spacename', label: 'Nombre', hint: 'Cómo se llama este espacio en el menú y en la web.', perSpace: true }
 ];
 
-/** `folded`: lo que se toca de tarde en tarde va plegado en el menú, para que no compita con lo de cada semana. */
-export const SECTION_GROUPS: { label: string; keys: SectionKey[]; folded?: boolean }[] = [
-  { label: 'Tu restaurante', keys: ['overview', 'hours', 'contact', 'languages'] },
-  { label: 'Tu web', keys: ['cover', 'home', 'menu', 'photos', 'about', 'groups', 'faq'] },
-  { label: 'Avanzado', keys: ['media', 'legal', 'search', 'spaces'], folded: true }
+/** Con un solo espacio: lo de cada semana, la web de arriba abajo y la información del local. */
+export const SECTION_GROUPS: { label: string; keys: SectionKey[] }[] = [
+  { label: 'Cada semana', keys: ['menu', 'hours'] },
+  { label: 'Tu web', keys: ['cover', 'home', 'photos', 'about', 'groups', 'faq'] },
+  { label: 'Información', keys: ['contact', 'languages', 'search', 'legal', 'media', 'spaces'] }
 ];
 
-export interface NavItem { key: SectionKey; /** Espacio que abre, en las secciones de espacio. */ e?: string }
-export interface NavGroup { label: string; items: NavItem[]; folded?: boolean }
+/** Una entrada del menú: una sección suelta o una página de la web con sus partes en pestañas. */
+export interface NavEntry {
+  /** Estable: va en la key y en el desplegable móvil. */
+  id: string;
+  label: string;
+  /** Sección que abre. */
+  key: SectionKey;
+  /** Espacio que abre, en la página de un espacio. */
+  e?: string;
+  /** Partes de la página, en pestañas. */
+  tabs?: SectionKey[];
+}
+export interface NavGroup { label: string; entries: NavEntry[] }
 
-/** Lo que se edita de cada espacio, en el orden en que sale en su página. */
-const SPACE_KEYS: SectionKey[] = ['cover', 'hours', 'menu', 'photos'];
+const HOME_TABS: SectionKey[] = ['home', 'about', 'groups', 'faq'];
+const SPACE_TABS: SectionKey[] = ['menu', 'hours', 'cover', 'photos', 'spacename'];
+const BUSINESS_KEYS: SectionKey[] = ['contact', 'languages', 'search', 'legal', 'media', 'spaces'];
 
 /**
  * El menú. Con un solo espacio, «espacio» no aparece: sus secciones van con las
- * del restaurante. Con varios, cada espacio es un grupo con sus secciones, y
- * lo común (inicio, sobre nosotros…) va en «Página de inicio».
+ * del restaurante. Con varios, el menú copia cómo es la web: la página de inicio
+ * y una página por espacio (cada una con sus partes en pestañas, siempre las
+ * mismas), y aparte lo del negocio, que vale para toda la web y no lleva pestañas.
  */
-export function navGroups(spaces: { id: string; name: string }[], visible: (key: SectionKey) => boolean): NavGroup[] {
-  const items = (keys: SectionKey[], e?: string) => keys.filter(visible).map(key => ({ key, ...(e ? { e } : {}) }));
-  if (spaces.length < 2) {
-    return SECTION_GROUPS.map(g => ({ label: g.label, folded: g.folded, items: items(g.keys) }));
-  }
+export function editorNav(spaces: { id: string; name: string }[], visible: (key: SectionKey) => boolean, current: SectionKey): NavGroup[] {
+  const plain = (key: SectionKey): NavEntry => ({ id: key, label: SECTION_BY_KEY[key].label, key });
+  if (spaces.length < 2) return SECTION_GROUPS.map(g => ({ label: g.label, entries: g.keys.filter(visible).map(plain) }));
+  const homeTabs = HOME_TABS.filter(visible);
+  // Al pasar de un espacio a otro se queda en la misma parte: de la carta de uno a la del otro.
+  const spaceKey = SPACE_TABS.includes(current) ? current : 'menu';
   return [
-    { label: 'Tu restaurante', items: items(['overview', 'contact', 'languages']) },
-    { label: 'Página de inicio', items: items(['home', 'about', 'groups', 'faq']) },
-    ...spaces.map(s => ({ label: s.name, items: items(SPACE_KEYS, s.id) })),
-    { label: 'Avanzado', folded: true, items: items(['media', 'legal', 'search', 'spaces']) }
+    {
+      label: 'Páginas de tu web',
+      entries: [
+        { id: 'home', label: 'Página de inicio', key: homeTabs.includes(current) ? current : homeTabs[0], tabs: homeTabs },
+        ...spaces.map(s => ({ id: `space-${s.id}`, label: s.name, key: spaceKey, e: s.id, tabs: SPACE_TABS }))
+      ]
+    },
+    { label: 'Tu negocio', entries: BUSINESS_KEYS.map(plain) }
   ];
+}
+
+export function isEntryActive(entry: NavEntry, section: SectionKey, spaceId: string | undefined): boolean {
+  if (entry.tabs) return entry.tabs.includes(section) && (!entry.e || entry.e === spaceId);
+  return entry.key === section;
 }
 
 export const SECTION_BY_KEY = Object.fromEntries(SECTIONS.map(s => [s.key, s])) as Record<SectionKey, SectionMeta>;
 
 /** Direcciones antiguas de la ficha (`?tab=`) y del espacio que siguen funcionando. */
 const ALIAS: Record<string, SectionKey> = {
+  // «Resumen» ya no existe: lo que decía está en el estado de la web, arriba.
+  overview: 'menu',
   data: 'contact', content: 'about', hours: 'hours', photos: 'photos', cover: 'cover',
   // El texto de presentación se edita ahora dentro de Portada.
   intro: 'cover',
@@ -82,9 +108,9 @@ const ALIAS: Record<string, SectionKey> = {
 };
 
 export function sectionFromParam(value: string | null | undefined): SectionKey {
-  if (!value) return 'overview';
+  if (!value) return 'menu';
   if (value in SECTION_BY_KEY) return value as SectionKey;
-  return ALIAS[value] ?? 'overview';
+  return ALIAS[value] ?? 'menu';
 }
 
 /** Sección en la que se edita cada campo de primer nivel de la ficha. */
@@ -98,7 +124,7 @@ const RESTAURANT_SECTION_OF: Record<string, SectionKey> = {
 
 /** Sección en la que se edita cada campo de primer nivel de un espacio. */
 const SPACE_SECTION_OF: Record<string, SectionKey> = {
-  name: 'spaces', descriptor: 'spaces',
+  name: 'spacename', descriptor: 'spacename',
   hero: 'cover', manifesto: 'cover', gallery: 'photos',
   schedule: 'hours', scheduleTexts: 'hours'
 };
@@ -117,7 +143,7 @@ export const spaceSectionOf = (path: string): SectionKey => SPACE_SECTION_OF[pat
 /** Dirección de una sección del editor. */
 export function sectionHref(slug: string, section: SectionKey, extra: Record<string, string | undefined> = {}): string {
   const query = new URLSearchParams();
-  if (section !== 'overview') query.set('s', section);
+  if (section !== 'menu') query.set('s', section);
   for (const [key, value] of Object.entries(extra)) if (value) query.set(key, value);
   const qs = query.toString();
   return `/restaurants/${slug}${qs ? `?${qs}` : ''}`;

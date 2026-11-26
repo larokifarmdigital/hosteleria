@@ -80,8 +80,12 @@ const SP = `/restaurants/pruebas/spaces/${state.SPACE}`;
       const p = await ctx.newPage();
       let mock = site({});
       await p.route('**/api/restaurants/pruebas/site-status', r => r.fulfill({ json: { site: mock } }));
-      const card = p.locator('section', { has: p.getByRole('heading', { name: 'Web', exact: true }) });
-      const open = async (m) => { mock = m; await p.goto(`${BASE}/restaurants/pruebas`); await p.getByRole('heading', { level: 1 }).waitFor(); await p.waitForTimeout(700); };
+      // El estado de la web se ve al pulsar el aviso de arriba («La web está al día ›»).
+      const card = p.getByRole('dialog').locator('section', { has: p.getByRole('heading', { name: 'Web', exact: true }) });
+      const open = async (m) => {
+        mock = m; await p.goto(`${BASE}/restaurants/pruebas`); await p.getByRole('heading', { level: 1 }).waitFor(); await p.waitForTimeout(700);
+        await p.getByRole('button', { name: /ver el detalle/ }).first().click(); await p.getByRole('dialog').waitFor(); await p.waitForTimeout(300);
+      };
 
       await open(site({}));
       check('al día: lo dice, con cuándo se actualizó y enlace a la web', await card.getByText('La web enseña lo último publicado').isVisible() && await card.getByText(/Se actualizó hace 5 min/).isVisible()

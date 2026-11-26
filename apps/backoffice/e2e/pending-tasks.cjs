@@ -77,13 +77,20 @@ const AXE = { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', '
       await pause(4000);
 
       await p.goto(`${BASE}/restaurants/pruebas`);
-      const aside = p.locator('main');
+      // «Resumen» ya no existe: lo que falta se ve al pulsar el estado de la web, arriba (o abajo en móvil).
+      const openStatus = async () => { await p.locator('button:visible').filter({ hasText: 'ver el detalle' }).first().click(); await p.getByRole('dialog').waitFor(); };
+      await p.locator('button:visible').filter({ hasText: 'ver el detalle' }).first().waitFor();
+      await p.waitForTimeout(800);
+      await openStatus();
+      const aside = p.getByRole('dialog');
       await aside.getByRole('heading', { name: 'Lo que falta' }).waitFor();
       const links = aside.locator('section', { has: p.getByRole('heading', { name: 'Lo que falta' }) }).getByRole('link');
       await links.first().waitFor();
       // Lo que está sin publicar lo dice la barra de arriba: en el resumen, lo que falta completar.
-      check('el resumen enseña lo que falta completar (espacio y carta)', (await links.count()) === 2 && !(await links.filter({ hasText: 'aún no se ha publicado' }).count()), await links.allInnerTexts());
-      await audit(p, 'ficha con pendientes');
+      check('el estado de la web enseña lo que falta completar (espacio y carta)', (await links.count()) === 2 && !(await links.filter({ hasText: 'aún no se ha publicado' }).count()), await links.allInnerTexts());
+      await audit(p, 'estado de la web con pendientes', '[role=dialog]');
+      await p.keyboard.press('Escape');
+      await p.waitForTimeout(300);
 
       // Se arregla lo de los platos por el api y se guarda algo en la ficha: la lista se pone al día sola.
       const dishes = (await api('GET', '/dishes?restaurantSlug=pruebas')).body.dishes;
@@ -91,11 +98,11 @@ const AXE = { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', '
       for (const d of dishes) { undo.push(['PATCH', `/dishes/${d.id}`, { name: d.name, note: d.note }]); await api('PATCH', `/dishes/${d.id}`, { name: { es: 'x', ca: 'x', en: 'x' }, note: {} }); }
       for (const c of cats) { undo.push(['PATCH', `/dishes/categories/${c.id}`, { name: c.name }]); await api('PATCH', `/dishes/categories/${c.id}`, { name: { es: 'x', ca: 'x', en: 'x' } }); }
       // En escritorio las secciones son un menú; en móvil, un desplegable. Se guarda solo.
-      const open = (id, label) => vpName === 'móvil' ? p.locator('#seccion-picker').selectOption(`${id}:`) : p.getByRole('navigation', { name: 'Secciones de la web' }).getByRole('button', { name: label }).click();
+      const open = (id, label) => vpName === 'móvil' ? p.locator('#seccion-picker').selectOption(id) : p.getByRole('navigation', { name: 'Secciones de la web' }).getByRole('button', { name: label }).click();
       await open('contact', /^Contacto y reservas/);
       await p.locator('#r-founded').fill('1999');
       await p.getByText('Cambios guardados', { exact: true }).first().waitFor({ timeout: 10000 });
-      await open('overview', /^Resumen/);
+      await openStatus();
       await p.waitForFunction(() => !document.body.innerText.includes('en los platos de'), null, { timeout: 8000 }).catch(() => {});
       check('tras guardar, lo ya resuelto desaparece de la lista', (await aside.getByText(/en los platos de/).count()) === 0 && (await links.count()) === 1, await links.allInnerTexts());
       await restoreMenu();
@@ -108,8 +115,10 @@ const AXE = { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', '
     const ctx = await browser.newContext({ storageState: S + '/editor.json', viewport: { width: 1280, height: 900 } });
     const p = await ctx.newPage();
     await p.goto(`${BASE}/restaurants/pruebas`);
-    await p.locator('main').getByRole('heading', { name: 'Lo que falta' }).waitFor();
-    check('el editor ve lo pendiente en el resumen de su restaurante', true);
+    await p.waitForTimeout(1500);
+    await p.locator('button:visible').filter({ hasText: 'ver el detalle' }).first().click();
+    await p.getByRole('dialog').getByRole('heading', { name: 'Lo que falta' }).waitFor();
+    check('el editor ve lo pendiente en el estado de su web', true);
     await ctx.close();
     await pause(15000);
 

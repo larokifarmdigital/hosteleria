@@ -58,8 +58,6 @@ export function SpaceSection({ show }: { show: SpaceSectionKey }) {
           >
             {localeTabs}
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <I18nField className="md:col-span-2" name="scheduleTexts.title" label="Título" hint="Por ejemplo, «Cuándo venir»." {...i18n} />
-              <I18nField className="md:col-span-2" name="scheduleTexts.text" label="Texto" multiline rows={3} {...i18n} />
               <I18nField name="scheduleTexts.open" label="Aviso de abierto" hint="Escribe {hora} donde va la hora de cierre: «Abierto hasta las {hora}»." {...i18n} />
               <I18nField name="scheduleTexts.nextOpening" label="Aviso de próxima apertura" hint="Escribe {hora} donde va la hora de apertura: «Hoy abrimos a las {hora}»." {...i18n} />
               <I18nField name="scheduleTexts.closed" label="Aviso de cerrado" hint="Por ejemplo, «Hoy cerramos»." {...i18n} />
@@ -69,15 +67,10 @@ export function SpaceSection({ show }: { show: SpaceSectionKey }) {
       )}
 
       {show === 'details' && (
-        <Section title={`Datos de «${form.getValues('name')}»`} description="Cómo se llama este espacio en la web.">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Field id="s-name" label="Nombre" error={errors.name?.message} required>
-              {c => <TextInput {...c} autoComplete="off" {...register('name')} />}
-            </Field>
-            <Field id="s-descriptor" label="Descripción corta" error={errors.descriptor?.message} hint="Una línea, por ejemplo «Terraza con vistas al puerto».">
-              {c => <TextInput {...c} autoComplete="off" {...register('descriptor')} />}
-            </Field>
-          </div>
+        <Section title={`Nombre de «${form.getValues('name')}»`} description="Cómo se llama este espacio en el menú y en la web.">
+          <Field id="s-name" className="md:max-w-[420px]" label="Nombre" error={errors.name?.message} required>
+            {c => <TextInput {...c} autoComplete="off" {...register('name')} />}
+          </Field>
         </Section>
       )}
     </FormProvider>

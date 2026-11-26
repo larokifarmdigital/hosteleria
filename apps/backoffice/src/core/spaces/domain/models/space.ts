@@ -94,8 +94,7 @@ export function spaceTranslatableTexts(c: Partial<SpaceContent>): Record<string,
     ...(c.hero?.imageAssetId ? { 'Descripción de la foto': c.hero.imageAlt } : {}),
     'Antetítulo de la presentación': c.manifesto?.eyebrow,
     'Texto de presentación': c.manifesto?.text,
-    'Horarios: título': c.scheduleTexts?.title,
-    'Horarios: texto': c.scheduleTexts?.text,
+    // El título y el texto del horario no los enseña ninguna web: no cuentan.
     'Horarios: aviso de abierto': c.scheduleTexts?.open,
     'Horarios: aviso de próxima apertura': c.scheduleTexts?.nextOpening,
     'Horarios: aviso de cerrado': c.scheduleTexts?.closed

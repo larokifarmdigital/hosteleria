@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { Field } from '@/components/ui/Field';
 import { TextArea, TextInput } from '@/components/ui/inputs';
-import { localeList, missingLocales } from '@/lib/forms/translations';
+import { missingLocales } from '@/lib/forms/translations';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -53,7 +53,8 @@ export function I18nField({ name, label, hint, locales, activeLocale, localeName
               labelSuffix={localeNames[code] ?? code}
               hint={hint}
               describedBy={referenceId}
-              warning={missing.length > 0 ? `Falta en ${localeList(missing, localeNames)}.` : undefined}
+              // Mientras se escribe en el idioma principal no se avisa: la traducción se pide en su pestaña.
+              warning={code !== defaultLocale && missing.includes(code) ? `Falta en ${(localeNames[code] ?? code).toLowerCase()}.` : undefined}
               error={code === errorFor ? error : undefined}
               count={recommendedMax ? { value: length, max: recommendedMax } : undefined}
               below={showReference ? <Original id={referenceId!} text={original!} lang={defaultLocale!} languageName={localeNames[defaultLocale!] ?? defaultLocale!} /> : undefined}
