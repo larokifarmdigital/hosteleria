@@ -28,7 +28,7 @@ export const SECTIONS: SectionMeta[] = [
   { key: 'menu', label: 'Carta', hint: 'Platos, vinos y bebidas. Los cambios se guardan solos y salen en tu web al pulsar «Publicar cambios».', perSpace: true },
   { key: 'photos', label: 'Galería de fotos', hint: 'Las fotos de la galería, en el orden en que se ven.', perSpace: true },
   { key: 'about', label: 'Sobre nosotros', hint: 'La historia del restaurante, con sus fotos.' },
-  { key: 'groups', label: 'Grupos y eventos', hint: 'Lo que ofrecéis a grupos y celebraciones. En la página de inicio va hacia el final, justo antes de las preguntas frecuentes.' },
+  { key: 'groups', label: 'Grupos y celebraciones', hint: 'Comidas de grupo, celebraciones y empresas. En la página de inicio va hacia el final, justo antes de las preguntas frecuentes.' },
   { key: 'faq', label: 'Preguntas frecuentes', hint: 'Respuestas a las dudas habituales. Google también puede mostrarlas.' },
   // Fuera del menú: describir y borrar fotos se hace al elegirlas. Solo se llega desde el aviso de fotos en uso sin descripción.
   { key: 'media', label: 'Fotos sin descripción', hint: 'Fotos que ya salen en la web y no tienen descripción en todos los idiomas. La descripción es lo que oye quien no puede verlas.' },
@@ -70,8 +70,9 @@ const BUSINESS_KEYS: SectionKey[] = ['contact', 'languages', 'search', 'legal', 
  * y una página por espacio (cada una con sus partes en pestañas, siempre las
  * mismas), y aparte lo del negocio, que vale para toda la web y no lleva pestañas.
  */
-export function editorNav(spaces: { id: string; name: string }[], visible: (key: SectionKey) => boolean, current: SectionKey): NavGroup[] {
-  const plain = (key: SectionKey): NavEntry => ({ id: key, label: SECTION_BY_KEY[key].label, key });
+export function editorNav(spaces: { id: string; name: string; type: string; isDefault: boolean }[], visible: (key: SectionKey) => boolean, current: SectionKey): NavGroup[] {
+  const kind = localKindOf(spaces);
+  const plain = (key: SectionKey): NavEntry => ({ id: key, label: sectionMeta(key, kind).label, key });
   if (spaces.length < 2) return SECTION_GROUPS.map(g => ({ label: g.label, entries: g.keys.filter(visible).map(plain) }));
   const homeTabs = HOME_TABS.filter(visible);
   // Al pasar de un espacio a otro se queda en la misma parte: de la carta de uno a la del otro.
@@ -94,6 +95,28 @@ export function isEntryActive(entry: NavEntry, section: SectionKey, spaceId: str
 }
 
 export const SECTION_BY_KEY = Object.fromEntries(SECTIONS.map(s => [s.key, s])) as Record<SectionKey, SectionMeta>;
+
+/**
+ * Restaurante o bar: lo decide el tipo del espacio principal. Cambian el nombre de la
+ * sección de grupos y sus ejemplos; los campos son los mismos.
+ */
+export type LocalKind = 'restaurant' | 'bar';
+const BAR_TYPES = new Set(['cafe', 'coctel', 'club', 'live_music']);
+export function localKindOf(spaces: { type: string; isDefault: boolean }[]): LocalKind {
+  const main = spaces.find(s => s.isDefault) ?? spaces[0];
+  return main && BAR_TYPES.has(main.type) ? 'bar' : 'restaurant';
+}
+
+const GROUPS_BY_KIND: Record<LocalKind, Pick<SectionMeta, 'label' | 'hint'>> = {
+  restaurant: { label: 'Grupos y celebraciones', hint: 'Comidas de grupo, celebraciones y empresas. En la página de inicio va hacia el final, justo antes de las preguntas frecuentes.' },
+  bar: { label: 'Eventos y fiestas privadas', hint: 'Cumpleaños, fiestas y zonas reservadas. En la página de inicio va hacia el final, justo antes de las preguntas frecuentes.' }
+};
+
+/** Nombre y ayuda de una sección para este local. */
+export function sectionMeta(key: SectionKey, kind: LocalKind = 'restaurant'): SectionMeta {
+  const meta = SECTION_BY_KEY[key];
+  return key === 'groups' ? { ...meta, ...GROUPS_BY_KIND[kind] } : meta;
+}
 
 /** Direcciones antiguas de la ficha (`?tab=`) y del espacio que siguen funcionando. */
 const ALIAS: Record<string, SectionKey> = {

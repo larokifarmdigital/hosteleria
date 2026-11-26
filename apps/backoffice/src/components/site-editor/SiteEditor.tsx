@@ -16,13 +16,13 @@ import { EditorMobileBar, EditorTopBar } from './EditorTopBar';
 import { LegalSection } from './LegalSection';
 import { RestaurantSection, UiTextsFold } from './RestaurantSections';
 import { BOOKING_TEXTS, FOOTER_TEXTS, GALLERY_TITLES, MENU_TITLES } from '@/app/(app)/restaurants/[slug]/form/model';
-import { SECTION_BY_KEY, editorNav, isEntryActive, restaurantSectionOf, spaceSectionOf, type NavEntry, type SectionKey } from './sections';
+import { SECTION_BY_KEY, editorNav, isEntryActive, localKindOf, sectionMeta, restaurantSectionOf, spaceSectionOf, type NavEntry, type SectionKey } from './sections';
 import { SpaceSection } from './SpaceSections';
 
 /** Editor de la web de un restaurante: un menú de secciones y la sección abierta. */
 export function SiteEditor() {
-  const { section, restaurant } = useEditor();
-  const meta = SECTION_BY_KEY[section];
+  const { section, restaurant, spaces } = useEditor();
+  const meta = sectionMeta(section, localKindOf(spaces));
   const page = useOpenPage();
   const title = page?.tabs ? page.label : meta.label;
   // La sección cambia sin recargar la página: el título de la pestaña la sigue.
@@ -162,7 +162,8 @@ function SectionNav() {
 
 /** Las partes de una página de la web (la de inicio o la de un espacio), siempre las mismas. */
 function PageTabs({ page }: { page: NavEntry }) {
-  const { section, goTo } = useEditor();
+  const { section, goTo, spaces } = useEditor();
+  const kind = localKindOf(spaces);
   const { pending, errors } = useSectionMarks();
   return (
     <nav aria-label={`Partes de ${page.label}`} className="mt-4 border-b border-[color:var(--color-border)]">
@@ -182,7 +183,7 @@ function PageTabs({ page }: { page: NavEntry }) {
                     : 'border-transparent font-medium text-[color:var(--color-ink-soft)] hover:border-[color:var(--color-border)] hover:text-[color:var(--color-ink)]'
                 )}
               >
-                {SECTION_BY_KEY[key].label}
+                {sectionMeta(key, kind).label}
                 <Mark errors={errors[key]} pending={pending[key]} />
               </button>
             </li>

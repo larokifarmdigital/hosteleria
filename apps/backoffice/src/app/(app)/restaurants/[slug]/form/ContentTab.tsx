@@ -10,8 +10,10 @@ import { Fold, Section } from '@/components/shared/Section';
 import { Field } from '@/components/ui/Field';
 import { Select, TextInput } from '@/components/ui/inputs';
 import { newItemId } from '@/lib/forms/rules';
-import { ABOUT, FAQ, FEATURE_ICONS, GROUPS, HOME_BLOCKS, type FormValues } from './model';
+import { ABOUT, FAQ, FEATURE_ICONS, HOME_BLOCKS, type FormValues } from './model';
 import type { TabProps } from './types';
+import { useEditor } from '@/components/site-editor/EditorContext';
+import { localKindOf, sectionMeta } from '@/components/site-editor/sections';
 
 type I18n = Record<string, string> | undefined;
 /** Texto de un campo traducible en el idioma principal o, si falta, en el primero que lo tenga. */
@@ -25,6 +27,12 @@ export function ContentTab({ show, i18n, mediaScope, localeTabs, pendingIn }: Ta
 
   const sectionTitles = useWatch({ control, name: ['faq.title', 'faq.eyebrow'] });
   const eyebrowLabel = 'Texto pequeño sobre el título';
+  // Restaurante o bar: cambian el nombre de la sección y los ejemplos, no los campos.
+  const kind = localKindOf(useEditor().spaces);
+  const groupsLabel = sectionMeta('groups', kind).label;
+  const examples = kind === 'bar'
+    ? { cta: '«Reservar una zona»', feature: '«Cumpleaños» o «Barra libre»', featureTitle: '«Barra libre»', highlight: '«Zona reservada» o «DJ propio»' }
+    : { cta: '«Pedir presupuesto»', feature: '«Hasta 40 personas» o «Menú cerrado»', featureTitle: '«Hasta 40 personas»', highlight: '«Sala privada» o «Proyector y pantalla»' };
 
   return (
     <div>
@@ -52,11 +60,11 @@ export function ContentTab({ show, i18n, mediaScope, localeTabs, pendingIn }: Ta
 
         {show === 'groups' && (
           <>
-            <Section title={GROUPS}>
+            <Section title={groupsLabel}>
               <div className="flex flex-col gap-5">
                 <I18nField name="groups.eyebrow" label={eyebrowLabel} hint="Una o dos palabras encima del título." {...i18n} />
                 <I18nField name="groups.title" label="Título" {...i18n} />
-                <I18nField name="groups.cta" label="Texto del botón" hint="Por ejemplo, «Pedir presupuesto»." {...i18n} />
+                <I18nField name="groups.cta" label="Texto del botón" hint={`Por ejemplo, ${examples.cta}.`} {...i18n} />
                 <FormImageField name="groups.imageAssetId" label="Foto" scope={mediaScope} purpose="dish" />
               </div>
             </Section>
@@ -68,14 +76,14 @@ export function ContentTab({ show, i18n, mediaScope, localeTabs, pendingIn }: Ta
                 noun={{ singular: 'ventaja', feminine: true }}
                 summary={(item, locale) => ({ title: textOf(item.label, locale), detail: textOf(item.text, locale) })}
                 addLabel="Añadir ventaja"
-                emptyText="Por ejemplo, «Hasta 40 personas» o «Menú cerrado»."
+                emptyText={`Por ejemplo, ${examples.feature}.`}
                 max={12}
                 newItem={() => ({ id: newItemId(), icon: 'users', label: emptyI18n(), text: emptyI18n() })}
                 focusField={i => `groups.features.${i}.label.${i18n.activeLocale}`}
               >
                 {i => (
                   <div className="flex flex-col gap-5">
-                    <I18nField name={`groups.features.${i}.label`} label="Título" hint="Dos o tres palabras, por ejemplo «Hasta 40 personas»." {...i18n} />
+                    <I18nField name={`groups.features.${i}.label`} label="Título" hint={`Dos o tres palabras, por ejemplo ${examples.featureTitle}.`} {...i18n} />
                     <I18nField name={`groups.features.${i}.text`} label="Texto" multiline rows={2} {...i18n} />
                     <Field id={`groups-features-${i}-icon`} label="Icono">
                       {fieldControl => (
@@ -96,7 +104,7 @@ export function ContentTab({ show, i18n, mediaScope, localeTabs, pendingIn }: Ta
                 noun={{ singular: 'punto destacado' }}
                 summary={(item, locale) => ({ title: textOf(item.text, locale) })}
                 addLabel="Añadir punto"
-                emptyText="Por ejemplo, «Sala privada» o «Proyector y pantalla»."
+                emptyText={`Por ejemplo, ${examples.highlight}.`}
                 max={12}
                 newItem={() => ({ id: newItemId(), text: emptyI18n() })}
                 focusField={i => `groups.highlights.${i}.text.${i18n.activeLocale}`}

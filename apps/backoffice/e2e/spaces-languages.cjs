@@ -105,7 +105,7 @@ const cleanup = async (original) => {
     await menuNav.getByRole('button', { name: 'Página de inicio' }).click();
     const homeParts = p.getByRole('navigation', { name: 'Partes de Página de inicio' });
     await homeParts.waitFor();
-    check('la página de inicio lleva lo común en pestañas', state.j(await homeParts.getByRole('button').allInnerTexts()) === state.j(['Bloques destacados', 'Sobre nosotros', 'Grupos y eventos', 'Preguntas frecuentes']));
+    check('la página de inicio lleva lo común en pestañas', state.j(await homeParts.getByRole('button').allInnerTexts()) === state.j(['Bloques destacados', 'Sobre nosotros', 'Grupos y celebraciones', 'Preguntas frecuentes']));
     await menuNav.getByRole('button', { name: 'Contacto y reservas' }).click();
     await p.getByRole('heading', { level: 2, name: 'Contacto y reservas' }).waitFor();
     check('lo del negocio no lleva pestañas', (await p.getByRole('navigation', { name: /^Partes de/ }).count()) === 0);
