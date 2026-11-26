@@ -34,8 +34,12 @@ const {
   jsonLd,
   faviconUrl,
   appleTouchIconUrl,
-  cloudflareAnalyticsToken
+  cloudflareAnalyticsToken: savedAnalyticsToken
 } = Astro.props;
+
+// El token de Cloudflare Web Analytics es de cada web: se pone en su despliegue
+// (CF_ANALYTICS_TOKEN). Lo guardado en el contenido queda solo como respaldo.
+const cloudflareAnalyticsToken = import.meta.env.CF_ANALYTICS_TOKEN || savedAnalyticsToken;
 
 const cfBeaconConfig = cloudflareAnalyticsToken
   ? JSON.stringify({ token: cloudflareAnalyticsToken })

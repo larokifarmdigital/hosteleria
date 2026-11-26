@@ -100,7 +100,7 @@ function toEspacio(s: PublishedSpace, index: number, media: Record<string, Publi
     horariosAbierto: t(s.scheduleTexts?.open),
     horariosProximaApertura: t(s.scheduleTexts?.nextOpening),
     horariosCerrado: t(s.scheduleTexts?.closed),
-    horariosSemana: s.schedule.map(d => ({ dia: d.day, turnos: d.shifts.map(x => ({ apertura: x.open, cierre: x.close })) })),
+    horariosSemana: weekOf(s),
     direccion: address(s.address),
     mapaUrl: s.mapUrl ?? undefined,
     contactoReserva: orUndefined({ telefono: s.bookingContact?.phone, whatsapp: s.bookingContact?.whatsapp, email: s.bookingContact?.email })
@@ -137,6 +137,8 @@ function toRestaurant(site: PublishedSite): Restaurant {
     idiomasActivos: r.locales.map(l => ({ codigo: l.code, nombre: l.name })),
     anyoFundacion: r.foundedYear ?? undefined,
     espacios: site.spaces.map((s, i) => toEspacio(s, i, media, locales)),
+    // El horario del restaurante es el de su espacio principal: lo usan el JSON-LD (Google) y llms.txt.
+    horariosSemana: weekOf(site.spaces.find(s => s.isDefault) ?? site.spaces[0]),
     bloquesHome: r.homeBlocks?.length
       ? r.homeBlocks.map(b => compact({
           _key: b.id, titulo: t(b.title), texto: t(b.text), imagen: img(b.imageAssetId), ctaTexto: t(b.ctaText), ctaHref: b.ctaHref
@@ -251,4 +253,9 @@ export function toLegalPages(site: PublishedSite): LegalPageDoc[] {
     ultimaActualizacion: p.lastUpdated ?? undefined,
     orden: (i + 1) * 10
   }) as LegalPageDoc);
+}
+
+/** Los turnos de la semana en la forma de Sanity. */
+function weekOf(space: PublishedSite['spaces'][number] | undefined) {
+  return space?.schedule.map(d => ({ dia: d.day, turnos: d.shifts.map(x => ({ apertura: x.open, cierre: x.close })) }));
 }
