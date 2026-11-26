@@ -72,7 +72,10 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
 -->
 <div
   id='mobileOverlay'
-  aria-hidden='true'
+  role='dialog'
+  aria-modal='true'
+  aria-label={a11y.menu}
+  inert
   data-open='false'
   class="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-bg
          py-6 px-(--gap) pb-10
@@ -145,7 +148,7 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
         href={bookingAction.href}
         target={bookingAction.external ? '_blank' : undefined}
         rel={bookingAction.external ? 'noopener' : undefined}
-        class='group flex items-center justify-center gap-3 py-4 px-6 bg-transparent text-accent border border-accent rounded-md font-sans font-semibold uppercase text-[12px] tracking-[0.28em] cursor-pointer transition-[background-color,color] duration-300 hover:bg-accent hover:text-bg'
+        class='group flex items-center justify-center gap-3 py-4 px-6 bg-transparent border border-accent rounded-md font-sans font-semibold uppercase text-[13px] tracking-[0.22em] cursor-pointer transition-[background-color,color] duration-300 text-accent hover:bg-accent hover:text-bg'
       >
         <span>{bookingAction.label ?? reservarLabel}</span>
         <span aria-hidden='true' class='transition-transform duration-300 group-hover:translate-x-1'>→</span>
@@ -155,12 +158,12 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
 
   <!-- Footer: contacto centrado + idiomas discretos -->
   <div class='flex flex-col items-center gap-5 pt-8 mt-6 border-t border-line-strong/25 text-center'>
-    <div class='flex flex-col gap-2'>
+    <div class='flex flex-col'>
       {
         bookingPhone && (
           <a
             href={`tel:${bookingPhone}`}
-            class='font-serif text-ink text-[16px] leading-[1.4] transition-colors duration-300 hover:text-accent cursor-pointer'
+            class='inline-flex items-center justify-center min-h-[40px] font-serif text-ink text-[17px] leading-[1.4] transition-colors duration-300 hover:text-accent cursor-pointer'
           >
             {bookingPhone}
           </a>
@@ -172,7 +175,7 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
             href={waHref}
             target='_blank'
             rel='noopener'
-            class='font-serif text-ink text-[16px] leading-[1.4] transition-colors duration-300 hover:text-accent cursor-pointer'
+            class='inline-flex items-center justify-center min-h-[40px] font-serif text-ink text-[17px] leading-[1.4] transition-colors duration-300 hover:text-accent cursor-pointer'
           >
             WhatsApp <span class='text-dim mx-1'>·</span> {whatsappRaw}
           </a>
@@ -182,7 +185,7 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
         bookingEmail && (
           <a
             href={`mailto:${bookingEmail}`}
-            class='font-serif text-ink text-[16px] leading-[1.4] transition-colors duration-300 hover:text-accent cursor-pointer'
+            class='inline-flex items-center justify-center min-h-[40px] font-serif text-ink text-[17px] leading-[1.4] transition-colors duration-300 hover:text-accent cursor-pointer'
           >
             {bookingEmail}
           </a>
@@ -194,7 +197,7 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
       localesUi.length > 1 && (
         <div
           aria-label={a11y.language}
-          class='flex items-center gap-3 font-sans font-semibold uppercase text-[10.5px] tracking-[0.3em] pt-2'
+          class='flex items-center gap-3 font-sans font-semibold uppercase text-[12.5px] tracking-[0.24em] pt-2'
         >
           {localesUi.map((l, i) => (
             <>
@@ -206,10 +209,10 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
                     : localizedPath(langSwitcherPath, l.codigo, defaultLocale)
                 }
                 class:list={[
-                  'py-1 transition-colors duration-300',
+                  'inline-flex items-center min-h-[44px] px-2 transition-colors duration-300',
                   l.codigo === locale
-                    ? 'text-accent border-b border-accent pointer-events-none'
-                    : 'text-muted hover:text-ink cursor-pointer'
+                    ? 'text-accent underline underline-offset-8 pointer-events-none'
+                    : 'text-ink-soft hover:text-ink cursor-pointer'
                 ]}
                 aria-current={l.codigo === locale ? 'true' : undefined}
               >
@@ -230,11 +233,22 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
     const overlay = document.getElementById('mobileOverlay');
     if (!hamburger || !overlay) return;
 
+    overlay.classList.add('group/overlay');
+
+    // aria-modal no retiene el Tab: mientras el menú está abierto, el resto de
+    // la página queda inerte. La barra de acciones gestiona su propio inert y
+    // queda tapada por el menú.
+    const background = () =>
+      Array.from(document.body.children).filter(
+        el => el !== overlay && el.id !== 'actionBar' && !/^(SCRIPT|STYLE|ASTRO-DEV-TOOLBAR)$/.test(el.tagName)
+      );
+
     const setOpen = open => {
+      background().forEach(el => { el.inert = open; });
       overlay.dataset.open = open ? 'true' : 'false';
       document.body.classList.toggle('overlay-open', open);
       hamburger.setAttribute('aria-expanded', open ? 'true' : 'false');
-      overlay.setAttribute('aria-hidden', open ? 'false' : 'true');
+      overlay.inert = !open;
       if (open) closeBtn?.focus();
       else hamburger?.focus();
     };
@@ -254,9 +268,15 @@ const reservarLabel = t(nav.linkReservar, locale, defaultLocale) || 'Reservar';
         e.preventDefault();
         const wasOpen = overlay.dataset.open === 'true';
         if (wasOpen) setOpen(false);
+        const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
         setTimeout(
-          () => el.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-          wasOpen ? 240 : 0
+          () => {
+            el.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+            // El foco acompaña al salto: si no, se queda en el enlace pulsado.
+            if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+            el.focus({ preventScroll: true });
+          },
+          wasOpen ? 300 : 0
         );
       };
     });

@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Nav from '../components/Nav.astro';
 import MobileOverlay from '../components/MobileOverlay.astro';
-import Footer from '@hosteleria/ui/components/Footer.astro';
+import Footer from '../components/Footer.astro';
 import WhatsAppFab from '@hosteleria/ui/components/WhatsAppFab.astro';
 import CtaButton from '../components/CtaButton.astro';
 import { fetchRestaurantData, fetchLegalPages } from '../lib/queries';
@@ -166,7 +166,7 @@ const t = COPY[locale] ?? COPY.es;
           <a
             data-i18n-href='about'
             href='/#about'
-            class='text-muted hover:text-accent transition-colors duration-300 cursor-pointer'
+            class='inline-flex min-h-11 items-center text-muted hover:text-accent transition-colors duration-300 cursor-pointer'
           >
             <span data-i18n='linkAbout'>{t.linkAbout}</span>
           </a>
@@ -174,7 +174,7 @@ const t = COPY[locale] ?? COPY.es;
           <a
             data-i18n-href='plates'
             href='/#plates'
-            class='text-muted hover:text-accent transition-colors duration-300 cursor-pointer'
+            class='inline-flex min-h-11 items-center text-muted hover:text-accent transition-colors duration-300 cursor-pointer'
           >
             <span data-i18n='linkPlates'>{t.linkPlates}</span>
           </a>
@@ -182,7 +182,7 @@ const t = COPY[locale] ?? COPY.es;
           <a
             data-i18n-href='wines'
             href='/#wines'
-            class='text-muted hover:text-accent transition-colors duration-300 cursor-pointer'
+            class='inline-flex min-h-11 items-center text-muted hover:text-accent transition-colors duration-300 cursor-pointer'
           >
             <span data-i18n='linkWines'>{t.linkWines}</span>
           </a>
@@ -190,7 +190,7 @@ const t = COPY[locale] ?? COPY.es;
           <a
             data-i18n-href='gallery'
             href='/#gallery'
-            class='text-muted hover:text-accent transition-colors duration-300 cursor-pointer'
+            class='inline-flex min-h-11 items-center text-muted hover:text-accent transition-colors duration-300 cursor-pointer'
           >
             <span data-i18n='linkGallery'>{t.linkGallery}</span>
           </a>
@@ -208,18 +208,7 @@ const t = COPY[locale] ?? COPY.es;
     whatsappRaw={whatsappRaw}
     bookingPhone={bookingPhone}
     bookingEmail={bookingEmail}
-  >
-    {bookingAction && (
-      <CtaButton
-        slot='cta'
-        href={bookingAction.href}
-        target={bookingAction.external ? '_blank' : undefined}
-        rel={bookingAction.external ? 'noopener' : undefined}
-      >
-        {bookingAction.label ?? tt(restaurant.textosNav?.linkReservar, locale, defaultLocale) ?? 'Reservar'}
-      </CtaButton>
-    )}
-  </Footer>
+  />
 
   <WhatsAppFab href={waHref} locale={locale} />
 </BaseLayout>

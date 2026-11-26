@@ -2,8 +2,8 @@
 import { t } from '@hosteleria/i18n-utils';
 import { img } from '../lib/sanity';
 import type { Restaurant } from '../lib/queries';
-import { extractI18nParagraphs, splitAtHalf } from '@hosteleria/utils';
-import Tag from '../components/Tag.astro';
+import { extractI18nParagraphs } from '@hosteleria/utils';
+import SectionHeading from '../components/SectionHeading.astro';
 
 interface Props {
   restaurant: Restaurant;
@@ -13,8 +13,7 @@ interface Props {
 
 const { restaurant, locale, defaultLocale } = Astro.props;
 
-// Hasta 3 imágenes (schema limita a 3). Placeholders locales si Sanity aún
-// no tiene ninguna subida.
+// Hasta 3 imágenes (el schema limita a 3). Placeholder local si no hay ninguna.
 const imagesInput = (restaurant.sobreImagenes ?? [])
   .slice(0, 3)
   .map(i => img.url(i))
@@ -23,87 +22,53 @@ const images = imagesInput.length > 0 ? imagesInput : ['/img/gal-room.jpg'];
 
 const eyebrow = t(restaurant.sobreEyebrow, locale, defaultLocale);
 const title = t(restaurant.sobreTitulo, locale, defaultLocale);
-const { head, tail } = splitAtHalf(title);
 const paragraphs = extractI18nParagraphs(restaurant.sobreCuerpo, locale, defaultLocale);
-
-// Sombra + border + radio: figures se sienten "elevadas" sin cambiar el layout
-const imgShadow = 'border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)]';
 ---
 
 <!--
-  Guixot About: stack vertical secuencial estilo brasserie parisina.
-  Header con Tag + título split-at-half (italic navy en la mitad final),
-  texto centrado con drop-cap grande brass, y bloque de imágenes adaptativo
-  (1/2/3) abajo con sombras navy suaves + radio + border. Blobs discretos
-  brass + cream a los lados para dar profundidad ambiental.
+  About de Guixot: apilado. Cabecera centrada, texto en columna estrecha con
+  capitular navy y fila de fotos debajo (1, 2 o 3).
 -->
-<section
-  id='about'
-  class='relative overflow-hidden mx-auto pt-[14vh] pb-[16vh] px-(--gap) max-w-[var(--max)] max-[960px]:pt-[10vh] max-[960px]:pb-[10vh]'
->
+<section id='about' class='section-y px-(--gap)'>
+  <div class='mx-auto max-w-[var(--max)]'>
+    <SectionHeading eyebrow={eyebrow} title={title} split='half' class='mb-[clamp(40px,7vh,72px)]' />
 
-  <div class='relative z-[1]'>
-  <!-- Header centrado con Tag + título split-at-half -->
-  <div class='reveal text-center mb-[9vh] max-[960px]:mb-10'>
-    <Tag class='mb-6 mx-auto'>{eyebrow}</Tag>
-    <h2
-      class='font-serif font-medium leading-[1.05] tracking-[-0.01em] text-[clamp(38px,5.5vw,72px)] max-w-[20ch] mx-auto'
-    >
-      {tail ? (
-        <>
-          {head} <em class='italic text-accent font-normal'>{tail}</em>
-        </>
-      ) : (
-        title
-      )}
-    </h2>
-  </div>
+    {paragraphs.length > 0 && (
+      <div class='stagger mx-auto max-w-[680px]'>
+        {paragraphs.map((p, i) => (
+          <p class:list={['reveal leading-[1.8]', i === 0 ? 'text-ink text-[18px]' : 'text-ink-soft text-[17px] mt-6']}>
+            {i === 0 ? (
+              <>
+                {/* La capitular es decorativa: el lector de pantalla lee la palabra entera. */}
+                <span aria-hidden='true' class='float-left font-serif font-medium text-accent leading-[0.85] text-[76px] mr-3 mt-1.5 max-[700px]:text-[62px]'>{p.charAt(0)}</span>
+                <span class='sr-only'>{p.charAt(0)}</span>{p.slice(1)}
+              </>
+            ) : p}
+          </p>
+        ))}
+      </div>
+    )}
 
-  <!-- Texto centrado — columna de lectura editorial estrecha con drop-cap navy -->
-  {paragraphs.length > 0 && (
-    <div class='reveal mx-auto max-w-[680px]'>
-      {paragraphs.map((p, i) => (
-        <p
-          class:list={[
-            'text-ink-soft text-[17px] leading-[1.8]',
-            i === 0 ? '' : 'mt-6'
-          ]}
-        >
-          {i === 0 && (
-            <span class='float-left font-serif font-medium text-accent leading-[0.85] text-[76px] mr-3 mt-1 max-[700px]:text-[62px]'>
-              {p.charAt(0)}
-            </span>
-          )}
-          {i === 0 ? p.slice(1) : p}
-        </p>
-      ))}
-    </div>
-  )}
-
-  <!-- Bloque de imágenes · fila horizontal centrada. Composición se adapta
-       al conteo (1/2/3) manteniendo el mismo aspect 4/5. -->
-  <div
-    class='reveal mx-auto mt-[9vh] max-[960px]:mt-12'
-    class:list={[
-      images.length === 1 && 'max-w-[560px]',
-      images.length === 2 && 'max-w-[900px]',
-      images.length === 3 && 'max-w-[1080px]'
-    ]}
-  >
     <div
       class:list={[
-        'grid gap-[clamp(20px,3vw,32px)] max-[700px]:grid-cols-1 max-[700px]:gap-5',
-        images.length === 1 && 'grid-cols-1',
-        images.length === 2 && 'grid-cols-2',
-        images.length === 3 && 'grid-cols-3'
+        'stagger mx-auto mt-[clamp(48px,9vh,88px)] grid gap-[clamp(16px,2.6vw,32px)] max-[700px]:grid-cols-1',
+        images.length === 1 && 'max-w-[560px] grid-cols-1',
+        images.length === 2 && 'max-w-[900px] grid-cols-2',
+        images.length === 3 && 'max-w-[1080px] grid-cols-3'
       ]}
     >
-      {images.map(src => (
-        <figure class:list={['aspect-[4/5] overflow-hidden bg-surface', imgShadow]}>
-          <img src={src} alt='' class='w-full h-full object-cover' />
+      {images.map((src, i) => (
+        <figure
+          data-reveal='img'
+          class:list={[
+            'reveal aspect-[4/5] overflow-hidden bg-surface rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] max-[700px]:aspect-[4/3]',
+            /* Con tres fotos, la del centro baja: rompe la fila sin cambiar la estructura. */
+            images.length === 3 && i === 1 && 'min-[701px]:translate-y-8'
+          ]}
+        >
+          <img src={src} alt='' class='w-full h-full object-cover' loading='lazy' decoding='async' />
         </figure>
       ))}
     </div>
-  </div>
   </div>
 </section>

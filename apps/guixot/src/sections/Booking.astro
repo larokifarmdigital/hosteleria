@@ -3,8 +3,9 @@ import { t } from '@hosteleria/i18n-utils';
 import type { Restaurant, Espacio } from '../lib/queries';
 import { buildHoursByDay } from '@hosteleria/utils';
 import { bookingStrings } from '@hosteleria/booking-form';
-import Tag from '../components/Tag.astro';
+import SectionHeading from '../components/SectionHeading.astro';
 import CtaButton from '../components/CtaButton.astro';
+import Icon from '../components/Icon.astro';
 
 interface Props {
   restaurant: Restaurant;
@@ -16,151 +17,139 @@ interface Props {
 
 const { restaurant, espacio, locale, defaultLocale, bookingEmail } = Astro.props;
 
-// Switch en Sanity: si aceptaReservas === false ocultamos la sección Booking
-// completa. El botón "Reservar" del Nav/Hero/etc cae en cascada a WhatsApp/tel.
+// Si en el CMS no se aceptan reservas, la sección no existe y el botón
+// "Reservar" pasa a WhatsApp o teléfono.
 if (restaurant.aceptaReservas === false) return null;
 
 const nav = restaurant.textosNav ?? {};
 const form = restaurant.textosForm ?? {};
 
-// Horas por día en decimal → date/time pickers
 const hoursByDay = buildHoursByDay(espacio.horariosSemana);
-const tt = bookingStrings(locale);
+const pickerStrings = bookingStrings(locale);
 const bookingConfig = {
   hoursByDay,
-  strings: tt,
+  strings: pickerStrings,
   bookingEmail,
   restaurantName: restaurant.nombre
 };
 
-// Esencia Guixot brasserie: inputs SIN bg, solo línea inferior — ficha de
-// reserva editorial. Tipografía Manrope (misma que labels/nav) para que
-// todos los controles del formulario formen una familia coherente; el
-// serif Bodoni queda reservado para display (títulos), no para inputs.
-const inputCls =
-  'w-full bg-transparent border-0 border-b border-line-strong/70 rounded-none py-3 px-1 font-sans text-ink text-[15px] font-normal tracking-normal transition-[border-color,box-shadow] duration-300 focus:outline-none focus:border-accent focus:shadow-[0_2px_0_0_rgb(30_58_95/0.18)] hover:border-ink/50 placeholder:font-sans placeholder:text-dim placeholder:font-normal placeholder:text-[14.5px] placeholder:tracking-normal';
-const labelCls =
-  'flex flex-col gap-2 font-sans text-accent font-semibold text-[11px] uppercase tracking-[0.14em]';
-const errorCls =
-  'text-[11.5px] font-normal text-[color:var(--color-accent-alt)] italic hidden data-[error]:block mt-1';
-const pickerBtnCls =
-  'w-full bg-transparent border-0 border-b border-line-strong/70 rounded-none py-3 px-1 font-sans text-ink text-[15px] font-normal tracking-normal text-left transition-[border-color,box-shadow] duration-300 hover:border-ink/50 focus:outline-none focus:border-accent focus:shadow-[0_2px_0_0_rgb(30_58_95/0.18)] flex items-center justify-between gap-3 cursor-pointer';
+// Campos de Guixot: sin caja, solo línea inferior (ficha de reserva). 16px:
+// por debajo, iOS hace zoom al enfocar.
+const fieldCls =
+  'w-full min-h-[48px] bg-transparent border-0 border-b border-field-line rounded-none py-2.5 px-1 font-sans text-ink text-[16px] font-normal normal-case tracking-normal transition-[border-color,box-shadow] duration-200 hover:border-ink/60 focus:outline-2 focus:outline-transparent focus:outline-offset-2 focus:border-accent focus:shadow-[0_2px_0_0_var(--color-accent)] placeholder:font-sans placeholder:text-dim';
+const pickerBtnCls = `${fieldCls} text-left flex items-center justify-between gap-3 cursor-pointer`;
+const labelCls = 'flex flex-col gap-1.5 font-sans text-accent font-bold text-[12px] uppercase tracking-[0.16em]';
+// empty:hidden y no display:none fijo: role=alert anuncia el aviso al rellenarse.
+const errorCls = 'text-[14px] font-medium normal-case tracking-normal text-[color:var(--color-error)] empty:hidden';
+const popCls =
+  'hidden absolute z-50 left-0 top-[calc(100%+8px)] max-w-full bg-bg border border-line-strong rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] p-4 font-normal normal-case tracking-normal';
 
-const titulo = t(form.titulo, locale, defaultLocale);
-const [first, ...restTitle] = titulo.split(' ');
-const restText = restTitle.join(' ');
+const T = {
+  es: { optional: 'opcional', errName: 'Dinos a nombre de quién va la reserva' },
+  ca: { optional: 'opcional', errName: 'Digue’ns a nom de qui va la reserva' },
+  en: { optional: 'optional', errName: 'Tell us the name for the booking' }
+};
+const tt = T[locale as keyof typeof T] ?? T.es;
 ---
 
-<section id='book' class='relative py-[16vh] px-(--gap) bg-bg-2 border-y border-line max-[900px]:py-[10vh]'>
-
-  <div class='relative z-[1] mx-auto max-w-[900px]'>
-    <div class='reveal text-center mb-12'>
-      <Tag class='mb-5 mx-auto'>{t(nav.linkReservar, locale, defaultLocale) || 'Reserva'}</Tag>
-      <h2 class='font-serif font-medium leading-[1.05] tracking-[-0.02em] text-[clamp(36px,4.4vw,60px)] text-ink mb-4'>
-        <em class='italic text-accent font-normal'>{first}</em>{restText && ' ' + restText}
-      </h2>
-      <p class='text-muted text-[16px] leading-[1.7] mx-auto max-w-[52ch]'>
-        {t(form.intro, locale, defaultLocale)}
-      </p>
-    </div>
+<section id='book' class='section-y px-(--gap) bg-bg-2 border-y border-line'>
+  <div class='mx-auto max-w-[900px]'>
+    <SectionHeading
+      eyebrow={t(nav.linkReservar, locale, defaultLocale) || 'Reserva'}
+      title={t(form.titulo, locale, defaultLocale) || 'Reserva tu mesa'}
+      split='first'
+      class='mb-5'
+    />
+    <p class='reveal text-muted text-[16.5px] leading-[1.7] text-center mx-auto max-w-[52ch] mb-12'>
+      {t(form.intro, locale, defaultLocale)}
+    </p>
 
     <form
       id='reservaForm'
       novalidate
-      class='reveal bg-bg border border-line-strong rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-12 grid grid-cols-2 gap-y-8 gap-x-12 max-[900px]:grid-cols-1 max-[900px]:gap-7 max-[600px]:p-7'
+      data-err-name={tt.errName}
+      class='bg-bg border border-line-strong rounded-[var(--radius-card)] shadow-[var(--shadow-card)] p-12 grid grid-cols-2 gap-y-8 gap-x-12 max-[900px]:grid-cols-1 max-[900px]:gap-7 max-[600px]:p-6'
     >
-      <label class={labelCls}>
-        <span>{t(form.labelNombre, locale, defaultLocale) || 'Nombre'}</span>
-        <input type='text' name='nombre' required autocomplete='name' class={inputCls} />
-      </label>
+      <div class='flex flex-col gap-1.5'>
+        <label class={labelCls}>
+          <span>{t(form.labelNombre, locale, defaultLocale) || 'Nombre'}</span>
+          <input type='text' name='nombre' required autocomplete='name' aria-describedby='err-nombre' class={fieldCls} />
+        </label>
+        <span class={errorCls} id='err-nombre' role='alert' data-error-for='nombre'></span>
+      </div>
 
-      <label class={labelCls}>
-        <span>{t(form.labelTelefono, locale, defaultLocale) || 'Teléfono'}</span>
-        <input
-          type='tel' name='telefono' required autocomplete='tel' inputmode='tel'
-          placeholder='612 345 678' maxlength='17'
-          class={inputCls} data-input-phone
-        />
-        <span class={errorCls} data-error-for='telefono'></span>
-      </label>
+      <div class='flex flex-col gap-1.5'>
+        <label class={labelCls}>
+          <span>{t(form.labelTelefono, locale, defaultLocale) || 'Teléfono'}</span>
+          <input
+            type='tel' name='telefono' required autocomplete='tel' inputmode='tel'
+            placeholder='612 345 678' maxlength='17'
+            aria-describedby='err-telefono' class={fieldCls} data-input-phone
+          />
+        </label>
+        <span class={errorCls} id='err-telefono' role='alert' data-error-for='telefono'></span>
+      </div>
 
-      <label class={labelCls}>
-        <span>{t(form.labelEmail, locale, defaultLocale) || 'Email'}</span>
-        <input
-          type='email' name='email' autocomplete='email'
-          placeholder='hola@ejemplo.com'
-          class={inputCls} data-input-email
-        />
-        <span class={errorCls} data-error-for='email'></span>
-      </label>
+      <div class='flex flex-col gap-1.5'>
+        <label class={labelCls}>
+          <span>
+            {t(form.labelEmail, locale, defaultLocale) || 'Email'}
+            <span class='font-medium text-muted'> ({tt.optional})</span>
+          </span>
+          <input type='email' name='email' autocomplete='email' aria-describedby='err-email' class={fieldCls} data-input-email />
+        </label>
+        <span class={errorCls} id='err-email' role='alert' data-error-for='email'></span>
+      </div>
 
-      <label class={labelCls}>
-        <span>{t(form.labelComensales, locale, defaultLocale) || 'Comensales'}</span>
-        <input
-          type='text' name='personas' required inputmode='numeric' pattern='[0-9]{1,2}'
-          maxlength='2' value='2' placeholder='2'
-          class={inputCls} data-input-guests
-        />
-        <span class={errorCls} data-error-for='personas'></span>
-      </label>
+      <div class='flex flex-col gap-1.5'>
+        <label class={labelCls}>
+          <span>{t(form.labelComensales, locale, defaultLocale) || 'Comensales'}</span>
+          <input
+            type='text' name='personas' required inputmode='numeric' pattern='[0-9]{1,2}'
+            maxlength='2' value='2'
+            aria-describedby='err-personas' class={fieldCls} data-input-guests
+          />
+        </label>
+        <span class={errorCls} id='err-personas' role='alert' data-error-for='personas'></span>
+      </div>
 
-      <label class={labelCls}>
-        <span>{t(form.labelFecha, locale, defaultLocale) || 'Fecha'}</span>
+      <div class={labelCls}>
+        <span id='bookDateLabel'>{t(form.labelFecha, locale, defaultLocale) || 'Fecha'}</span>
         <div class='relative'>
-          <button type='button' class={pickerBtnCls} data-datepicker-btn>
-            <span data-datepicker-label class='text-dim'>{tt.pickDate}</span>
-            <svg width='15' height='15' viewBox='0 0 20 20' fill='none' aria-hidden='true' class='text-accent shrink-0'>
-              <rect x='3' y='4' width='14' height='13' rx='2' stroke='currentColor' stroke-width='1.5' />
-              <path d='M3 8h14M7 2v4M13 2v4' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' />
-            </svg>
+          <button type='button' class={pickerBtnCls} data-datepicker-btn aria-haspopup='dialog' aria-labelledby='bookDateLabel bookDateValue' aria-describedby='err-fecha'>
+            <span id='bookDateValue' data-datepicker-label class='text-dim'>{pickerStrings.pickDate}</span>
+            <Icon name='calendar' size={18} class='text-accent' />
           </button>
           <input type='hidden' name='fecha' required data-datepicker-input />
-          <div
-            data-datepicker-pop
-            class='hidden absolute z-50 left-0 top-[calc(100%+8px)] w-[300px] bg-bg border border-line-strong rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] p-4 max-[700px]:w-full max-[700px]:max-w-[320px]'
-          ></div>
+          <div data-datepicker-pop class:list={[popCls, 'w-[300px]']}></div>
         </div>
-        <span class={errorCls} data-error-for='fecha'></span>
-      </label>
+        <span class={errorCls} id='err-fecha' role='alert' data-error-for='fecha'></span>
+      </div>
 
-      <label class={labelCls}>
-        <span>{t(form.labelHora, locale, defaultLocale) || 'Hora'}</span>
+      <div class={labelCls}>
+        <span id='bookTimeLabel'>{t(form.labelHora, locale, defaultLocale) || 'Hora'}</span>
         <div class='relative'>
-          <button type='button' class={pickerBtnCls} data-timepicker-btn>
-            <span data-timepicker-label class='text-dim'>{tt.pickTime}</span>
-            <svg width='15' height='15' viewBox='0 0 20 20' fill='none' aria-hidden='true' class='text-accent shrink-0'>
-              <circle cx='10' cy='10' r='7' stroke='currentColor' stroke-width='1.5' />
-              <path d='M10 6v4l2.5 2' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' />
-            </svg>
+          <button type='button' class={pickerBtnCls} data-timepicker-btn aria-haspopup='dialog' aria-labelledby='bookTimeLabel bookTimeValue' aria-describedby='err-hora'>
+            <span id='bookTimeValue' data-timepicker-label class='text-dim'>{pickerStrings.pickTime}</span>
+            <Icon name='clock' size={18} class='text-accent' />
           </button>
           <input type='hidden' name='hora' required data-timepicker-input />
-          <div
-            data-timepicker-pop
-            class='hidden absolute z-50 left-0 top-[calc(100%+8px)] w-[320px] bg-bg border border-line-strong rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] p-4 max-[700px]:w-full max-[700px]:max-w-[340px]'
-          ></div>
+          <div data-timepicker-pop class:list={[popCls, 'w-[320px]']}></div>
         </div>
-        <span class={errorCls} data-error-for='hora'></span>
-      </label>
+        <span class={errorCls} id='err-hora' role='alert' data-error-for='hora'></span>
+      </div>
 
       <label class:list={[labelCls, 'col-span-full']}>
         <span>{t(form.labelNotas, locale, defaultLocale) || 'Notas'}</span>
-        <textarea
-          name='notas' rows='3'
-          class:list={[inputCls, 'resize-y min-h-[110px] leading-normal']}
-        ></textarea>
+        <textarea name='notas' rows='3' class:list={[fieldCls, 'resize-y min-h-[104px] leading-normal']}></textarea>
       </label>
 
-      <div class='col-span-full flex justify-center mt-2'>
-        <CtaButton type='submit'>
+      <div class='col-span-full flex flex-col items-center gap-4 mt-2'>
+        <CtaButton type='submit' class='max-[600px]:w-full'>
           {t(form.submit, locale, defaultLocale) || 'Enviar'}
         </CtaButton>
+        <p id='reservaMsg' role='status' aria-live='polite' class='text-center text-[15px] text-ink-soft empty:hidden'></p>
       </div>
-      <p
-        id='reservaMsg'
-        role='status'
-        aria-live='polite'
-        class='col-span-full text-center min-h-[1.4em] text-[13px] tracking-[0.04em] text-muted'
-      ></p>
     </form>
   </div>
 </section>
@@ -170,4 +159,38 @@ const restText = restTitle.join(' ');
 <script>
   import { initBookingForm } from '@hosteleria/booking-form';
   initBookingForm();
+
+  // El paquete compartido bloquea el envío sin nombre pero no avisa, y no lleva
+  // el foco al primer error. Se completa aquí sin tocar el paquete.
+  const form = document.querySelector<HTMLFormElement>('#reservaForm');
+  const nameInput = form?.querySelector<HTMLInputElement>('input[name="nombre"]');
+  const nameError = form?.querySelector<HTMLElement>('[data-error-for="nombre"]');
+  if (form && nameInput && nameError) {
+    const errors = () => Array.from(form.querySelectorAll<HTMLElement>('[data-error-for]'));
+    const controlOf = (error: HTMLElement) =>
+      form.querySelector<HTMLElement>(`[aria-describedby~="${error.id}"]`);
+    // aria-invalid sigue al texto del aviso: lo pone o lo quita quien lo escriba.
+    const syncInvalid = () => {
+      errors().forEach((error) => {
+        const control = controlOf(error);
+        if (!control) return;
+        if (error.textContent?.trim()) control.setAttribute('aria-invalid', 'true');
+        else control.removeAttribute('aria-invalid');
+      });
+    };
+    const observer = new MutationObserver(syncInvalid);
+    errors().forEach((error) => observer.observe(error, { childList: true, characterData: true, subtree: true }));
+
+    nameInput.addEventListener('input', () => {
+      if (nameInput.value.trim()) nameError.textContent = '';
+    });
+    form.addEventListener('submit', () => {
+      nameError.textContent = nameInput.value.trim() ? '' : (form.dataset.errName ?? '');
+      // Tras la validación del paquete (mismo evento), foco al primer campo con error.
+      queueMicrotask(() => {
+        const firstError = errors().find((el) => el.textContent?.trim());
+        if (firstError) controlOf(firstError)?.focus();
+      });
+    });
+  }
 </script>

@@ -4,7 +4,10 @@ import { buildWhatsAppHref } from '@hosteleria/utils';
 
 import Nav from './Nav.astro';
 import MobileOverlay from './MobileOverlay.astro';
-import Footer from '@hosteleria/ui/components/Footer.astro';
+import Footer from './Footer.astro';
+import MobileActionBar from './MobileActionBar.astro';
+import HoursScript from './HoursScript.astro';
+import { buildHoursUi } from '../lib/hours';
 import WhatsAppFab from '@hosteleria/ui/components/WhatsAppFab.astro';
 import RevealScript from '@hosteleria/ui/components/RevealScript.astro';
 
@@ -45,6 +48,7 @@ const bookingEmail = restaurant.contacto?.email ?? '';
 const bookingPhone = restaurant.contacto?.telefono ?? '';
 const whatsappRaw = restaurant.contacto?.whatsapp ?? '';
 const waHref = buildWhatsAppHref(whatsappRaw, restaurant.nombre, locale);
+const hours = buildHoursUi(espacio.horariosSemana, locale);
 ---
 
 <Nav
@@ -66,7 +70,7 @@ const waHref = buildWhatsAppHref(whatsappRaw, restaurant.nombre, locale);
 />
 
 <main id="main">
-  <Hero restaurant={restaurant} espacio={espacio} locale={locale} defaultLocale={defaultLocale} />
+  <Hero restaurant={restaurant} espacio={espacio} hours={hours} locale={locale} defaultLocale={defaultLocale} />
   <Manifesto restaurant={restaurant} espacio={espacio} locale={locale} defaultLocale={defaultLocale} />
   <About restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
   <Dishes
@@ -93,12 +97,11 @@ const waHref = buildWhatsAppHref(whatsappRaw, restaurant.nombre, locale);
     defaultLocale={defaultLocale}
     bookingEmail={bookingEmail}
   />
-  <Map restaurant={restaurant} espacio={espacio} locale={locale} defaultLocale={defaultLocale} />
+  <Map restaurant={restaurant} hours={hours} locale={locale} />
 </main>
 
 <Footer
   restaurant={restaurant}
-  espacio={espacio}
   locale={locale}
   defaultLocale={defaultLocale}
   legalPages={legalPages}
@@ -106,9 +109,11 @@ const waHref = buildWhatsAppHref(whatsappRaw, restaurant.nombre, locale);
   whatsappRaw={whatsappRaw}
   bookingPhone={bookingPhone}
   bookingEmail={bookingEmail}
-  showCta={false}
 />
 
 <WhatsAppFab href={waHref} locale={locale} />
 
+<MobileActionBar restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
+
+{hours.hasHours && <HoursScript config={hours.config} />}
 <RevealScript />

@@ -1,0 +1,142 @@
+---
+import { t } from '@hosteleria/i18n-utils';
+import type { Restaurant, LegalPageDoc } from '../lib/queries';
+import { getLocation, telHref } from '../lib/location';
+import Icon from './Icon.astro';
+
+interface Props {
+  restaurant: Restaurant;
+  locale: string;
+  defaultLocale: string;
+  legalPages?: LegalPageDoc[];
+  waHref: string;
+  whatsappRaw: string;
+  bookingPhone: string;
+  bookingEmail: string;
+}
+
+const {
+  restaurant,
+  locale,
+  defaultLocale,
+  legalPages = [],
+  waHref,
+  whatsappRaw,
+  bookingPhone,
+  bookingEmail
+} = Astro.props;
+
+const { dir, mapsUrl } = getLocation(restaurant, locale);
+const byline = t(restaurant.textosFooter?.bylineIzq, locale, defaultLocale);
+
+const social = restaurant.mostrarRedes === true
+  ? [
+      { label: 'Instagram', icon: 'instagram', href: restaurant.redes?.instagram },
+      { label: 'Facebook', icon: 'facebook', href: restaurant.redes?.facebook },
+      { label: 'TikTok', icon: 'tiktok', href: restaurant.redes?.tiktok }
+    ].filter((s) => s.href)
+  : [];
+
+const legalPath = (slug: string) =>
+  locale === defaultLocale ? `/legal/${slug}` : `/${locale}/legal/${slug}`;
+
+const T = {
+  es: { footer: 'Datos del restaurante', visit: 'Visítanos', directions: 'Cómo llegar', contact: 'Contacto', legal: 'Legal', on: 'en' },
+  ca: { footer: 'Dades del restaurant', visit: 'Visita’ns', directions: 'Com arribar', contact: 'Contacte', legal: 'Legal', on: 'a' },
+  en: { footer: 'Restaurant details', visit: 'Visit us', directions: 'Get directions', contact: 'Contact', legal: 'Legal', on: 'on' }
+};
+const tt = T[locale as keyof typeof T] ?? T.es;
+
+const headingCls = 'label mb-4';
+const linkCls =
+  'group inline-flex items-center gap-3 min-h-[40px] text-ink-soft text-[15.5px] cursor-pointer transition-colors duration-200 hover:text-accent';
+const iconCls = 'text-accent transition-transform duration-200 group-hover:scale-110 motion-reduce:transition-none';
+---
+
+<!-- Footer de Guixot: marca · Visítanos · Contacto (con redes) · Legal. -->
+<footer class='px-(--gap) pt-[clamp(56px,9vh,96px)] pb-8 bg-surface border-t border-line'>
+  <div class='mx-auto max-w-[var(--max)]'>
+    <h2 class='sr-only'>{tt.footer}</h2>
+
+    <div class='grid grid-cols-[1.3fr_1fr_1fr_1fr] gap-x-[clamp(32px,5vw,80px)] gap-y-10 mb-12 max-[960px]:grid-cols-2 max-[600px]:grid-cols-1'>
+      <div class='max-w-[340px]'>
+        <p class='font-serif text-ink text-[36px] leading-none tracking-[-0.01em]'>{restaurant.nombre}</p>
+        <span aria-hidden='true' class='brass-rule my-5'></span>
+        {byline && <p class='text-muted text-[15.5px] leading-[1.6]'>{byline}</p>}
+      </div>
+
+      <div>
+        <h3 class={headingCls}>{tt.visit}</h3>
+        <p class='text-ink-soft text-[15.5px] leading-[1.65]'>
+          {dir.calle}<br />
+          {[dir.codigoPostal, dir.ciudad].filter(Boolean).join(' ')}
+          {dir.barrio && <><br />{dir.barrio}</>}
+        </p>
+        {mapsUrl && (
+          <a href={mapsUrl} target='_blank' rel='noopener' class:list={[linkCls, 'mt-2 font-semibold text-accent']}>
+            <Icon name='pin' size={18} class={iconCls} />
+            <span class='underline decoration-accent/40 underline-offset-4 group-hover:decoration-accent'>{tt.directions}</span>
+          </a>
+        )}
+      </div>
+
+      <div>
+        <h3 class={headingCls}>{tt.contact}</h3>
+        <ul class='list-none flex flex-col'>
+          {bookingPhone && (
+            <li>
+              <a href={telHref(bookingPhone)} class:list={[linkCls, 'tabular-nums']}>
+                <Icon name='phone' size={18} class={iconCls} />{bookingPhone}
+              </a>
+            </li>
+          )}
+          {waHref && whatsappRaw && (
+            <li>
+              <a href={waHref} target='_blank' rel='noopener' class={linkCls}>
+                <Icon name='chat' size={18} class={iconCls} />WhatsApp · {whatsappRaw}
+              </a>
+            </li>
+          )}
+          {bookingEmail && (
+            <li>
+              <a href={`mailto:${bookingEmail}`} class:list={[linkCls, 'break-all']}>
+                <Icon name='mail' size={18} class={iconCls} />{bookingEmail}
+              </a>
+            </li>
+          )}
+        </ul>
+        {social.length > 0 && (
+          <ul class='list-none flex gap-2.5 mt-4'>
+            {social.map((s) => (
+              <li>
+                <a
+                  href={s.href}
+                  target='_blank'
+                  rel='noopener'
+                  aria-label={`${restaurant.nombre} ${tt.on} ${s.label}`}
+                  title={s.label}
+                  class='flex items-center justify-center w-11 h-11 rounded-full border border-line-strong text-accent cursor-pointer transition-[background-color,border-color,color,transform] duration-200 hover:bg-accent hover:border-accent hover:text-bg hover:-translate-y-0.5 motion-reduce:hover:translate-y-0'
+                >
+                  <Icon name={s.icon} size={20} />
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {legalPages.length > 0 && (
+        <div>
+          <h3 class={headingCls}>{tt.legal}</h3>
+          <ul class='list-none flex flex-col'>
+            {legalPages.map((p) => (
+              <li><a href={legalPath(p.tipo)} class={linkCls}>{t(p.titulo, locale, defaultLocale)}</a></li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+
+    <p class='border-t border-line pt-6 text-muted text-[14px]'>© {new Date().getFullYear()} {restaurant.nombre}</p>
+  </div>
+</footer>

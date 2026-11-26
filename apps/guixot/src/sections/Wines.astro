@@ -1,8 +1,7 @@
 ---
 import { t } from '@hosteleria/i18n-utils';
 import type { Restaurant, WineCategory, Wine } from '../lib/queries';
-import { splitLastWord } from '@hosteleria/utils';
-import Tag from '../components/Tag.astro';
+import SectionHeading from '../components/SectionHeading.astro';
 
 interface Props {
   restaurant: Restaurant;
@@ -16,64 +15,79 @@ const { restaurant, wineCategories, wines, locale, defaultLocale } = Astro.props
 
 const sec = restaurant.textosSecciones ?? {};
 const title = t(sec.vinosTitulo, locale, defaultLocale);
-const { head, tail } = splitLastWord(title);
+const finalNote = t(sec.vinosNotaFinal, locale, defaultLocale);
 
-const winesByCategory = wineCategories.map((cat) => ({
-  category: cat,
-  items: wines.filter((w) => w.categoria?._id === cat._id),
-}));
+const groups = wineCategories
+  .map((cat) => ({
+    name: t(cat.nombre, locale, defaultLocale),
+    items: wines.filter((w) => w.categoria?._id === cat._id)
+  }))
+  .filter((g) => g.items.length > 0);
+
+if (groups.length === 0) return null;
+
+// "6 / 28" a secas no dice qué es cada precio: se rotula una vez por categoría.
+const T = {
+  es: { glass: 'Copa', bottle: 'Botella' },
+  ca: { glass: 'Copa', bottle: 'Ampolla' },
+  en: { glass: 'Glass', bottle: 'Bottle' }
+};
+const tt = T[locale as keyof typeof T] ?? T.es;
+const hasGlass = wines.some((w) => w.precioCopa != null);
+const hasBottle = wines.some((w) => w.precioBotella != null);
+
+const itemNameCls = 'font-serif font-medium text-ink text-[19px] leading-tight';
+const itemNoteCls = 'text-muted text-[15px] leading-[1.55] italic mt-1';
+const priceCls = 'w-[64px] text-right font-serif text-accent text-[18px] font-medium whitespace-nowrap tabular-nums max-[480px]:w-[58px]';
+const colLabelCls = 'w-[64px] text-right font-sans font-bold uppercase text-muted text-[11.5px] tracking-[0.14em] max-[480px]:w-[58px] max-[480px]:tracking-[0.04em]';
 ---
 
-<section id="wines" class="relative overflow-hidden py-[16vh] px-(--gap) max-[900px]:py-[10vh]">
+<section id='wines' class='section-y px-(--gap)'>
+  <div class='mx-auto max-w-[1080px]'>
+    <SectionHeading eyebrow={t(sec.vinosEyebrow, locale, defaultLocale)} title={title} class='mb-14 max-[900px]:mb-10' />
 
-  <div class="relative z-[1] mx-auto max-w-[1080px]">
-    <div class="reveal text-center mb-16 max-[900px]:mb-10">
-      <Tag class="mb-6 mx-auto">{t(sec.vinosEyebrow, locale, defaultLocale)}</Tag>
-      <h2 class="font-serif font-medium leading-none tracking-[-0.01em] text-[clamp(40px,5.5vw,80px)]">
-        {tail ? (
-          <>
-            {head} <em class="italic text-accent font-normal">{tail}</em>
-          </>
-        ) : (
-          title
-        )}
-      </h2>
-    </div>
-
-    <div class="flex flex-col gap-14">
-      {winesByCategory.map(({ category, items }) => (
-        items.length > 0 && (
-          <div class="reveal">
-            <div class="flex items-baseline gap-5 mb-6">
-              <h3 class="font-serif font-medium text-accent text-[clamp(20px,2.2vw,26px)] leading-none whitespace-nowrap">
-                {t(category.nombre, locale, defaultLocale)}
-              </h3>
-              <span class="flex-1 h-px bg-line"></span>
-            </div>
-            <div class="flex flex-col divide-y divide-line/60">
-              {items.map((wine) => (
-                <div class="grid grid-cols-[1fr_auto] items-baseline gap-6 py-4">
-                  <div>
-                    <div class="font-serif font-medium text-ink text-[18px] leading-tight mb-1">
-                      {wine.nombre}
-                    </div>
-                    <div class="text-muted text-[14px] leading-[1.55] italic">
-                      {t(wine.nota, locale, defaultLocale)}{wine.region && <> · {wine.region}</>}
-                    </div>
-                  </div>
-                  <span class="font-serif text-accent text-[17px] font-medium whitespace-nowrap tabular-nums">
-                    {wine.precioCopa ?? '—'} / {wine.precioBotella ?? '—'}
-                  </span>
-                </div>
-              ))}
+    <div class='flex flex-col gap-16 max-[900px]:gap-12'>
+      {groups.map((g) => (
+        <div>
+          <div class='reveal flex items-baseline gap-5 mb-3'>
+            <h3 class='font-serif font-medium text-accent text-[clamp(23px,2.4vw,29px)] leading-none whitespace-nowrap'>{g.name}</h3>
+            <span aria-hidden='true' class='flex-1 h-px bg-line-strong/70'></span>
+            <div aria-hidden='true' class='flex gap-3'>
+              {hasGlass && <span class={colLabelCls}>{tt.glass}</span>}
+              {hasBottle && <span class={colLabelCls}>{tt.bottle}</span>}
             </div>
           </div>
-        )
+          <ul class='stagger list-none flex flex-col divide-y divide-line'>
+            {g.items.map((wine) => {
+              const note = [t(wine.nota, locale, defaultLocale), wine.region].filter(Boolean).join(' · ');
+              return (
+                <li class='reveal grid grid-cols-[1fr_auto] items-baseline gap-5 py-4.5'>
+                  <div>
+                    <p class={itemNameCls}>{wine.nombre}</p>
+                    {note && <p class={itemNoteCls}>{note}</p>}
+                  </div>
+                  <div class='flex gap-3'>
+                    {hasGlass && (
+                      <p class={priceCls}>
+                        <span class='sr-only'>{tt.glass}: </span>{wine.precioCopa != null ? `${wine.precioCopa} €` : '—'}
+                      </p>
+                    )}
+                    {hasBottle && (
+                      <p class={priceCls}>
+                        <span class='sr-only'>{tt.bottle}: </span>{wine.precioBotella != null ? `${wine.precioBotella} €` : '—'}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       ))}
     </div>
 
-    <div class="text-center pt-14 text-[11px] tracking-[0.32em] uppercase text-muted">
-      {t(sec.vinosNotaFinal, locale, defaultLocale)}
-    </div>
+    {finalNote && (
+      <p class='reveal text-center mt-14 font-serif italic text-muted text-[18px]'>{finalNote}</p>
+    )}
   </div>
 </section>

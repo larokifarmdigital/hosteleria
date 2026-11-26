@@ -1,0 +1,29 @@
+---
+import type { HoursUi } from '../lib/hours';
+
+interface Props {
+  hours: HoursUi;
+  class?: string;
+}
+
+const { hours, class: cls } = Astro.props;
+---
+
+<!-- "Hoy" lo marca HoursScript en el navegador (el build no sabe qué día es). -->
+<dl class:list={['text-[15.5px] leading-snug text-muted tabular-nums', cls]}>
+  {hours.week.map((row) => (
+    <div data-hours-row={row.days.join(',')} class='flex items-baseline justify-between gap-4 py-2.5 border-b border-line/70 last:border-b-0'>
+      <dt>
+        {row.name}
+        <span data-today-tag class='ml-2 font-sans text-accent text-[11.5px] font-bold uppercase tracking-[0.16em]'>
+          · {hours.strings.today}
+        </span>
+      </dt>
+      <dd class='text-right whitespace-nowrap'>
+        {row.shifts.length
+          ? row.shifts.map((shift) => <span class='block'>{shift}</span>)
+          : hours.strings.closedDay}
+      </dd>
+    </div>
+  ))}
+</dl>

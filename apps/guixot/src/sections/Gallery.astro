@@ -2,8 +2,8 @@
 import { t } from '@hosteleria/i18n-utils';
 import { img } from '../lib/sanity';
 import type { Restaurant, Espacio } from '../lib/queries';
-import { splitLastWord } from '@hosteleria/utils';
-import Tag from '../components/Tag.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import Icon from '../components/Icon.astro';
 
 interface Props {
   restaurant: Restaurant;
@@ -16,90 +16,150 @@ const { restaurant, espacio, locale, defaultLocale } = Astro.props;
 
 const sec = restaurant.textosSecciones ?? {};
 const title = t(sec.galeriaTitulo, locale, defaultLocale) || 'El local';
-const { head, tail } = splitLastWord(title);
 
-const galeriaFallback = [
+const galleryFallback = [
   '/img/gal-table.jpg', '/img/gal-room.jpg', '/img/gal-soup.jpg',
   '/img/gal-martini.jpg', '/img/cellar.jpg', '/img/pass.jpg',
-  '/img/glass.jpg', '/img/hire.jpg', '/img/kitchen.jpg',
+  '/img/glass.jpg', '/img/hire.jpg', '/img/kitchen.jpg'
 ];
-const galeriaImgs = espacio.galeria?.length
+const images = espacio.galeria?.length
   ? espacio.galeria.map((g) => img.url(g) ?? '/img/gal-room.jpg')
-  : galeriaFallback;
+  : galleryFallback;
+
+// Rejilla de 4 columnas: la 1.ª foto ocupa 2×2 y la 5.ª dos filas. Según cuántas
+// fotos haya, la última fila puede quedar coja: la última foto se ensancha lo
+// justo para cerrarla.
+const cellsOf = (i: number) => (i === 0 ? 4 : i === 4 ? 2 : 1);
+const cells = images.reduce((sum, _, i) => sum + cellsOf(i), 0);
+const gap = (4 - (cells % 4)) % 4;
+const lastSpan = images.length > 5 ? ['', 'min-[901px]:col-span-2', 'min-[901px]:col-span-3', 'min-[901px]:col-span-4'][gap] : '';
+// En dos columnas (tablet) la 1.ª ocupa la fila entera: con un número par de fotos sobra un hueco.
+const lastSpanTablet = images.length > 1 && images.length % 2 === 0 ? 'max-[900px]:col-span-2 max-[600px]:col-span-1' : '';
+
+const T = {
+  es: { photo: 'Foto {n} de {total}', open: 'Ampliar foto {n} de {total}', viewer: 'Galería de fotos', close: 'Cerrar', prev: 'Foto anterior', next: 'Foto siguiente' },
+  ca: { photo: 'Foto {n} de {total}', open: 'Ampliar foto {n} de {total}', viewer: 'Galeria de fotos', close: 'Tancar', prev: 'Foto anterior', next: 'Foto següent' },
+  en: { photo: 'Photo {n} of {total}', open: 'Enlarge photo {n} of {total}', viewer: 'Photo gallery', close: 'Close', prev: 'Previous photo', next: 'Next photo' }
+};
+const tt = T[locale as keyof typeof T] ?? T.es;
+const fill = (template: string, n: number) =>
+  template.replace('{n}', String(n)).replace('{total}', String(images.length));
+
+const viewerBtnCls =
+  'flex items-center justify-center w-12 h-12 rounded-full bg-white/10 text-white border border-white/25 cursor-pointer transition-colors duration-200 hover:bg-white/25 focus-visible:outline-white';
 ---
 
-<!--
-  Guixot Gallery: grid asimétrico con posiciones específicas (algunas fotos
-  span 2 rows) para look editorial de revista gastronómica.
--->
-<section id="gallery" class="py-[16vh] px-(--gap) max-w-[var(--max)] mx-auto max-[900px]:py-[10vh]">
-  <div class="reveal text-center mb-14 max-[900px]:mb-10">
-    <Tag class="mb-6 mx-auto">{t(sec.galeriaEyebrow, locale, defaultLocale)}</Tag>
-    <h2 class="font-serif font-medium leading-none tracking-[-0.01em] text-[clamp(38px,5vw,64px)]">
-      {tail ? (
-        <>
-          {head} <em class="italic text-accent font-normal">{tail}</em>
-        </>
-      ) : (
-        title
-      )}
-    </h2>
-  </div>
+<!-- Galería de Guixot: rejilla asimétrica; cada foto se amplía en un visor. -->
+<section id='gallery' class='section-y px-(--gap)'>
+  <div class='mx-auto max-w-[var(--max)]'>
+    <SectionHeading eyebrow={t(sec.galeriaEyebrow, locale, defaultLocale)} title={title} class='mb-14 max-[900px]:mb-10' />
 
-  <div
-    class="grid grid-cols-4 gap-3 auto-rows-[180px] max-[900px]:grid-cols-2 max-[900px]:auto-rows-[160px] max-[600px]:grid-cols-1 max-[600px]:auto-rows-[240px]"
-  >
-    {galeriaImgs.map((src, i) => (
-      <!-- posiciones específicas: 1er y 5to span 2 rows + 2 cols para asymmetria editorial -->
-      <div
-        data-gallery-item
-        class:list={[
-          'group relative overflow-hidden bg-surface cursor-zoom-in',
-          'border border-line rounded-[var(--radius-card)]',
-          'shadow-[var(--shadow-card)]',
-          'transition-[box-shadow,transform,border-color] duration-[400ms] ease-out',
-          'hover:shadow-[var(--shadow-card-lift)] hover:-translate-y-1 hover:border-accent/30',
-          i === 0 && 'col-span-2 row-span-2 max-[900px]:col-span-2 max-[900px]:row-span-1 max-[600px]:col-span-1',
-          i === 4 && 'row-span-2 max-[900px]:row-span-1',
-          'max-[900px]:hover:translate-y-0',
-        ]}
-      >
-        <img
-          src={src}
-          alt=""
-          loading="lazy"
-          class="w-full h-full object-cover brightness-[0.95] saturate-[0.92] transition-[transform,filter] duration-[1100ms] ease-[cubic-bezier(.2,.6,.2,1)] group-hover:scale-[1.06] group-hover:brightness-100 group-hover:saturate-100"
-        />
-      </div>
-    ))}
+    <ul class='stagger list-none grid grid-cols-4 gap-3 auto-rows-[190px] max-[900px]:grid-cols-2 max-[900px]:auto-rows-[170px] max-[600px]:grid-cols-1 max-[600px]:auto-rows-[240px]'>
+      {images.map((src, i) => (
+        <li
+          data-reveal='zoom'
+          class:list={[
+            'reveal',
+            i === 0 && 'col-span-2 row-span-2 max-[900px]:row-span-1 max-[600px]:col-span-1',
+            i === 4 && 'row-span-2 max-[900px]:row-span-1',
+            i === images.length - 1 && i !== 0 && [lastSpan, lastSpanTablet]
+          ]}
+        >
+          <button
+            type='button'
+            data-gallery-item={i}
+            aria-label={fill(tt.open, i + 1)}
+            class='group block w-full h-full overflow-hidden bg-surface cursor-pointer rounded-[var(--radius-card)] focus-visible:outline-[3px] focus-visible:outline-white focus-visible:-outline-offset-[5px] focus-visible:ring-2 focus-visible:ring-accent'
+          >
+            <img
+              src={src} alt='' loading='lazy' decoding='async'
+              class='w-full h-full object-cover transition-transform duration-[900ms] ease-[cubic-bezier(.2,.6,.2,1)] group-hover:scale-[1.05] motion-reduce:transition-none motion-reduce:group-hover:scale-100'
+            />
+          </button>
+        </li>
+      ))}
+    </ul>
   </div>
 </section>
 
-<div
-  id="lightbox"
-  data-open="false"
-  class="fixed inset-0 z-[200] grid place-items-center cursor-zoom-out invisible opacity-0 bg-[rgb(26_29_36/0.94)] transition-[opacity,visibility] duration-[400ms] delay-[400ms] data-[open='true']:visible data-[open='true']:opacity-100 data-[open='true']:delay-0"
+<dialog
+  id='lightbox'
+  aria-label={tt.viewer}
+  data-photo-label={tt.photo}
+  class='fixed inset-0 m-0 w-screen h-dvh max-w-none max-h-none p-0 bg-[rgb(18_22_30/0.95)] text-white backdrop:bg-transparent
+         open:grid grid-rows-[auto_1fr_auto]'
 >
-  <img src="" alt="" class="w-auto max-w-[88vw] h-auto max-h-[86vh] object-contain" />
-</div>
+  <div class='flex items-center justify-between gap-4 p-4'>
+    <p data-lightbox-count aria-live='polite' class='font-sans text-[15px] text-white/85 tabular-nums pl-2'></p>
+    <button type='button' data-lightbox-close aria-label={tt.close} class={viewerBtnCls}>
+      <Icon name='close' />
+    </button>
+  </div>
+  <div class='min-h-0 flex items-center justify-center px-4' data-lightbox-stage>
+    <img src='' alt='' class='max-w-full max-h-full object-contain rounded-[8px]' />
+  </div>
+  <div class='flex items-center justify-center gap-4 p-4'>
+    <button type='button' data-lightbox-prev aria-label={tt.prev} class={viewerBtnCls}>
+      <Icon name='arrow-left' />
+    </button>
+    <button type='button' data-lightbox-next aria-label={tt.next} class={viewerBtnCls}>
+      <Icon name='arrow' />
+    </button>
+  </div>
+</dialog>
 
 <script is:inline>
   (function () {
     const lb = document.getElementById('lightbox');
-    if (!lb) return;
-    const lbi = lb.querySelector('img');
-    const setOpen = (open) => { lb.dataset.open = open ? 'true' : 'false'; };
-    document.querySelectorAll('[data-gallery-item]').forEach((c) => {
-      const inner = c.querySelector('img');
-      if (!inner) return;
-      c.addEventListener('click', () => {
-        lbi.src = inner.src;
-        setOpen(true);
+    const items = Array.from(document.querySelectorAll('[data-gallery-item]'));
+    if (!lb || !items.length || typeof lb.showModal !== 'function') return;
+
+    const image = lb.querySelector('[data-lightbox-stage] img');
+    const count = lb.querySelector('[data-lightbox-count]');
+    const sources = items.map((item) => item.querySelector('img').src);
+    let index = 0;
+    let opener = null;
+
+    const show = (next) => {
+      index = (next + sources.length) % sources.length;
+      image.src = sources[index];
+      count.textContent = lb.dataset.photoLabel
+        .replace('{n}', index + 1)
+        .replace('{total}', sources.length);
+    };
+
+    items.forEach((item, i) => {
+      item.addEventListener('click', () => {
+        opener = item;
+        show(i);
+        lb.showModal();
       });
     });
-    lb.addEventListener('click', () => setOpen(false));
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') setOpen(false);
+
+    lb.querySelector('[data-lightbox-close]').addEventListener('click', () => lb.close());
+    lb.querySelector('[data-lightbox-prev]').addEventListener('click', () => show(index - 1));
+    lb.querySelector('[data-lightbox-next]').addEventListener('click', () => show(index + 1));
+    // Clic fuera de la foto (en el fondo) cierra.
+    lb.querySelector('[data-lightbox-stage]').addEventListener('click', (e) => {
+      if (e.target !== image) lb.close();
     });
+    lb.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') show(index - 1);
+      if (e.key === 'ArrowRight') show(index + 1);
+    });
+    lb.addEventListener('close', () => {
+      image.src = '';
+      opener?.focus();
+    });
+
+    // Deslizar en móvil.
+    let startX = null;
+    lb.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
+    lb.addEventListener('touchend', (e) => {
+      if (startX == null) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 50) show(index + (dx < 0 ? 1 : -1));
+      startX = null;
+    }, { passive: true });
   })();
 </script>

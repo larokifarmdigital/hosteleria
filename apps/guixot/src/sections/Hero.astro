@@ -2,144 +2,130 @@
 import { t } from '@hosteleria/i18n-utils';
 import { img } from '../lib/sanity';
 import type { Restaurant, Espacio } from '../lib/queries';
-import { buildHoursByDay } from '@hosteleria/utils';
+import type { HoursUi } from '../lib/hours';
+import { getLocation } from '../lib/location';
 import Tag from '../components/Tag.astro';
 import CtaButton from '../components/CtaButton.astro';
+import Icon from '../components/Icon.astro';
 import { resolveBookingAction } from '@hosteleria/utils';
 
 interface Props {
   restaurant: Restaurant;
   espacio: Espacio;
+  hours: HoursUi;
   locale: string;
   defaultLocale: string;
 }
 
-const { restaurant, espacio, locale, defaultLocale } = Astro.props;
+const { restaurant, espacio, hours, locale, defaultLocale } = Astro.props;
 const heroImgUrl = img.url(espacio.heroImagen) ?? '/img/hero.jpg';
 const heroTitle = t(espacio.heroTitulo, locale, defaultLocale);
 const heroSubtitle = t(espacio.heroSubtitulo, locale, defaultLocale);
-const metaIzq = t(espacio.heroMetaIzq, locale, defaultLocale);
-const metaDer = t(espacio.heroMetaDer, locale, defaultLocale);
+const metaLeft = t(espacio.heroMetaIzq, locale, defaultLocale);
+const metaRight = t(espacio.heroMetaDer, locale, defaultLocale);
+const note = t(espacio.heroNota, locale, defaultLocale);
 const bookingAction = resolveBookingAction(restaurant, locale);
+const { dir, mapsUrl } = getLocation(restaurant, locale);
 
-// Chip flotante "Estamos abiertos": datos para el script inline
-const hoursByDay = buildHoursByDay(espacio.horariosSemana);
-const scheduleMessages = {
-  abierto: t(espacio.horariosAbierto, locale, defaultLocale) || 'Abierto hasta las {hora}.',
-  proxima: t(espacio.horariosProximaApertura, locale, defaultLocale) || 'Hoy abrimos a las {hora}.',
-  cerrado: t(espacio.horariosCerrado, locale, defaultLocale) || 'Cerrado hoy.'
+const T = {
+  es: { menu: 'Ver la carta', directions: 'Cómo llegar' },
+  ca: { menu: 'Veure la carta', directions: 'Com arribar' },
+  en: { menu: 'See the menu', directions: 'Get directions' }
 };
-const hasHorarios = Boolean(espacio.horariosSemana?.length);
+const tt = T[locale as keyof typeof T] ?? T.es;
+
+const factCls =
+  'group inline-flex items-center gap-2.5 min-h-[32px] text-ink-soft text-[15px] cursor-pointer transition-colors duration-200 hover:text-accent';
 ---
 
 <!--
-  Guixot Hero: layout HORIZONTAL editorial.
-  - hero-top: tags decorativas alineadas
-  - hero-body: 2 columnas (texto + foto), CTA integrado al final del texto
-  - chip flotante "Abierto/Cerrado" en esquina inf-izq de la foto (dinámico)
+  Hero de Guixot: dos columnas (texto + foto). El estado abierto/cerrado va en
+  una pastilla sobre la foto y lo calcula HoursScript en el navegador.
 -->
-<header id="top" class="relative overflow-hidden pt-28 pb-20 px-(--gap) max-[900px]:pt-24 max-[900px]:pb-14">
-  <div class="relative z-[1] mx-auto max-w-[var(--max)]">
-
-    <!-- ▸ hero-top: dos Tags de corrido con separador punto -->
-    <div class="flex items-center gap-4 mb-12 max-[700px]:flex-wrap max-[700px]:gap-2">
-      {metaIzq && <Tag>{metaIzq}</Tag>}
-      {metaIzq && metaDer && <span class="text-dim opacity-60">·</span>}
-      {metaDer && <Tag>{metaDer}</Tag>}
+<header id='top' class='relative pt-[calc(var(--nav-h)+44px)] pb-24 px-(--gap) max-[900px]:pt-[calc(var(--nav-h)+24px)] max-[900px]:pb-16'>
+  <div class='mx-auto max-w-[var(--max)]'>
+    <div class='hero-in flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-11 max-[900px]:mb-8' style='--i:0'>
+      {metaLeft && <Tag as='p'>{metaLeft}</Tag>}
+      {metaLeft && metaRight && <span aria-hidden='true' class='w-6 h-px bg-accent-alt max-[700px]:hidden'></span>}
+      {metaRight && <Tag as='p'>{metaRight}</Tag>}
     </div>
 
-    <!-- ▸ hero-body: título + descripción + CTA a la izquierda, foto a la derecha -->
-    <div class="grid grid-cols-[1.1fr_1fr] gap-[clamp(40px,6vw,96px)] items-center max-[900px]:grid-cols-1 max-[900px]:gap-10">
-      <div class="flex flex-col gap-8">
-        <h1 class="font-serif font-medium leading-[0.95] tracking-[-0.02em] text-[clamp(56px,8vw,124px)]">
-          <span class="block">{heroTitle}</span>
-          <span class="block italic text-accent font-normal">{heroSubtitle}</span>
+    <div class='grid grid-cols-[1.1fr_1fr] gap-[clamp(40px,6vw,96px)] items-center max-[900px]:grid-cols-1 max-[900px]:gap-11'>
+      <div class='flex flex-col gap-8'>
+        <h1 class='font-serif font-medium leading-[0.96] tracking-[-0.02em] text-[clamp(50px,7.6vw,118px)]'>
+          <span class='hero-in block' style='--i:1'>{heroTitle}</span>
+          <span class='hero-in block italic text-accent font-normal' style='--i:2'>{heroSubtitle}</span>
         </h1>
-        <p
-          class="text-ink-soft text-[17px] leading-[1.7] max-w-[42ch]"
-          set:html={t(espacio.heroNota, locale, defaultLocale).replace(/\n/g, '<br />')}
-        />
-        {bookingAction && (
-          <div class="max-[900px]:self-start">
+        {note && (
+          <p
+            class='hero-in text-ink-soft text-[17.5px] leading-[1.7] max-w-[42ch]'
+            style='--i:3'
+            set:html={note.replace(/\n/g, '<br />')}
+          />
+        )}
+
+        <div class='hero-in flex flex-wrap items-center gap-x-4 gap-y-3' style='--i:4'>
+          {bookingAction && (
             <CtaButton
               href={bookingAction.href}
               target={bookingAction.external ? '_blank' : undefined}
               rel={bookingAction.external ? 'noopener' : undefined}
+              class='max-[480px]:w-full'
             >
-              {t(espacio.heroCta, locale, defaultLocale)}
+              {t(espacio.heroCta, locale, defaultLocale) || bookingAction.label}
             </CtaButton>
-          </div>
+          )}
+          <CtaButton href='#plates' variant='outline' class='max-[480px]:w-full'>{tt.menu}</CtaButton>
+        </div>
+
+        {(hours.hasHours || dir.calle) && (
+          <ul class='hero-in list-none flex flex-wrap gap-x-8 gap-y-1 pt-6 border-t border-line max-w-[560px]' style='--i:5'>
+            {hours.hasHours && (
+              <li>
+                <a href='#hours' class={factCls}>
+                  <Icon name='clock' size={18} class='text-accent' />
+                  <span><span data-today-prefix>{hours.strings.today}: </span><span data-today-hours class='font-semibold tabular-nums'>…</span><noscript>{hours.strings.seeHours}</noscript></span>
+                </a>
+              </li>
+            )}
+            {dir.calle && (
+              <li>
+                <a
+                  href={mapsUrl || '#map'}
+                  target={mapsUrl ? '_blank' : undefined}
+                  rel={mapsUrl ? 'noopener' : undefined}
+                  aria-label={`${tt.directions}: ${dir.calle}`}
+                  class={factCls}
+                >
+                  <Icon name='pin' size={18} class='text-accent' />
+                  {dir.calle}
+                </a>
+              </li>
+            )}
+          </ul>
         )}
       </div>
 
-      <div class="relative">
-        <figure class="relative aspect-[4/5] overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] max-[900px]:aspect-[4/3]">
-          <img src={heroImgUrl} alt={heroTitle} fetchpriority="high" decoding="async" class="w-full h-full object-cover" />
+      <div class='relative isolate'>
+        <figure class='hero-frame relative aspect-[4/5] overflow-hidden bg-surface rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] max-[900px]:aspect-[4/3]'>
+          <img src={heroImgUrl} alt='' fetchpriority='high' decoding='async' class='hero-img w-full h-full object-cover' />
         </figure>
+        <!-- Marco de latón desplazado: profundidad sin tapar la foto. -->
+        <span aria-hidden='true' class='hero-in absolute -z-[1] inset-0 translate-x-4 translate-y-4 border border-accent-alt/70 rounded-[var(--radius-card)] max-[900px]:translate-x-2.5 max-[900px]:translate-y-2.5' style='--i:6'></span>
 
-        {hasHorarios && (
-          <!-- Chip flotante "Estamos abiertos" — esquina inferior izq, sale
-               ligeramente de la card para dar look flotante brasserie. -->
-          <div
-            id="heroOpenChip"
-            data-state="loading"
-            class="absolute bottom-[-14px] left-6 z-[2] inline-flex items-center gap-2.5 py-2.5 pl-3 pr-4 rounded-full bg-bg border border-line-strong shadow-[var(--shadow-card-lift)] font-sans max-[900px]:left-4 max-[900px]:bottom-[-12px]"
+        {hours.hasHours && (
+          <a
+            href='#hours'
+            data-open-status
+            class='hero-in absolute bottom-[-18px] left-6 z-[2] inline-flex items-center gap-2.5 min-h-[40px] py-2 pl-3.5 pr-4.5 rounded-full bg-bg border border-line-strong shadow-[var(--shadow-card-lift)] text-ink text-[14px] leading-tight cursor-pointer transition-[border-color,transform] duration-200 hover:border-accent hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 max-[900px]:left-4'
+            style='--i:7'
           >
-            <span class="relative inline-flex items-center justify-center w-2 h-2 shrink-0">
-              <span
-                data-ping
-                class="absolute inline-flex h-full w-full rounded-full bg-accent opacity-60 animate-ping"
-              ></span>
-              <span
-                data-dot
-                class="relative inline-flex rounded-full h-2 w-2 bg-accent"
-              ></span>
-            </span>
-            <span data-text class="text-[12.5px] font-medium tracking-[0.01em] text-ink">…</span>
-          </div>
+            <span class='status-dot' aria-hidden='true'></span>
+            <span class='font-semibold' data-status-label></span>
+            <span class='text-muted' data-status-detail></span>
+          </a>
         )}
       </div>
     </div>
-
   </div>
 </header>
-
-{hasHorarios && (
-  <script is:inline define:vars={{ hoursByDay, scheduleMessages }}>
-    (function () {
-      const HOURS = hoursByDay;
-      const msg = scheduleMessages;
-      const chip = document.getElementById('heroOpenChip');
-      if (!chip) return;
-      const fmt = n => {
-        const h = Math.floor(n);
-        const m = Math.round((n - h) * 60);
-        return `${h}:${m.toString().padStart(2, '0')}`;
-      };
-      const now = new Date();
-      const d = now.getDay();
-      const h = now.getHours() + now.getMinutes() / 60;
-      const today = HOURS[d] || [];
-      let open = false, nextOpen = null, closesAt = null;
-      for (const [a, b] of today) {
-        if (h >= a && h < b) { open = true; closesAt = b; break; }
-        if (h < a && nextOpen === null) nextOpen = a;
-      }
-      const line = open
-        ? msg.abierto.replace('{hora}', fmt(closesAt))
-        : nextOpen !== null
-          ? msg.proxima.replace('{hora}', fmt(nextOpen))
-          : msg.cerrado;
-      const textEl = chip.querySelector('[data-text]');
-      if (textEl) textEl.textContent = line;
-
-      chip.dataset.state = open ? 'open' : 'closed';
-      // Si está cerrado, el ping y el dot pasan a dim (menos "activo")
-      if (!open) {
-        chip.querySelector('[data-ping]')?.classList.remove('animate-ping');
-        chip.querySelector('[data-dot]')?.classList.remove('bg-accent');
-        chip.querySelector('[data-dot]')?.classList.add('bg-dim');
-      }
-    })();
-  </script>
-)}

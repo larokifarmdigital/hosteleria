@@ -2,8 +2,7 @@
 import { t } from '@hosteleria/i18n-utils';
 import { img } from '../lib/sanity';
 import type { Restaurant } from '../lib/queries';
-import { splitLastWord } from '@hosteleria/utils';
-import Tag from '../components/Tag.astro';
+import SectionHeading from '../components/SectionHeading.astro';
 import CtaButton from '../components/CtaButton.astro';
 import { resolveBookingAction } from '@hosteleria/utils';
 
@@ -14,61 +13,43 @@ interface Props {
 }
 
 const { restaurant, locale, defaultLocale } = Astro.props;
-const gruposImgUrl = img.url(restaurant.gruposImagen) ?? '/img/hire.jpg';
+const imageUrl = img.url(restaurant.gruposImagen) ?? '/img/hire.jpg';
 const title = t(restaurant.gruposTitulo, locale, defaultLocale);
-const { head, tail } = splitLastWord(title);
 const bookingAction = resolveBookingAction(restaurant, locale);
 
-// Descripción corta por locale — no viene de Sanity (schema no la tiene)
+// Descripción corta por idioma: el schema no la tiene.
 const T: Record<string, string> = {
   es: 'Grupos, celebraciones y menús cerrados. Escríbenos con antelación y preparamos una propuesta a medida.',
   ca: 'Grups, celebracions i menús tancats. Escriu-nos amb antelació i preparem una proposta a mida.',
-  en: 'Groups, celebrations and set menus. Write in advance and we\'ll prepare a bespoke proposal.'
+  en: 'Groups, celebrations and set menus. Write in advance and we will prepare a bespoke proposal.'
 };
-const descripcion = T[locale] ?? T.es;
+const description = T[locale] ?? T.es;
 ---
 
-<!--
-  Guixot Groups: split limpio brasserie. Texto izq (Tag + h2 + descripción +
-  CTA) y foto der en card contenida con radio + border + sombra suave. Blob
-  brass discreto detrás para dar profundidad. Sin gradient sobre la imagen.
--->
-<section
-  id="groups"
-  class="relative overflow-hidden py-[16vh] px-(--gap) bg-bg-2 border-y border-line max-[900px]:py-[10vh]"
->
-
-  <div class="relative z-[1] mx-auto max-w-[var(--max)] grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] items-center gap-[clamp(40px,6vw,110px)] max-[900px]:grid-cols-1 max-[900px]:gap-12">
-    <!-- Contenido izq -->
-    <div class="reveal flex flex-col gap-8 max-w-[520px] max-[900px]:mx-auto max-[900px]:text-center max-[900px]:items-center max-[900px]:order-2">
-      <Tag class="max-[900px]:mx-auto">{t(restaurant.gruposEyebrow, locale, defaultLocale)}</Tag>
-      <h2 class="font-serif font-medium leading-[1.05] tracking-[-0.01em] text-[clamp(38px,5vw,72px)]">
-        {tail ? (
-          <>
-            {head} <em class="italic text-accent font-normal">{tail}</em>
-          </>
-        ) : (
-          title
-        )}
-      </h2>
-      <p class="text-ink-soft text-[16.5px] leading-[1.8] max-w-[46ch]">
-        {descripcion}
-      </p>
+<!-- Grupos: texto a la izquierda (etiqueta, título, descripción, botón) y foto a la derecha. -->
+<section id='groups' class='section-y px-(--gap) bg-bg-2 border-y border-line'>
+  <div class='mx-auto max-w-[var(--max)] grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] items-center gap-[clamp(40px,6vw,110px)] max-[900px]:grid-cols-1 max-[900px]:gap-11'>
+    <div class='flex flex-col items-start gap-8 max-w-[520px] max-[900px]:order-2'>
+      <SectionHeading eyebrow={t(restaurant.gruposEyebrow, locale, defaultLocale)} title={title} align='left' />
+      <p class='reveal text-ink-soft text-[17px] leading-[1.8] max-w-[46ch]'>{description}</p>
       {bookingAction && (
-        <CtaButton
-          href={bookingAction.href}
-          target={bookingAction.external ? '_blank' : undefined}
-          rel={bookingAction.external ? 'noopener' : undefined}
-          class="self-start max-[900px]:self-center"
-        >
-          {t(restaurant.gruposCta, locale, defaultLocale)}
-        </CtaButton>
+        <div class='reveal'>
+          <CtaButton
+            href={bookingAction.href}
+            target={bookingAction.external ? '_blank' : undefined}
+            rel={bookingAction.external ? 'noopener' : undefined}
+          >
+            {t(restaurant.gruposCta, locale, defaultLocale) || bookingAction.label}
+          </CtaButton>
+        </div>
       )}
     </div>
 
-    <!-- Foto der: card con radio + border + sombra suave -->
-    <figure class="reveal aspect-[4/5] overflow-hidden bg-surface border border-line rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] max-[900px]:order-1 max-[900px]:aspect-[4/3]">
-      <img src={gruposImgUrl} alt="" class="w-full h-full object-cover" loading="lazy" />
-    </figure>
+    <div class='relative isolate max-[900px]:order-1'>
+      <figure data-reveal='img' class='reveal aspect-[4/5] overflow-hidden bg-surface rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] max-[900px]:aspect-[4/3]'>
+        <img src={imageUrl} alt='' class='w-full h-full object-cover' loading='lazy' decoding='async' />
+      </figure>
+      <span aria-hidden='true' class='absolute -z-[1] inset-0 -translate-x-4 translate-y-4 border border-accent-alt/70 rounded-[var(--radius-card)] max-[900px]:-translate-x-2.5 max-[900px]:translate-y-2.5'></span>
+    </div>
   </div>
 </section>

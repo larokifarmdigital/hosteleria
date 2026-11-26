@@ -1,7 +1,6 @@
 ---
 /**
- * Tag — label decorativo específico de Guixot: solo texto uppercase en accent.
- * Sin rule/línea decorativa. Distinto del `Eyebrow` de Casabella.
+ * Tag — etiqueta propia de Guixot: texto en mayúsculas espaciadas, en navy.
  */
 interface Props {
   class?: string;
@@ -13,7 +12,7 @@ const { class: cls = '', as: Tag = 'span' } = Astro.props;
 <Tag
   class:list={[
     cls,
-    'inline-flex items-center text-accent font-medium uppercase text-[11px] tracking-[0.3em]'
+    'inline-flex items-center text-accent font-semibold uppercase text-[12px] tracking-[0.26em]'
   ]}
 >
   <slot />

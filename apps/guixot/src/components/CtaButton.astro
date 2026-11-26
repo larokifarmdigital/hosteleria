@@ -1,38 +1,38 @@
 ---
 /**
- * Guixot CTA — rectangular filled burgundy con acabado tavern.
- * Distinto al pill dorado de Casabella. Substancial, brochazo tradicional.
+ * CTA de Guixot: rectangular, navy lleno. `outline` para la acción secundaria.
  */
 interface Props {
   target?: '_blank' | '_self';
   rel?: string;
   href?: string;
   type?: 'submit' | 'button';
+  variant?: 'solid' | 'outline';
   class?: string;
 }
-const { href, type = 'button', target, rel, class: cls = '' } = Astro.props;
+const { href, type = 'button', target, rel, variant = 'solid', class: cls = '' } = Astro.props;
 
 const base = [
-  'inline-flex items-center gap-3 py-3.5 px-8',
-  'bg-accent text-bg rounded-md',
-  'font-sans font-semibold uppercase text-[12px] tracking-[0.24em]',
-  'cursor-pointer border border-accent',
-  'shadow-[0_6px_20px_-6px_rgb(30_58_95/0.4)]',
-  'transition-[background-color,border-color,transform,box-shadow] duration-[350ms] ease-out',
-  'hover:bg-accent-hover hover:border-accent-hover hover:-translate-y-0.5',
-  'hover:shadow-[0_12px_28px_-6px_rgb(30_58_95/0.55)]',
-  '[&>.arrow]:transition-transform [&>.arrow]:duration-[350ms] hover:[&>.arrow]:translate-x-1',
+  'group/cta inline-flex items-center justify-center gap-3 min-h-[50px] py-3 px-7',
+  'rounded-md border font-sans font-semibold uppercase text-[12.5px] tracking-[0.2em]',
+  'cursor-pointer whitespace-nowrap',
+  'transition-[background-color,border-color,color,transform,box-shadow] duration-300 ease-out',
+  'hover:-translate-y-0.5 active:translate-y-0 motion-reduce:hover:translate-y-0',
+  variant === 'solid'
+    ? 'bg-accent text-bg border-accent shadow-[0_6px_20px_-6px_rgb(30_58_95/0.4)] hover:bg-accent-hover hover:border-accent-hover hover:shadow-[0_12px_28px_-6px_rgb(30_58_95/0.55)]'
+    : 'bg-transparent text-accent border-accent/60 hover:border-accent hover:bg-accent hover:text-bg'
 ];
+const arrowCls = 'transition-transform duration-300 group-hover/cta:translate-x-1 motion-reduce:transition-none';
 ---
 
 {href ? (
   <a href={href} target={target} rel={rel} class:list={[...base, cls]}>
     <slot />
-    <span class="arrow">→</span>
+    <span aria-hidden='true' class={arrowCls}>→</span>
   </a>
 ) : (
   <button type={type} class:list={[...base, cls]}>
     <slot />
-    <span class="arrow">→</span>
+    <span aria-hidden='true' class={arrowCls}>→</span>
   </button>
 )}

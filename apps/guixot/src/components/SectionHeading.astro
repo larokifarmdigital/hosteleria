@@ -1,0 +1,40 @@
+---
+import { splitAtHalf, splitLastWord } from '@hosteleria/utils';
+import Tag from './Tag.astro';
+
+interface Props {
+  eyebrow?: string;
+  title: string;
+  /** Qué parte del título va en itálica navy. */
+  split?: 'last' | 'half' | 'first';
+  /** Texto en itálica añadido al final (ignora `split`). */
+  accent?: string;
+  align?: 'center' | 'left';
+  class?: string;
+}
+
+const { eyebrow, title, split = 'last', accent, align = 'center', class: cls } = Astro.props;
+
+let head = title;
+let tail = '';
+let lead = '';
+if (!accent) {
+  if (split === 'first') {
+    const [first, ...rest] = title.trim().split(/\s+/);
+    lead = rest.length ? first : '';
+    head = rest.length ? rest.join(' ') : title;
+  } else {
+    ({ head, tail } = split === 'half' ? splitAtHalf(title) : splitLastWord(title));
+    if (!tail) head = title;
+  }
+}
+const centered = align === 'center';
+---
+
+<div class:list={['stagger flex flex-col gap-5', centered ? 'items-center text-center' : 'items-start', cls]}>
+  {eyebrow && <Tag as='p' class='reveal'>{eyebrow}</Tag>}
+  <h2 class='reveal h-section max-w-[20ch]'>
+    {lead && <><em>{lead}</em>{' '}</>}{head}{(tail || accent) && <>{' '}<em>{accent || tail}</em></>}
+  </h2>
+  <span aria-hidden='true' data-reveal='rule' class:list={['reveal brass-rule mt-1', centered && '[--rule-origin:center]']}></span>
+</div>

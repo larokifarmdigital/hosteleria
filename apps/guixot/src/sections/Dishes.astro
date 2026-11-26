@@ -1,8 +1,7 @@
 ---
 import { t } from '@hosteleria/i18n-utils';
 import type { Restaurant, DishCategory, Dish } from '../lib/queries';
-import { splitLastWord } from '@hosteleria/utils';
-import Tag from '../components/Tag.astro';
+import SectionHeading from '../components/SectionHeading.astro';
 
 interface Props {
   restaurant: Restaurant;
@@ -16,64 +15,63 @@ const { restaurant, dishCategories, dishes, locale, defaultLocale } = Astro.prop
 
 const sec = restaurant.textosSecciones ?? {};
 const title = t(sec.platosTitulo, locale, defaultLocale);
-const { head, tail } = splitLastWord(title);
 
-const dishesByCategory = dishCategories.map((cat) => ({
-  category: cat,
-  items: dishes.filter((d) => d.categoria?._id === cat._id),
-}));
+const groups = dishCategories
+  .map((cat) => ({
+    name: t(cat.nombre, locale, defaultLocale),
+    items: dishes.filter((d) => d.categoria?._id === cat._id)
+  }))
+  .filter((g) => g.items.length > 0);
+
+const navLabel = locale === 'en' ? 'Menu sections' : locale === 'ca' ? 'Seccions de la carta' : 'Secciones de la carta';
+
+const itemNameCls = 'font-serif font-medium text-ink text-[19px] leading-tight';
+const itemNoteCls = 'text-muted text-[15px] leading-[1.55] italic mt-1';
+const priceCls = 'font-serif text-accent text-[18px] font-medium whitespace-nowrap tabular-nums';
+const chipCls =
+  'inline-flex items-center min-h-[40px] px-4 rounded-md border border-line-strong text-ink-soft font-sans font-semibold text-[13.5px] cursor-pointer transition-colors duration-200 hover:border-accent hover:bg-accent hover:text-bg';
 ---
 
 <!--
-  Guixot Dishes: cada categoría con h3 + rule horizontal que llena el espacio,
-  después lista de platos con nombre + nota + precio. Look tavern/bodega.
+  Carta de Guixot: cada categoría con su título y un filete que llena la línea,
+  y debajo la lista de platos (nombre + nota a la izquierda, precio a la derecha).
 -->
-<section id="plates" class="relative overflow-hidden py-[16vh] px-(--gap) bg-bg-2 border-y border-line max-[900px]:py-[10vh]">
+<section id='plates' class='section-y px-(--gap) bg-bg-2 border-y border-line'>
+  <div class='mx-auto max-w-[1080px]'>
+    <SectionHeading eyebrow={t(sec.platosEyebrow, locale, defaultLocale)} title={title} class='mb-10' />
 
-  <div class="relative z-[1] mx-auto max-w-[1080px]">
-    <div class="reveal text-center mb-16 max-[900px]:mb-10">
-      <Tag class="mb-6 mx-auto">{t(sec.platosEyebrow, locale, defaultLocale)}</Tag>
-      <h2 class="font-serif font-medium leading-none tracking-[-0.01em] text-[clamp(40px,5.5vw,80px)]">
-        {tail ? (
-          <>
-            {head} <em class="italic text-accent font-normal">{tail}</em>
-          </>
-        ) : (
-          title
-        )}
-      </h2>
-    </div>
+    {groups.length > 1 && (
+      <nav aria-label={navLabel} class='reveal mb-14 max-[900px]:mb-10'>
+        <ul class='list-none flex flex-wrap justify-center gap-2.5'>
+          {groups.map((g, i) => (
+            <li><a href={`#plates-${i}`} class={chipCls}>{g.name}</a></li>
+          ))}
+        </ul>
+      </nav>
+    )}
 
-    <div class="flex flex-col gap-14">
-      {dishesByCategory.map(({ category, items }) => (
-        items.length > 0 && (
-          <div class="reveal">
-            {/* Category header with horizontal rule filling remaining space */}
-            <div class="flex items-baseline gap-5 mb-6">
-              <h3 class="font-serif font-medium text-accent text-[clamp(20px,2.2vw,26px)] leading-none whitespace-nowrap">
-                {t(category.nombre, locale, defaultLocale)}
-              </h3>
-              <span class="flex-1 h-px bg-line"></span>
-            </div>
-            <div class="flex flex-col divide-y divide-line/60">
-              {items.map((dish) => (
-                <div class="grid grid-cols-[1fr_auto] items-baseline gap-6 py-4">
-                  <div>
-                    <div class="font-serif font-medium text-ink text-[18px] leading-tight mb-1">
-                      {t(dish.nombre, locale, defaultLocale)}
-                    </div>
-                    <div class="text-muted text-[14px] leading-[1.55] italic">
-                      {t(dish.nota, locale, defaultLocale)}
-                    </div>
-                  </div>
-                  <span class="font-serif text-accent text-[17px] font-medium whitespace-nowrap tabular-nums">
-                    {dish.precio != null ? `${dish.precio} €` : '—'}
-                  </span>
-                </div>
-              ))}
-            </div>
+    <div class='flex flex-col gap-16 max-[900px]:gap-12'>
+      {groups.map((g, i) => (
+        <div id={`plates-${i}`} data-scroll-anchor>
+          <div class='reveal flex items-baseline gap-5 mb-3'>
+            <h3 class='font-serif font-medium text-accent text-[clamp(23px,2.4vw,29px)] leading-none whitespace-nowrap'>{g.name}</h3>
+            <span aria-hidden='true' class='flex-1 h-px bg-line-strong/70'></span>
           </div>
-        )
+          <ul class='stagger list-none flex flex-col divide-y divide-line'>
+            {g.items.map((dish) => {
+              const note = t(dish.nota, locale, defaultLocale);
+              return (
+                <li class='reveal grid grid-cols-[1fr_auto] items-baseline gap-6 py-4.5'>
+                  <div>
+                    <p class={itemNameCls}>{t(dish.nombre, locale, defaultLocale)}</p>
+                    {note && <p class={itemNoteCls}>{note}</p>}
+                  </div>
+                  {dish.precio != null && <p class={priceCls}>{dish.precio} €</p>}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       ))}
     </div>
   </div>
