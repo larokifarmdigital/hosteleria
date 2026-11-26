@@ -13,53 +13,39 @@ interface Props {
 }
 
 const { restaurant, locale, defaultLocale } = Astro.props;
-const gruposImgUrl = img.url(restaurant.gruposImagen) ?? '/img/hire.jpg';
+// Sin foto propia no se pone una de catálogo: la sección va sin imagen.
+const gruposImgUrl = img.url(restaurant.gruposImagen);
 const bookingAction = resolveBookingAction(restaurant, locale);
 
 const titulo = t(restaurant.gruposTitulo, locale, defaultLocale);
 const [first, ...restTitle] = titulo.split(' ');
 const restText = restTitle.join(' ');
 
-// Feature bullets: primero Sanity (`gruposFeatures`), luego fallback local por
-// locale si no hay contenido (backward compat con el mock).
-const featuresFallback: Record<string, { icon: string; label: string; text: string }[]> = {
-  es: [
-    { icon: 'users', label: 'Aforo',   text: 'Hasta 40 comensales en salón privado.' },
-    { icon: 'chef',  label: 'Menú',    text: 'Cartas cerradas o personalizadas para el evento.' },
-    { icon: 'wine',  label: 'Bodega',  text: 'Selección de vinos y maridajes a medida.' },
-    { icon: 'clock', label: 'Horario', text: 'Comidas, cenas y sobremesas sin prisa.' }
-  ],
-  ca: [
-    { icon: 'users', label: 'Aforament', text: 'Fins a 40 comensals en sala privada.' },
-    { icon: 'chef',  label: 'Menú',      text: 'Cartes tancades o personalitzades per a l’esdeveniment.' },
-    { icon: 'wine',  label: 'Celler',    text: 'Selecció de vins i maridatges a mida.' },
-    { icon: 'clock', label: 'Horari',    text: 'Dinars, sopars i sobretaules sense pressa.' }
-  ],
-  en: [
-    { icon: 'users', label: 'Capacity', text: 'Up to 40 guests in our private room.' },
-    { icon: 'chef',  label: 'Menu',     text: 'Fixed or bespoke menus for your event.' },
-    { icon: 'wine',  label: 'Cellar',   text: 'Curated wine and pairing selections.' },
-    { icon: 'clock', label: 'Time',     text: 'Lunch, dinner and long, unhurried afternoons.' }
-  ]
-};
-
+// Solo lo que el restaurante ha escrito: sus ventajas (con icono) o, si no, sus puntos
+// destacados. Nada inventado (antes salía un aforo de ejemplo que no era real).
 const features = restaurant.gruposFeatures?.length
   ? restaurant.gruposFeatures.map((f) => ({
       icon: f.icon,
       label: t(f.label, locale, defaultLocale),
       text: t(f.texto, locale, defaultLocale)
     }))
-  : featuresFallback[locale] ?? featuresFallback.es;
+  : [];
+const highlights = features.length
+  ? []
+  : (restaurant.gruposDestacados ?? []).map((d) => t(d.texto, locale, defaultLocale)).filter(Boolean);
 
 const eyebrow = t(restaurant.gruposEyebrow, locale, defaultLocale);
 const cta = t(restaurant.gruposCta, locale, defaultLocale);
 ---
 
+{titulo && (
 <section id='groups' class='section-y px-(--gap)'>
-  <div class='mx-auto max-w-[var(--max)] grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] items-center gap-[clamp(40px,7vw,120px)] max-[960px]:grid-cols-1 max-[960px]:gap-10'>
-    <figure data-reveal='img' class='reveal overflow-hidden bg-surface-2 rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] aspect-[4/5] max-[960px]:aspect-[4/3]'>
-      <img src={gruposImgUrl} alt='' class='w-full h-full object-cover' loading='lazy' decoding='async' />
-    </figure>
+  <div class:list={['mx-auto grid items-center gap-[clamp(40px,7vw,120px)] max-[960px]:grid-cols-1 max-[960px]:gap-10', gruposImgUrl ? 'max-w-[var(--max)] grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]' : 'max-w-[760px] grid-cols-1']}>
+    {gruposImgUrl && (
+      <figure data-reveal='img' class='reveal overflow-hidden bg-surface-2 rounded-[var(--radius-card)] shadow-[var(--shadow-card-lift)] aspect-[4/5] max-[960px]:aspect-[4/3]'>
+        <img src={gruposImgUrl} alt='' class='w-full h-full object-cover' loading='lazy' decoding='async' />
+      </figure>
+    )}
 
     <div class='reveal flex flex-col' data-reveal='right'>
       {eyebrow && <p class='eyebrow mb-5'>{eyebrow}</p>}
@@ -68,15 +54,27 @@ const cta = t(restaurant.gruposCta, locale, defaultLocale);
         <em>{first}</em>{restText && ' ' + restText}
       </h2>
 
-      <dl class='mb-9 border-t border-line-strong divide-y divide-line'>
-        {features.map((f) => (
-          <div class='grid grid-cols-[24px_minmax(92px,0.36fr)_1fr] items-baseline gap-x-4 py-4 max-[560px]:grid-cols-[24px_1fr]'>
-            <Icon name={f.icon} class='text-accent self-center' />
-            <dt class='font-sans font-semibold text-ink text-[15px]'>{f.label}</dt>
-            <dd class='text-muted text-[15.5px] leading-[1.55] max-[560px]:col-start-2'>{f.text}</dd>
-          </div>
-        ))}
-      </dl>
+      {features.length > 0 && (
+        <dl class='mb-9 border-t border-line-strong divide-y divide-line'>
+          {features.map((f) => (
+            <div class='grid grid-cols-[24px_minmax(92px,0.36fr)_1fr] items-baseline gap-x-4 py-4 max-[560px]:grid-cols-[24px_1fr]'>
+              <Icon name={f.icon} class='text-accent self-center' />
+              <dt class='font-sans font-semibold text-ink text-[15px]'>{f.label}</dt>
+              <dd class='text-muted text-[15.5px] leading-[1.55] max-[560px]:col-start-2'>{f.text}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {highlights.length > 0 && (
+        <ul class='mb-9 list-none p-0 border-t border-line-strong divide-y divide-line'>
+          {highlights.map((text) => (
+            <li class='flex items-baseline gap-3 py-4 text-muted text-[15.5px] leading-[1.55]'>
+              <span aria-hidden='true' class='h-1.5 w-1.5 flex-none translate-y-[-2px] rounded-full bg-accent'></span>
+              {text}
+            </li>
+          ))}
+        </ul>
+      )}
 
       {bookingAction && cta && (
         <CtaButton
@@ -91,3 +89,4 @@ const cta = t(restaurant.gruposCta, locale, defaultLocale);
     </div>
   </div>
 </section>
+)}
