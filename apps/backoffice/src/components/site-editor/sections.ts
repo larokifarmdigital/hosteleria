@@ -30,7 +30,8 @@ export const SECTIONS: SectionMeta[] = [
   { key: 'about', label: 'Sobre nosotros', hint: 'La historia del restaurante, con sus fotos.' },
   { key: 'groups', label: 'Grupos y eventos', hint: 'Lo que ofrecéis a grupos y celebraciones. En la página de inicio va hacia el final, justo antes de las preguntas frecuentes.' },
   { key: 'faq', label: 'Preguntas frecuentes', hint: 'Respuestas a las dudas habituales. Google también puede mostrarlas.' },
-  { key: 'media', label: 'Todas las fotos', hint: 'Subir fotos, describirlas y borrar las que ya no uses.' },
+  // Fuera del menú: describir y borrar fotos se hace al elegirlas. Solo se llega desde el aviso de fotos en uso sin descripción.
+  { key: 'media', label: 'Fotos sin descripción', hint: 'Fotos que ya salen en la web y no tienen descripción en todos los idiomas. La descripción es lo que oye quien no puede verlas.' },
   { key: 'legal', label: 'Textos legales', hint: 'Aviso legal, privacidad y cookies. Salen en la web al guardarlos.' },
   { key: 'search', label: 'Google y buscadores', hint: 'Cómo aparece la web en Google, su icono y lo que leen los asistentes de IA.' },
   { key: 'spaces', label: 'Espacios', hint: 'Comedor, terraza, barra…: cada uno con su portada, horario y carta.' },
@@ -42,7 +43,7 @@ export const SECTIONS: SectionMeta[] = [
 export const SECTION_GROUPS: { label: string; keys: SectionKey[] }[] = [
   { label: 'Cada semana', keys: ['menu', 'hours'] },
   { label: 'Tu web', keys: ['cover', 'home', 'photos', 'about', 'groups', 'faq'] },
-  { label: 'Información', keys: ['contact', 'languages', 'search', 'legal', 'media', 'spaces'] }
+  { label: 'Información', keys: ['contact', 'languages', 'search', 'legal', 'spaces'] }
 ];
 
 /** Una entrada del menú: una sección suelta o una página de la web con sus partes en pestañas. */
@@ -61,7 +62,7 @@ export interface NavGroup { label: string; entries: NavEntry[] }
 
 const HOME_TABS: SectionKey[] = ['home', 'about', 'groups', 'faq'];
 const SPACE_TABS: SectionKey[] = ['menu', 'hours', 'cover', 'photos', 'spacename'];
-const BUSINESS_KEYS: SectionKey[] = ['contact', 'languages', 'search', 'legal', 'media', 'spaces'];
+const BUSINESS_KEYS: SectionKey[] = ['contact', 'languages', 'search', 'legal', 'spaces'];
 
 /**
  * El menú. Con un solo espacio, «espacio» no aparece: sus secciones van con las

@@ -70,7 +70,9 @@ pasan una auditoría de accesibilidad (axe) a cada pantalla y diálogo que tocan
 | `images` | Subir, describir, asignar y borrar fotos (portada y plato). Deja fotos: pasa `pnpm e2e reset` después. |
 | `translations` | Avisos de traducción por idioma y sección, y bloqueo al publicar con textos a medias. |
 | `spaces-languages` | Entrar a editar: resumen y menú de apartados del restaurante (desplegable en móvil), añadir, ordenar y eliminar espacios, idiomas de la web, dirección de la web, pestañas del espacio y alta de restaurantes. |
-| `users-languages` | Ajustes: alta de usuario con enlace, elegir contraseña, suspender, idiomas. |
+| `account` | Cabecera con avatar y menú de la cuenta, y «Mi cuenta» (nombre; errores de contraseña sin cambiarla). |
+| `photo-picker` | Elegir foto: describir y eliminar desde el menú «⋯» de cada foto (fotos simuladas, no toca R2). |
+| `users-languages` | Administración: alta de usuario con enlace, elegir contraseña, suspender, idiomas. |
 
 ## A tener en cuenta
 

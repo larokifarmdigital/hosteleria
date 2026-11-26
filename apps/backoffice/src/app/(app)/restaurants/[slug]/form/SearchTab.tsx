@@ -63,13 +63,6 @@ export function SearchTab({ i18n, mediaScope, localeTabs, pendingIn, isAdmin }: 
           <I18nField name="aiSummary" label="Resumen" multiline rows={6} hint="Qué cocina hacéis, dónde estáis, para quién es y qué os distingue. Con frases completas." {...i18n} />
         </Section>
 
-        {isAdmin && (
-          <Section title="Analítica" description="Solo lo ven los administradores.">
-            <Field id="r-analytics" label="Token de Cloudflare Web Analytics" error={errors.analyticsToken?.message} hint="Sin él, la web no cuenta las visitas.">
-              {control => <TextInput {...control} autoComplete="off" spellCheck={false} {...register('analyticsToken')} />}
-            </Field>
-          </Section>
-        )}
       </div>
     </div>
   );

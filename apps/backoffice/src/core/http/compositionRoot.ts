@@ -22,7 +22,9 @@ import {
   RevokeSessionUseCase,
   RevokeOtherSessionsUseCase,
   RequestPasswordResetUseCase,
-  ApplyPasswordChangeUseCase
+  ApplyPasswordChangeUseCase,
+  ChangeOwnPasswordUseCase,
+  UpdateOwnProfileUseCase
 } from '@/core/auth';
 import {
   DrizzleLanguageRepository,
@@ -155,7 +157,9 @@ export function buildContainer(env: Env) {
       revokeSession: new RevokeSessionUseCase(sessionsRepo),
       revokeOthers: new RevokeOtherSessionsUseCase(sessionsRepo),
       requestPasswordReset: new RequestPasswordResetUseCase(usersRepo, tokenGen, email, env.APP_URL),
-      applyPasswordChange: new ApplyPasswordChangeUseCase(usersRepo, sessionsRepo, tokenGen, hasher)
+      applyPasswordChange: new ApplyPasswordChangeUseCase(usersRepo, sessionsRepo, tokenGen, hasher),
+      updateOwnProfile: new UpdateOwnProfileUseCase(usersRepo),
+      changeOwnPassword: new ChangeOwnPasswordUseCase(usersRepo, sessionsRepo, hasher)
     },
 
     users: {

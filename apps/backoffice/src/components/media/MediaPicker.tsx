@@ -7,10 +7,12 @@ import { Button } from '@/components/shared/Button';
 import { Pill } from '@/components/shared/Pill';
 import { QueryBoundary } from '@/components/shared/QueryBoundary';
 import { Modal } from '@/components/ui/Modal';
+import { RowMenu } from '@/components/ui/Sortable';
 import type { ImagePurpose } from '@/lib/media/imageChecks';
 import { useMediaList } from '@/lib/query/hooks';
 import { cn } from '@/lib/utils';
 import { AltTextForm } from './AltTextForm';
+import { MediaDeleteDialog } from './MediaDeleteDialog';
 import { MediaUploader } from './MediaUploader';
 import { mediaLabel, missingAltLocales, type MediaScope } from './types';
 
@@ -32,11 +34,15 @@ interface Props {
 /**
  * Elegir una foto del restaurante o subir una nueva. Una foto sin descripción
  * en algún idioma pasa antes por el paso de describirla: no se puede asignar sin ella.
+ * Desde aquí también se cambia la descripción de una foto o se borra (menú «⋯» de cada una):
+ * ya no hay una pantalla aparte con todas las fotos.
  */
 export function MediaPicker({ open, onClose, scope, purpose, currentId, excludeIds, onSelect, multiple }: Props) {
   const mediaQuery = useMediaList({ restaurantSlug: scope.restaurantSlug });
   const media = (mediaQuery.data ?? []).filter(m => !excludeIds?.includes(m.id));
-  const [describing, setDescribing] = useState<MediaAsset | null>(null);
+  // `use`: tras describirla se usa; `edit`: solo se cambia la descripción y se vuelve a las fotos.
+  const [describing, setDescribing] = useState<{ asset: MediaAsset; then: 'use' | 'edit' } | null>(null);
+  const [deleting, setDeleting] = useState<MediaAsset | null>(null);
   // Solo en modo `multiple`: ids marcados, en el orden en que se marcaron.
   const [picked, setPicked] = useState<string[]>([]);
   const full = !!multiple && picked.length >= multiple.max;
@@ -49,7 +55,7 @@ export function MediaPicker({ open, onClose, scope, purpose, currentId, excludeI
   };
   const choose = (asset: MediaAsset) => {
     // Desmarcar no necesita descripción; marcar o usar, sí.
-    if (!picked.includes(asset.id) && missingAltLocales(asset, scope.locales).length > 0) setDescribing(asset);
+    if (!picked.includes(asset.id) && missingAltLocales(asset, scope.locales).length > 0) setDescribing({ asset, then: 'use' });
     else use(asset);
   };
   const addPicked = () => {
@@ -64,16 +70,16 @@ export function MediaPicker({ open, onClose, scope, purpose, currentId, excludeI
       onClose={close}
       size="lg"
       title={describing ? 'Describe la foto' : multiple ? 'Elegir fotos' : 'Elegir foto'}
-      description={describing ? 'Hace falta una descripción para poder usarla.' : multiple ? 'Marca las que quieras añadir, o sube nuevas.' : 'Sube una nueva o elige una de las que ya tienes.'}
+      description={describing?.then === 'edit' ? 'Lo que oye quien no puede ver la foto. Cambia en todos los sitios donde se usa.' : describing ? 'Hace falta una descripción para poder usarla.' : multiple ? 'Marca las que quieras añadir, o sube nuevas.' : 'Sube una nueva o elige una de las que ya tienes.'}
     >
       {describing ? (
         <AltTextForm
-          asset={describing}
+          asset={describing.asset}
           scope={scope}
-          submitLabel={multiple ? 'Guardar y marcar esta foto' : 'Guardar y usar esta foto'}
+          submitLabel={describing.then === 'edit' ? 'Guardar descripción' : multiple ? 'Guardar y marcar esta foto' : 'Guardar y usar esta foto'}
           cancelLabel="Volver a las fotos"
           onCancel={() => setDescribing(null)}
-          onSaved={use}
+          onSaved={describing.then === 'edit' ? () => setDescribing(null) : use}
         />
       ) : (
         <div className="flex flex-col gap-6">
@@ -98,7 +104,7 @@ export function MediaPicker({ open, onClose, scope, purpose, currentId, excludeI
                     const isPicked = picked.includes(asset.id);
                     const label = mediaLabel(asset, scope.defaultLocale);
                     return (
-                      <li key={asset.id}>
+                      <li key={asset.id} className="relative">
                         <button
                           type="button"
                           aria-label={multiple ? `Marcar la foto: ${label}` : `Usar la foto: ${label}${isCurrent ? ' (la actual)' : ''}`}
@@ -129,6 +135,14 @@ export function MediaPicker({ open, onClose, scope, purpose, currentId, excludeI
                             {needsAlt && <Pill variant="warn" className="mt-1">Falta descripción</Pill>}
                           </span>
                         </button>
+                        <RowMenu
+                          name={label}
+                          className="absolute right-1.5 top-1.5 border border-[color:var(--color-border)] bg-white/95 text-[color:var(--color-ink-soft)] shadow-[var(--shadow-sm)] hover:bg-white"
+                          actions={[
+                            { label: needsAlt ? 'Describir' : 'Cambiar la descripción', onSelect: () => setDescribing({ asset, then: 'edit' }) },
+                            { label: 'Borrar', danger: true, separated: true, onSelect: () => setDeleting(asset) }
+                          ]}
+                        />
                       </li>
                     );
                   })}
@@ -151,6 +165,7 @@ export function MediaPicker({ open, onClose, scope, purpose, currentId, excludeI
           )}
         </div>
       )}
+      {deleting && <MediaDeleteDialog asset={deleting} defaultLocale={scope.defaultLocale} onClose={() => setDeleting(null)} />}
     </Modal>
   );
 }

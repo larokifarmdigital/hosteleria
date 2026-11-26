@@ -110,9 +110,7 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
       check('la carta está en el editor, con sus títulos plegados debajo', await page.getByText('Títulos de la carta en la web').isVisible());
       await page.getByText('Títulos de la carta en la web').click();
       check('los títulos de la carta se editan ahí', await page.locator('#uiTexts-sections-dishesTitle-es').isVisible());
-      await nav().getByRole('button', { name: /^Todas las fotos/ }).click();
-      await page.getByRole('heading', { level: 2, name: 'Todas las fotos' }).waitFor();
-      check('las fotos están en el editor', true);
+      check('ya no hay «Todas las fotos» en el menú', (await nav().getByRole('button', { name: /^(Todas las fotos|Fotos sin descripción)/ }).count()) === 0);
       check('ya no hay «Textos de la web» ni «Logo e iconos»', (await nav().getByRole('button', { name: /^(Textos de la web|Logo e iconos)/ }).count()) === 0);
       await nav().getByRole('button', { name: /^Google y buscadores/ }).click();
       await page.getByRole('heading', { level: 3, name: 'Icono de la web' }).waitFor();
@@ -129,7 +127,7 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
       const go = async (from, expect) => { await page.goto(BASE + from); await page.waitForLoadState('networkidle'); return expect.every(part => page.url().includes(part)); };
       check('espacio → su sección', await go(`/restaurants/pruebas/spaces/${SPACE}?tab=hours`, ['/restaurants/pruebas?', 's=hours', `e=${SPACE}`]), page.url());
       check('carta → sección Carta', await go('/dishes?r=pruebas&ver=sin-traducir', ['s=menu', 'ver=sin-traducir']), page.url());
-      check('imágenes → sección Todas las fotos', await go('/media?r=pruebas', ['s=media']), page.url());
+      check('imágenes → fotos sin descripción (del aviso de tareas)', await go('/media?r=pruebas', ['s=media']), page.url());
       check('legales → sección Textos legales', await go('/restaurants/pruebas/legal/cookies', ['s=legal', 'p=cookies']), page.url());
       check('textos de la web → Contacto, con el formulario de reserva', await go('/restaurants/pruebas?s=texts', ['s=texts']) && await page.getByRole('heading', { level: 2, name: 'Contacto y reservas' }).isVisible() && await page.getByText('Formulario de reserva', { exact: true }).first().isVisible());
       check('logo e iconos → Google y buscadores', await go('/restaurants/pruebas?s=brand', ['s=brand']) && await page.getByRole('heading', { level: 2, name: 'Google y buscadores' }).isVisible());

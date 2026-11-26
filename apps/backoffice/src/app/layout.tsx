@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
-import { Manrope } from 'next/font/google';
+import { Source_Sans_3 } from 'next/font/google';
 import './globals.css';
 import { QueryProvider } from '@/lib/query/provider';
 import { Toaster } from '@/lib/api/toast';
 
-const manrope = Manrope({
-  subsets: ['latin'],
+const sourceSans = Source_Sans_3({
+  subsets: ['latin', 'latin-ext'],
   weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-manrope',
+  variable: '--font-source-sans',
   display: 'swap'
 });
 
@@ -23,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={manrope.variable}>
+    <html lang="es" className={sourceSans.variable}>
       <body className="font-sans antialiased">
         <QueryProvider>{children}</QueryProvider>
         <Toaster richColors closeButton position="bottom-right" />

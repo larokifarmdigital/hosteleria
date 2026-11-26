@@ -7,3 +7,4 @@ export * from './passwordStrength';
 export * from './requestPasswordResetUseCase';
 export * from './revokeOtherSessionsUseCase';
 export * from './revokeSessionUseCase';
+export * from './updateOwnAccountUseCase';

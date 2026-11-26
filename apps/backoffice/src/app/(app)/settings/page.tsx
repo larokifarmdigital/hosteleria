@@ -6,7 +6,7 @@ import { prefetchLanguages, prefetchUsers } from '@/lib/query/prefetch';
 import { SettingsPageClient } from './SettingsPageClient';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Ajustes' };
+export const metadata = { title: 'Administración' };
 
 export default async function SettingsPage() {
   await requireAdmin();

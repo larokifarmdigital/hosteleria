@@ -678,6 +678,35 @@ const paths: Record<string, any> = {
     }
   },
 
+  '/auth/me': {
+    patch: {
+      tags: ['Auth'], summary: 'Cambia el nombre de quien tiene la sesión',
+      requestBody: jsonBody({ type: 'object', properties: { name: { type: 'string', minLength: 1, maxLength: 80 } }, required: ['name'] }),
+      responses: {
+        200: ok({ type: 'object', properties: { user: { $ref: '#/components/schemas/SessionUser' } }, required: ['user'] }),
+        400: errRef('400 Bad Request — `VALIDATION_ERROR`'),
+        401: err401, 500: err500
+      }
+    }
+  },
+
+  '/auth/password': {
+    post: {
+      tags: ['Auth'], summary: 'Cambia la contraseña sabiendo la actual',
+      description: 'Cierra las demás sesiones de la cuenta; la actual sigue abierta. Máximo 5 intentos por hora y cuenta.',
+      requestBody: jsonBody({
+        type: 'object',
+        properties: { currentPassword: { type: 'string', minLength: 1 }, newPassword: { type: 'string', minLength: 8, maxLength: 200 } },
+        required: ['currentPassword', 'newPassword']
+      }),
+      responses: {
+        200: ok({ type: 'object', properties: { ok: { type: 'boolean' }, closedSessions: { type: 'integer' } }, required: ['ok', 'closedSessions'] }),
+        400: errRef('400 Bad Request — `WRONG_CURRENT_PASSWORD` o `WEAK_PASSWORD`'),
+        401: err401, 429: errRef('429 Too Many Requests — `RATE_LIMITED`'), 500: err500
+      }
+    }
+  },
+
   '/restaurants': {
     get: {
       tags: ['Restaurants'], summary: 'Lista restaurantes accesibles por el user',

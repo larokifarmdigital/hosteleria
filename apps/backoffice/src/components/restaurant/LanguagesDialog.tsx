@@ -118,7 +118,7 @@ export function LanguagesDialog({ restaurant, isAdmin, onClose }: Props) {
       <p className="m-0 mt-4 text-[12.5px] leading-[1.5] text-[color:var(--color-muted)]">
         ¿Falta un idioma en la lista?{' '}
         {isAdmin
-          ? <Link href="/settings" className="inline-flex min-h-6 items-center font-semibold text-[color:var(--color-accent)] underline underline-offset-2">Añádelo en Ajustes</Link>
+          ? <Link href="/settings" className="inline-flex min-h-6 items-center font-semibold text-[color:var(--color-accent)] underline underline-offset-2">Añádelo en Administración</Link>
           : 'Pide a un administrador que lo añada.'}
       </p>
 

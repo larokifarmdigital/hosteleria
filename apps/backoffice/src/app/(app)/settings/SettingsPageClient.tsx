@@ -32,7 +32,7 @@ export function SettingsPageClient() {
 
   return (
     <>
-      <PageHeader title="Ajustes">Idiomas disponibles y usuarios del equipo.</PageHeader>
+      <PageHeader title="Administración">Quién entra al backoffice y en qué idiomas se pueden escribir las webs.</PageHeader>
 
       <QueryBoundary queries={[languagesQuery, usersQuery, restaurantsQuery]}>
       <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">

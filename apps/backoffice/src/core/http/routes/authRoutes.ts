@@ -96,6 +96,33 @@ export function createAuthRoutes() {
     return c.json({ ok: true, closed });
   });
 
+  // «Mi cuenta»: cada persona cambia su nombre y su contraseña.
+  app.patch('/me',
+    requireAuth,
+    validate('json', z.object({ name: z.string().trim().min(1).max(80) })),
+    async (c) => {
+      const user = await c.get('container').auth.updateOwnProfile.execute(c.get('user')!.id, c.req.valid('json'));
+      return c.json({ user });
+    }
+  );
+
+  // Tope por cuenta: sin él, una sesión robada serviría para probar contraseñas actuales sin fin.
+  const passwordRateLimit = rateLimit({
+    bucket: 'auth-password',
+    limit: 5,
+    windowSeconds: 3600,
+    keyFn: async (c: any) => `user:${c.get('user')?.id ?? ''}`
+  });
+  app.post('/password',
+    requireAuth,
+    passwordRateLimit,
+    validate('json', z.object({ currentPassword: z.string().min(1).max(200), newPassword: z.string().min(8).max(200) })),
+    async (c) => {
+      const result = await c.get('container').auth.changeOwnPassword.execute(c.get('user')!.id, c.get('session')!.id, c.req.valid('json'));
+      return c.json({ ok: true, ...result });
+    }
+  );
+
   // Siempre 200 — no revelamos si el email está en BD (lo gestiona el UC).
   app.post('/forgot',
     forgotRateLimit,

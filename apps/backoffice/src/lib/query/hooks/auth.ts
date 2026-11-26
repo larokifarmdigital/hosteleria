@@ -56,3 +56,21 @@ export function useSetPassword() {
       api.auth.setPassword(vars.token, vars.newPassword)
   });
 }
+
+/** «Mi cuenta»: el nombre nuevo se ve al momento en la cabecera. */
+export function useUpdateMe() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { name: string }) => api.auth.updateMe(input).then(r => r.user),
+    onSuccess: user => {
+      qc.setQueryData<SessionUser>(qk.auth.session(), user);
+      void qc.invalidateQueries({ queryKey: qk.users.all });
+    }
+  });
+}
+
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: (input: { currentPassword: string; newPassword: string }) => api.auth.changePassword(input)
+  });
+}

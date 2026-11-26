@@ -35,12 +35,12 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           <p className="mb-4 text-[40px] font-bold leading-[1.1] tracking-[-0.025em]">
             El contenido de tus restaurantes, en un solo sitio.
           </p>
-          <p className="text-[14.5px] leading-[1.65] text-[#e9dccb]">
+          <p className="text-[14.5px] leading-[1.65] text-[#ede6e7]">
             Edita los textos, la carta, los horarios y las fotos de la web de tu restaurante.
           </p>
         </div>
 
-        <p className="relative m-0 text-[12px] text-[#d4c3a8]">© 2026 · Grupo Hosteleria</p>
+        <p className="relative m-0 text-[12px] text-[#d9cdcf]">© 2026 · Grupo Hosteleria</p>
       </div>
 
       <div className="flex flex-col p-6 sm:p-10">

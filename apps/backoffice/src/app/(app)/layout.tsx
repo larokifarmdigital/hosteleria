@@ -1,7 +1,5 @@
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import { Sidebar } from '@/components/layout/Sidebar';
-import { Topbar } from '@/components/layout/Topbar';
-import { MobileHeader } from '@/components/layout/MobileHeader';
+import { AppHeader } from '@/components/layout/AppHeader';
 import { requireUser } from '@/lib/auth/guards';
 import { getServerApi } from '@/lib/api/server';
 import { getQueryClient } from '@/lib/query/server';
@@ -17,7 +15,7 @@ export default async function AppLayout({
 }) {
   const user = await requireUser();
 
-  // Sesión y restaurantes van hidratados: el menú depende del rol y de
+  // Sesión y restaurantes van hidratados: la cabecera depende del rol y de
   // cuántos restaurantes tiene el usuario, y no debe parpadear al cargar.
   const qc = getQueryClient();
   qc.setQueryData(qk.auth.session(), user);
@@ -31,19 +29,11 @@ export default async function AppLayout({
       >
         Saltar al contenido
       </a>
-      <div className="grid min-h-screen grid-cols-[minmax(0,1fr)] lg:grid-cols-[var(--sidebar-w)_minmax(0,1fr)]">
-        <div className="max-lg:hidden">
-          <Sidebar />
-        </div>
-        <div className="flex min-w-0 flex-col">
-          <MobileHeader />
-          <div className="hidden lg:block">
-            <Topbar />
-          </div>
-          <main id="contenido" tabIndex={-1} className="min-w-0 flex-1 p-4 outline-none md:p-6 lg:p-8">
-            <div className="mx-auto max-w-[1240px]">{children}</div>
-          </main>
-        </div>
+      <div className="flex min-h-screen flex-col">
+        <AppHeader />
+        <main id="contenido" tabIndex={-1} className="min-w-0 flex-1 p-4 outline-none md:p-6 lg:p-8">
+          <div className="mx-auto max-w-[1240px]">{children}</div>
+        </main>
       </div>
     </HydrationBoundary>
   );

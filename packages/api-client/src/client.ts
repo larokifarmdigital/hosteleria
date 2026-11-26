@@ -153,7 +153,11 @@ export function createApiClient(opts: ApiClientOpts) {
       reset: (token: string, newPassword: string) =>
         req<{ ok: true }>('/auth/reset', { method: 'POST', body: JSON.stringify({ token, newPassword }) }),
       setPassword: (token: string, newPassword: string) =>
-        req<{ ok: true }>('/auth/set-password', { method: 'POST', body: JSON.stringify({ token, newPassword }) })
+        req<{ ok: true }>('/auth/set-password', { method: 'POST', body: JSON.stringify({ token, newPassword }) }),
+      updateMe: (input: { name: string }) =>
+        req<{ user: SessionUser }>('/auth/me', { method: 'PATCH', body: JSON.stringify(input) }),
+      changePassword: (input: { currentPassword: string; newPassword: string }) =>
+        req<{ ok: true; closedSessions: number }>('/auth/password', { method: 'POST', body: JSON.stringify(input) })
     },
 
     // ─── Restaurants ────────────────────────────────────────────

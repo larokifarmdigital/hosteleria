@@ -18,7 +18,7 @@ export function SaveBar({ dirty, saving, errorCount, onDiscard }: Props) {
     <div
       role="region"
       aria-label="Cambios sin guardar"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-[color:var(--color-border-strong)] bg-white px-4 py-3 shadow-[0_-8px_24px_-12px_rgb(74_36_22/0.25)] lg:left-[var(--sidebar-w)] lg:px-8"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-[color:var(--color-border-strong)] bg-white px-4 py-3 shadow-[0_-8px_24px_-12px_rgb(28_26_25/0.25)] lg:px-8"
     >
       <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-3">
         <p className="m-0 text-[14px] font-semibold text-[color:var(--color-ink)]">
