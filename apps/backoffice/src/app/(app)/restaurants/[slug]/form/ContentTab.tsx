@@ -8,7 +8,7 @@ import { FormImageField } from '@/components/media/FormImageField';
 import { ImageListField } from '@/components/media/ImageListField';
 import { Fold, Section } from '@/components/shared/Section';
 import { Field } from '@/components/ui/Field';
-import { Select, TextInput } from '@/components/ui/inputs';
+import { FormSelect, TextInput } from '@/components/ui/inputs';
 import { newItemId } from '@/lib/forms/rules';
 import { ABOUT, FAQ, FEATURE_ICONS, HOME_BLOCKS, type FormValues } from './model';
 import type { TabProps } from './types';
@@ -25,7 +25,6 @@ export function ContentTab({ show, i18n, mediaScope, localeTabs, pendingIn }: Ta
   const aboutImages = useWatch({ control, name: 'about.imageAssetIds' });
   const emptyI18n = () => Object.fromEntries(i18n.locales.map(code => [code, '']));
 
-  const sectionTitles = useWatch({ control, name: ['faq.title', 'faq.eyebrow'] });
   const eyebrowLabel = 'Texto pequeño sobre el título';
   // Restaurante o bar: cambian el nombre de la sección y los ejemplos, no los campos.
   const kind = localKindOf(useEditor().spaces);
@@ -87,9 +86,9 @@ export function ContentTab({ show, i18n, mediaScope, localeTabs, pendingIn }: Ta
                     <I18nField name={`groups.features.${i}.text`} label="Texto" multiline rows={2} {...i18n} />
                     <Field id={`groups-features-${i}-icon`} label="Icono">
                       {fieldControl => (
-                        <Select {...fieldControl} {...register(`groups.features.${i}.icon`)}>
+                        <FormSelect {...fieldControl} control={control} name={`groups.features.${i}.icon`}>
                           {FEATURE_ICONS.map(icon => <option key={icon.value} value={icon.value}>{icon.label}</option>)}
-                        </Select>
+                        </FormSelect>
                       )}
                     </Field>
                   </div>
@@ -117,6 +116,17 @@ export function ContentTab({ show, i18n, mediaScope, localeTabs, pendingIn }: Ta
 
         {show === 'faq' && (
           <>
+            <Fold
+              title="Encabezado de la sección"
+              summary="Lo que se lee encima de las preguntas en la web. Si lo dejas vacío, la web pone el suyo."
+              badge={<TranslationBadge count={pendingIn(FAQ)} />}
+            >
+              <div className="flex flex-col gap-5">
+                <I18nField name="faq.eyebrow" label={eyebrowLabel} hint="Por ejemplo, «Preguntas frecuentes»." {...i18n} />
+                <I18nField name="faq.title" label="Título" {...i18n} />
+                <I18nField name="faq.titleAccent" label="Parte destacada del título" hint="Las palabras del final del título que se resaltan. Puede quedar vacío." {...i18n} />
+              </div>
+            </Fold>
             <Section title="Preguntas" description="Salen en tu web en este orden.">
               <ItemList
                 name="faq.items"
@@ -137,17 +147,6 @@ export function ContentTab({ show, i18n, mediaScope, localeTabs, pendingIn }: Ta
                 )}
               </ItemList>
             </Section>
-            <Fold
-              title="Título de la sección"
-              summary={[textOf(sectionTitles[1], i18n.defaultLocale ?? i18n.activeLocale), textOf(sectionTitles[0], i18n.defaultLocale ?? i18n.activeLocale)].filter(Boolean).join(' · ') || 'Sin título: la web usa el suyo.'}
-              badge={<TranslationBadge count={pendingIn(FAQ)} />}
-            >
-              <div className="flex flex-col gap-5">
-                <I18nField name="faq.eyebrow" label={eyebrowLabel} hint="Por ejemplo, «Preguntas frecuentes»." {...i18n} />
-                <I18nField name="faq.title" label="Título" {...i18n} />
-                <I18nField name="faq.titleAccent" label="Parte destacada del título" hint="Las palabras del final del título que se resaltan. Puede quedar vacío." {...i18n} />
-              </div>
-            </Fold>
           </>
         )}
 

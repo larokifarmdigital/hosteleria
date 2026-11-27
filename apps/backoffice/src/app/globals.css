@@ -157,3 +157,10 @@ html [data-sonner-toaster][data-sonner-theme='light'] {
   --error-border: #f3c9c4;
   --error-text: var(--color-danger);
 }
+
+/* Radix Select crea un <select> nativo escondido cuando va dentro de un <form> (para el
+   envío HTML). Aquí el valor va por react-hook-form: se quita del todo, también de la
+   vista de lectores y de las auditorías (que lo contaban como un control de 1 px). */
+select[aria-hidden='true'][tabindex='-1'] {
+  display: none !important;
+}

@@ -77,18 +77,23 @@ export function Section({ title, description, badge, action, children, className
  * Lo que se toca poco, plegado: el título y, al lado, un resumen de lo que hay dentro.
  * Se usa para textos opcionales que acompañan a una lista o a un horario.
  */
-export function Fold({ title, summary, badge, defaultOpen, children }: { title: string; summary?: string; badge?: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode }) {
+/**
+ * Bloque secundario de una sección, siempre a la vista. Antes era un desplegable y
+ * marea: el cliente no encontraba lo que había dentro. `summary` va como descripción.
+ */
+export function Fold({ title, summary, badge, children }: { title: string; summary?: string; badge?: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode }) {
+  // Mismo nivel que las demás tarjetas de la sección (h3 dentro del editor).
+  const Heading = useContext(HeadingLevel) === 3 ? 'h3' : 'h2';
   return (
-    <details open={defaultOpen} className="editor-fold group overflow-hidden rounded-[10px] border border-[color:var(--color-border)] bg-white">
-      <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-4 py-3 hover:bg-[color:var(--color-surface-2)] [&::-webkit-details-marker]:hidden">
-        <svg aria-hidden viewBox="0 0 16 16" className="h-3.5 w-3.5 flex-shrink-0 text-[color:var(--color-muted)] transition-transform group-open:rotate-90 motion-reduce:transition-none" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3l5 5-5 5" /></svg>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[14px] font-semibold text-[color:var(--color-ink)]">{title}</span>
-          {summary && <span className="block truncate text-[13px] text-[color:var(--color-muted)] group-open:hidden">{summary}</span>}
-        </span>
+    <section aria-label={title} className="editor-fold rounded-[10px] border border-[color:var(--color-border)] bg-white">
+      <div className="flex items-start gap-3 border-b border-[color:var(--color-border)] px-4 py-3 sm:px-5">
+        <div className="min-w-0 flex-1">
+          <Heading className="m-0 text-[15px] font-bold text-[color:var(--color-ink)]">{title}</Heading>
+          {summary && <p className="m-0 mt-0.5 text-[13.5px] text-[color:var(--color-muted)]">{summary}</p>}
+        </div>
         {badge}
-      </summary>
-      <div className="border-t border-[color:var(--color-border)] p-4 sm:p-5">{children}</div>
-    </details>
+      </div>
+      <div className="p-4 sm:p-5">{children}</div>
+    </section>
   );
 }

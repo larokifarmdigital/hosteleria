@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
-import { RowMenu } from '@/components/ui/Sortable';
+import { Pencil, Plus } from 'lucide-react';
+import { Table, Td } from '@/components/shared/Table';
+import { ROW_ICON_BUTTON, RowMenu } from '@/components/ui/Sortable';
 import type { Restaurant, Space } from '@hosteleria/api-client';
-import { Button, LinkButton } from '@/components/shared/Button';
+import { Button } from '@/components/shared/Button';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { Pill } from '@/components/shared/Pill';
 import { StatePill, spacePublication } from '@/components/shared/StatePill';
@@ -22,6 +23,8 @@ interface Props {
 }
 
 /** Los espacios del restaurante: entrar a editarlos, añadir, ordenar, elegir el principal y eliminar. */
+const SPACE_COLUMNS = [{ label: 'Espacio' }, { label: 'Tipo' }, { label: 'Estado' }, { label: 'Acciones', hidden: true }];
+
 export function SpacesSection({ restaurant, spaces }: Props) {
   const CardHeading = useCardHeading();
   const slug = restaurant.slug;
@@ -71,10 +74,10 @@ export function SpacesSection({ restaurant, spaces }: Props) {
           Añade el primero para poder poner su portada, su horario y su carta.
         </EmptyState>
       ) : (
-        <ul className="m-0 flex list-none flex-col gap-0.5 rounded-[10px] border border-[color:var(--color-border)] bg-white p-1.5 shadow-[var(--shadow-sm)]">
+        <Table caption="Lista de espacios" columns={SPACE_COLUMNS}>
           {ordered.map((space, index) => (
-            <li key={space.id} className="flex items-center gap-2 rounded-[8px] px-2.5 py-2">
-              <div className="min-w-0 flex-1">
+            <tr key={space.id}>
+              <Td>
                 <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                   <Link
                     href={`/restaurants/${slug}?s=cover&e=${space.id}`}
@@ -82,30 +85,34 @@ export function SpacesSection({ restaurant, spaces }: Props) {
                   >
                     {space.name}
                   </Link>
-                  <StatePill publication={spacePublication(space)} />
                   {space.isDefault && ordered.length > 1 && <Pill variant="accent">Principal</Pill>}
                   {space.isDefault && ordered.length > 1 && <span className="sr-only">: es el que la web enseña primero</span>}
                 </div>
-                <p className="m-0 text-[13px] text-[color:var(--color-muted)]">
-                  {spaceTypeLabel(space.type)}
-                </p>
-              </div>
-              <LinkButton size="sm" href={`/restaurants/${slug}?s=cover&e=${space.id}`} aria-label={`Editar ${space.name}`}>Editar</LinkButton>
-              {/* Lo ocasional (ordenar, cambiar el principal, eliminar), en el menú de la fila. */}
-              {ordered.length > 1 && (
-                <RowMenu
-                  name={space.name}
-                  actions={[
-                    ...(space.isDefault ? [] : [{ label: 'Hacer principal', disabled: busy, onSelect: () => void makeDefault(space) }]),
-                    { label: 'Subir', disabled: index === 0 || busy, onSelect: () => void move(index, index - 1) },
-                    { label: 'Bajar', disabled: index === ordered.length - 1 || busy, onSelect: () => void move(index, index + 1) },
-                    { label: 'Eliminar', danger: true, separated: true, disabled: busy, onSelect: () => setDeleting(space) }
-                  ]}
-                />
-              )}
-            </li>
+              </Td>
+              <Td className="text-[color:var(--color-muted)]">{spaceTypeLabel(space.type)}</Td>
+              <Td><StatePill publication={spacePublication(space)} /></Td>
+              <Td className="w-[1%] whitespace-nowrap">
+                <div className="flex justify-end gap-1">
+                  <Link href={`/restaurants/${slug}?s=cover&e=${space.id}`} aria-label={`Editar ${space.name}`} title="Editar" className={ROW_ICON_BUTTON}>
+                    <Pencil aria-hidden className="h-[18px] w-[18px]" />
+                  </Link>
+                  {/* Lo ocasional (ordenar, cambiar el principal, eliminar), en el menú de la fila. */}
+                  {ordered.length > 1 && (
+                    <RowMenu
+                      name={space.name}
+                      actions={[
+                        ...(space.isDefault ? [] : [{ label: 'Hacer principal', disabled: busy, onSelect: () => void makeDefault(space) }]),
+                        { label: 'Subir', disabled: index === 0 || busy, onSelect: () => void move(index, index - 1) },
+                        { label: 'Bajar', disabled: index === ordered.length - 1 || busy, onSelect: () => void move(index, index + 1) },
+                        { label: 'Eliminar', danger: true, separated: true, disabled: busy, onSelect: () => setDeleting(space) }
+                      ]}
+                    />
+                  )}
+                </div>
+              </Td>
+            </tr>
           ))}
-        </ul>
+        </Table>
       )}
       <p role="status" className="sr-only">{announcement}</p>
 

@@ -139,7 +139,7 @@ const SP = state.SPACE;
     const dialog = p.getByRole('dialog');
     const mark = (n) => dialog.getByRole('button', { name: new RegExp(`^Marcar la foto: Foto ${n}`) });
     await p.goto(`${BASE}/restaurants/pruebas?s=photos&e=${SP}`);
-    await p.getByRole('heading', { level: 2, name: 'Galería de fotos' }).waitFor();
+    await p.getByRole('heading', { level: 2, name: 'Galería' }).waitFor();
     const gallery = p.getByRole('group', { name: 'Fotos de la galería' });
     await gallery.getByRole('button', { name: 'Añadir fotos' }).click();
     await mark('uno').waitFor();

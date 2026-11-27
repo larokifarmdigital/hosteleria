@@ -1,6 +1,7 @@
 // Fase 6: tareas pendientes en el panel de inicio y en la ficha (build de producción),
 // sobre «pruebas». Restaura al acabar.
 const { chromium } = require(process.env.PW);
+const select = require('./select.cjs');
 const { spawnSync } = require('child_process');
 const S = process.env.S, BASE = process.env.BASE;
 const api = require('./api.cjs')(S + '/admin.json');
@@ -68,7 +69,7 @@ const AXE = { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', '
       await p.locator('#carta-mostrar').waitFor();
       await p.getByText('Tortilla trufada').first().waitFor({ timeout: 10000 }).catch(() => {});
       check('la tarea de la carta lleva a los platos ya filtrados por «Falta traducción»',
-        /ver=sin-traducir/.test(p.url()) && (await p.locator('#carta-mostrar').inputValue()) === 'missing' && await p.getByText('Tortilla trufada').first().isVisible(), p.url());
+        /ver=sin-traducir/.test(p.url()) && (await select.text(p.locator('#carta-mostrar'))) === 'Falta traducción' && await p.getByText('Tortilla trufada').first().isVisible(), p.url());
       await pause(4000);
 
       await p.goto(`${BASE}/dashboard`);
@@ -99,7 +100,7 @@ const AXE = { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', '
       for (const d of dishes) { undo.push(['PATCH', `/dishes/${d.id}`, { name: d.name, note: d.note }]); await api('PATCH', `/dishes/${d.id}`, { name: { es: 'x', ca: 'x', en: 'x' }, note: {} }); }
       for (const c of cats) { undo.push(['PATCH', `/dishes/categories/${c.id}`, { name: c.name }]); await api('PATCH', `/dishes/categories/${c.id}`, { name: { es: 'x', ca: 'x', en: 'x' } }); }
       // En escritorio las secciones son un menú; en móvil, un desplegable. Se guarda solo.
-      const open = (id, label) => vpName === 'móvil' ? p.locator('#seccion-picker').selectOption(id) : p.getByRole('navigation', { name: 'Secciones de la web' }).getByRole('button', { name: label }).click();
+      const open = (id, label) => vpName === 'móvil' ? select.pick(p, p.locator('#seccion-picker'), id) : p.getByRole('navigation', { name: 'Secciones de la web' }).getByRole('button', { name: label }).click();
       await open('contact', /^Contacto y reservas/);
       await p.locator('#r-founded').fill('1999');
       await p.getByText('Cambios guardados', { exact: true }).first().waitFor({ timeout: 10000 });

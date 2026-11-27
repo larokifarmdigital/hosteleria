@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import { MarkdownEditor } from './MarkdownEditor';
 import { Field } from '@/components/ui/Field';
 import { TextArea, TextInput } from '@/components/ui/inputs';
 import { missingLocales } from '@/lib/forms/translations';
@@ -18,6 +19,8 @@ interface Props {
   /** Idioma principal: su texto se enseña debajo, en pequeño, al traducir a los demás. */
   defaultLocale?: string;
   multiline?: boolean;
+  /** Editor con formato (negrita, títulos, listas con sangría); guarda Markdown. */
+  richText?: boolean;
   /** Alto inicial del campo de varias líneas. */
   rows?: number;
   /** Longitud recomendada: muestra contador, no bloquea. */
@@ -32,9 +35,9 @@ interface Props {
  * Un control por idioma; solo se ve el del idioma activo. Los demás siguen
  * montados (ocultos) para que el formulario conserve y valide sus valores.
  */
-export function I18nField({ name, label, hint, locales, activeLocale, localeNames, defaultLocale, multiline, rows, recommendedMax, error, errorFor, className }: Props) {
-  const { register, control } = useFormContext();
-  const values = (useWatch({ control, name }) ?? {}) as Record<string, string>;
+export function I18nField({ name, label, hint, locales, activeLocale, localeNames, defaultLocale, multiline, richText, rows, recommendedMax, error, errorFor, className }: Props) {
+  const { register, control: control_ } = useFormContext();
+  const values = (useWatch({ control: control_, name }) ?? {}) as Record<string, string>;
   const missing = missingLocales(values, locales);
   const original = defaultLocale ? values[defaultLocale]?.trim() : undefined;
 
@@ -60,7 +63,22 @@ export function I18nField({ name, label, hint, locales, activeLocale, localeName
               below={showReference ? <Original id={referenceId!} text={original!} lang={defaultLocale!} languageName={localeNames[defaultLocale!] ?? defaultLocale!} /> : undefined}
             >
               {control =>
-                multiline ? (
+                richText ? (
+                  <Controller
+                    control={control_}
+                    name={`${name}.${code}`}
+                    render={({ field }) => (
+                      <MarkdownEditor
+                        control={control}
+                        label={`${label} (${localeNames[code] ?? code})`}
+                        lang={code}
+                        value={field.value ?? ''}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                      />
+                    )}
+                  />
+                ) : multiline ? (
                   <TextArea lang={code} rows={rows} {...control} {...register(`${name}.${code}`)} />
                 ) : (
                   <TextInput lang={code} {...control} {...register(`${name}.${code}`)} />

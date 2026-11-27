@@ -66,7 +66,7 @@ export function EditorTopBar() {
   const { restaurant } = useEditor();
   return (
     <div className="sticky top-14 z-20 -mx-4 mb-6 [@media(max-height:500px)]:static border-b border-[color:var(--color-border)] bg-[color:var(--color-bg)]/95 px-4 py-3 backdrop-blur md:-mx-6 md:px-6 lg:top-14 lg:-mx-8 lg:-mt-8 lg:px-8">
-      <div className="mx-auto flex max-w-[1240px] items-center gap-3">
+      <div className="flex items-center gap-3">
         <div
           aria-hidden
           className="hidden h-10 w-10 flex-shrink-0 place-items-center rounded-[12px] text-[15px] font-bold text-white sm:grid"

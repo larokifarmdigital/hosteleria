@@ -72,10 +72,7 @@ interface ProviderProps {
 export function EditorProvider({ restaurant, spaces, localeNames, isAdmin, children }: ProviderProps) {
   const params = useSearchParams();
   const ordered = useMemo(() => [...spaces].sort((a, b) => a.order - b.order), [spaces]);
-  // Con un solo espacio no hay página de espacio: su nombre se cambia en «Espacios».
-  const single = ordered.length < 2;
-  const asked = sectionFromParam(params.get('s') ?? params.get('tab'));
-  const section: SectionKey = asked === 'spacename' && single ? 'spaces' : asked;
+  const section: SectionKey = sectionFromParam(params.get('s') ?? params.get('tab'));
   const space = ordered.find(s => s.id === params.get('e')) ?? ordered.find(s => s.isDefault) ?? ordered[0] ?? null;
   const locales = restaurant.activeLocales as string[];
   const defaultLocale = restaurant.defaultLocale as string;
@@ -87,10 +84,10 @@ export function EditorProvider({ restaurant, spaces, localeNames, isAdmin, child
     const current = new URLSearchParams(window.location.search);
     const e = extra.e ?? current.get('e') ?? undefined;
     const p = extra.p === undefined ? (next === 'legal' ? current.get('p') ?? undefined : undefined) : extra.p ?? undefined;
-    const href = sectionHref(restaurant.slug, next === 'spacename' && single ? 'spaces' : next, { e, p });
+    const href = sectionHref(restaurant.slug, next, { e, p });
     if (href !== window.location.pathname + window.location.search) window.history.pushState(null, '', href);
     window.scrollTo({ top: 0 });
-  }, [restaurant.slug, single]);
+  }, [restaurant.slug]);
 
   const value: Nav = {
     restaurant, spaces: ordered, space, localeNames, locales, defaultLocale, isAdmin,

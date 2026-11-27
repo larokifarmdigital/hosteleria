@@ -31,6 +31,7 @@ es `src/core/shared/infrastructure/env.ts`; `.env.example` la resume.
 | `APP_URL` | sí | `https://<backoffice>`: con él se montan los enlaces de invitación |
 | `RESEND_API_KEY`, `EMAIL_FROM` | no | Correo. Sin clave, las invitaciones van por enlace copiado a mano |
 | `COOKIE_DOMAIN` | no | Vacío: la cookie vale para el host que responde |
+| `NEXT_PUBLIC_WEB3FORMS_KEY` | no | «Ayuda y soporte»: clave de Web3Forms creada con el correo de soporte. Sin ella, «Enviar» abre el programa de correo con el mensaje escrito. Al ser `NEXT_PUBLIC_`, va en el build: tras añadirla hay que redesplegar |
 
 `APP_ENV` no se define en producción: solo `development` quita `Secure` de la cookie.
 `ADMIN_EMAIL` / `ADMIN_PASSWORD` solo los usa `pnpm db:seed`, en local.

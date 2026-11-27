@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ChevronDown, CircleHelp, KeyRound, LogOut, UserRound } from 'lucide-react';
 import type { SessionUser } from '@hosteleria/api-client';
@@ -10,11 +10,9 @@ import { logoutAction } from '@/lib/actions';
 import { useSession } from '@/lib/query/hooks';
 import { cn } from '@/lib/utils';
 import { isLinkActive, useAppNav } from './AppHeader';
+import { HelpDialog } from './HelpDialog';
 
 const ROLE_LABEL: Record<SessionUser['role'], string> = { admin: 'Administrador', editor: 'Gestor' };
-/** Ayuda y soporte: escribe al equipo que mantiene el backoffice. */
-const SUPPORT_EMAIL = 'pinedacuevaerick910@gmail.com';
-const SUPPORT_HREF = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Ayuda con Hosteleria Studio')}`;
 
 function initialsOf(name: string): string {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]!.toUpperCase()).join('');
@@ -29,10 +27,12 @@ export function AccountMenu() {
   const pathname = usePathname();
   const { links, admin } = useAppNav();
   const [leaving, startLeaving] = useTransition();
+  const [helpOpen, setHelpOpen] = useState(false);
   if (!user) return null;
   const mobileLinks = [...links, ...(admin ? [{ href: '/settings', label: 'Administración' }] : [])];
 
   return (
+    <>
     <DropdownMenu.Root modal={false}>
       <DropdownMenu.Trigger
         aria-label={`Tu cuenta: ${user.name}`}
@@ -68,8 +68,9 @@ export function AccountMenu() {
             <DropdownMenu.Item asChild>
               <Link href="/account#contrasena" className={ITEM}><KeyRound aria-hidden className={ICON} />Cambiar contraseña</Link>
             </DropdownMenu.Item>
-            <DropdownMenu.Item asChild>
-              <a href={SUPPORT_HREF} className={ITEM}><CircleHelp aria-hidden className={ICON} />Ayuda y soporte</a>
+            {/* Se abre tras cerrarse el menú: así el foco vuelve bien al avatar al cerrar el diálogo. */}
+            <DropdownMenu.Item onSelect={() => setTimeout(() => setHelpOpen(true), 0)} className={ITEM}>
+              <CircleHelp aria-hidden className={ICON} />Ayuda y soporte
             </DropdownMenu.Item>
           </div>
           <DropdownMenu.Separator className="h-px bg-[color:var(--color-border)]" />
@@ -84,5 +85,7 @@ export function AccountMenu() {
           </div>
         </DropdownMenu.Content>
     </DropdownMenu.Root>
+    {helpOpen && <HelpDialog user={user} onClose={() => setHelpOpen(false)} />}
+    </>
   );
 }

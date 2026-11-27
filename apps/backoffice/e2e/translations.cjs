@@ -1,6 +1,7 @@
 // Idiomas: avisos de traducción por idioma y por sección, y bloqueo al publicar con textos a medias
 // (espacio, ficha, carta). Sobre «pruebas»; restaura al acabar.
 const { chromium } = require(process.env.PW);
+const select = require('./select.cjs');
 const S = process.env.S, BASE = process.env.BASE;
 const api = require('./api.cjs')(S + '/admin.json');
 const state = require('./pruebas-state.cjs')(api);
@@ -147,10 +148,10 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
     await page.getByLabel('Mostrar').waitFor();
     // La barra sale antes que la lista: se espera a los platos.
     await page.getByText('Tortilla trufada').first().waitFor();
-    await page.getByLabel('Mostrar').selectOption({ label: 'Falta traducción' });
+    await select.pick(page, page.getByLabel('Mostrar'), { label: 'Falta traducción' });
     await page.getByText('1 resultado', { exact: true }).waitFor({ timeout: 5000 }).catch(() => {});
     check('filtro: 1 resultado', await page.getByText('1 resultado', { exact: true }).isVisible());
-    check('es la tortilla y dice qué falta', await page.getByText('Tortilla trufada').isVisible() && await page.locator('li', { hasText: 'Tortilla trufada' }).getByText('Falta traducir: CA').isVisible() && !(await page.getByText('Escalivada con anchoa').count()));
+    check('es la tortilla y dice qué falta', await page.getByText('Tortilla trufada').isVisible() && await page.locator('tr', { hasText: 'Tortilla trufada' }).getByText('Falta traducir: CA').isVisible() && !(await page.getByText('Escalivada con anchoa').count()));
     await page.getByRole('button', { name: 'Editar Tortilla trufada' }).click();
     const sheet = page.getByRole('dialog');
     await sheet.waitFor();
@@ -168,7 +169,7 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
     await sheet.getByRole('button', { name: 'Cancelar' }).click();
     await sheet.waitFor({ state: 'hidden' });
 
-    await page.getByLabel('Mostrar').selectOption({ label: 'Todos' });
+    await select.pick(page, page.getByLabel('Mostrar'), { label: 'Todos' });
     await page.getByRole('button', { name: 'Añadir categoría de platos' }).click();
     const dlg = page.getByRole('dialog', { name: 'Nueva categoría' });
     await dlg.locator('#cat-es').fill('Postres');

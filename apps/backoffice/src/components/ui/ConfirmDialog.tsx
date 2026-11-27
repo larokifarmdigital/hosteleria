@@ -23,7 +23,7 @@ export function ConfirmDialog({ open, onOpenChange, title, children, confirmLabe
   return (
     <Dialog.Root open={open} onOpenChange={next => { if (!pending) onOpenChange(next); }}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-[rgb(42_20_9/0.45)]" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-[rgb(28_26_25/0.45)]" />
         <Dialog.Content {...returnFocus} className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-[440px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[var(--radius)] border border-[color:var(--color-border)] bg-white p-5 shadow-[var(--shadow-lg)] focus:outline-none">
           <Dialog.Title className="m-0 text-[17px] font-bold tracking-[-0.015em] text-[color:var(--color-ink)]">
             {title}

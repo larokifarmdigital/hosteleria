@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { Space, SpaceType } from '@hosteleria/api-client';
 import { Button } from '@/components/shared/Button';
 import { Field } from '@/components/ui/Field';
-import { Select, TextInput } from '@/components/ui/inputs';
+import { FormSelect, TextInput } from '@/components/ui/inputs';
 import { Modal } from '@/components/ui/Modal';
 import { showSuccessToast } from '@/lib/api';
 import { useCreateSpace } from '@/lib/query/hooks';
@@ -22,7 +22,7 @@ interface Props {
 export function AddSpaceDialog({ restaurantSlug, spaces, onClose }: Props) {
   const router = useRouter();
   const create = useCreateSpace(restaurantSlug);
-  const { register, handleSubmit, setError, formState: { errors } } = useForm<{ name: string; type: SpaceType; descriptor: string }>({
+  const { register, handleSubmit, setError, control: formControl, formState: { errors } } = useForm<{ name: string; type: SpaceType; descriptor: string }>({
     defaultValues: { name: '', type: 'restaurant', descriptor: '' }
   });
 
@@ -56,9 +56,9 @@ export function AddSpaceDialog({ restaurantSlug, spaces, onClose }: Props) {
         </Field>
         <Field id="sp-type" label="Tipo">
           {control => (
-            <Select {...control} {...register('type')}>
+            <FormSelect {...control} control={formControl} name='type'>
               {SPACE_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-            </Select>
+            </FormSelect>
           )}
         </Field>
         {spaces.length === 1 && (

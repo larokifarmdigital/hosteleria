@@ -19,7 +19,7 @@ export function Sheet({ open, onRequestClose, title, description, children }: Pr
   return (
     <Dialog.Root open={open} onOpenChange={next => { if (!next) onRequestClose(); }}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-[rgb(42_20_9/0.45)]" />
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-[rgb(28_26_25/0.45)]" />
         <Dialog.Content
           {...returnFocus}
           className="fixed left-1/2 top-1/2 z-40 flex max-h-[calc(100dvh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-[580px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[var(--radius)] border border-[color:var(--color-border)] bg-white shadow-[var(--shadow-lg)] focus:outline-none"

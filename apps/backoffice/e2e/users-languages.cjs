@@ -1,6 +1,7 @@
 // Fase 6: usuarios e idiomas en Ajustes, y la página de elegir contraseña (build de producción).
 // Crea un usuario y un idioma de prueba y los borra al acabar.
 const { chromium } = require(process.env.PW);
+const select = require('./select.cjs');
 const { spawnSync } = require('child_process');
 const S = process.env.S, BASE = process.env.BASE;
 const api = require('./api.cjs')(S + '/admin.json');
@@ -49,39 +50,27 @@ const cleanup = async () => {
     await p.getByRole('heading', { name: 'Usuarios' }).waitFor();
     await audit(p, 'ajustes');
 
-    console.log('— Idiomas');
+    console.log('— Idiomas: por restaurante, no en Administración');
+    check('Administración ya no tiene idiomas', (await p.getByRole('heading', { name: 'Idiomas' }).count()) === 0 && (await p.getByRole('button', { name: 'Añadir idioma' }).count()) === 0);
+    await p.goto(`${BASE}/restaurants/pruebas?s=languages`);
     await p.getByRole('button', { name: 'Añadir idioma' }).click();
-    await dialog.getByRole('heading', { name: 'Nuevo idioma' }).waitFor();
-    await audit(p, 'idioma nuevo', '[role=dialog]');
-    await dialog.locator('#l-code').fill('francés');
-    await dialog.locator('#l-name').fill('Prueba');
-    await dialog.getByRole('button', { name: 'Añadir idioma' }).click();
-    check('un código que no son dos letras se rechaza con explicación', await dialog.getByText(/Usa el código de dos letras/).isVisible());
-    await dialog.locator('#l-code').fill('es');
-    await dialog.getByRole('button', { name: 'Añadir idioma' }).click();
-    check('un código repetido se avisa antes de enviar', await dialog.getByText('Ya hay un idioma con el código «es».').isVisible());
-    await dialog.locator('#l-code').fill(LANG.toUpperCase());
-    await dialog.getByRole('button', { name: 'Añadir idioma' }).click();
-    await p.getByText('Idioma añadido', { exact: true }).first().waitFor();
-    const langs = p.getByRole('region', { name: 'Idiomas' });
-    await langs.getByRole('button', { name: 'Editar Prueba' }).waitFor();
-    check('el idioma nuevo aparece en la lista, en minúscula y sin restaurantes', (await api('GET', '/languages')).body.languages.some(l => l.code === LANG && l.name === 'Prueba'));
-    await langs.getByRole('button', { name: 'Editar Prueba' }).click();
-    await dialog.locator('#l-name').fill('Prueba dos');
-    check('al editar no se puede cambiar el código y sí eliminar si nadie lo usa', (await dialog.locator('#l-code').count()) === 0 && await dialog.getByRole('button', { name: 'Eliminar idioma' }).isVisible());
-    await dialog.getByRole('button', { name: 'Guardar', exact: true }).click();
-    await p.getByText('Idioma guardado', { exact: true }).first().waitFor();
-    await langs.getByRole('button', { name: 'Editar Prueba dos' }).waitFor();
-    await langs.getByRole('button', { name: 'Editar Español' }).click();
-    check('un idioma en uso no se puede eliminar y dice quién lo usa', await dialog.getByText(/No se puede eliminar mientras lo usen/).isVisible() && (await dialog.getByRole('button', { name: 'Eliminar idioma' }).count()) === 0);
-    await audit(p, 'idioma en uso', '[role=dialog]');
-    await dialog.getByRole('button', { name: 'Cancelar' }).click();
-    await langs.getByRole('button', { name: 'Editar Prueba dos' }).click();
-    await dialog.getByRole('button', { name: 'Eliminar idioma' }).click();
-    await p.waitForTimeout(350);
-    await p.getByRole('button', { name: 'Sí, eliminar' }).click();
-    await p.getByText('Idioma eliminado', { exact: true }).first().waitFor();
-    check('eliminar lo quita', !(await api('GET', '/languages')).body.languages.some(l => l.code === LANG));
+    await dialog.getByRole('heading', { name: 'Añadir idiomas' }).waitFor();
+    await dialog.getByRole('button', { name: '¿No está en la lista? Crear otro idioma' }).click();
+    await dialog.locator('#new-lang-code').fill('1a');
+    await dialog.locator('#new-lang-name').fill('Prueba');
+    await dialog.getByRole('button', { name: 'Crear idioma', exact: true }).click();
+    check('un código que no son 2 o 3 letras se rechaza con explicación', await dialog.getByText(/El código son 2 o 3 letras/).isVisible());
+    await audit(p, 'crear otro idioma', '[role=dialog]');
+    await dialog.locator('#new-lang-code').fill(LANG.toUpperCase());
+    await dialog.getByRole('button', { name: 'Crear idioma', exact: true }).click();
+    await p.getByText('Idioma creado', { exact: true }).first().waitFor();
+    check('el idioma se crea en minúscula y queda marcado en la web', (await api('GET', '/languages')).body.languages.some(l => l.code === LANG && l.name === 'Prueba') && await dialog.locator(`#lang-${LANG}`).isChecked());
+    // Sin guardar: «pruebas» se queda con sus idiomas.
+    await dialog.getByRole('button', { name: 'Cancelar', exact: true }).click();
+    for (const l of (await api('GET', '/languages')).body.languages.filter(l => l.code === LANG)) await api('DELETE', `/languages/${l.id}`);
+    check('el idioma de prueba se borra', !(await api('GET', '/languages')).body.languages.some(l => l.code === LANG));
+    await p.goto(`${BASE}/settings`);
+    await p.getByRole('heading', { name: 'Usuarios' }).waitFor();
     await pause(8000);
 
     console.log('— Alta de usuario e invitación');
@@ -147,15 +136,24 @@ const cleanup = async () => {
     check('con esa contraseña entra y cae en su restaurante', /\/restaurants\/pruebas/.test(g.url()), [g.url(), await g.getByRole('alert').allInnerTexts()]);
     await pause(8000);
 
-    console.log('— Suspender y reactivar');
+    console.log('— Suspender y reactivar (menú «⋯» de la fila)');
     await p.reload();
+    const rowMenu = async (name, action) => {
+      await users.getByRole('button', { name: `Más acciones: ${name}`, exact: true }).click();
+      await p.getByRole('menuitem', { name: action, exact: true }).click();
+    };
+    await row.waitFor();
+    check('la tabla dice el estado: activa tras entrar', /Activa/.test(await row.innerText()), await row.innerText());
+    check('editar, con su icono, y lo demás en el menú de la fila', await users.getByRole('button', { name: `Editar a ${NAME}` }).isVisible() && await users.getByRole('button', { name: `Más acciones: ${NAME}`, exact: true }).isVisible());
     await users.getByRole('button', { name: `Editar a ${NAME}` }).click();
     await dialog.getByRole('heading', { name: `Editar a ${NAME}` }).waitFor();
-    check('la cuenta consta como activa tras entrar', await dialog.getByText('La cuenta está activa.').isVisible());
+    check('el diálogo de editar solo lleva los datos', (await dialog.getByRole('button', { name: /Suspender|Eliminar|Crear enlace/ }).count()) === 0);
     await audit(p, 'editar usuario', '[role=dialog]');
-    await dialog.getByRole('button', { name: 'Suspender cuenta' }).click();
+    await dialog.getByRole('button', { name: 'Cancelar' }).click();
+    await users.getByRole('button', { name: `Más acciones: ${NAME}`, exact: true }).click();
+    check('el menú ofrece enlace, suspender y eliminar', JSON.stringify(await p.getByRole('menuitem').allInnerTexts()) === JSON.stringify(['Crear enlace para elegir contraseña', 'Suspender cuenta', 'Eliminar']), await p.getByRole('menuitem').allInnerTexts());
+    await p.getByRole('menuitem', { name: 'Suspender cuenta', exact: true }).click();
     await p.getByText('Cuenta suspendida', { exact: true }).first().waitFor();
-    check('al suspender, el diálogo lo dice y ofrece reactivar', await dialog.getByText('La cuenta está suspendida: no puede iniciar sesión.').isVisible() && await dialog.getByRole('button', { name: 'Reactivar cuenta' }).isVisible());
     await g.goto(`${BASE}/dishes`);
     await g.waitForURL(/\/login/, { timeout: 20000 });
     check('su sesión abierta se cierra', true);
@@ -164,10 +162,9 @@ const cleanup = async () => {
     await g.getByRole('button', { name: 'Entrar' }).click();
     await g.getByRole('alert').filter({ hasText: /suspendida/ }).waitFor();
     check('y al intentar entrar se le dice que está suspendida', true);
-    await dialog.getByRole('button', { name: 'Cancelar' }).click();
+    await p.waitForTimeout(800);
     check('en la lista sale como «Suspendida»', /Suspendida/.test(await row.innerText()));
-    await users.getByRole('button', { name: `Editar a ${NAME}` }).click();
-    await dialog.getByRole('button', { name: 'Reactivar cuenta' }).click();
+    await rowMenu(NAME, 'Reactivar cuenta');
     await p.getByText('Cuenta reactivada', { exact: true }).first().waitFor();
     check('tras un intento fallido, el formulario conserva el email', (await g.locator('#lg-email').inputValue()) === EMAIL, await g.locator('#lg-email').inputValue());
     await g.locator('#lg-pwd').fill(PASSWORD);
@@ -177,28 +174,29 @@ const cleanup = async () => {
     await pause(8000);
 
     console.log('— Editar, enlace nuevo y eliminar');
-    await dialog.getByRole('button', { name: 'Crear enlace para elegir contraseña' }).click();
+    await rowMenu(NAME, 'Crear enlace para elegir contraseña');
     await dialog.getByRole('heading', { name: 'Enlace para elegir contraseña' }).waitFor();
     const link2 = await dialog.locator('#invitation-url').inputValue();
     check('se puede crear un enlace nuevo, distinto del primero', link2 !== link && link2.includes('/set-password?token='));
     await dialog.getByRole('button', { name: 'Hecho' }).click();
     await users.getByRole('button', { name: `Editar a ${NAME}` }).click();
-    await dialog.locator('#u-role').selectOption('admin');
+    await select.pick(p, dialog.locator('#u-role'), 'admin');
     check('al pasar a administrador desaparece la lista de restaurantes', (await dialog.getByText('Restaurantes que puede editar').count()) === 0);
     await dialog.getByRole('button', { name: 'Guardar', exact: true }).click();
     await p.getByText('Usuario guardado', { exact: true }).first().waitFor();
     check('guardar cambia el rol', /Administrador/.test(await row.innerText()) && /Todos/.test(await row.innerText()), await row.innerText());
 
+    await users.getByRole('button', { name: `Más acciones: ${me.name}`, exact: true }).click();
+    check('en tu propia cuenta el menú no ofrece suspenderte ni eliminarte', JSON.stringify(await p.getByRole('menuitem').allInnerTexts()) === JSON.stringify(['Crear enlace para elegir contraseña']));
+    await p.keyboard.press('Escape');
     await users.getByRole('button', { name: `Editar a ${me.name}` }).click();
-    check('en tu propia cuenta no puedes cambiarte el rol, suspenderte ni eliminarte',
-      await dialog.locator('#u-role').isDisabled() && (await dialog.getByRole('button', { name: /Suspender|Eliminar usuario/ }).count()) === 0 && await dialog.getByText('No puedes suspender ni eliminar tu propia cuenta.').isVisible());
+    check('ni cambiarte el rol', await dialog.locator('#u-role').isDisabled());
     const self = await api('PATCH', `/users/${me.id}`, { suspended: true });
     const selfRole = await api('PATCH', `/users/${me.id}`, { role: 'editor' });
     check('y el api tampoco lo permite', self.status === 400 && selfRole.status === 400 && self.body.code === 'CANNOT_LOCK_SELF_OUT', [self.status, selfRole.status]);
     await dialog.getByRole('button', { name: 'Cancelar' }).click();
 
-    await users.getByRole('button', { name: `Editar a ${NAME}` }).click();
-    await dialog.getByRole('button', { name: 'Eliminar usuario' }).click();
+    await rowMenu(NAME, 'Eliminar');
     await p.waitForTimeout(350);
     await p.getByRole('button', { name: 'Sí, eliminar' }).click();
     await p.getByText('Usuario eliminado', { exact: true }).first().waitFor();
@@ -220,8 +218,6 @@ const cleanup = async () => {
     await m.getByRole('region', { name: 'Usuarios' }).getByRole('button', { name: `Editar a ${me.name}` }).click();
     await audit(m, 'editar usuario en móvil', '[role=dialog]');
     await m.keyboard.press('Escape');
-    await m.getByRole('button', { name: 'Añadir idioma' }).click();
-    await audit(m, 'idioma nuevo en móvil', '[role=dialog]');
     await mctx.close();
     const mg = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const mp = await mg.newPage();

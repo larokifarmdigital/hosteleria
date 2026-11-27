@@ -1,20 +1,20 @@
 'use client';
 
-import { useFormContext, useWatch } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { I18nField } from '@/components/editor/I18nField';
 import { TranslationBadge } from '@/components/editor/TranslationBadge';
 import { FormImageField } from '@/components/media/FormImageField';
 import { ImageField } from '@/components/media/ImageField';
 import { Section } from '@/components/shared/Section';
 import { Field } from '@/components/ui/Field';
-import { Checkbox, TextInput } from '@/components/ui/inputs';
+import { TextInput } from '@/components/ui/inputs';
+import { MultiSelect } from '@/components/ui/MultiSelect';
 import { AI, BRAND_ICON, EXTRA_SERVICES, GOOGLE, PAYMENT_METHODS, type FormValues } from './model';
 import type { TabProps } from './types';
 
-const LEGEND = 'mb-1 p-0 text-[13.5px] font-semibold text-[color:var(--color-ink)]';
 
 export function SearchTab({ i18n, mediaScope, localeTabs, pendingIn, isAdmin }: TabProps & { isAdmin: boolean }) {
-  const { register, formState: { errors } } = useFormContext<FormValues>();
+  const { register, control: formControl, formState: { errors } } = useFormContext<FormValues>();
 
   return (
     <div>
@@ -39,23 +39,29 @@ export function SearchTab({ i18n, mediaScope, localeTabs, pendingIn, isAdmin }: 
               {control => <TextInput {...control} inputMode="decimal" autoComplete="off" {...register('business.averagePrice')} />}
             </Field>
 
-            <fieldset className="m-0 min-w-0 border-0 p-0">
-              <legend className={LEGEND}>Formas de pago</legend>
-              <div className="grid grid-cols-1 gap-x-5 sm:grid-cols-2">
-                {PAYMENT_METHODS.map(option => (
-                  <Checkbox key={option.value} id={`r-pay-${option.value}`} label={option.label} value={option.value} {...register('business.paymentMethods')} />
-                ))}
-              </div>
-            </fieldset>
+            <Field id="r-pay" label="Formas de pago" hint="Las que aceptáis. Google las enseña junto al restaurante.">
+              {control => (
+                <Controller
+                  control={formControl}
+                  name="business.paymentMethods"
+                  render={({ field }) => (
+                    <MultiSelect id={control.id} aria-describedby={control['aria-describedby']} noun="formas de pago" placeholder="Elegir formas de pago" options={PAYMENT_METHODS} value={(field.value ?? []) as string[]} onChange={field.onChange} />
+                  )}
+                />
+              )}
+            </Field>
 
-            <fieldset className="m-0 min-w-0 border-0 p-0">
-              <legend className={LEGEND}>Servicios</legend>
-              <div className="grid grid-cols-1 gap-x-5 sm:grid-cols-2">
-                {EXTRA_SERVICES.map(option => (
-                  <Checkbox key={option.value} id={`r-service-${option.value}`} label={option.label} value={option.value} {...register('business.extraServices')} />
-                ))}
-              </div>
-            </fieldset>
+            <Field id="r-service" label="Servicios" hint="Lo que ofrece el local: terraza, menú del día, opciones sin gluten…">
+              {control => (
+                <Controller
+                  control={formControl}
+                  name="business.extraServices"
+                  render={({ field }) => (
+                    <MultiSelect id={control.id} aria-describedby={control['aria-describedby']} noun="servicios" placeholder="Elegir servicios" options={EXTRA_SERVICES} value={(field.value ?? []) as string[]} onChange={field.onChange} />
+                  )}
+                />
+              )}
+            </Field>
           </div>
         </Section>
 

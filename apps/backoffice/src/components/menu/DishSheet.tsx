@@ -9,7 +9,7 @@ import { I18nField } from '@/components/editor/I18nField';
 import { ImageField } from '@/components/media/ImageField';
 import { LocaleTabs } from '@/components/space/LocaleTabs';
 import { Field } from '@/components/ui/Field';
-import { Checkbox, Select, TextInput } from '@/components/ui/inputs';
+import { Checkbox, FormSelect, TextInput } from '@/components/ui/inputs';
 import { showSuccessToast } from '@/lib/api';
 import { i18nFromForm, i18nToForm } from '@/lib/forms/i18n';
 import { priceFromForm, priceText, priceToForm } from '@/lib/forms/price';
@@ -131,11 +131,11 @@ export function DishSheet({ scope, categories, dish, initialCategoryId, nextOrde
         <div className="flex flex-col gap-5">
           <Field id="d-category" label="Categoría" error={errors.categoryId?.message} required>
             {control => (
-              <Select {...control} {...register('categoryId')}>
+              <FormSelect {...control} control={form.control} name='categoryId'>
                 {categories.map(c => (
                   <option key={c.id} value={c.id}>{categoryLabel(c, scope.defaultLocale)}</option>
                 ))}
-              </Select>
+              </FormSelect>
             )}
           </Field>
 

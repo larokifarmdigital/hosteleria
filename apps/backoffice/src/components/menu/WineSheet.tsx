@@ -8,7 +8,7 @@ import type { Wine, WineCategory } from '@hosteleria/api-client';
 import { I18nField } from '@/components/editor/I18nField';
 import { LocaleTabs } from '@/components/space/LocaleTabs';
 import { Field } from '@/components/ui/Field';
-import { Checkbox, Select, TextInput } from '@/components/ui/inputs';
+import { Checkbox, FormSelect, TextInput } from '@/components/ui/inputs';
 import { showSuccessToast } from '@/lib/api';
 import { i18nFromForm, i18nToForm } from '@/lib/forms/i18n';
 import { priceFromForm, priceText, priceToForm } from '@/lib/forms/price';
@@ -105,11 +105,11 @@ export function WineSheet({ scope, categories, wine, initialCategoryId, nextOrde
         <div className="flex flex-col gap-5">
           <Field id="w-category" label="Categoría" error={errors.categoryId?.message} required>
             {control => (
-              <Select {...control} {...register('categoryId')}>
+              <FormSelect {...control} control={form.control} name='categoryId'>
                 {categories.map(c => (
                   <option key={c.id} value={c.id}>{categoryLabel(c, scope.defaultLocale)}</option>
                 ))}
-              </Select>
+              </FormSelect>
             )}
           </Field>
 

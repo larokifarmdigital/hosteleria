@@ -25,7 +25,7 @@ export function Modal({ open, onClose, title, description, size = 'md', footer, 
   return (
     <Dialog.Root open={open} onOpenChange={next => { if (!next) onClose(); }}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-[rgb(42_20_9/0.45)]" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-[rgb(28_26_25/0.45)]" />
         <Dialog.Content
           {...returnFocus}
           className={cn(

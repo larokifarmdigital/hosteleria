@@ -6,7 +6,7 @@ import { Button } from '@/components/shared/Button';
 import { Pill } from '@/components/shared/Pill';
 import { useCardHeading } from '@/components/shared/Section';
 import { SWITCH_INPUT } from '@/components/ui/inputs';
-import { DragHandle, RowMenu, SortableList, sortableRowClass, useSortableItem } from '@/components/ui/Sortable';
+import { DragHandle, RowMenu, SortableList, useSortableItem } from '@/components/ui/Sortable';
 import { missingLocales } from '@/lib/forms/translations';
 import { cn } from '@/lib/utils';
 import { categoryLabel, type MenuCategory } from './types';
@@ -99,7 +99,9 @@ export function MenuList({ categories, locales, rows, totals, filtering, default
         const canMoveCategory = !filtering && categories.length > 1;
 
         return (
-          <section key={category.id} aria-labelledby={`cat-${category.id}`}>
+          // Un grupo, no una región: con platos, vinos y bebidas en la misma página, dos categorías
+          // pueden llamarse igual y dos regiones con el mismo nombre confunden.
+          <div key={category.id} role="group" aria-labelledby={`cat-${category.id}`}>
             <div className="mb-2 flex items-center justify-between gap-2">
               <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
                 <CardHeading id={`cat-${category.id}`} className="m-0 text-[15px] font-bold tracking-[-0.01em]">
@@ -138,30 +140,45 @@ export function MenuList({ categories, locales, rows, totals, filtering, default
                 Añade {itemNoun === 'bebida' ? 'la primera' : 'el primer'} {itemNoun} de {label}
               </button>
             ) : (
-              <SortableList
-                ids={items.map(r => r.id)}
-                nameOf={id => items.find(r => r.id === id)?.name ?? ''}
-                disabled={!sortable}
-                // Al arrastrar, el movimiento ya lo anuncia la propia lista.
-                onReorder={ids => onReorderItems(ids)}
-              >
-                <ul className="m-0 flex list-none flex-col gap-0.5 rounded-[10px] border border-[color:var(--color-border)] bg-white p-1.5 shadow-[var(--shadow-sm)]">
-                  {items.map((row, rowIndex) => (
-                    <ItemRow
-                      key={row.id}
-                      row={row}
-                      sortable={sortable}
-                      onEdit={() => onEdit(row.id)}
-                      onToggle={next => onToggle(row.id, next)}
-                      onUp={rowIndex > 0 ? () => moveItem(items, rowIndex, rowIndex - 1) : undefined}
-                      onDown={rowIndex < items.length - 1 ? () => moveItem(items, rowIndex, rowIndex + 1) : undefined}
-                    />
-                  ))}
-                </ul>
-              </SortableList>
+              // Una tabla por categoría: nombre, precio y si se ve, en columnas que se leen de un vistazo.
+              <div className="overflow-x-auto rounded-[10px] border border-[color:var(--color-border)] bg-white shadow-[var(--shadow-sm)]">
+                <SortableList
+                  ids={items.map(r => r.id)}
+                  nameOf={id => items.find(r => r.id === id)?.name ?? ''}
+                  disabled={!sortable}
+                  // Al arrastrar, el movimiento ya lo anuncia la propia lista.
+                  onReorder={ids => onReorderItems(ids)}
+                >
+                  <table className="w-full border-collapse text-left">
+                    <caption className="sr-only">{label}</caption>
+                    <thead>
+                      <tr className="border-b border-[color:var(--color-border)] bg-[color:var(--color-surface-2)] text-[12.5px] font-semibold text-[color:var(--color-muted)]">
+                        {sortable && <th scope="col" className="hidden w-10 sm:table-cell"><span className="sr-only">Orden</span></th>}
+                        <th scope="col" className="px-3 py-2.5 font-semibold">Nombre</th>
+                        <th scope="col" className="px-3 py-2.5 text-right font-semibold">Precio</th>
+                        <th scope="col" className="w-[1%] whitespace-nowrap px-3 py-2.5 font-semibold">Visible</th>
+                        {sortable && <th scope="col" className="w-[1%] sm:hidden"><span className="sr-only">Acciones</span></th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((row, rowIndex) => (
+                        <ItemRow
+                          key={row.id}
+                          row={row}
+                          sortable={sortable}
+                          onEdit={() => onEdit(row.id)}
+                          onToggle={next => onToggle(row.id, next)}
+                          onUp={rowIndex > 0 ? () => moveItem(items, rowIndex, rowIndex - 1) : undefined}
+                          onDown={rowIndex < items.length - 1 ? () => moveItem(items, rowIndex, rowIndex + 1) : undefined}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </SortableList>
+              </div>
             )}
             {!filtering && <RemovedRows rows={removed.filter(r => r.categoryId === category.id)} onRestore={onRestore} />}
-          </section>
+          </div>
         );
       })}
       {!filtering && (() => {
@@ -201,52 +218,64 @@ function RemovedRows({ rows, onRestore }: { rows: RemovedMenuRow[]; onRestore?: 
 function ItemRow({ row, sortable, onEdit, onToggle, onUp, onDown }: { row: MenuRow; sortable: boolean; onEdit: () => void; onToggle: (next: boolean) => void; onUp?: () => void; onDown?: () => void }) {
   const { container, handle, isDragging } = useSortableItem(row.id);
   return (
-    <li ref={container.ref} style={container.style} className={sortableRowClass(isDragging)}>
-      {sortable && <DragHandle handle={handle} name={row.name} />}
-      {/* Toda la fila abre el plato: nombre, foto y precio se cambian ahí. */}
-      <button
-        type="button"
-        aria-label={`Editar ${row.name}`}
-        onClick={onEdit}
-        className={cn('flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-[6px] border-0 bg-transparent px-2 py-1 text-left', !sortable && 'sm:pl-2')}
-      >
-        {row.imageUrl && (
-          // Decorativa: el nombre del plato va justo al lado.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={row.imageUrl} alt="" loading="lazy" decoding="async" className="h-9 w-9 flex-shrink-0 rounded-[6px] object-cover" />
-        )}
-        <span className="min-w-0 flex-1">
-          <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-            <span className={cn('text-[14px] font-semibold leading-snug', row.active ? 'text-[color:var(--color-ink)]' : 'text-[color:var(--color-muted)]')}>{row.name}</span>
-            {row.unpublished && <Pill variant="warn" dot>Sin publicar</Pill>}
-          </span>
-          {row.detail && <span className="mt-0.5 hidden truncate text-[13px] leading-tight text-[color:var(--color-muted)] sm:block">{row.detail}</span>}
-          {row.missing.length > 0 && (
-            <span className="mt-0.5 flex items-center gap-1.5 text-[12.5px] font-medium text-[color:var(--color-warn-fg)]">
-              <span aria-hidden className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-current" />
-              Falta traducir: {row.missing.map(c => c.toUpperCase()).join(', ')}
-            </span>
-          )}
-        </span>
-        <span className="flex flex-shrink-0 flex-col items-end">
-          <span className={cn('tabular text-right text-[14px] font-semibold', row.active ? 'text-[color:var(--color-ink)]' : 'text-[color:var(--color-muted)]')}>{row.price}</span>
-          {row.pricedBefore && <span className="tabular text-[12.5px] text-[color:var(--color-muted)]">Antes: {row.pricedBefore}</span>}
-        </span>
-      </button>
-      <label className="flex min-h-11 flex-shrink-0 cursor-pointer items-center gap-2 pl-1 pr-1 text-[13px] text-[color:var(--color-ink-soft)]">
-        <span aria-hidden className="hidden w-[46px] text-right md:inline">{row.active ? 'Visible' : 'Oculto'}</span>
-        <input type="checkbox" role="switch" className={SWITCH_INPUT} checked={row.active} aria-label={`Visible en la carta: ${row.name}`} onChange={e => onToggle(e.target.checked)} />
-      </label>
-      {sortable && (
-        <RowMenu
-          name={row.name}
-          className="sm:hidden"
-          actions={[
-            { label: 'Subir', disabled: !onUp, onSelect: () => onUp?.() },
-            { label: 'Bajar', disabled: !onDown, onSelect: () => onDown?.() }
-          ]}
-        />
+    <tr
+      ref={container.ref}
+      style={container.style}
+      className={cn(
+        'border-b border-[color:var(--color-border)] align-middle last:border-b-0 hover:bg-[color:var(--color-surface-2)]',
+        isDragging && 'bg-white shadow-[var(--shadow-md)]'
       )}
-    </li>
+    >
+      {sortable && <td className="hidden w-10 pl-1.5 sm:table-cell"><DragHandle handle={handle} name={row.name} /></td>}
+      <td className="px-1.5 py-1">
+        {/* El nombre abre el plato: nombre, foto y precio se cambian ahí. */}
+        <button
+          type="button"
+          aria-label={`Editar ${row.name}`}
+          onClick={onEdit}
+          className="flex min-h-11 w-full min-w-0 cursor-pointer items-center gap-3 rounded-[6px] border-0 bg-transparent px-1.5 py-1 text-left"
+        >
+          {row.imageUrl && (
+            // Decorativa: el nombre del plato va justo al lado.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={row.imageUrl} alt="" loading="lazy" decoding="async" className="h-9 w-9 flex-shrink-0 rounded-[6px] object-cover" />
+          )}
+          <span className="min-w-0 flex-1">
+            <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <span className={cn('text-[14px] font-semibold leading-snug', row.active ? 'text-[color:var(--color-ink)]' : 'text-[color:var(--color-muted)]')}>{row.name}</span>
+              {row.unpublished && <Pill variant="warn" dot>Sin publicar</Pill>}
+            </span>
+            {row.detail && <span className="mt-0.5 hidden truncate text-[13px] leading-tight text-[color:var(--color-muted)] sm:block">{row.detail}</span>}
+            {row.missing.length > 0 && (
+              <span className="mt-0.5 flex items-center gap-1.5 text-[12.5px] font-medium text-[color:var(--color-warn-fg)]">
+                <span aria-hidden className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-current" />
+                Falta traducir: {row.missing.map(c => c.toUpperCase()).join(', ')}
+              </span>
+            )}
+          </span>
+        </button>
+      </td>
+      <td className="whitespace-nowrap px-3 py-1 text-right">
+        <span className={cn('tabular block text-[14px] font-semibold', row.active ? 'text-[color:var(--color-ink)]' : 'text-[color:var(--color-muted)]')}>{row.price}</span>
+        {row.pricedBefore && <span className="tabular block text-[12.5px] text-[color:var(--color-muted)]">Antes: {row.pricedBefore}</span>}
+      </td>
+      <td className="px-3 py-1">
+        <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[13px] text-[color:var(--color-ink-soft)]">
+          <input type="checkbox" role="switch" className={SWITCH_INPUT} checked={row.active} aria-label={`Visible en la carta: ${row.name}`} onChange={e => onToggle(e.target.checked)} />
+          <span aria-hidden className="hidden w-[46px] md:inline">{row.active ? 'Visible' : 'Oculto'}</span>
+        </label>
+      </td>
+      {sortable && (
+        <td className="pr-1.5 sm:hidden">
+          <RowMenu
+            name={row.name}
+            actions={[
+              { label: 'Subir', disabled: !onUp, onSelect: () => onUp?.() },
+              { label: 'Bajar', disabled: !onDown, onSelect: () => onDown?.() }
+            ]}
+          />
+        </td>
+      )}
+    </tr>
   );
 }

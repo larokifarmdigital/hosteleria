@@ -8,7 +8,7 @@ export type SectionKey =
   | 'hours' | 'contact' | 'languages'
   | 'cover' | 'home'
   | 'menu' | 'photos' | 'about' | 'groups' | 'faq'
-  | 'media' | 'legal' | 'search' | 'spaces' | 'spacename';
+  | 'media' | 'legal' | 'search' | 'spaces';
 
 export interface SectionMeta {
   key: SectionKey;
@@ -22,11 +22,11 @@ export interface SectionMeta {
 export const SECTIONS: SectionMeta[] = [
   { key: 'hours', label: 'Horario', hint: 'Los días y las horas en que abre. Un día sin turnos sale como cerrado.', perSpace: true },
   { key: 'contact', label: 'Contacto y reservas', hint: 'Nombre, dirección, teléfono, redes y cómo se reserva.' },
-  { key: 'languages', label: 'Idiomas de la web', hint: 'En qué idiomas se puede leer la web.' },
+  { key: 'languages', label: 'Idiomas', hint: 'En qué idiomas se puede leer la web.' },
   { key: 'cover', label: 'Portada', hint: 'Lo primero que se ve al entrar en la web: título, foto, botón y el texto de presentación.', perSpace: true },
-  { key: 'home', label: 'Bloques destacados', hint: 'Los bloques de la página de inicio que llevan a cada espacio.' },
+  { key: 'home', label: 'Tarjetas de los espacios', hint: 'Las tarjetas de la página de inicio que llevan a cada espacio.' },
   { key: 'menu', label: 'Carta', hint: 'Platos, vinos y bebidas. Los cambios se guardan solos y salen en tu web al pulsar «Publicar cambios».', perSpace: true },
-  { key: 'photos', label: 'Galería de fotos', hint: 'Las fotos de la galería, en el orden en que se ven.', perSpace: true },
+  { key: 'photos', label: 'Galería', hint: 'Las fotos de la galería, en el orden en que se ven.', perSpace: true },
   { key: 'about', label: 'Sobre nosotros', hint: 'La historia del restaurante, con sus fotos.' },
   { key: 'groups', label: 'Grupos y celebraciones', hint: 'Comidas de grupo, celebraciones y empresas. En la página de inicio va hacia el final, justo antes de las preguntas frecuentes.' },
   { key: 'faq', label: 'Preguntas frecuentes', hint: 'Respuestas a las dudas habituales. Google también puede mostrarlas.' },
@@ -34,16 +34,14 @@ export const SECTIONS: SectionMeta[] = [
   { key: 'media', label: 'Fotos sin descripción', hint: 'Fotos que ya salen en la web y no tienen descripción en todos los idiomas. La descripción es lo que oye quien no puede verlas.' },
   { key: 'legal', label: 'Textos legales', hint: 'Aviso legal, privacidad y cookies. Salen en tu web al pulsar «Publicar cambios».' },
   { key: 'search', label: 'Google y buscadores', hint: 'Cómo aparece la web en Google, su icono y lo que leen los asistentes de IA.' },
-  { key: 'spaces', label: 'Espacios', hint: 'Comedor, terraza, barra…: cada uno con su portada, horario y carta.' },
-  // Solo con varios espacios: con uno, su nombre se cambia en «Espacios».
-  { key: 'spacename', label: 'Nombre', hint: 'Cómo se llama este espacio en el menú y en la web.', perSpace: true }
+  { key: 'spaces', label: 'Espacios', hint: 'Comedor, terraza, barra…: cada uno con su portada, horario y carta.' }
 ];
 
 /** Con un solo espacio: lo de cada semana, la web de arriba abajo y la información del local. */
 export const SECTION_GROUPS: { label: string; keys: SectionKey[] }[] = [
-  { label: 'Cada semana', keys: ['menu', 'hours'] },
-  { label: 'Tu web', keys: ['cover', 'home', 'photos', 'about', 'groups', 'faq'] },
-  { label: 'Información', keys: ['contact', 'languages', 'search', 'legal', 'spaces'] }
+  { label: 'Día a día', keys: ['menu', 'hours'] },
+  { label: 'Páginas de la web', keys: ['cover', 'home', 'photos', 'about', 'groups', 'faq'] },
+  { label: 'Datos del negocio', keys: ['contact', 'languages', 'search', 'legal', 'spaces'] }
 ];
 
 /** Una entrada del menú: una sección suelta o una página de la web con sus partes en pestañas. */
@@ -61,7 +59,8 @@ export interface NavEntry {
 export interface NavGroup { label: string; entries: NavEntry[] }
 
 const HOME_TABS: SectionKey[] = ['home', 'about', 'groups', 'faq'];
-const SPACE_TABS: SectionKey[] = ['menu', 'hours', 'cover', 'photos', 'spacename'];
+// El nombre del espacio no es una pestaña: se cambia con «Cambiar nombre», junto al título.
+const SPACE_TABS: SectionKey[] = ['menu', 'hours', 'cover', 'photos'];
 const BUSINESS_KEYS: SectionKey[] = ['contact', 'languages', 'search', 'legal', 'spaces'];
 
 /**
@@ -79,13 +78,13 @@ export function editorNav(spaces: { id: string; name: string; type: string; isDe
   const spaceKey = SPACE_TABS.includes(current) ? current : 'menu';
   return [
     {
-      label: 'Páginas de tu web',
+      label: 'Páginas de la web',
       entries: [
         { id: 'home', label: 'Página de inicio', key: homeTabs.includes(current) ? current : homeTabs[0], tabs: homeTabs },
         ...spaces.map(s => ({ id: `space-${s.id}`, label: s.name, key: spaceKey, e: s.id, tabs: SPACE_TABS }))
       ]
     },
-    { label: 'Tu negocio', entries: BUSINESS_KEYS.map(plain) }
+    { label: 'Datos del negocio', entries: BUSINESS_KEYS.map(plain) }
   ];
 }
 
@@ -128,7 +127,9 @@ const ALIAS: Record<string, SectionKey> = {
   // El logo y los iconos son ahora un solo icono, en Google y buscadores.
   brand: 'search',
   // Los textos de la plantilla van ahora en la sección donde se ven.
-  texts: 'contact'
+  texts: 'contact',
+  // La pestaña «Nombre» del espacio ya no existe: su nombre se cambia desde la cabecera.
+  spacename: 'cover'
 };
 
 export function sectionFromParam(value: string | null | undefined): SectionKey {
@@ -148,7 +149,7 @@ const RESTAURANT_SECTION_OF: Record<string, SectionKey> = {
 
 /** Sección en la que se edita cada campo de primer nivel de un espacio. */
 const SPACE_SECTION_OF: Record<string, SectionKey> = {
-  name: 'spacename', descriptor: 'spacename',
+  name: 'cover', descriptor: 'cover',
   hero: 'cover', manifesto: 'cover', gallery: 'photos',
   schedule: 'hours', scheduleTexts: 'hours'
 };

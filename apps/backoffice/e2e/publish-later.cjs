@@ -32,6 +32,8 @@ const publicDish = (site, id) => site.spaces?.flatMap(s => s.dishCategories.flat
     await api('PATCH', `/restaurants/pruebas/spaces/${SPACE}`, { hero: { ...sp.hero, title: fill(sp.hero.title), subtitle: fill(sp.hero.subtitle) }, state: 'draft' });
     const first = await api('POST', '/restaurants/pruebas/publish');
     check('la primera vez publica con todo traducido', first.status === 200, first.body);
+    // Sin copia publicada, «Recuperar» no tendría de dónde: no se borra nada si la primera publicación falla.
+    if (first.status !== 200) throw new Error('la primera publicación falló; se para antes de borrar nada');
     let site = await publicSite();
     check('la web enseña la carta publicada', publicDish(site, d1.id)?.price === d1.price, publicDish(site, d1.id));
     check('sin cambios no hay marcas', JSON.stringify((await api('GET', '/restaurants/pruebas/changes')).body.changes.rows) === '{}');
@@ -54,8 +56,9 @@ const publicDish = (site, id) => site.spaces?.flatMap(s => s.dishCategories.flat
     const page = await ctx.newPage();
     await page.goto(`${BASE}/restaurants/pruebas?s=menu`);
     const name1 = d1.name.es;
-    const row1 = page.getByRole('button', { name: `Editar ${name1}` });
-    await row1.waitFor();
+    await page.getByRole('button', { name: `Editar ${name1}` }).waitFor();
+    // En la tabla, el precio de antes va en su columna: se mira la fila entera.
+    const row1 = page.getByRole('row').filter({ has: page.getByRole('button', { name: `Editar ${name1}` }) });
     check('el plato cambiado lleva «Sin publicar» y el precio de antes', /Sin publicar/.test(await row1.innerText()) && /Antes:/.test(await row1.innerText()), await row1.innerText());
     check('la carta explica que sale al publicar', await page.getByText(/salen en tu web al pulsar «Publicar cambios»/).first().isVisible());
     const restoreBtn = page.getByRole('button', { name: `Recuperar ${d2.name.es}` });

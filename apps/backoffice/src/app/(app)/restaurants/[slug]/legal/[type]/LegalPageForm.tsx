@@ -101,7 +101,7 @@ export function LegalPageForm({ restaurant, type, title, page, localeNames }: Pr
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={onSave} noValidate className={isDirty ? 'max-w-[900px] pb-24' : 'max-w-[900px]'}>
+      <form onSubmit={onSave} noValidate className={isDirty ? 'pb-24' : undefined}>
         <Callout className="mb-6" title="Sale en tu web al publicar">
           Lo que guardes sale en tu web al pulsar «Publicar cambios». Por ser un texto legal, hay que escribirlo en todos los idiomas antes de guardar.
         </Callout>
@@ -120,9 +120,8 @@ export function LegalPageForm({ restaurant, type, title, page, localeNames }: Pr
             <I18nField
               name="content"
               label="Texto"
-              multiline
-              rows={22}
-              hint="Empieza una línea con ## para un título de apartado y con - para una lista. Deja una línea en blanco entre párrafos."
+              richText
+              hint="Usa los botones de arriba para negritas, títulos de apartado y listas (con más o menos sangría)."
               errorFor={contentErrorLocale}
               error={contentErrorLocale ? errors.content?.[contentErrorLocale]?.message : undefined}
               {...i18n}

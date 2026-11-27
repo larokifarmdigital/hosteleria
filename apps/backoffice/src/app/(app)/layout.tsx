@@ -1,5 +1,6 @@
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { AppHeader } from '@/components/layout/AppHeader';
+import { AppSidebar } from '@/components/layout/AppSidebar';
 import { requireUser } from '@/lib/auth/guards';
 import { getServerApi } from '@/lib/api/server';
 import { getQueryClient } from '@/lib/query/server';
@@ -29,11 +30,14 @@ export default async function AppLayout({
       >
         Saltar al contenido
       </a>
-      <div className="flex min-h-screen flex-col">
-        <AppHeader />
-        <main id="contenido" tabIndex={-1} className="min-w-0 flex-1 p-4 outline-none md:p-6 lg:p-8">
-          <div className="mx-auto max-w-[1240px]">{children}</div>
-        </main>
+      <div className="flex min-h-screen">
+        <AppSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <AppHeader />
+          <main id="contenido" tabIndex={-1} className="min-w-0 flex-1 p-4 outline-none md:p-6 lg:p-8">
+            <div>{children}</div>
+          </main>
+        </div>
       </div>
     </HydrationBoundary>
   );

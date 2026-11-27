@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { BookOpen, CircleHelp, Pencil, Clock, Home, ImageOff, Images, Languages, LayoutGrid, PanelTop, Phone, Scale, Search, Store, UtensilsCrossed, Users, type LucideIcon } from 'lucide-react';
 import type { FieldErrors } from 'react-hook-form';
 import { SpacesSection } from '@/components/restaurant/SpacesSection';
 import { Button } from '@/components/shared/Button';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { EditorSectionTitleProvider, SectionHeadingLevel } from '@/components/shared/Section';
 import { Select } from '@/components/ui/inputs';
+import { Modal } from '@/components/ui/Modal';
 import { countErrors } from '@/lib/forms/errors';
 import { cn } from '@/lib/utils';
 import { DishesPageClient } from '@/app/(app)/dishes/DishesPageClient';
@@ -34,11 +36,14 @@ export function SiteEditor() {
       <EditorTopBar />
       <div className="grid grid-cols-1 gap-5 pb-24 sm:pb-10 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-10">
         <SectionNav />
-        <div className="min-w-0 max-w-[768px]">
-          <header className="mb-7">
-            <h2 className="m-0 text-[26px] font-bold leading-[1.1] tracking-[-0.025em] sm:text-[28px]">{title}</h2>
+        <div className="min-w-0">
+          <header className="mb-7 border-b border-[color:var(--color-border)] pb-5">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <h2 className="m-0 text-[26px] font-bold leading-[1.1] tracking-[-0.025em] sm:text-[28px]">{title}</h2>
+              {page?.e && <RenameSpace name={page.label} />}
+            </div>
             {page?.tabs && <PageTabs page={page} />}
-            <p className={cn('m-0 max-w-[56ch] border-b border-[color:var(--color-border)] pb-5 text-[14px] leading-[1.5] text-[color:var(--color-muted)]', page?.tabs ? 'mt-4' : 'mt-2')}>{meta.hint}</p>
+            <p className={cn('m-0 max-w-[70ch] text-[14px] leading-[1.5] text-[color:var(--color-muted)]', page?.tabs ? 'mt-4' : 'mt-2')}>{meta.hint}</p>
           </header>
           {/* La sección ya tiene su h2: los bloques de dentro van un nivel por debajo y no repiten su nombre. */}
           <SectionHeadingLevel value={3}>
@@ -70,10 +75,11 @@ function useOpenPage(): NavEntry | undefined {
 function useSectionMarks() {
   const restaurant = useRestaurantDraft();
   const space = useSpaceDraft();
+  // Con un solo espacio, su nombre se cambia en «Espacios»; con varios, desde la cabecera de su página (Portada).
   const { spaces } = useEditor();
   const sectionOfSpace = (path: string): SectionKey => {
     const key = spaceSectionOf(path);
-    return key === 'spacename' && spaces.length < 2 ? 'spaces' : key;
+    return path.startsWith('name') && spaces.length < 2 ? 'spaces' : key;
   };
   const pending: Partial<Record<SectionKey, number>> = {};
   const errors: Partial<Record<SectionKey, number>> = {};
@@ -126,9 +132,10 @@ function SectionNav() {
       </div>
 
       <nav aria-label="Secciones de la web" className="hidden rounded-[12px] border border-[color:var(--color-border)] bg-white px-2 pb-2.5 pt-1 lg:block">
-        {groups.map(group => (
-          <div key={group.label}>
-            <p data-group className="m-0 px-2.5 pb-1.5 pt-3 text-[12px] font-semibold text-[color:var(--color-muted)]">{group.label}</p>
+        {groups.map((group, gi) => (
+          // Cada grupo, separado del anterior por una línea y con su título en versalitas: se ve dónde empieza cada uno.
+          <div key={group.label} className={cn(gi > 0 && 'mt-2 border-t border-[color:var(--color-border)]')}>
+            <p data-group className="m-0 px-2.5 pb-2 pt-3.5 text-[11.5px] font-bold uppercase tracking-[0.08em] text-[color:var(--color-muted)]">{group.label}</p>
             <ul className="m-0 flex list-none flex-col gap-px p-0">
               {group.entries.map(entry => {
                 const isActive = active(entry);
@@ -140,13 +147,14 @@ function SectionNav() {
                       aria-current={isActive ? 'page' : undefined}
                       onClick={() => { if (!isActive || !entry.tabs) open(entry); }}
                       className={cn(
-                        'relative flex min-h-9 w-full cursor-pointer items-center justify-between gap-2 rounded-[8px] border-0 px-2.5 py-2 text-left text-[13.5px] transition-colors',
+                        'relative flex min-h-10 w-full cursor-pointer items-center gap-2.5 rounded-[8px] border-0 px-2.5 py-2 text-left text-[14px] transition-colors',
                         isActive
                           ? "bg-[color:var(--color-accent-soft)] font-semibold text-[color:var(--color-ink)] before:absolute before:left-[-5px] before:top-1/2 before:h-4 before:w-[3px] before:-translate-y-1/2 before:rounded-[2px] before:bg-[color:var(--color-accent)] before:content-['']"
                           : 'bg-transparent font-medium text-[color:var(--color-ink-soft)] hover:bg-[color:var(--color-surface-2)] hover:text-[color:var(--color-ink)]'
                       )}
                     >
-                      {entry.label}
+                      <EntryIcon entry={entry} active={isActive} />
+                      <span className="min-w-0 flex-1 truncate">{entry.label}</span>
                       <Mark errors={marks.errors} pending={marks.pending} />
                     </button>
                   </li>
@@ -158,6 +166,42 @@ function SectionNav() {
       </nav>
     </div>
   );
+}
+
+/** Cambiar el nombre del espacio abierto: un diálogo pequeño, no una pestaña para un solo campo. */
+function RenameSpace({ name }: { name: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button size="sm" variant="ghost" onClick={() => setOpen(true)} aria-label={`Cambiar el nombre de ${name}`}>
+        <Pencil aria-hidden className="h-3.5 w-3.5" />
+        Cambiar nombre
+      </Button>
+      {open && (
+        <Modal open onClose={() => setOpen(false)} title="Nombre del espacio" description="Cómo se llama en el menú y en la web. Se guarda solo y sale al publicar.">
+          <SectionHeadingLevel value={3}>
+            <SpaceSection show="name" />
+          </SectionHeadingLevel>
+          <div className="mt-5 flex justify-end">
+            <Button variant="primary" onClick={() => setOpen(false)}>Hecho</Button>
+          </div>
+        </Modal>
+      )}
+    </>
+  );
+}
+
+/** Un icono por sección, para encontrarla de un vistazo. */
+const SECTION_ICONS: Record<SectionKey, LucideIcon> = {
+  menu: UtensilsCrossed, hours: Clock, cover: PanelTop, home: LayoutGrid, photos: Images, about: BookOpen,
+  groups: Users, faq: CircleHelp, contact: Phone, languages: Languages, search: Search, legal: Scale,
+  spaces: Store, media: ImageOff
+};
+
+function EntryIcon({ entry, active }: { entry: NavEntry; active: boolean }) {
+  // Con varios espacios: la página de inicio y cada espacio llevan su propio icono.
+  const Icon = entry.id === 'home' ? Home : entry.e ? Store : SECTION_ICONS[entry.key];
+  return <Icon aria-hidden className={cn('h-4 w-4 flex-shrink-0', active ? 'text-[color:var(--color-accent)]' : 'text-[color:var(--color-muted)]')} />;
 }
 
 /** Las partes de una página de la web (la de inicio o la de un espacio), siempre las mismas. */
@@ -231,13 +275,11 @@ function SectionContent({ section }: { section: SectionKey }) {
   switch (section) {
     case 'cover': case 'hours':
       return <SpaceSection show={section} />;
-    case 'spacename':
-      return <SpaceSection show="details" />;
     case 'photos':
       return (
         <div className="flex flex-col gap-8">
-          <SpaceSection show="photos" />
           <UiTextsFold title={GALLERY_TITLES} summary="Opcional. Lo que se lee encima de las fotos en la web." />
+          <SpaceSection show="photos" />
         </div>
       );
     case 'contact':
@@ -254,8 +296,8 @@ function SectionContent({ section }: { section: SectionKey }) {
     case 'menu':
       return (
         <div className="flex flex-col gap-8">
+          <UiTextsFold title={MENU_TITLES} summary="Opcional. Lo que se lee encima de la carta, de los vinos y de las bebidas." />
           <DishesPageClient key={space!.id} slug={restaurant.slug} spaceId={space!.id} embedded />
-          <UiTextsFold title={MENU_TITLES} summary="Opcional. Lo que se lee encima de la carta y de los vinos. Sale en la web al publicar." />
         </div>
       );
     case 'media':

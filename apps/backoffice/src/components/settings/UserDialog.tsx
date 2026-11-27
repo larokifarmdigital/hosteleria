@@ -4,12 +4,11 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import type { Invitation, Restaurant, User } from '@hosteleria/api-client';
 import { Button } from '@/components/shared/Button';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Field } from '@/components/ui/Field';
-import { Checkbox, Select, TextInput } from '@/components/ui/inputs';
+import { Checkbox, FormSelect, TextInput } from '@/components/ui/inputs';
 import { Modal } from '@/components/ui/Modal';
 import { showSuccessToast } from '@/lib/api';
-import { useCreateUser, useDeleteUser, useInviteUser, useUpdateUser } from '@/lib/query/hooks';
+import { useCreateUser, useUpdateUser } from '@/lib/query/hooks';
 import { InvitationLink } from './InvitationLink';
 
 interface FormValues {
@@ -30,7 +29,7 @@ interface Props {
 
 export function UserDialog({ user, restaurants, currentUserId, onClose }: Props) {
   const isSelf = user?.id === currentUserId;
-  const { register, handleSubmit, watch, setError, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, watch, setError, control: formControl, formState: { errors } } = useForm<FormValues>({
     defaultValues: {
       name: user?.name ?? '',
       email: user?.email ?? '',
@@ -42,14 +41,10 @@ export function UserDialog({ user, restaurants, currentUserId, onClose }: Props)
 
   const create = useCreateUser();
   const update = useUpdateUser();
-  const invite = useInviteUser();
-  const remove = useDeleteUser();
   const saving = create.isPending || update.isPending;
 
   // Tras crear al usuario o pedir un enlace nuevo, el diálogo enseña el enlace.
   const [invitation, setInvitation] = useState<{ invitation: Invitation; name: string } | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [suspended, setSuspended] = useState(user?.suspended ?? false);
 
   const onSubmit = handleSubmit(async values => {
     const name = values.name.trim();
@@ -107,10 +102,10 @@ export function UserDialog({ user, restaurants, currentUserId, onClose }: Props)
             hint={isSelf ? 'No puedes cambiar tu propio rol. Pídeselo a otro administrador.' : 'Un editor solo ve sus restaurantes. Un administrador los ve todos y gestiona usuarios e idiomas.'}
           >
             {control => (
-              <Select {...control} disabled={isSelf} {...register('role')}>
+              <FormSelect {...control} disabled={isSelf} control={formControl} name='role'>
                 <option value="editor">Editor</option>
                 <option value="admin">Administrador</option>
-              </Select>
+              </FormSelect>
             )}
           </Field>
 
@@ -134,54 +129,8 @@ export function UserDialog({ user, restaurants, currentUserId, onClose }: Props)
           </div>
         </form>
 
-        {user && (
-          <section aria-labelledby="u-access" className="mt-6 border-t border-[color:var(--color-border)] pt-5">
-            <h3 id="u-access" className="m-0 text-[14px] font-bold text-[color:var(--color-ink)]">Acceso</h3>
-            <p className="m-0 mt-1 text-[13px] leading-[1.5] text-[color:var(--color-muted)]">
-              {suspended
-                ? 'La cuenta está suspendida: no puede iniciar sesión.'
-                : user.lastAccessAt ? 'La cuenta está activa.' : 'Todavía no ha entrado nunca.'}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2.5">
-              <Button
-                size="sm"
-                disabled={invite.isPending}
-                onClick={() => invite.mutateAsync(user.id).then(inv => setInvitation({ invitation: inv, name: user.name }), () => {})}
-              >
-                {invite.isPending ? 'Creando…' : 'Crear enlace para elegir contraseña'}
-              </Button>
-              {!isSelf && (
-                <Button
-                  size="sm"
-                  disabled={update.isPending}
-                  onClick={() => update.mutateAsync({ id: user.id, body: { suspended: !suspended } }).then(u => {
-                    setSuspended(u.suspended);
-                    showSuccessToast(u.suspended ? 'Cuenta suspendida' : 'Cuenta reactivada', u.suspended ? 'Se han cerrado sus sesiones.' : undefined);
-                  }, () => {})}
-                >
-                  {suspended ? 'Reactivar cuenta' : 'Suspender cuenta'}
-                </Button>
-              )}
-              {!isSelf && <Button size="sm" className="text-[color:var(--color-danger)]" onClick={() => setDeleting(true)}>Eliminar usuario</Button>}
-            </div>
-            {isSelf && <p className="m-0 mt-3 text-[12.5px] leading-[1.5] text-[color:var(--color-muted)]">No puedes suspender ni eliminar tu propia cuenta.</p>}
-          </section>
-        )}
       </Modal>
 
-      {user && (
-        <ConfirmDialog
-          open={deleting}
-          onOpenChange={setDeleting}
-          title={`¿Eliminar a ${user.name}?`}
-          confirmLabel="Sí, eliminar"
-          pendingLabel="Eliminando…"
-          pending={remove.isPending}
-          onConfirm={() => remove.mutateAsync(user.id).then(() => { showSuccessToast('Usuario eliminado'); setDeleting(false); onClose(); }, () => {})}
-        >
-          <p className="m-0">Pierde el acceso al momento y no se puede deshacer. Si solo quieres que deje de entrar por un tiempo, suspende la cuenta.</p>
-        </ConfirmDialog>
-      )}
     </>
   );
 }

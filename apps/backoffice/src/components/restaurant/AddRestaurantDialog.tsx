@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/shared/Button';
 import { Field } from '@/components/ui/Field';
-import { Checkbox, Select, TextInput } from '@/components/ui/inputs';
+import { Checkbox, FormSelect, TextInput } from '@/components/ui/inputs';
 import { Modal } from '@/components/ui/Modal';
 import { showSuccessToast } from '@/lib/api';
 import { useCreateRestaurant, useLanguages } from '@/lib/query/hooks';
@@ -30,7 +30,7 @@ export function AddRestaurantDialog({ takenSlugs, onClose }: Props) {
   const router = useRouter();
   const { data: languages = [] } = useLanguages();
   const create = useCreateRestaurant();
-  const { register, handleSubmit, setError, watch, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, setError, watch, control: formControl, formState: { errors } } = useForm<FormValues>({
     defaultValues: { name: '', domain: '', defaultLocale: 'es', locales: { es: true } }
   });
   const locales = watch('locales');
@@ -80,9 +80,9 @@ export function AddRestaurantDialog({ takenSlugs, onClose }: Props) {
         </fieldset>
         <Field id="nr-default" label="Idioma principal" hint="El que se enseña primero a quien entra." error={errors.defaultLocale?.message}>
           {control => (
-            <Select {...control} {...register('defaultLocale')}>
+            <FormSelect {...control} control={formControl} name='defaultLocale'>
               {(active.length > 0 ? languages.filter(l => active.includes(l.code as string)) : languages).map(l => <option key={l.id} value={l.code}>{l.name}</option>)}
-            </Select>
+            </FormSelect>
           )}
         </Field>
         <div className="flex flex-wrap justify-end gap-2.5">

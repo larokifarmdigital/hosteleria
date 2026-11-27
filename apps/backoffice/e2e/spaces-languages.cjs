@@ -2,6 +2,7 @@
 // idiomas de la web, dirección de la web, pestañas del espacio y alta de restaurantes.
 // Sobre «pruebas»; borra lo que crea y restaura al acabar.
 const { chromium } = require(process.env.PW);
+const select = require('./select.cjs');
 const { spawnSync } = require('child_process');
 const S = process.env.S, BASE = process.env.BASE;
 const api = require('./api.cjs')(S + '/admin.json');
@@ -50,7 +51,7 @@ const cleanup = async (original) => {
     const p = await ctx.newPage();
     const dialog = p.getByRole('dialog');
     const spaces = p.locator('section', { has: p.getByRole('heading', { name: 'Espacios', exact: true }) });
-    const row = (name) => spaces.getByRole('listitem').filter({ hasText: name });
+    const row = (name) => spaces.getByRole('row').filter({ hasText: name });
     const active = () => p.evaluate(() => document.activeElement?.getAttribute('aria-label') ?? '');
 
     console.log('— Entrada al restaurante');
@@ -58,7 +59,7 @@ const cleanup = async (original) => {
     const menu = p.getByRole('navigation', { name: 'Secciones de la web' });
     await menu.waitFor();
     check('se entra por la carta, con el menú en tres grupos siempre abiertos', (await menu.getByRole('button', { name: /^Carta/ }).getAttribute('aria-current')) === 'page'
-      && state.j(await menu.locator('[data-group]').allInnerTexts()) === state.j(['Cada semana', 'Tu web', 'Información']) && (await menu.locator('[aria-expanded]').count()) === 0, await menu.locator('[data-group]').allInnerTexts());
+      && state.j(await menu.locator('[data-group]').allTextContents()) === state.j(['Día a día', 'Páginas de la web', 'Datos del negocio']) && (await menu.locator('[aria-expanded]').count()) === 0, await menu.locator('[data-group]').allInnerTexts());
     await audit(p, 'carta del restaurante');
     await menu.getByRole('button', { name: /^Espacios/ }).click();
     check('cada sección se abre desde el menú', /s=spaces/.test(p.url()) && await p.getByRole('button', { name: 'Añadir espacio' }).isVisible(), p.url());
@@ -80,7 +81,7 @@ const cleanup = async (original) => {
     await dialog.getByRole('button', { name: 'Crear espacio' }).click();
     check('sin nombre no crea y lo dice', await dialog.getByText('Escribe el nombre del espacio.').isVisible());
     await dialog.locator('#sp-name').fill('Terraza de prueba');
-    await dialog.locator('#sp-type').selectOption('terraza');
+    await select.pick(p, dialog.locator('#sp-type'), 'terraza');
     await dialog.getByRole('button', { name: 'Crear espacio' }).click();
     await p.waitForURL(/s=cover&e=[a-z0-9]+$/, { timeout: 20000 });
     let list = await spacesOf();
@@ -89,23 +90,28 @@ const cleanup = async (original) => {
     // Con dos espacios, el menú copia la web: la página de inicio, una página por espacio y lo del negocio aparte.
     const menuNav = p.getByRole('navigation', { name: 'Secciones de la web' });
     await p.getByRole('heading', { level: 2, name: 'Terraza de prueba' }).waitFor();
-    check('con varios espacios, el menú son las páginas de la web y el negocio', state.j(await menuNav.locator('[data-group]').allInnerTexts()) === state.j(['Páginas de tu web', 'Tu negocio'])
+    check('con varios espacios, el menú son las páginas de la web y el negocio', state.j(await menuNav.locator('[data-group]').allTextContents()) === state.j(['Páginas de la web', 'Datos del negocio'])
       && state.j(await menuNav.locator('ul').first().getByRole('button').allInnerTexts()) === state.j(['Página de inicio', 'Comedor principal', 'Terraza de prueba']), await menuNav.innerText());
     const parts = p.getByRole('navigation', { name: 'Partes de Terraza de prueba' });
-    check('la página del espacio abre en Portada, con sus partes en pestañas', state.j(await parts.getByRole('button').allInnerTexts()) === state.j(['Carta', 'Horario', 'Portada', 'Galería de fotos', 'Nombre'])
+    check('la página del espacio abre en Portada, con sus partes en pestañas', state.j(await parts.getByRole('button').allInnerTexts()) === state.j(['Carta', 'Horario', 'Portada', 'Galería'])
       && (await parts.getByRole('button', { name: 'Portada' }).getAttribute('aria-current')) === 'page'
       && (await menuNav.getByRole('button', { name: 'Terraza de prueba' }).getAttribute('aria-current')) === 'page', await parts.innerText());
-    await parts.getByRole('button', { name: 'Nombre' }).click();
-    await p.getByRole('heading', { name: 'Nombre de «Terraza de prueba»' }).waitFor();
-    check('el nombre se cambia en la página del espacio', /s=spacename/.test(p.url()) && p.url().includes(created.id));
+    await p.getByRole('button', { name: 'Cambiar el nombre de Terraza de prueba' }).click();
+    const nameDialog = p.getByRole('dialog', { name: 'Nombre del espacio' });
+    await nameDialog.waitFor();
+    check('el nombre se cambia en un diálogo junto al título, no en una pestaña', (await nameDialog.locator('#s-name').inputValue()) === 'Terraza de prueba');
+    await audit(p, 'cambiar el nombre del espacio', '[role=dialog]');
+    await nameDialog.getByRole('button', { name: 'Hecho' }).click();
+    await parts.getByRole('button', { name: 'Horario' }).click();
+    await p.waitForURL(/s=hours/);
     await menuNav.getByRole('button', { name: 'Comedor principal' }).click();
     await p.getByRole('heading', { level: 2, name: 'Comedor principal' }).waitFor();
-    check('pasar a otro espacio se queda en la misma parte', /s=spacename/.test(p.url()) && !p.url().includes(created.id)
-      && (await p.getByRole('navigation', { name: 'Partes de Comedor principal' }).getByRole('button', { name: 'Nombre' }).getAttribute('aria-current')) === 'page');
+    check('pasar a otro espacio se queda en la misma parte', /s=hours/.test(p.url()) && !p.url().includes(created.id)
+      && (await p.getByRole('navigation', { name: 'Partes de Comedor principal' }).getByRole('button', { name: 'Horario' }).getAttribute('aria-current')) === 'page');
     await menuNav.getByRole('button', { name: 'Página de inicio' }).click();
     const homeParts = p.getByRole('navigation', { name: 'Partes de Página de inicio' });
     await homeParts.waitFor();
-    check('la página de inicio lleva lo común en pestañas', state.j(await homeParts.getByRole('button').allInnerTexts()) === state.j(['Bloques destacados', 'Sobre nosotros', 'Grupos y celebraciones', 'Preguntas frecuentes']));
+    check('la página de inicio lleva lo común en pestañas', state.j(await homeParts.getByRole('button').allInnerTexts()) === state.j(['Tarjetas de los espacios', 'Sobre nosotros', 'Grupos y celebraciones', 'Preguntas frecuentes']));
     await menuNav.getByRole('button', { name: 'Contacto y reservas' }).click();
     await p.getByRole('heading', { level: 2, name: 'Contacto y reservas' }).waitFor();
     check('lo del negocio no lleva pestañas', (await p.getByRole('navigation', { name: /^Partes de/ }).count()) === 0);
@@ -125,7 +131,7 @@ const cleanup = async (original) => {
     await rowAction('Terraza de prueba', 'Subir');
     await p.waitForTimeout(2500);
     list = await spacesOf();
-    check('subir un espacio cambia el orden y se guarda', list[0].id === created.id && (await spaces.getByRole('listitem').first().innerText()).includes('Terraza de prueba'), list.map(s => s.name));
+    check('subir un espacio cambia el orden y se guarda', list[0].id === created.id && (await spaces.getByRole('row').nth(1).innerText()).includes('Terraza de prueba'), list.map(s => s.name));
     check('el foco vuelve al menú de la fila movida', /^Más acciones: Terraza de prueba$/.test(await active()), await active());
     await rowAction('Terraza de prueba', 'Hacer principal');
     await p.getByText('Espacio principal cambiado', { exact: true }).first().waitFor();
@@ -142,40 +148,40 @@ const cleanup = async (original) => {
     check('eliminar lo quita y el de siempre sigue siendo el principal', list.length === 1 && list[0].id === SP && list[0].isDefault, list.map(s => [s.name, s.isDefault]));
     await pause(15000);
 
-    console.log('— Idiomas de la web');
+    console.log('— Idiomas de la web: tabla con acciones de icono');
     const aside = p.locator('main');
     await p.goto(`${BASE}/restaurants/pruebas?s=languages`);
-    await aside.getByRole('button', { name: 'Cambiar idiomas' }).click();
-    await dialog.getByRole('heading', { name: 'Idiomas de la web' }).waitFor();
-    check('sin cambios no se puede guardar', await dialog.getByRole('button', { name: 'Guardar idiomas' }).isDisabled());
-    await audit(p, 'idiomas de la web', '[role=dialog]');
-    await dialog.getByLabel(/^English/).uncheck();
-    check('al quitar un idioma explica qué pasa con sus páginas y sus textos', await dialog.getByText('Vas a quitar English.').isVisible() && await dialog.getByText(/se guardan por si lo vuelves a activar/).isVisible());
-    await dialog.locator('#main-ca').check();
-    await dialog.getByRole('button', { name: 'Guardar idiomas' }).click();
-    await p.getByText('Idiomas guardados', { exact: true }).first().waitFor();
+    const langTable = aside.getByRole('region', { name: 'Idiomas de la web' });
+    await langTable.waitFor();
+    check('los idiomas, en una tabla con el principal marcado', (await langTable.getByRole('row').count()) === 4 && /Español\s*es\s*Principal/i.test(await langTable.innerText()), await langTable.innerText());
+    check('el principal no se puede quitar', await langTable.getByRole('button', { name: /^Quitar Español \(antes elige otro principal\)$/ }).isDisabled());
+    await audit(p, 'idiomas de la web en tabla');
+    await langTable.getByRole('button', { name: 'Quitar English de la web' }).click();
+    await p.getByRole('dialog').getByText(/se guardan por si lo vuelves a añadir/).waitFor();
+    await p.waitForTimeout(300);
+    await p.getByRole('button', { name: 'Sí, quitar' }).click();
+    await p.getByText('Idioma quitado', { exact: true }).first().waitFor();
+    await langTable.getByRole('button', { name: 'Hacer principal: Català' }).click();
+    await p.getByText('Idioma principal cambiado', { exact: true }).first().waitFor();
     let r = (await api('GET', '/restaurants/pruebas')).body.restaurant;
-    check('guarda los idiomas y el principal', state.j([...r.activeLocales].sort()) === '["ca","es"]' && r.defaultLocale === 'ca', [r.activeLocales, r.defaultLocale]);
-    await p.waitForTimeout(800);
-    check('la ficha lo refleja: lista de idiomas y campos', /Català\s*Principal/.test(await aside.innerText()) && !/English/.test(await aside.getByRole('region', { name: 'Idiomas de la web' }).innerText()));
-    await aside.getByRole('button', { name: 'Cambiar idiomas' }).click();
-    await dialog.getByLabel(/^English/).check();
-    check('al añadir un idioma avisa de que habrá que traducir', await dialog.getByText('Vas a añadir English.').isVisible() && await dialog.getByText(/tendrás que traducir/).isVisible());
-    await dialog.getByLabel(/^Español/).uncheck();
-    await dialog.getByLabel(/^Català/).uncheck();
-    await dialog.getByLabel(/^English/).uncheck();
-    await dialog.getByRole('button', { name: 'Guardar idiomas' }).click();
-    check('no deja la web sin idiomas', await dialog.getByRole('alert').filter({ hasText: 'al menos un idioma' }).isVisible());
-    await dialog.getByRole('button', { name: 'Cancelar' }).click();
-    // Con un cambio a medio guardar, «Cambiar idiomas» lo guarda antes de abrir.
+    check('quitar y hacer principal se guardan con sus iconos', state.j([...r.activeLocales].sort()) === '["ca","es"]' && r.defaultLocale === 'ca', [r.activeLocales, r.defaultLocale]);
+    await aside.getByRole('button', { name: 'Añadir idioma' }).click();
+    await dialog.getByRole('heading', { name: 'Añadir idiomas' }).waitFor();
+    check('añadir solo ofrece los que faltan', await dialog.locator('#lang-en').isVisible() && (await dialog.locator('#lang-es').count()) === 0);
+    await audit(p, 'añadir idiomas', '[role=dialog]');
+    await dialog.locator('#lang-en').check();
+    await dialog.getByRole('button', { name: 'Añadir idioma', exact: true }).click();
+    await p.getByText('Idioma añadido', { exact: true }).first().waitFor();
+    r = (await api('GET', '/restaurants/pruebas')).body.restaurant;
+    check('añadir lo suma a la web', state.j([...r.activeLocales].sort()) === '["ca","en","es"]', r.activeLocales);
+    // Con un cambio a medio guardar, cambiar los idiomas lo guarda antes.
     await menu.getByRole('button', { name: /^Contacto y reservas/ }).click();
     await p.locator('#r-founded').fill('1990');
     await menu.getByRole('button', { name: /^Idiomas/ }).click();
-    await aside.getByRole('button', { name: 'Cambiar idiomas' }).click();
-    await dialog.getByRole('heading', { name: 'Idiomas de la web' }).waitFor();
+    await langTable.getByRole('button', { name: 'Hacer principal: Español' }).click();
+    await p.getByText('Idioma principal cambiado', { exact: true }).first().waitFor();
     r = (await api('GET', '/restaurants/pruebas')).body.restaurant;
-    check('cambiar idiomas guarda antes lo pendiente', r.foundedYear === 1990, r.foundedYear);
-    await dialog.getByRole('button', { name: 'Cancelar' }).click();
+    check('cambiar idiomas guarda antes lo pendiente', r.foundedYear === 1990 && r.defaultLocale === 'es', [r.foundedYear, r.defaultLocale]);
     await api('PATCH', '/restaurants/pruebas', { activeLocaleCodes: original.locales, defaultLocaleCode: original.defaultLocale });
     await pause(10000);
 
@@ -196,7 +202,7 @@ const cleanup = async (original) => {
     const noDomain = (await e.locator('#r-domain').count()) === 0;
     const enav = e.getByRole('navigation', { name: 'Secciones de la web' });
     await enav.getByRole('button', { name: /^Idiomas/ }).click();
-    const canLanguages = await e.getByRole('button', { name: 'Cambiar idiomas' }).isVisible();
+    const canLanguages = await e.getByRole('button', { name: 'Añadir idioma' }).isVisible();
     await enav.getByRole('button', { name: /^Espacios/ }).click();
     check('un editor no ve la dirección de la web, y sí puede cambiar idiomas y añadir espacios', noDomain && canLanguages && await e.getByRole('button', { name: 'Añadir espacio' }).isVisible());
     await ectx.close();
@@ -235,17 +241,18 @@ const cleanup = async (original) => {
     const picker = m.getByLabel('Sección', { exact: true });
     await picker.waitFor();
     check('en móvil las secciones se eligen en un desplegable, con los mismos grupos', !(await m.getByRole('navigation', { name: 'Secciones de la web' }).isVisible())
-      && state.j(await picker.locator('optgroup').evaluateAll(g => g.map(x => x.label))) === state.j(['Cada semana', 'Tu web', 'Información']));
+      && state.j(await select.groups(m, picker)) === state.j(['Día a día', 'Páginas de la web', 'Datos del negocio']));
     await audit(m, 'resumen en móvil');
-    await picker.selectOption('spaces');
+    await select.pick(m, picker, 'spaces');
     check('elegir una sección la abre', await m.getByRole('button', { name: 'Añadir espacio' }).isVisible() && /s=spaces/.test(m.url()));
     await audit(m, 'espacios en móvil');
     await m.getByRole('button', { name: 'Añadir espacio' }).click();
     await audit(m, 'espacio nuevo en móvil', '[role=dialog]');
     await m.keyboard.press('Escape');
-    await picker.selectOption('languages');
-    await m.getByRole('button', { name: 'Cambiar idiomas' }).click();
-    await audit(m, 'idiomas en móvil', '[role=dialog]');
+    await select.pick(m, picker, 'languages');
+    await audit(m, 'idiomas en móvil (tabla)');
+    await m.getByRole('button', { name: 'Añadir idioma' }).click();
+    await audit(m, 'añadir idiomas en móvil', '[role=dialog]');
     await m.keyboard.press('Escape');
     await m.goto(`${BASE}/restaurants/pruebas?s=hours`);
     await m.getByRole('group', { name: 'Lunes' }).waitFor();

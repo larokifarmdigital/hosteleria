@@ -13,7 +13,7 @@ import { TextInput } from '@/components/ui/inputs';
 import { useEditor, useSpaceDraft } from './EditorContext';
 import { COVER, INTRO, SCHEDULE_TEXTS } from './spaceForm';
 
-export type SpaceSectionKey = 'cover' | 'photos' | 'hours' | 'details';
+export type SpaceSectionKey = 'cover' | 'photos' | 'hours' | 'details' | 'name';
 
 /** Lo que se edita de un espacio en cada sección del editor. */
 export function SpaceSection({ show }: { show: SpaceSectionKey }) {
@@ -64,6 +64,12 @@ export function SpaceSection({ show }: { show: SpaceSectionKey }) {
             </div>
           </Fold>
         </div>
+      )}
+
+      {show === 'name' && (
+        <Field id="s-name" label="Nombre" error={errors.name?.message} required>
+          {c => <TextInput {...c} autoComplete="off" {...register('name')} />}
+        </Field>
       )}
 
       {show === 'details' && (

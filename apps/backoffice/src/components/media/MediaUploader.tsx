@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ImagePlus, TriangleAlert } from 'lucide-react';
+import { ImagePlus, TriangleAlert, X } from 'lucide-react';
+import { ROW_ICON_BUTTON } from '@/components/ui/Sortable';
 import type { MediaAsset } from '@hosteleria/api-client';
 import { Button } from '@/components/shared/Button';
 import { handleApiError } from '@/lib/api';
@@ -240,7 +241,9 @@ export function MediaUploader({ restaurantSlug, purpose = 'any', multiple = true
                   {item.status === 'error' && (
                     <Button size="sm" aria-label={`Reintentar la subida de ${item.file.name}`} onClick={() => void start(item)}>Reintentar</Button>
                   )}
-                  <Button size="sm" variant="ghost" aria-label={`Quitar ${item.file.name}`} onClick={() => remove(item)}>Quitar</Button>
+                  <button type="button" className={ROW_ICON_BUTTON} aria-label={`Quitar ${item.file.name}`} title="Quitar" onClick={() => remove(item)}>
+                    <X aria-hidden className="h-[18px] w-[18px]" />
+                  </button>
                 </div>
               )}
             </li>

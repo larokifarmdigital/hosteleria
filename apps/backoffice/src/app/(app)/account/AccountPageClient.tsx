@@ -18,9 +18,10 @@ export function AccountPageClient() {
   const { data: user } = useSession();
   if (!user) return null;
   return (
-    <div className="max-w-[640px]">
+    <div>
       <PageHeader title="Mi cuenta">Tu nombre y tu contraseña. Solo los ves tú.</PageHeader>
-      <div className="flex flex-col gap-6">
+      {/* En pantallas anchas, los dos bloques uno al lado del otro: se usa todo el ancho. */}
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
         <ProfileCard name={user.name} email={user.email} role={ROLE_LABEL[user.role]} />
         <PasswordCard />
       </div>

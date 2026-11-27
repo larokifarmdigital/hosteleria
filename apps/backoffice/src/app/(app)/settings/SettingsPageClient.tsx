@@ -1,73 +1,37 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
-import type { Language, User } from '@hosteleria/api-client';
-import { LanguageDialog } from '@/components/settings/LanguageDialog';
+import { Pencil, Plus } from 'lucide-react';
+import { ROW_ICON_BUTTON } from '@/components/ui/Sortable';
+import type { User } from '@hosteleria/api-client';
 import { UserDialog } from '@/components/settings/UserDialog';
+import { UserRowActions } from '@/components/settings/UserRowActions';
 import { Button } from '@/components/shared/Button';
 import { QueryBoundary } from '@/components/shared/QueryBoundary';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Pill } from '@/components/shared/Pill';
 import { Table, Td } from '@/components/shared/Table';
 import { formatDate } from '@/lib/utils';
-import { useLanguages, useRestaurants, useSession, useUsers } from '@/lib/query/hooks';
+import { useRestaurants, useSession, useUsers } from '@/lib/query/hooks';
 
-const LANGUAGE_COLUMNS = [{ label: 'Código' }, { label: 'Idioma' }, { label: 'Restaurantes que lo usan' }, { label: 'Acciones', hidden: true }];
-const USER_COLUMNS = [{ label: 'Usuario' }, { label: 'Rol' }, { label: 'Restaurantes' }, { label: 'Último acceso' }, { label: 'Acciones', hidden: true }];
+const USER_COLUMNS = [{ label: 'Usuario' }, { label: 'Rol' }, { label: 'Restaurantes' }, { label: 'Estado' }, { label: 'Último acceso' }, { label: 'Acciones', hidden: true }];
 
-type Editing = { kind: 'user'; user: User | null } | { kind: 'language'; language: Language | null } | null;
+type Editing = { kind: 'user'; user: User | null } | null;
 
 export function SettingsPageClient() {
   const { data: me } = useSession();
-  const languagesQuery = useLanguages();
   const usersQuery = useUsers();
   const restaurantsQuery = useRestaurants();
-  const languages = languagesQuery.data ?? [];
   const users = usersQuery.data ?? [];
   const restaurants = restaurantsQuery.data ?? [];
   const [editing, setEditing] = useState<Editing>(null);
 
-  const usedBy = (code: string) => restaurants.filter(r => r.activeLocales.includes(code));
 
   return (
     <>
-      <PageHeader title="Administración">Quién entra al backoffice y en qué idiomas se pueden escribir las webs.</PageHeader>
+      <PageHeader title="Administración">Quién entra al backoffice. Los idiomas de cada web se eligen en su editor, en «Idiomas».</PageHeader>
 
-      <QueryBoundary queries={[languagesQuery, usersQuery, restaurantsQuery]}>
-      <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="m-0 text-[15px] font-bold tracking-[-0.005em]">Idiomas</h2>
-        <Button onClick={() => setEditing({ kind: 'language', language: null })}>
-          <Plus aria-hidden className="h-4 w-4" />
-          Añadir idioma
-        </Button>
-      </div>
-      <div className="mb-8">
-        <Table caption="Idiomas" columns={LANGUAGE_COLUMNS}>
-          {languages.map(l => {
-            const using = usedBy(l.code);
-            return (
-              <tr key={l.id}>
-                <Td className="font-bold uppercase text-[color:var(--color-ink)]">{l.code}</Td>
-                <Td><strong className="font-semibold text-[color:var(--color-ink)]">{l.name}</strong></Td>
-                <Td>
-                  {using.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
-                      {using.map(r => <Pill key={r.id}>{r.name}</Pill>)}
-                    </div>
-                  ) : (
-                    <span className="text-[13px] text-[color:var(--color-muted)]">Ninguno todavía</span>
-                  )}
-                </Td>
-                <Td className="text-right">
-                  <Button size="sm" aria-label={`Editar ${l.name}`} onClick={() => setEditing({ kind: 'language', language: l })}>Editar</Button>
-                </Td>
-              </tr>
-            );
-          })}
-        </Table>
-      </div>
-
+      <QueryBoundary queries={[usersQuery, restaurantsQuery]}>
       <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">
         <h2 className="m-0 text-[15px] font-bold tracking-[-0.005em]">Usuarios</h2>
         <Button onClick={() => setEditing({ kind: 'user', user: null })}>
@@ -96,7 +60,6 @@ export function SettingsPageClient() {
             <Td>
               <div className="flex flex-wrap gap-1">
                 {u.role === 'admin' ? <Pill variant="accent">Administrador</Pill> : <Pill>Editor</Pill>}
-                {u.suspended && <Pill>Suspendida</Pill>}
               </div>
             </Td>
             <Td>
@@ -112,9 +75,17 @@ export function SettingsPageClient() {
                 </div>
               )}
             </Td>
-            <Td className="slug whitespace-nowrap">{u.lastAccessAt ? formatDate(u.lastAccessAt) : 'Aún no ha entrado'}</Td>
-            <Td className="text-right">
-              <Button size="sm" aria-label={`Editar a ${u.name}`} onClick={() => setEditing({ kind: 'user', user: u })}>Editar</Button>
+            <Td>
+              {u.suspended ? <Pill variant="danger" dot>Suspendida</Pill> : u.lastAccessAt ? <Pill variant="ok" dot>Activa</Pill> : <Pill variant="warn" dot>Aún no ha entrado</Pill>}
+            </Td>
+            <Td className="slug whitespace-nowrap">{u.lastAccessAt ? formatDate(u.lastAccessAt) : '—'}</Td>
+            <Td className="w-[1%] whitespace-nowrap">
+              <div className="flex justify-end gap-1">
+                <button type="button" className={ROW_ICON_BUTTON} aria-label={`Editar a ${u.name}`} title="Editar" onClick={() => setEditing({ kind: 'user', user: u })}>
+                  <Pencil aria-hidden className="h-[18px] w-[18px]" />
+                </button>
+                <UserRowActions user={u} isSelf={u.id === me?.id} />
+              </div>
             </Td>
           </tr>
         ))}
@@ -127,15 +98,6 @@ export function SettingsPageClient() {
           user={editing.user}
           restaurants={restaurants}
           currentUserId={me?.id ?? ''}
-          onClose={() => setEditing(null)}
-        />
-      )}
-      {editing?.kind === 'language' && (
-        <LanguageDialog
-          key={editing.language?.id ?? 'nuevo'}
-          language={editing.language}
-          existingCodes={languages.map(l => l.code as string)}
-          usedBy={editing.language ? usedBy(editing.language.code) : []}
           onClose={() => setEditing(null)}
         />
       )}

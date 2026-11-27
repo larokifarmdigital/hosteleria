@@ -1,4 +1,5 @@
 const { chromium } = require(process.env.PW);
+const select = require('./select.cjs');
 const path = require('path');
 const S = process.env.S, BASE = process.env.BASE;
 const api = require('./api.cjs')(S + '/admin.json');
@@ -25,7 +26,7 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
   console.log('— A. Pantalla de imágenes');
   await step('A', async () => {
     await page.goto(BASE + '/media?r=pruebas');
-    check('título y restaurante elegido', await page.getByRole('heading', { level: 1, name: 'Imágenes' }).isVisible() && await page.getByLabel('Restaurante').inputValue() === 'pruebas');
+    check('título y restaurante elegido', await page.getByRole('heading', { level: 1, name: 'Imágenes' }).isVisible() && (await select.text(page.getByLabel('Restaurante'))) === 'Pruebas');
     check('estado vacío', await page.getByText('Todavía no hay fotos').isVisible());
 
     await input().setInputFiles(IMG('documento.pdf'));
@@ -132,9 +133,9 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
     check('descripción guardada en los 3 idiomas', Object.keys(plato.altText).length === 3 && plato.hasAltText, JSON.stringify(plato.altText));
     await page.waitForTimeout(600);
     check('desaparece «Falta descripción» de esa foto', (await tile('plato.jpg').getByText('Falta descripción').count()) === 0);
-    await page.getByLabel('Mostrar').selectOption('missing');
+    await select.pick(page, page.getByLabel('Mostrar'), 'missing');
     check('filtro «Sin descripción»', (await tile('plato.jpg').count()) === 0 && (await tile('pesada.webp').count()) === 1);
-    await page.getByLabel('Mostrar').selectOption('all');
+    await select.pick(page, page.getByLabel('Mostrar'), 'all');
 
     // Borrar una que no se usa
     await tile('soltada-n-01.jpg').getByRole('button', { name: /Borrar/ }).click();

@@ -27,23 +27,24 @@ export const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { value: 'bizum', label: 'Bizum' }
 ];
 
-export const EXTRA_SERVICES: { value: ExtraService; label: string }[] = [
-  { value: 'terraza', label: 'Terraza' },
-  { value: 'grupos', label: 'Grupos y eventos' },
-  { value: 'sala_privada', label: 'Sala privada o reservado' },
-  { value: 'vegetariano', label: 'Opciones vegetarianas' },
-  { value: 'vegano', label: 'Opciones veganas' },
-  { value: 'sin_gluten', label: 'Opciones sin gluten' },
-  { value: 'menu_dia', label: 'Menú del día' },
-  { value: 'menu_degustacion', label: 'Menú degustación' },
-  { value: 'carta_vinos', label: 'Carta de vinos amplia' },
-  { value: 'bar', label: 'Bar o vermut' },
-  { value: 'familiar', label: 'Para ir con niños' },
-  { value: 'pet_friendly', label: 'Admite mascotas' },
-  { value: 'accesible', label: 'Accesible en silla de ruedas' },
-  { value: 'aparcamiento', label: 'Aparcamiento cerca' },
-  { value: 'coctel', label: 'Coctelería' },
-  { value: 'live_music', label: 'Música en directo' }
+/** Agrupados como se piensan: lo que se come, cómo es el local y para quién es cómodo. */
+export const EXTRA_SERVICES: { value: ExtraService; label: string; group: string }[] = [
+  { value: 'vegetariano', label: 'Opciones vegetarianas', group: 'Comida' },
+  { value: 'vegano', label: 'Opciones veganas', group: 'Comida' },
+  { value: 'sin_gluten', label: 'Opciones sin gluten', group: 'Comida' },
+  { value: 'menu_dia', label: 'Menú del día', group: 'Comida' },
+  { value: 'menu_degustacion', label: 'Menú degustación', group: 'Comida' },
+  { value: 'carta_vinos', label: 'Carta de vinos amplia', group: 'Comida' },
+  { value: 'terraza', label: 'Terraza', group: 'El local' },
+  { value: 'sala_privada', label: 'Sala privada o reservado', group: 'El local' },
+  { value: 'grupos', label: 'Grupos y eventos', group: 'El local' },
+  { value: 'bar', label: 'Bar o vermut', group: 'El local' },
+  { value: 'coctel', label: 'Coctelería', group: 'El local' },
+  { value: 'live_music', label: 'Música en directo', group: 'El local' },
+  { value: 'familiar', label: 'Para ir con niños', group: 'Familias y accesibilidad' },
+  { value: 'pet_friendly', label: 'Admite mascotas', group: 'Familias y accesibilidad' },
+  { value: 'accesible', label: 'Accesible en silla de ruedas', group: 'Familias y accesibilidad' },
+  { value: 'aparcamiento', label: 'Aparcamiento cerca', group: 'Familias y accesibilidad' }
 ];
 
 // ─── Textos de la plantilla que redacta el restaurante ───────────

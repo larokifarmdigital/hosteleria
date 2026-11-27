@@ -1,6 +1,7 @@
 // Editor de la web: un menú de secciones, guardado automático y un solo «Publicar».
 // Como editor, sobre «pruebas»; restaura por SQL al acabar.
 const { chromium } = require(process.env.PW);
+const select = require('./select.cjs');
 const S = process.env.S, BASE = process.env.BASE;
 const api = require('./api.cjs')(S + '/admin.json');
 const state = require('./pruebas-state.cjs')(api);
@@ -26,8 +27,8 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
     await step('menu', async () => {
       await page.goto(`${BASE}/restaurants/pruebas`);
       await nav().waitFor();
-      const groups = await nav().locator('[data-group]').allInnerTexts();
-      check('grupos: cada semana, la web y la información, siempre abiertos', groups.join('|') === 'Cada semana|Tu web|Información' && (await nav().locator('[aria-expanded]').count()) === 0, groups);
+      const groups = await nav().locator('[data-group]').allTextContents();
+      check('grupos: día a día, páginas de la web y datos del negocio, siempre abiertos', groups.join('|') === 'Día a día|Páginas de la web|Datos del negocio' && (await nav().locator('[aria-expanded]').count()) === 0, groups);
       check('entra por la Carta', await page.getByRole('heading', { level: 2, name: 'Carta' }).isVisible());
       check('legales y Google, directos en el menú', await nav().getByRole('button', { name: /^Textos legales/ }).isVisible() && await nav().getByRole('button', { name: /^Google y buscadores/ }).isVisible());
       check('el menú global ya no tiene Carta ni Imágenes', (await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: /^(Carta|Imágenes)$/ }).count()) === 0);
@@ -107,7 +108,7 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
     await step('secciones', async () => {
       await nav().getByRole('button', { name: /^Carta/ }).click();
       await page.getByText('Tortilla trufada').waitFor({ timeout: 8000 });
-      check('la carta está en el editor, con sus títulos plegados debajo', await page.getByText('Títulos de la carta en la web').isVisible());
+      check('la carta está en el editor, con sus títulos a la vista y encima', await page.getByText('Títulos de la carta en la web').isVisible());
       await page.getByText('Títulos de la carta en la web').click();
       check('los títulos de la carta se editan ahí', await page.locator('#uiTexts-sections-dishesTitle-es').isVisible());
       check('ya no hay «Todas las fotos» en el menú', (await nav().getByRole('button', { name: /^(Todas las fotos|Fotos sin descripción)/ }).count()) === 0);
@@ -115,11 +116,33 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
       await nav().getByRole('button', { name: /^Google y buscadores/ }).click();
       await page.getByRole('heading', { level: 3, name: 'Icono de la web' }).waitFor();
       check('un solo icono, dentro de Google y buscadores', (await page.getByText('Icono', { exact: true }).count()) >= 1);
+      // Formas de pago y servicios: un multiselect con buscador; lo elegido sale como etiquetas.
+      const hadBizum = ((await api('GET', '/restaurants/pruebas')).body.restaurant.business?.paymentMethods ?? []).includes('bizum');
+      await page.locator('#r-pay').click();
+      await page.getByRole('checkbox', { name: 'Bizum' }).click();
+      await page.getByRole('button', { name: 'Listo' }).click();
+      check('el multiselect deja la forma de pago como etiqueta con ✕', hadBizum ? (await page.getByRole('button', { name: 'Quitar Bizum' }).count()) === 0 : await page.getByRole('button', { name: 'Quitar Bizum' }).isVisible());
+      let pay;
+      for (let i = 0; i < 12; i++) { await page.waitForTimeout(700); pay = (await api('GET', '/restaurants/pruebas')).body.restaurant.business?.paymentMethods ?? []; if (pay.includes('bizum') !== hadBizum) break; }
+      check('y se guarda solo', pay.includes('bizum') !== hadBizum, pay);
+      await page.locator('#r-service').click();
+      check('los servicios salen agrupados', await page.getByRole('group', { name: 'Comida' }).isVisible() && await page.getByRole('group', { name: 'Familias y accesibilidad' }).isVisible());
+      await page.keyboard.press('Escape');
       await nav().getByRole('button', { name: /^Textos legales/ }).click();
       await page.getByRole('button', { name: /Política de privacidad/ }).click();
       check('cada texto legal se abre dentro', page.url().includes('p=privacy') && await page.getByRole('heading', { name: 'Política de privacidad' }).isVisible());
+      // El texto legal se escribe con formato (negrita, títulos, listas con sangría), no con símbolos.
+      const toolbar = page.getByRole('toolbar', { name: /^Formato: Texto/ }).first();
+      await toolbar.waitFor();
+      const editor = page.getByRole('textbox', { name: /^Texto \(/ }).first();
+      await editor.click();
+      await toolbar.getByRole('button', { name: 'Negrita' }).click();
+      check('el texto legal tiene editor con negrita, títulos y sangría', (await toolbar.getByRole('button', { name: 'Negrita' }).getAttribute('aria-pressed')) === 'true'
+        && await toolbar.getByRole('button', { name: 'Más sangría' }).isVisible() && await toolbar.getByRole('button', { name: 'Título de apartado' }).isVisible());
     });
 
+    // El api corta a las 100 peticiones por minuto: este bloque abre ocho páginas seguidas.
+    await page.waitForTimeout(30000);
     console.log('— Las direcciones de antes siguen funcionando');
     // Cada carga del editor son varias peticiones: se respira para no tocar el límite de 100 por minuto.
     await page.waitForTimeout(20000);
@@ -144,7 +167,7 @@ const step = async (name, fn) => { try { await fn(); } catch (e) { fail++; conso
       check('menú de secciones en un desplegable', await p.locator('#seccion-picker').isVisible());
       check('la acción, abajo y a mano', await p.getByRole('button', { name: 'Publicar la web' }).last().isVisible());
       check('sin scroll horizontal', await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
-      await p.locator('#seccion-picker').selectOption('hours');
+      await select.pick(p, p.locator('#seccion-picker'), 'hours');
       await p.getByRole('heading', { level: 2, name: 'Horario' }).waitFor();
       check('elegir en el desplegable abre la sección', p.url().includes('s=hours'));
       await m.close();
