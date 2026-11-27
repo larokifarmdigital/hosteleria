@@ -1,6 +1,6 @@
 ---
 import { t } from '@hosteleria/i18n-utils';
-import { img } from '../lib/sanity';
+import { img } from '../lib/content';
 import type { Restaurant } from '../lib/queries';
 import { extractI18nParagraphs } from '@hosteleria/utils';
 import Eyebrow from '@hosteleria/ui/components/Eyebrow.astro';
@@ -13,7 +13,7 @@ interface Props {
 
 const { restaurant, locale, defaultLocale } = Astro.props;
 
-// Hasta 3 imágenes (schema limita a 3). Placeholders locales si Sanity aún
+// Hasta 3 imágenes (schema limita a 3). Placeholders locales si el backoffice aún
 // no tiene ninguna subida.
 const imagesInput = (restaurant.sobreImagenes ?? [])
   .slice(0, 3)

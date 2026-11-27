@@ -3,7 +3,7 @@
  *
  * El cliente puede ramificar lógica sobre estos valores (sin usar el `message`
  * para branching — ese es texto para humanos). Mantén la lista sincronizada con
- * `apps/api/src/interface/http/httpErrors.ts` + los `DomainError` subclases.
+ * `apps/backoffice/src/core/http` + las subclases de `DomainError`.
  */
 /**
  * Const object con los codes como valores — para autocompletado:

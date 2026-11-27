@@ -9,8 +9,8 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 ## ✅ Estado actual — lo que YA funciona
 
 ### CMS y contenido
-- [x] Doc `restaurante` en Sanity con todos los groups (identidad, hero, manifiesto, sobre, galería, grupos, horarios, contacto, redes, textos UI, SEO, IA)
-- [x] Categorías + vinos + platos gestionables desde Sanity
+- [x] Doc `restaurante` en el backoffice con todos los groups (identidad, hero, manifiesto, sobre, galería, grupos, horarios, contacto, redes, textos UI, SEO, IA)
+- [x] Categorías + vinos + platos gestionables desde el backoffice
 - [x] Idiomas configurables (ES + EN activos)
 - [x] Textos UI (nav, form, footer) editables por el cliente
 - [x] Toggle `mostrarRedes: true` (Instagram visible en Footer y overlay móvil)
@@ -37,14 +37,14 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 ### GEO / IA (Generative Engine Optimization)
 - [x] `/robots.txt` con Allow explícito para 16 crawlers de IA
 - [x] `/llms.txt` dinámico con datos + horario + carta completa + FAQ
-- [x] Resumen IA (campo `resumenIA` en Sanity)
+- [x] Resumen IA (campo `resumenIA` en el backoffice)
 - [x] FAQ visible en la landing
 - [x] Servicios extras (`carta_vinos`, `grupos`, `sala_privada`, `menu_degustacion`, `bar`) y formas de pago estructurados
 
 ### PWA
 - [x] `/site.webmanifest` dinámico con iconos (192, 512, maskable)
-- [x] Favicon (fallback + Sanity)
-- [x] Apple touch icon (fallback + Sanity con `pngSquare`)
+- [x] Favicon (fallback + backoffice)
+- [x] Apple touch icon (fallback + backoffice con `pngSquare`)
 - [x] `<meta name="theme-color">` con `accentColor` local (`#2f4a2c` verde bosque profundo)
 - [x] Viewport meta con mínimo 375px
 
@@ -84,24 +84,22 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 ## 🔴 BLOQUEANTES — no se puede publicar sin esto
 
 ### Legal (RGPD + LSSI-CE, obligatorio en España)
-- [x] **Aviso legal** — plantilla base ES+EN en Sanity, con `[COMPLETAR]` para CIF/titular
+- [x] **Aviso legal** — plantilla base ES+EN en el backoffice, con `[COMPLETAR]` para CIF/titular
 - [x] **Política de privacidad** — plantilla base ES+EN
 - [x] **Política de cookies** — plantilla base ES+EN
 - [x] **Sin banner de consentimiento** — Cloudflare Web Analytics exento
 - [x] Enlaces a las 3 páginas legales en el footer
-- [ ] Cliente rellena `[COMPLETAR]` de CIF/NIF, titular, dirección fiscal en Sanity
+- [ ] Cliente rellena `[COMPLETAR]` de CIF/NIF, titular, dirección fiscal en el backoffice
 
 ### Técnicos
 - [x] **`/sitemap.xml`** dinámico con hreflang alternates (home + legal, ES + EN)
 - [x] **Página 404 custom** con branding y links de vuelta al home por idioma
 - [ ] **Deploy configurado** en Vercel/Netlify/Cloudflare Pages
   - [x] `astro.config.mjs` con `site: https://roure-cat.vercel.app` (provisional)
-  - [ ] Variables de entorno en el hosting (SANITY_PROJECT_ID + SANITY_DATASET + RESTAURANT_SLUG=roure)
-  - [ ] Webhook Sanity → rebuild al publicar
   - [ ] SSL automático
-  - [ ] Dominio propio apuntando (registro DNS) — `roure.cat` ya reservado en Sanity
+  - [ ] Dominio propio apuntando (registro DNS) — `roure.cat` ya reservado en el backoffice
 - [x] **Analytics** — Cloudflare Web Analytics integrado
-  - [ ] Cliente da de alta el sitio en dash.cloudflare.com y pega el token en Sanity
+  - [ ] Cliente da de alta el sitio en dash.cloudflare.com y pega el token en el backoffice
 
 ---
 
@@ -111,8 +109,8 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 - [ ] **Confirmación de reserva** email/SMS/WhatsApp al cliente y al restaurante
 - [ ] **Google Business Profile** reclamado — SEO local impacto más grande que la web
 - [ ] **Email `hola@roure.cat`** verificar que existe y alguien lo lee
-- [ ] **Fotos reales** subidas a Sanity (hero, galería, sobre — hasta 3, grupos)
-- [ ] **Logo del restaurante** subido a Sanity (JSON-LD + OG fallback)
+- [ ] **Fotos reales** subidas al backoffice (hero, galería, sobre — hasta 3, grupos)
+- [ ] **Logo del restaurante** subido al backoffice (JSON-LD + OG fallback)
 - [ ] **Icono PWA + favicon** reales del cliente
 
 ---
@@ -120,7 +118,6 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 ## 🟡 PERFORMANCE — mejoras recomendadas
 
 - [x] Self-host de fonts (Marcellus + Space Grotesk) con Fontsource
-- [x] `<link rel="preconnect">` a `cdn.sanity.io`
 - [ ] `<Image>` de Astro para imágenes locales
 - [ ] `<link rel="preload">` de fuente crítica del heading (Marcellus)
 - [ ] Verificar cache headers en el hosting
@@ -154,19 +151,17 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 ## Orden sugerido de ataque
 
 ### Fase 1 — Contenido del cliente
-1. Subir fotos reales a Sanity (hero, sobre — hasta 3, galería, grupos)
+1. Subir fotos reales al backoffice (hero, sobre — hasta 3, galería, grupos)
 2. Subir logo + favicon + iconoApp
 3. Rellenar `[COMPLETAR]` de CIF/NIF, titular, dirección fiscal en las 3 páginas legales
 4. Confirmar / editar las 7 FAQs iniciales
 
 ### Fase 2 — Deploy
 5. Deploy en Vercel (proyecto `roure-vercel` o similar)
-6. Env vars: SANITY_PROJECT_ID, SANITY_DATASET=production, RESTAURANT_SLUG=roure
-7. Webhook Sanity → deploy hook Vercel
 8. Cliente confirma dominio final → DNS → cambiar `site` en `astro.config.mjs`
 
 ### Fase 3 — Analytics + reservas
-9. Cliente da de alta Cloudflare Web Analytics, pega token en Sanity
+9. Cliente da de alta Cloudflare Web Analytics, pega token en el backoffice
 10. Sistema de reservas real (Formspree recomendado por rapidez) o TheFork
 11. Verificar Google Business Profile
 
@@ -184,8 +179,8 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 - [x] ~~Elegir analytics~~ → **Cloudflare Web Analytics**
 - [ ] Elegir **sistema de reservas**: Formspree o TheFork/CoverManager (Roure con bodega puede pedir integración pro)
 - [x] Elegir **hosting**: **Vercel** (`roure-cat.vercel.app` provisional en `astro.config.mjs`)
-- [ ] Confirmar **dominio final** (`roure.cat` está reservado en Sanity)
-- [x] ~~Redactar textos legales~~ → **Plantilla A** aplicada; cliente rellena `[COMPLETAR]` desde Sanity
+- [ ] Confirmar **dominio final** (`roure.cat` está reservado en el backoffice)
+- [x] ~~Redactar textos legales~~ → **Plantilla A** aplicada; cliente rellena `[COMPLETAR]` desde el backoffice
 
 ---
 

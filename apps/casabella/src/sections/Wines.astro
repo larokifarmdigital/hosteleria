@@ -28,7 +28,7 @@ const T = {
 };
 const tt = T[locale as keyof typeof T] ?? T.es;
 
-// En Sanity el precio llega como número o texto libre: solo se le añade € si es una cifra.
+// El precio llega como número o texto libre: solo se le añade € si es una cifra.
 const price = (value: unknown) => {
   if (value == null || value === '') return null;
   const text = String(value).trim();

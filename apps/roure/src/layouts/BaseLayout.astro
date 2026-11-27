@@ -87,8 +87,6 @@ const skipToContent = SKIP_TO_CONTENT[locale] ?? SKIP_TO_CONTENT.es;
     {/* Robots: explícito aunque sea el default (evita ambigüedad para bots agresivos) */}
     <meta name='robots' content='index,follow' />
 
-    {/* Preconnect a Sanity CDN — mejora LCP de las imágenes del hero/galería */}
-    <link rel='preconnect' href='https://cdn.sanity.io' crossorigin />
 
     <meta name='generator' content={Astro.generator} />
 

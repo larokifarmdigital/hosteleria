@@ -1,26 +1,23 @@
-import {
-  CODIGO_FALLBACK_GLOBAL,
-  type CodigoIdioma,
-} from '@hosteleria/sanity-schema/constants';
+/** Idioma de último recurso cuando un texto no está ni en el idioma pedido ni en el principal. */
+export const CODIGO_FALLBACK_GLOBAL = 'es';
 
-export { CODIGO_FALLBACK_GLOBAL };
-export type { CodigoIdioma };
+/** Código ISO de idioma (`es`, `ca`, `en`…). Los de cada restaurante vienen del contenido. */
+export type CodigoIdioma = string;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helpers para leer campos i18n que vienen de Sanity vía sanity-plugin-internationalized-array
+// Helpers para leer campos traducidos
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Estructura que devuelve el plugin sanity-plugin-internationalized-array para
- * cada campo i18n:
+ * Forma de cada campo traducido en el contenido de las landings:
  *
  *   [
- *     { _key: 'es', _type: 'internationalizedArrayStringValue', value: 'Cocina de mercado' },
- *     { _key: 'en', _type: 'internationalizedArrayStringValue', value: 'Market cuisine' },
+ *     { _key: 'es', value: 'Cocina de mercado' },
+ *     { _key: 'en', value: 'Market cuisine' },
  *   ]
  */
-export type EntradaI18nSanity = { _key: string; value?: string | null } | null | undefined;
-export type CampoI18nSanity = EntradaI18nSanity[] | null | undefined;
+export type EntradaI18n = { _key: string; value?: string | null } | null | undefined;
+export type CampoI18n = EntradaI18n[] | null | undefined;
 
 export type VariablesInterpolacion = Record<string, string | number>;
 
@@ -31,7 +28,7 @@ export type VariablesInterpolacion = Record<string, string | number>;
  *   t(restaurante.heroTitulo, 'ca', 'es')  → catalán, o español, o el primer valor no vacío
  */
 export function t(
-  campo: CampoI18nSanity,
+  campo: CampoI18n,
   locale: CodigoIdioma,
   localeDefecto: CodigoIdioma = CODIGO_FALLBACK_GLOBAL,
 ): string {
@@ -54,7 +51,7 @@ export function t(
  *     →  'Estamos abiertos hasta las 23:30.'
  */
 export function tp(
-  campo: CampoI18nSanity,
+  campo: CampoI18n,
   locale: CodigoIdioma,
   localeDefecto: CodigoIdioma,
   vars: VariablesInterpolacion = {},

@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { t } from '@hosteleria/i18n-utils';
-import type { RestaurantData } from '@hosteleria/sanity-client';
+import type { RestaurantData } from '@hosteleria/content-client';
 
 const DIAS_ES: Record<string, string> = {
   Mo: 'Lunes',

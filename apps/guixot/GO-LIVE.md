@@ -24,9 +24,8 @@ Marcaje: `- [x]` hecho · `- [ ]` pendiente · `- [~]` opcional.
 - [x] lib/ helpers (queries, jsonld, mapUtils, portableText, brand, schedule, whatsapp, typography)
 
 ### CMS + i18n
-- [x] Sanity conectado (`RESTAURANT_SLUG=guixot`)
 - [x] Idiomas ES + EN activos
-- [x] Textos UI editables desde Sanity (4 tabs: nav, secciones, form, footer)
+- [x] Textos UI editables desde el backoffice (4 tabs: nav, secciones, form, footer)
 
 ### SEO / GEO
 - [x] JSON-LD Restaurant + FAQPage
@@ -35,7 +34,6 @@ Marcaje: `- [x]` hecho · `- [ ]` pendiente · `- [~]` opcional.
 - [x] llms.txt dinámico
 - [x] Meta OG + Twitter + canonical + hreflangs
 - [x] `<html lang="es-ES">` regional
-- [x] Preconnect a `cdn.sanity.io`
 - [x] Skip navigation link (WCAG 2.4.1)
 
 ### Legal
@@ -54,7 +52,7 @@ Marcaje: `- [x]` hecho · `- [ ]` pendiente · `- [~]` opcional.
 
 ### PWA
 - [x] site.webmanifest dinámico
-- [x] theme-color con `colorMarca` (`#c85a3b` → configurar en Sanity si se quiere burgundy)
+- [x] theme-color con `colorMarca` (`#c85a3b` → configurar en el backoffice si se quiere burgundy)
 
 ### 404
 - [x] Custom 404 con detección de locale en cliente
@@ -65,11 +63,11 @@ Marcaje: `- [x]` hecho · `- [ ]` pendiente · `- [~]` opcional.
 
 ### Legal (RGPD + LSSI-CE)
 - [x] Rutas legales técnicamente activas
-- [ ] Cliente rellena `[COMPLETAR]` de CIF/NIF/titular en aviso, privacidad, cookies desde Sanity
+- [ ] Cliente rellena `[COMPLETAR]` de CIF/NIF/titular en aviso, privacidad, cookies desde el backoffice
 
 ### Analytics (Cloudflare Web Analytics)
 - [x] Código integrado (BaseLayout carga script si `cloudflareAnalyticsToken` está definido)
-- [ ] Cliente da de alta el sitio en dash.cloudflare.com → pega token en Sanity
+- [ ] Cliente da de alta el sitio en dash.cloudflare.com → pega token en el backoffice
 
 ### Reservas
 - [ ] Endpoint Cloudflare Workers + Resend (compartir Resend Pro con todos los restaurantes → ~$4/mes por local)
@@ -77,8 +75,6 @@ Marcaje: `- [x]` hecho · `- [ ]` pendiente · `- [~]` opcional.
 
 ### Deploy Vercel
 - [ ] Import repo → Root: `apps/guixot`, Build: `pnpm --filter guixot build`, Install: `cd ../.. && pnpm install --frozen-lockfile`
-- [ ] Env vars: `SANITY_PROJECT_ID=yp5fwe5v`, `SANITY_DATASET=production`, `RESTAURANT_SLUG=guixot`
-- [ ] Deploy hook + webhook Sanity con filter `slug.current == "guixot"`
 
 ### Dominio custom
 - [ ] Comprar `guixot.cat` (o el que decida el cliente)

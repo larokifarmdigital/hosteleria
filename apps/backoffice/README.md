@@ -53,4 +53,3 @@ origen: la cookie de sesión viaja sola.
 | `pnpm db:generate` / `pnpm db:migrate` | Migraciones (la segunda escribe en producción) |
 | `pnpm db:inspect` | Estado de la base de datos, solo lectura |
 | `pnpm db:seed` | Datos iniciales para una base de datos nueva |
-| `pnpm import:sanity <slug>` | Volcado desde Sanity; sin `--apply` no escribe |

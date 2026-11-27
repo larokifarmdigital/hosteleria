@@ -1,4 +1,4 @@
-import type { I18nPortable } from '@hosteleria/sanity-client';
+import type { I18nPortable } from '@hosteleria/content-client';
 
 /** Aplana bloques de Portable Text a párrafos de texto plano. */
 export function ptToParagraphs(pt: unknown): string[] {

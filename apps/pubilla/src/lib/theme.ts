@@ -4,6 +4,6 @@
  *   · <meta name="theme-color"> — colorea la barra superior del navegador móvil.
  *   · theme_color del PWA manifest — splash screen y barra al instalar como app.
  *
- * Fuente única de verdad para el chrome del navegador (no se cambia desde Sanity).
+ * Fuente única de verdad para el chrome del navegador (no se cambia desde el backoffice).
  */
 export const accentColor = '#2f4b7c';

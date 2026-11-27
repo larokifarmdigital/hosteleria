@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import type { RestaurantData } from '@hosteleria/sanity-client';
+import type { RestaurantData } from '@hosteleria/content-client';
 
 export type CreateRobotsOpts = {
   fetchRestaurantData: () => Promise<RestaurantData>;

@@ -9,8 +9,8 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 ## ✅ Estado actual — lo que YA funciona
 
 ### CMS y contenido
-- [x] Doc `restaurante` en Sanity con todos los groups (identidad, hero, manifiesto, sobre, galería, grupos, horarios, contacto, redes, textos UI, SEO, IA)
-- [x] Categorías + vinos + platos gestionables desde Sanity
+- [x] Doc `restaurante` en el backoffice con todos los groups (identidad, hero, manifiesto, sobre, galería, grupos, horarios, contacto, redes, textos UI, SEO, IA)
+- [x] Categorías + vinos + platos gestionables desde el backoffice
 - [x] Idiomas configurables (ES + EN activos)
 - [x] Textos UI (nav, form, footer) editables por el cliente
 - [x] Toggles `mostrarRedes` y `mostrarResenas` (default false)
@@ -36,14 +36,14 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 ### GEO / IA (Generative Engine Optimization)
 - [x] `/robots.txt` con Allow explícito para 16 crawlers de IA (GPTBot, PerplexityBot, Google-Extended, ClaudeBot, etc.)
 - [x] `/llms.txt` dinámico (markdown con datos + horario + carta completa + FAQ)
-- [x] Resumen IA (campo `resumenIA` en Sanity)
+- [x] Resumen IA (campo `resumenIA` en el backoffice)
 - [x] FAQ visible en la landing (accordion) — LLMs leen HTML puro
 - [x] Servicios extras y formas de pago estructurados
 
 ### PWA
 - [x] `/site.webmanifest` dinámico con iconos (192, 512, maskable)
-- [x] Favicon (fallback + Sanity)
-- [x] Apple touch icon (fallback + Sanity con `pngSquare`)
+- [x] Favicon (fallback + backoffice)
+- [x] Apple touch icon (fallback + backoffice con `pngSquare`)
 - [x] `<meta name="theme-color">` con `colorMarca`
 - [x] Viewport meta con mínimo 375px
 
@@ -66,7 +66,7 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 - [x] `prefers-reduced-motion` respetado
 - [x] Sección map con iframe + link "Ver en Google Maps" (usa CID directo)
 
-### Data/Sanity
+### Contenido (backoffice)
 - [x] Campo `mapaUrl` cubre iframe + coords JSON-LD + link externo (extracción automática con regex)
 - [x] Campo `coordenadas` retirado (redundante con `mapaUrl`)
 
@@ -75,25 +75,23 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 ## 🔴 BLOQUEANTES — no se puede publicar sin esto
 
 ### Legal (RGPD + LSSI-CE, obligatorio en España)
-- [x] **Aviso legal** — plantilla base ES+EN en Sanity, con `[COMPLETAR]` para CIF/titular
+- [x] **Aviso legal** — plantilla base ES+EN en el backoffice, con `[COMPLETAR]` para CIF/titular
 - [x] **Política de privacidad** — plantilla base ES+EN, form de reserva + derechos RGPD
 - [x] **Política de cookies** — plantilla base ES+EN (no cookies con Cloudflare Web Analytics → informativa)
 - [x] **Sin banner de consentimiento** — Cloudflare Web Analytics no usa cookies ni fingerprinting, exento del banner
 - [x] Enlaces a las 3 páginas legales en el footer (index + `/en/`)
-- [ ] Cliente rellena `[COMPLETAR]` de CIF/NIF, titular, dirección fiscal en Sanity
+- [ ] Cliente rellena `[COMPLETAR]` de CIF/NIF, titular, dirección fiscal en el backoffice
 
-**Hecho**: schema `paginaLegal` en Sanity (titulo i18n + contenido rich text i18n + fecha), rutas `/legal/[slug]` y `/en/legal/[slug]`, plantillas ES+EN inyectadas por seed.
+**Hecho**: schema `paginaLegal` en el backoffice (titulo i18n + contenido rich text i18n + fecha), rutas `/legal/[slug]` y `/en/legal/[slug]`, plantillas ES+EN inyectadas por seed.
 
 ### Técnicos
 - [x] **`/sitemap.xml`** dinámico con hreflang alternates (home + legal, ES + EN)
 - [x] **Página 404 custom** con branding y links de vuelta al home por idioma
 - [ ] **Deploy configurado** en Vercel/Netlify/Cloudflare Pages
-  - [ ] Variables de entorno en el hosting (SANITY_PROJECT_ID)
-  - [ ] Webhook Sanity → rebuild al publicar
   - [ ] SSL automático
   - [ ] Dominio propio apuntando (registro DNS)
-- [x] **Analytics** — Cloudflare Web Analytics integrado (script cargado si `cloudflareAnalyticsToken` está definido en Sanity); gratis, sin cookies, sin banner
-  - [ ] Cliente da de alta el sitio en dash.cloudflare.com → Analytics & Logs → Web Analytics, y pega el token en Sanity
+- [x] **Analytics** — Cloudflare Web Analytics integrado (script cargado si `cloudflareAnalyticsToken` está definido en el backoffice); gratis, sin cookies, sin banner
+  - [ ] Cliente da de alta el sitio en dash.cloudflare.com → Analytics & Logs → Web Analytics, y pega el token en el backoffice
 
 ---
 
@@ -105,8 +103,8 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 - [ ] **Confirmación de reserva al cliente y al restaurante** (email/SMS/WhatsApp)
 - [ ] **Google Business Profile** reclamado y bien rellenado (fotos, horario, categoría) — SEO local impacto más grande que la web misma
 - [ ] **Email `hola@casabella.com`** verificar que existe y alguien lo lee
-- [ ] **Fotos reales** del restaurante subidas a Sanity (hero, galería, sobre, hire)
-- [ ] **Logo del restaurante** subido a Sanity (JSON-LD + OG fallback)
+- [ ] **Fotos reales** del restaurante subidas al backoffice (hero, galería, sobre, hire)
+- [ ] **Logo del restaurante** subido al backoffice (JSON-LD + OG fallback)
 - [ ] **Icono PWA + favicon** reales del cliente (no los placeholders)
 
 ---
@@ -116,7 +114,6 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 - [ ] Usar `<Image>` de Astro para imágenes locales (fallbacks en `public/img/`) — optimización automática WebP/AVIF
 - [ ] Self-host de Google Fonts (Fraunces + Inter) con Fontsource — quita ~150ms de latencia
 - [ ] `<link rel="preload">` de fuente crítica del heading (Fraunces)
-- [ ] `<link rel="preconnect">` a `cdn.sanity.io` (imágenes)
 - [ ] Verificar cache headers en el hosting (Cache-Control largos para assets)
 - [ ] Compresión Brotli — automática en Vercel/Cloudflare/Netlify
 - [ ] Auditoría Lighthouse post-deploy (mobile + desktop)
@@ -137,7 +134,7 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 
 ## 🟢 NICE TO HAVE
 
-- [ ] Newsletter signup (Mailchimp/ConvertKit/Sanity)
+- [ ] Newsletter signup (Mailchimp/ConvertKit)
 - [ ] `/.well-known/security.txt`
 - [ ] `humans.txt` con créditos
 - [ ] JSON-LD `Menu` por plato individual (rich cards en Google)
@@ -151,7 +148,7 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 ## Orden sugerido de ataque
 
 ### Fase 1 — Legal (bloqueante para publicar)
-1. Schema `paginaLegal` en Sanity + seed con contenido base ES/EN
+1. Schema `paginaLegal` en el backoffice + seed con contenido base ES/EN
 2. Rutas `/legal/[slug]` en Astro
 3. Enlaces en footer
 4. Decidir analytics → Plausible (sin cookies) o GA4 (con cookies)
@@ -162,7 +159,6 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 7. ~~Página `src/pages/404.astro`~~ ✅
 8. Deploy en Vercel/Cloudflare Pages
 9. Configurar dominio propio + DNS
-10. Webhook Sanity → deploy
 
 ### Fase 3 — Críticos negocio
 11. Sistema de reservas real (Formspree recomendado por rapidez)
@@ -189,7 +185,7 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 - [ ] Elegir **sistema de reservas**: Formspree (~10€/mes, forma simple) o TheFork/CoverManager (integración pro)
 - [ ] Elegir **hosting**: Vercel / Netlify / Cloudflare Pages
 - [ ] Confirmar **dominio final** (casabella.com? .cat? .bcn?)
-- [x] ~~Redactar textos legales~~ → **Plantilla A** aplicada; cliente rellena `[COMPLETAR]` desde Sanity
+- [x] ~~Redactar textos legales~~ → **Plantilla A** aplicada; cliente rellena `[COMPLETAR]` desde el backoffice
 
 ---
 

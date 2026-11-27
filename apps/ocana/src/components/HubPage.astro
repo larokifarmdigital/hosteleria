@@ -2,7 +2,7 @@
 import type { GrupoData, LocaleRef, LegalPageDoc } from '../lib/queries';
 import { t, localizedPath } from '@hosteleria/i18n-utils';
 import { buildWhatsAppHref, buildMapsExternalUrl, extractCoords, extractMapSrc } from '@hosteleria/utils';
-import { img } from '../lib/sanity';
+import { img } from '../lib/content';
 
 import Nav from './Nav.astro';
 import MobileOverlay from './MobileOverlay.astro';
@@ -39,7 +39,7 @@ const heroTagline = t(restaurant.seoDescripcion, locale, defaultLocale);
 const dir = restaurant.direccion ?? {};
 
 // Labels UI genéricos por locale — chrome del layout, no copy de marca.
-// Los textos específicos (sobre nosotros, grupos, tagline) vienen de Sanity.
+// Los textos específicos (sobre nosotros, grupos, tagline) vienen del backoffice.
 const COPY: Record<string, {
   discover: string;
   spaces: string;
@@ -527,12 +527,12 @@ const mapsExternalUrl = buildMapsExternalUrl('', coords, fullAddress, locale);
     </div>
   </section>
 
-  <!-- BLOQUES DESTACADOS: cards cortas editables desde Sanity.
+  <!-- BLOQUES DESTACADOS: cards cortas editables desde el backoffice.
        Opt-in por contenido: si el cliente no rellena `bloquesHome[]`, la
        sección se auto-oculta y el hub queda igual que antes. -->
   <BloquesHome restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />
 
-  <!-- SOBRE NOSOTROS: la historia de la marca (editable desde Sanity).
+  <!-- SOBRE NOSOTROS: la historia de la marca (editable desde el backoffice).
        La sección compartida reutiliza el mismo componente <About> que las
        páginas de espacio, así se mantiene consistente y todo lo edita el cliente. -->
   <About restaurant={restaurant} locale={locale} defaultLocale={defaultLocale} />

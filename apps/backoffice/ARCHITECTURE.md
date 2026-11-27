@@ -42,7 +42,7 @@ apps/backoffice/
 │       │   └── infrastructure/
 │       └── http/            app Hono: rutas, middleware, DTO, tareas programadas
 ├── migrations/              SQL generado por drizzle-kit
-├── scripts/                 seed, db-inspect, volcado de Sanity
+├── scripts/                 seed, db-inspect
 ├── tests/                   vitest
 └── e2e/                     pruebas de navegador (Playwright)
 ```
@@ -119,5 +119,4 @@ pnpm db:generate    # migración nueva a partir del schema
 pnpm db:migrate     # aplicar migraciones (producción)
 pnpm db:inspect     # solo lectura: tablas y recuentos
 pnpm db:studio      # Drizzle Studio
-pnpm import:sanity  # volcado de un restaurante desde Sanity (en seco si no lleva --apply)
 ```

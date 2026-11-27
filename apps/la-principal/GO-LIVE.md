@@ -9,8 +9,8 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 ## ✅ Estado actual — lo que YA funciona
 
 ### CMS y contenido
-- [x] Doc `restaurante` en Sanity con todos los groups (identidad, hero, manifiesto, sobre, galería, grupos, horarios, contacto, redes, textos UI, SEO, IA)
-- [x] Categorías + vinos + platos gestionables desde Sanity
+- [x] Doc `restaurante` en el backoffice con todos los groups (identidad, hero, manifiesto, sobre, galería, grupos, horarios, contacto, redes, textos UI, SEO, IA)
+- [x] Categorías + vinos + platos gestionables desde el backoffice
 - [x] Idiomas configurables (ES + EN activos)
 - [x] Textos UI (nav, form, footer) editables por el cliente
 - [x] Toggle `mostrarRedes: true` (Instagram visible en Footer y overlay móvil)
@@ -37,14 +37,14 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 ### GEO / IA (Generative Engine Optimization)
 - [x] `/robots.txt` con Allow explícito para 16 crawlers de IA (GPTBot, PerplexityBot, Google-Extended, ClaudeBot, etc.)
 - [x] `/llms.txt` dinámico (markdown con datos + horario + carta completa + FAQ)
-- [x] Resumen IA (campo `resumenIA` en Sanity)
+- [x] Resumen IA (campo `resumenIA` en el backoffice)
 - [x] FAQ visible en la landing (accordion, numeración romana editorial) — LLMs leen HTML puro
 - [x] Servicios extras (`grupos`, `sala_privada`, `carta_vinos`, `menu_dia`, `familiar`) y formas de pago estructurados
 
 ### PWA
 - [x] `/site.webmanifest` dinámico con iconos (192, 512, maskable)
-- [x] Favicon (fallback + Sanity)
-- [x] Apple touch icon (fallback + Sanity con `pngSquare`)
+- [x] Favicon (fallback + backoffice)
+- [x] Apple touch icon (fallback + backoffice con `pngSquare`)
 - [x] `<meta name="theme-color">` con `accentColor` local (`#8a3a4a` borgoña)
 - [x] Viewport meta con mínimo 375px
 
@@ -77,33 +77,30 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 - [x] Focus states para navegación por teclado
 - [x] `prefers-reduced-motion` respetado
 
-### Data/Sanity
+### Contenido (backoffice)
 - [x] Campo `mapaUrl` cubre iframe + coords JSON-LD + link externo (extracción automática con regex)
-- [x] Schema restaurante compartido en `packages/sanity-schema` (no duplicado por app)
 
 ---
 
 ## 🔴 BLOQUEANTES — no se puede publicar sin esto
 
 ### Legal (RGPD + LSSI-CE, obligatorio en España)
-- [x] **Aviso legal** — plantilla base ES+EN en Sanity, con `[COMPLETAR]` para CIF/titular
+- [x] **Aviso legal** — plantilla base ES+EN en el backoffice, con `[COMPLETAR]` para CIF/titular
 - [x] **Política de privacidad** — plantilla base ES+EN, form de reserva + derechos RGPD
 - [x] **Política de cookies** — plantilla base ES+EN (no cookies con Cloudflare Web Analytics → informativa)
 - [x] **Sin banner de consentimiento** — Cloudflare Web Analytics no usa cookies ni fingerprinting, exento del banner
 - [x] Enlaces a las 3 páginas legales en el footer (index + `/en/`)
-- [ ] Cliente rellena `[COMPLETAR]` de CIF/NIF, titular, dirección fiscal en Sanity
+- [ ] Cliente rellena `[COMPLETAR]` de CIF/NIF, titular, dirección fiscal en el backoffice
 
 ### Técnicos
 - [x] **`/sitemap.xml`** dinámico con hreflang alternates (home + legal, ES + EN)
 - [x] **Página 404 custom** con branding y links de vuelta al home por idioma
 - [ ] **Deploy configurado** en Vercel/Netlify/Cloudflare Pages
   - [x] `astro.config.mjs` con `site: https://laprincipal.vercel.app` (provisional)
-  - [ ] Variables de entorno en el hosting (SANITY_PROJECT_ID + SANITY_DATASET + RESTAURANT_SLUG)
-  - [ ] Webhook Sanity → rebuild al publicar
   - [ ] SSL automático
   - [ ] Dominio propio apuntando (registro DNS) — decidir dominio final
-- [x] **Analytics** — Cloudflare Web Analytics integrado (script cargado si `cloudflareAnalyticsToken` está definido en Sanity); gratis, sin cookies, sin banner
-  - [ ] Cliente da de alta el sitio en dash.cloudflare.com → Analytics & Logs → Web Analytics, y pega el token en Sanity
+- [x] **Analytics** — Cloudflare Web Analytics integrado (script cargado si `cloudflareAnalyticsToken` está definido en el backoffice); gratis, sin cookies, sin banner
+  - [ ] Cliente da de alta el sitio en dash.cloudflare.com → Analytics & Logs → Web Analytics, y pega el token en el backoffice
 
 ---
 
@@ -115,8 +112,8 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 - [ ] **Confirmación de reserva al cliente y al restaurante** (email/SMS/WhatsApp)
 - [ ] **Google Business Profile** reclamado y bien rellenado (fotos, horario, categoría) — SEO local impacto más grande que la web misma
 - [ ] **Email `hola@laprincipal.com`** verificar que existe y alguien lo lee
-- [ ] **Fotos reales** del restaurante subidas a Sanity (hero, galería, sobre, grupos)
-- [ ] **Logo del restaurante** subido a Sanity (JSON-LD + OG fallback)
+- [ ] **Fotos reales** del restaurante subidas al backoffice (hero, galería, sobre, grupos)
+- [ ] **Logo del restaurante** subido al backoffice (JSON-LD + OG fallback)
 - [ ] **Icono PWA + favicon** reales del cliente (no los placeholders)
 
 ---
@@ -124,7 +121,6 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 ## 🟡 PERFORMANCE — mejoras recomendadas
 
 - [x] Self-host de fonts (Cormorant Garamond + Inter) con Fontsource
-- [x] `<link rel="preconnect">` a `cdn.sanity.io` (imágenes)
 - [ ] Usar `<Image>` de Astro para imágenes locales (fallbacks en `public/img/`) — optimización automática WebP/AVIF
 - [ ] `<link rel="preload">` de fuente crítica del heading (Cormorant Garamond)
 - [ ] Verificar cache headers en el hosting (Cache-Control largos para assets)
@@ -148,7 +144,7 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 
 ## 🟢 NICE TO HAVE
 
-- [ ] Newsletter signup (Mailchimp/ConvertKit/Sanity)
+- [ ] Newsletter signup (Mailchimp/ConvertKit)
 - [ ] `/.well-known/security.txt`
 - [ ] `humans.txt` con créditos
 - [ ] JSON-LD `Menu` por plato individual (rich cards en Google)
@@ -161,19 +157,17 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 ## Orden sugerido de ataque
 
 ### Fase 1 — Contenido del cliente
-1. Subir fotos reales a Sanity (hero, sobre — hasta 3 imágenes, galería, grupos)
-2. Subir logo + favicon + iconoApp desde Sanity Studio
+1. Subir fotos reales al backoffice (hero, sobre — hasta 3 imágenes, galería, grupos)
+2. Subir logo + favicon + iconoApp desde el backoffice Studio
 3. Rellenar `[COMPLETAR]` de CIF/NIF, titular, dirección fiscal en las 3 páginas legales
 4. Confirmar / editar los 7 items de FAQ inicial (o añadir más)
 
 ### Fase 2 — Deploy
 5. Deploy en Vercel (proyecto `la-principal-vercel` o similar)
-6. Env vars: SANITY_PROJECT_ID, SANITY_DATASET=production, RESTAURANT_SLUG=la-principal
-7. Webhook Sanity → deploy hook Vercel (rebuild al publicar)
 8. Cliente confirma dominio final → DNS → cambiar `site` en `astro.config.mjs`
 
 ### Fase 3 — Analytics + reservas
-9. Cliente da de alta Cloudflare Web Analytics, pega token en Sanity
+9. Cliente da de alta Cloudflare Web Analytics, pega token en el backoffice
 10. Sistema de reservas real (Formspree recomendado por rapidez) o TheFork
 11. Verificar Google Business Profile
 
@@ -192,7 +186,7 @@ Marcaje: `- [x]` = hecho · `- [ ]` = pendiente · `- [~]` = parcial/opcional.
 - [ ] Elegir **sistema de reservas**: Formspree (~10€/mes, forma simple) o TheFork/CoverManager (integración pro)
 - [x] Elegir **hosting**: **Vercel** (dominio provisional `laprincipal.vercel.app` ya configurado en `astro.config.mjs`)
 - [ ] Confirmar **dominio final** (laprincipal.com? .cat? .bcn?)
-- [x] ~~Redactar textos legales~~ → **Plantilla A** aplicada; cliente rellena `[COMPLETAR]` desde Sanity
+- [x] ~~Redactar textos legales~~ → **Plantilla A** aplicada; cliente rellena `[COMPLETAR]` desde el backoffice
 
 ---
 

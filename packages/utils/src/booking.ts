@@ -40,7 +40,7 @@ export function resolveBookingAction(
   locale: string,
   hrefPrefix: string = ''
 ): BookingAction {
-  // Sanity: `aceptaReservas: false` = deshabilita form. Cualquier otro valor
+  // `aceptaReservas: false` = deshabilita form. Cualquier otro valor
   // (true, undefined, null) mantiene el comportamiento por defecto (formulario).
   if (restaurant.aceptaReservas !== false) {
     return { kind: 'form', href: `${hrefPrefix}#book` };

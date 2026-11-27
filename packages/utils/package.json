@@ -13,6 +13,6 @@
     "./typography": "./src/typography.ts"
   },
   "dependencies": {
-    "@hosteleria/sanity-client": "workspace:*"
+    "@hosteleria/content-client": "workspace:*"
   }
 }

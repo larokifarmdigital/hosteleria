@@ -1,6 +1,6 @@
 ---
-import { t } from '@hosteleria/i18n-utils';
-import { img } from '../lib/sanity';
+import { t, type CampoI18n } from '@hosteleria/i18n-utils';
+import { img } from '../lib/content';
 import type { Restaurant, Espacio } from '../lib/queries';
 
 interface Props {
@@ -16,7 +16,7 @@ const sec = restaurant.textosSecciones ?? {};
 
 // Solo las fotos del espacio, con su descripción: sin fotos no hay galería (antes salían fotos de catálogo).
 const galeriaImgs = (espacio.galeria ?? [])
-  .map(g => ({ src: img.url(g), alt: t(g.alt, locale, defaultLocale) }))
+  .map(g => ({ src: img.url(g), alt: t(g.alt as CampoI18n, locale, defaultLocale) }))
   .filter((g): g is { src: string; alt: string } => !!g.src);
 const ENLARGE: Record<string, string> = { es: 'Ampliar foto', ca: 'Ampliar la foto', en: 'Enlarge photo', fr: 'Agrandir la photo', it: 'Ingrandisci la foto' };
 const enlarge = ENLARGE[locale] ?? ENLARGE.es;

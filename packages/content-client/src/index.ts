@@ -1,10 +1,10 @@
-// Contenido de una landing leído del api propio (`GET /public/restaurants/:slug`),
-// con la misma forma y las mismas funciones que `@hosteleria/sanity-client`.
+// Contenido de una landing leído del api del backoffice (`GET /public/restaurants/:slug`).
 import type { PublishedSite } from '@hosteleria/api-client';
-import type { EspacioData, EspacioMenu, GrupoData, ImageBuilder, LegalPageDoc, RestaurantData } from '@hosteleria/sanity-client';
+import type { EspacioData, EspacioMenu, GrupoData, ImageBuilder, LegalPageDoc, RestaurantData } from './types';
 import { toGroupData, toLegalPages, toRestaurantData, toSpaceData, toSpaceMenu } from './fromApi';
 
 export * from './fromApi';
+export * from './types';
 export { markdownToBlocks } from './markdown';
 
 export interface ContentClientOpts {
@@ -16,7 +16,7 @@ export interface ContentClientOpts {
 
 export interface ContentQueries {
   fetchRestaurantData(): Promise<RestaurantData>;
-  /** El argumento se ignora: existe para que la firma sea la de Sanity. */
+  /** El argumento se ignora (se mantiene por compatibilidad con las llamadas de las webs). */
   fetchLegalPages(restaurantId?: string): Promise<LegalPageDoc[]>;
   fetchEspacioMenu(espacioId: string): Promise<EspacioMenu>;
   /** Ficha y espacios, sin cartas: para la portada de un grupo. */

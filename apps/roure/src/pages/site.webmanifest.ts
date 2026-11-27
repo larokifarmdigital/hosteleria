@@ -1,6 +1,6 @@
 import { createManifestGET } from '@hosteleria/seo';
 import { fetchRestaurantData } from '../lib/queries';
-import { img } from '../lib/sanity';
+import { img } from '../lib/content';
 import { accentColor } from '../lib/theme';
 
 export const prerender = true;

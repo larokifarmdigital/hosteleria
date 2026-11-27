@@ -1,6 +1,6 @@
 ---
 import { t } from '@hosteleria/i18n-utils';
-import { img } from '../lib/sanity';
+import { img } from '../lib/content';
 import type { Restaurant } from '../lib/queries';
 import CtaButton from '../components/CtaButton.astro';
 import { resolveBookingAction } from '@hosteleria/utils';
@@ -17,7 +17,7 @@ const eyebrow = t(restaurant.gruposEyebrow, locale, defaultLocale);
 const titulo = t(restaurant.gruposTitulo, locale, defaultLocale);
 const cta = t(restaurant.gruposCta, locale, defaultLocale);
 
-// Puntos destacados desde Sanity (array de objects { texto: i18nStr }).
+// Puntos destacados del backoffice (array de objects { texto: i18nStr }).
 // Se filtran los vacíos (por si el cliente crea items sin texto).
 const puntosDestacados = (restaurant.gruposDestacados ?? [])
   .map(p => t(p.texto, locale, defaultLocale))
@@ -68,7 +68,7 @@ const bookingAction = resolveBookingAction(restaurant, locale);
         {titulo}
       </h2>
 
-      <!-- Puntos destacados dinámicos desde Sanity (opcional) -->
+      <!-- Puntos destacados del backoffice (opcional) -->
       {puntosDestacados.length > 0 && (
         <ul class='flex flex-col divide-y divide-line/70'>
           {puntosDestacados.map(punto => (

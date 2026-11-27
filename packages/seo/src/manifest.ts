@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import type { ImageBuilder, RestaurantData } from '@hosteleria/sanity-client';
+import type { ImageBuilder, RestaurantData } from '@hosteleria/content-client';
 
 export type CreateManifestOpts = {
   fetchRestaurantData: () => Promise<RestaurantData>;
@@ -11,7 +11,7 @@ export type CreateManifestOpts = {
 };
 
 /**
- * Manifest PWA generado desde los datos del restaurant en Sanity.
+ * Manifest PWA generado desde los datos del restaurante.
  * Si el iconoApp aún no está subido, usa placeholders en /public.
  */
 export function createManifestGET({

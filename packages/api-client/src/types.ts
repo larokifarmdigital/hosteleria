@@ -1,6 +1,6 @@
 /**
  * Types del contrato API. Espejo de los shapes que devuelven las rutas
- * de `apps/api` — mantener sincronizado cuando cambien los DTOs.
+ * del api (`apps/backoffice/src/core`) — mantener sincronizado cuando cambien los DTOs.
  *
  * Este paquete es la fuente única de tipos para el backoffice; se
  * elimina la duplicación con `apps/backoffice/src/lib/types.ts` (ese

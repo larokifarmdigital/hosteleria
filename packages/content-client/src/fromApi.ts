@@ -1,12 +1,11 @@
-// El sitio publicado del api, con la forma que las landings ya consumen (la de
-// los documentos de Sanity). Así una landing cambia de origen sin tocar sus
-// componentes. Cuando ninguna lea de Sanity (M6), estos tipos se podrán
-// simplificar a los del api.
+// El sitio publicado del api, con la forma que consumen los componentes de las
+// landings (`./types`): campos en español y textos traducidos como listas
+// `{ _key: idioma, value }`.
 import type { PublishedMedia, PublishedSite, PublishedSpace } from '@hosteleria/api-client';
 import type {
   Dish, DishCategory, Drink, DrinkCategory, Espacio, EspacioData, EspacioMenu, GrupoData, LegalPageDoc, Restaurant,
-  RestaurantData, SanityImg, Wine, WineCategory
-} from '@hosteleria/sanity-client';
+  RestaurantData, ContentImage, Wine, WineCategory
+} from './types';
 import { markdownToBlocks } from './markdown';
 import { withUiTextDefault } from './uiTextDefaults';
 
@@ -21,8 +20,8 @@ function i18n(value: I18n, locales: string[]): I18nField {
   return out.length > 0 ? out : undefined;
 }
 
-/** Imagen del api con forma de imagen de Sanity; la URL viaja en `asset.url`. */
-export type ApiImage = SanityImg & { asset: { _ref: string; url: string }; alt?: I18nField; width?: number; height?: number };
+/** Imagen del contenido; la URL viaja en `asset.url`. */
+export type ApiImage = ContentImage & { asset: { _ref: string; url: string }; alt?: I18nField; width?: number; height?: number };
 
 function image(id: string | null | undefined, media: Record<string, PublishedMedia>, locales: string[]): ApiImage | undefined {
   const m = id ? media[id] : undefined;
@@ -61,7 +60,7 @@ const UI_TEXT_FIELDS = {
 
 const LEGAL_TYPE = { 'legal-notice': 'aviso-legal', privacy: 'privacidad', cookies: 'cookies' } as const;
 
-/** Quita las claves sin valor, como hace Sanity con los campos vacíos. */
+/** Quita las claves sin valor: los componentes tratan igual «vacío» que «no está». */
 function compact<T extends Record<string, unknown>>(obj: T): T {
   return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined && v !== null)) as T;
 }
@@ -218,7 +217,7 @@ function menuOf(space: PublishedSpace | undefined, locales: string[]): EspacioMe
   return { dishCategories, dishes, wineCategories, wines, drinkCategories, drinks };
 }
 
-/** Ficha, espacios y la carta del espacio principal, como `fetchRestaurantData` de Sanity. */
+/** Ficha, espacios y la carta del espacio principal. */
 export function toRestaurantData(site: PublishedSite): RestaurantData {
   return { restaurant: toRestaurant(site), ...menuOf(site.spaces[0], site.restaurant.activeLocales) };
 }
@@ -255,7 +254,7 @@ export function toLegalPages(site: PublishedSite): LegalPageDoc[] {
   }) as LegalPageDoc);
 }
 
-/** Los turnos de la semana en la forma de Sanity. */
+/** Los turnos de la semana en la forma de las landings. */
 function weekOf(space: PublishedSite['spaces'][number] | undefined) {
   return space?.schedule.map(d => ({ dia: d.day, turnos: d.shifts.map(x => ({ apertura: x.open, cierre: x.close })) }));
 }

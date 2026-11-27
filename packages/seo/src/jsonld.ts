@@ -1,5 +1,5 @@
 import { t, type CodigoIdioma } from '@hosteleria/i18n-utils';
-import type { ImageBuilder, Restaurant, DishCategory, Dish } from '@hosteleria/sanity-client';
+import type { ImageBuilder, Restaurant, DishCategory, Dish } from '@hosteleria/content-client';
 
 const HTML_LANG_MENU: Record<string, string> = {
   es: 'es-ES',
@@ -163,7 +163,7 @@ export type BuildMenuJsonLdOpts = {
 
 /**
  * JSON-LD `Menu` (schema.org). Genera secciones y items desde los platos
- * activos de Sanity. Google puede mostrar la carta expandida como rich
+ * activos. Google puede mostrar la carta expandida como rich
  * result bajo el resultado orgánico. `null` si no hay platos con nombre.
  */
 export function buildMenuJsonLd(opts: BuildMenuJsonLdOpts) {

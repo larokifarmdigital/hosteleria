@@ -13,7 +13,7 @@ const { restaurant, locale, defaultLocale } = Astro.props;
 
 if (!restaurant.faq?.length) return null;
 
-// Header FAQ desde Sanity con fallbacks por locale (por si el cliente no
+// Header FAQ del backoffice con fallbacks por locale (por si el cliente no
 // llenó los campos en el CMS todavía).
 const FALLBACK: Record<string, { eyebrow: string; title: string; titleAccent: string }> = {
   es: {

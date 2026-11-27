@@ -1,11 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalEnv": [
-    "SANITY_STUDIO_PROJECT_ID",
-    "SANITY_STUDIO_DATASET",
-    "SANITY_PROJECT_ID",
-    "SANITY_DATASET",
-    "SANITY_TOKEN",
     "RESTAURANT_SLUG",
     "CONTENT_API_URL",
     "DATABASE_URL",
@@ -26,7 +21,10 @@
     "EMAIL_FROM",
     "NEXT_DIST_DIR"
   ],
-  "globalDependencies": [".env", "**/.env.local"],
+  "globalDependencies": [
+    ".env",
+    "**/.env.local"
+  ],
   "tasks": {
     "dev": {
       "cache": false,
@@ -34,16 +32,27 @@
     },
     "build": {
       "cache": false,
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".astro/**", ".next/**", "!.next/cache/**"]
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "dist/**",
+        ".astro/**",
+        ".next/**",
+        "!.next/cache/**"
+      ]
     },
     "preview": {
-      "dependsOn": ["build"],
+      "dependsOn": [
+        "build"
+      ],
       "cache": false,
       "persistent": true
     },
     "check": {
-      "dependsOn": ["^build"]
+      "dependsOn": [
+        "^build"
+      ]
     },
     "clean": {
       "cache": false

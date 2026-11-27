@@ -14,7 +14,7 @@ const { restaurant, locale, defaultLocale } = Astro.props;
 
 if (!restaurant.faq?.length) return null;
 
-// Rótulos fijos por idioma: no vienen de Sanity.
+// Rótulos fijos por idioma: no vienen del backoffice.
 const T: Record<string, { eyebrow: string; title: string }> = {
   es: { eyebrow: 'Preguntas frecuentes', title: 'Todo lo que necesitas saber' },
   en: { eyebrow: 'Frequently asked', title: 'Everything you need to know' },

@@ -1,6 +1,6 @@
 ---
 import { t, localizedPath } from '@hosteleria/i18n-utils';
-import type { LocaleRef, Restaurant } from '@hosteleria/sanity-client';
+import type { LocaleRef, Restaurant } from '@hosteleria/content-client';
 import IconClose from '@hosteleria/ui/icons/IconClose.astro';
 import { resolveBookingAction } from '@hosteleria/utils';
 import CtaButton from './CtaButton.astro';
@@ -48,7 +48,7 @@ const partes = restaurant.nombre.match(/^(Casa|La|El)?\s?(.*)$/);
 const brandStart = partes?.[1] ?? '';
 const brandRest = partes?.[2] ?? restaurant.nombre;
 
-// Sello "Casa desde {año}" desde Sanity — mismo patrón que el hero
+// Sello "Casa desde {año}" del backoffice — mismo patrón que el hero
 const anyo = restaurant.anyoFundacion;
 const casaDesde = anyo
   ? locale === 'en' ? `House since ${anyo}` : `Casa desde ${anyo}`

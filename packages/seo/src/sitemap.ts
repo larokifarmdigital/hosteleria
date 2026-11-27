@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { localizedPath, resolveActiveLocales } from '@hosteleria/i18n-utils';
-import type { RestaurantData, LegalPageDoc } from '@hosteleria/sanity-client';
+import type { RestaurantData, LegalPageDoc } from '@hosteleria/content-client';
 
 interface UrlEntry {
   loc: string;

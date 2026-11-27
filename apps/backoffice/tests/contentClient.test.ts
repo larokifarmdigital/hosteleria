@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { markdownToBlocks } from '../../../packages/content-client/src/markdown.js';
 import { toGroupData, toLegalPages, toRestaurantData, toSpaceData } from '../../../packages/content-client/src/fromApi.js';
 import { createContentQueries, createImageBuilder } from '../../../packages/content-client/src/index.js';
-import { mapLegalPage, mapRestaurant, mapSpace, portableToMarkdown } from '../scripts/sanity-import/map';
 
 const s = (es: string, en: string) => [{ _key: 'es', value: es }, { _key: 'en', value: en }];
 
@@ -16,8 +15,12 @@ describe('Markdown de las páginas legales', () => {
     'Fin'
   ].join('\n\n');
 
-  it('ida y vuelta: lo que se guarda es lo que se pinta', () => {
-    expect(portableToMarkdown(markdownToBlocks(md))).toBe(md);
+  it('cada parte del texto da su bloque: títulos, párrafos, listas y citas', () => {
+    const blocks = markdownToBlocks(md);
+    expect(blocks.map(b => [b.style, b.listItem ?? null])).toEqual([
+      ['h2', null], ['normal', null], ['normal', 'bullet'], ['normal', 'bullet'],
+      ['normal', 'number'], ['normal', 'number'], ['blockquote', null], ['normal', null]
+    ]);
   });
 
   it('da los bloques que espera el pintor de texto enriquecido', () => {
@@ -28,18 +31,14 @@ describe('Markdown de las páginas legales', () => {
   });
 });
 
-// Un documento de Sanity pasa al api (volcado) y vuelve con la forma de Sanity (landing).
+// Lo que la landing espera recibir, en la forma de sus componentes (campos en español).
 const doc = {
-  nombre: 'La Prueba', dominio: 'https://laprueba.com', idiomaPorDefecto: 'es', idiomasActivos: ['es', 'en'],
+  nombre: 'La Prueba', dominio: 'https://laprueba.com',
   aceptaReservas: true, mostrarRedes: true, anyoFundacion: 1926,
   direccion: { calle: 'Plaça 1', ciudad: 'Barcelona', barrio: 'Gràcia', pais: 'ES' },
   contacto: { telefono: '+34 930', email: 'a@b.com' },
   redes: { instagram: 'https://instagram.com/x' },
   seoTitulo: s('Título', 'Title'),
-  sobreCuerpo: [
-    { _key: 'es', value: [{ _type: 'block', children: [{ text: 'Uno' }] }, { _type: 'block', children: [{ text: 'Dos' }] }] },
-    { _key: 'en', value: [{ _type: 'block', children: [{ text: 'One' }] }] }
-  ],
   gruposDestacados: [{ _key: 'gd1', texto: s('Hasta 30', 'Up to 30') }],
   gruposFeatures: [{ _key: 'gf1', icon: 'wine', label: s('Bodega', 'Cellar') }],
   faq: [{ _key: 'q1', pregunta: s('¿Sí?', 'Yes?'), respuesta: s('Sí', 'Yes') }],
@@ -50,15 +49,19 @@ const doc = {
   precioMedio: 25, formasPago: ['cash'], serviciosExtras: ['grupos']
 };
 const espacio = {
-  _id: 'e1', nombre: 'Sala', slug: { current: 'sala' }, tipo: 'restaurant',
+  nombre: 'Sala', slug: { current: 'sala' }, tipo: 'restaurant',
   heroTitulo: s('Cocina', 'Kitchen'), horariosAbierto: s('Abierto hasta {hora}', 'Open until {hora}'),
-  horariosSemana: [{ dia: 'Tu', turnos: [{ apertura: '13:00', cierre: '16:00' }] }],
   contactoReserva: { telefono: '930' }
 };
 
+// Lo que devuelve el api (`GET /public/restaurants/:slug`).
+const apiRestaurant = {"name": "La Prueba", "domain": "laprueba.com", "acceptsBookings": true, "showSocials": true, "showReviews": false, "foundedYear": 1926, "address": {"street": "Plaça 1", "city": "Barcelona", "district": "Gràcia", "country": "ES"}, "contact": {"phone": "+34 930", "email": "a@b.com"}, "socials": {"instagram": "https://instagram.com/x"}, "mapUrl": null, "seo": {"title": {"es": "Título", "en": "Title"}}, "about": {"body": {"es": "Uno\n\nDos", "en": "One"}}, "groups": {"highlights": [{"id": "gd1", "text": {"es": "Hasta 30", "en": "Up to 30"}}], "features": [{"id": "gf1", "icon": "wine", "label": {"es": "Bodega", "en": "Cellar"}}]}, "homeBlocks": [], "faq": {"items": [{"id": "q1", "question": {"es": "¿Sí?", "en": "Yes?"}, "answer": {"es": "Sí", "en": "Yes"}}]}, "uiTexts": {"nav": {"book": {"es": "Reservar", "en": "Book"}}, "form": {"success": {"es": "Hecho", "en": "Done"}}, "footer": {"byline": {"es": "Cocina", "en": "Cuisine"}}}, "aiSummary": {"es": "Resumen", "en": "Summary"}, "analyticsToken": null, "business": {"averagePrice": 25, "paymentMethods": ["cash"], "extraServices": ["grupos"]}};
+const apiSpace = {"slug": "sala", "type": "restaurant", "name": "Sala", "content": {"hero": {"title": {"es": "Cocina", "en": "Kitchen"}}, "manifesto": {}, "scheduleTexts": {"open": {"es": "Abierto hasta {hora}", "en": "Open until {hora}"}}, "address": {}, "mapUrl": null, "bookingContact": {"phone": "930"}}, "schedule": [{"day": "Mo", "shifts": []}, {"day": "Tu", "shifts": [{"open": "13:00", "close": "16:00"}]}, {"day": "We", "shifts": []}, {"day": "Th", "shifts": []}, {"day": "Fr", "shifts": []}, {"day": "Sa", "shifts": []}, {"day": "Su", "shifts": []}]};
+const apiLegal = {"type": "legal-notice", "title": {"es": "Aviso legal", "en": "Legal notice"}, "content": {"es": "## Titular\n\nTexto"}, "lastUpdated": "2026-08-21"};
+
 function site(over: Record<string, unknown> = {}) {
-  const r = mapRestaurant(doc);
-  const e = mapSpace(espacio);
+  const r = { content: apiRestaurant };
+  const e = apiSpace;
   return {
     restaurant: {
       slug: 'prueba', ...r.content, defaultLocale: 'es', activeLocales: ['es', 'en'],
@@ -71,22 +74,18 @@ function site(over: Record<string, unknown> = {}) {
       dishCategories: [{ id: 'c1', name: { es: 'Fríos', en: 'Cold' }, dishes: [{ id: 'd1', name: { es: 'Gildas', en: 'Gildas' }, note: {}, price: 6, imageAssetId: null }] }],
       wineCategories: [{ id: 'w1', name: { es: 'Tintos', en: 'Reds' }, wines: [{ id: 'v1', name: 'Rioja', region: null, note: {}, priceGlass: 4, priceBottle: null }] }]
     }],
-    legalPages: [mapLegalPage({
-      tipo: 'aviso-legal', titulo: s('Aviso legal', 'Legal notice'), ultimaActualizacion: '2026-08-21',
-      contenido: [{ _key: 'es', value: markdownToBlocks('## Titular\n\nTexto') }]
-    })!],
+    legalPages: [apiLegal],
     media: {}
   } as any;
 }
 
 describe('del api a la forma que consume la landing', () => {
-  it('la ficha vuelve igual que estaba en Sanity', () => {
+  it('la ficha llega con la forma de los componentes', () => {
     const { restaurant } = toRestaurantData(site());
-    const { idiomaPorDefecto, idiomasActivos, ...rest } = doc;
-    expect(restaurant).toMatchObject({ ...rest, _id: 'restaurante-prueba', slug: { current: 'prueba' }, mostrarResenas: false });
+    expect(restaurant).toMatchObject({ ...doc, _id: 'restaurante-prueba', slug: { current: 'prueba' }, mostrarResenas: false });
     expect(restaurant.idiomaPorDefecto).toEqual({ codigo: 'es', nombre: 'Español' });
     expect(restaurant.idiomasActivos).toEqual([{ codigo: 'es', nombre: 'Español' }, { codigo: 'en', nombre: 'English' }]);
-    // Lo vacío no aparece, como en Sanity.
+    // Lo vacío no aparece.
     for (const key of ['logo', 'seoImagen', 'mapaUrl', 'cloudflareAnalyticsToken', 'bloquesHome', 'textosSecciones']) {
       expect(restaurant).not.toHaveProperty(key);
     }
